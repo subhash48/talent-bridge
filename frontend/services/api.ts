@@ -47,11 +47,31 @@ async function accessToken(): Promise<string | null> {
 
 const AUTH_PAGES = ["/login", "/signup", "/forgot-password", "/reset-password"];
 
-/** The session ended (expired or signed out elsewhere): sign in again and come back here. */
-function onSessionExpired() {
+/**
+ * This page's session can't be used any more, so leave for a page that fits it rather than show an
+ * error. 401: it expired or ended, so sign in again and come back. 403: it now belongs to an account
+ * that isn't allowed here, typically because someone signed in as another user in another tab (the
+ * tabs share one session), so go home, which routes by the role on record. The sign-in pages handle
+ * these responses themselves.
+ */
+function onAccessLost(error: ApiError) {
   const { pathname, search } = window.location;
   if (AUTH_PAGES.includes(pathname)) return;
-  window.location.replace(`/login?reason=expired&next=${encodeURIComponent(pathname + search)}`);
+  if (error.status === 401) {
+    window.location.replace(`/login?reason=expired&next=${encodeURIComponent(pathname + search)}`);
+  } else if (error.code === "account_not_linked" || error.code === "account_disabled") {
+    window.location.replace(`/login?reason=${error.code}`);
+  } else {
+    window.location.replace("/");
+  }
+}
+
+/**
+ * True only when the API couldn't be reached or failed on its side (network error, 5xx): the cases
+ * where showing the last data we have is right. A 4xx is the API answering, never an outage.
+ */
+export function isServerUnavailable(error: unknown): boolean {
+  return error instanceof ApiError && (error.status === 0 || error.status >= 500);
 }
 
 /**
@@ -72,8 +92,9 @@ export async function apiFetch<T>(path: string, { headers, ...init }: RequestIni
     throw new ApiError(`Can't reach the Talent Bridge API at ${API_URL}. Is the backend running?`, 0, "network_error");
   }
   if (!response.ok) {
-    if (response.status === 401 && typeof window !== "undefined") onSessionExpired();
-    throw await toApiError(response);
+    const error = await toApiError(response);
+    if ((error.status === 401 || error.status === 403) && typeof window !== "undefined") onAccessLost(error);
+    throw error;
   }
   const text = await response.text();
   return (text ? JSON.parse(text) : undefined) as T;

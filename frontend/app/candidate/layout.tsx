@@ -8,7 +8,7 @@ import { CandidateShell } from "@/components/candidate/CandidateShell";
 import { ApiUnavailable } from "@/components/shared/ApiUnavailable";
 import { SessionWatcher } from "@/components/shared/SessionWatcher";
 import { requireRole } from "@/lib/session";
-import { errorMessage } from "@/services/api";
+import { errorMessage, isServerUnavailable } from "@/services/api";
 import { getCandidateMe } from "@/services/portal";
 
 export const metadata: Metadata = {
@@ -24,9 +24,11 @@ export default async function CandidateLayout({ children }: { children: ReactNod
   await connection();
   const me = await loadPortal().catch((error: unknown) => {
     unstable_rethrow(error); // redirects to /login or the recruiter workspace
-    return { error: errorMessage(error) };
+    return { error: errorMessage(error), serverDown: isServerUnavailable(error) };
   });
-  if ("error" in me) return <ApiUnavailable title="Your candidate portal can't load right now" message={me.error} />;
+  if ("error" in me) {
+    return <ApiUnavailable title="Your candidate portal can't load right now" message={me.error} serverDown={me.serverDown} />;
+  }
 
   return (
     <CandidatePortalProvider initialMe={me}>

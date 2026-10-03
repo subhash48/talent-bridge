@@ -7,7 +7,7 @@ import { WorkspaceProvider } from "@/components/recruiter/WorkspaceProvider";
 import { ApiUnavailable } from "@/components/shared/ApiUnavailable";
 import { SessionWatcher } from "@/components/shared/SessionWatcher";
 import { requireRole } from "@/lib/session";
-import { errorMessage } from "@/services/api";
+import { errorMessage, isServerUnavailable } from "@/services/api";
 import { getCandidates } from "@/services/candidates";
 import { getJobs } from "@/services/jobs";
 import { getUnreadThreadCount } from "@/services/messages";
@@ -19,9 +19,9 @@ export default async function RecruiterLayout({ children }: { children: ReactNod
   await connection();
   const workspace = await loadWorkspace().catch((error: unknown) => {
     unstable_rethrow(error); // redirects to /login or the candidate portal
-    return { error: errorMessage(error) };
+    return { error: errorMessage(error), serverDown: isServerUnavailable(error) };
   });
-  if ("error" in workspace) return <ApiUnavailable message={workspace.error} />;
+  if ("error" in workspace) return <ApiUnavailable message={workspace.error} serverDown={workspace.serverDown} />;
 
   const [user, candidates, jobs, unreadThreads] = workspace;
   return (

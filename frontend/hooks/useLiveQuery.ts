@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useRefetchOnFocus } from "@/hooks/useRefetchOnFocus";
-import { errorMessage } from "@/services/api";
+import { errorMessage, isServerUnavailable } from "@/services/api";
 
 type LiveQueryOptions<T> = {
   /** Server-rendered data, so the first paint needs no request. */
@@ -14,6 +14,11 @@ export type LiveQuery<T> = {
   data: T | undefined;
   /** The last failure; data from an earlier success is kept alongside it. */
   error: string | undefined;
+  /**
+   * The last failure was the API being unreachable or failing on its side (see isServerUnavailable),
+   * not a refusal like 404. Cleared by the next successful refetch.
+   */
+  offline: boolean;
   loading: boolean;
   refresh: () => Promise<void>;
   /** Apply a mutation's result straight away, before the next refetch confirms it. */
@@ -26,7 +31,7 @@ export type LiveQuery<T> = {
  * The fetcher must be stable (a module function or a useCallback).
  */
 export function useLiveQuery<T>(fetcher: () => Promise<T>, { initialData, intervalMs = 15_000 }: LiveQueryOptions<T> = {}): LiveQuery<T> {
-  const [state, setState] = useState<{ data?: T; error?: string }>({ data: initialData });
+  const [state, setState] = useState<{ data?: T; error?: string; offline?: boolean }>({ data: initialData });
   const latestRequest = useRef(0);
   const hasInitialData = useRef(initialData !== undefined);
 
@@ -36,7 +41,9 @@ export function useLiveQuery<T>(fetcher: () => Promise<T>, { initialData, interv
       const data = await fetcher();
       if (request === latestRequest.current) setState({ data });
     } catch (error) {
-      if (request === latestRequest.current) setState((current) => ({ data: current.data, error: errorMessage(error) }));
+      if (request === latestRequest.current) {
+        setState((current) => ({ data: current.data, error: errorMessage(error), offline: isServerUnavailable(error) }));
+      }
     }
   }, [fetcher]);
 
@@ -55,5 +62,12 @@ export function useLiveQuery<T>(fetcher: () => Promise<T>, { initialData, interv
     setState((current) => ({ data: update(current.data) }));
   }, []);
 
-  return { data: state.data, error: state.error, loading: state.data === undefined && !state.error, refresh, setData };
+  return {
+    data: state.data,
+    error: state.error,
+    offline: Boolean(state.offline),
+    loading: state.data === undefined && !state.error,
+    refresh,
+    setData,
+  };
 }

@@ -1,15 +1,12 @@
-import { RecruiterAI } from "@/components/recruiter/RecruiterAI";
-import { RecruiterHeader } from "@/components/recruiter/RecruiterHeader";
-import { RecruiterSidebar } from "@/components/recruiter/RecruiterSidebar";
+import type { Metadata } from "next";
 
-export default function RecruiterAIPage() {
-  return (
-    <div className="flex min-h-screen">
-      <RecruiterSidebar />
-      <main className="flex-1 px-10 py-10">
-        <RecruiterHeader title="AI Assistant" />
-        <RecruiterAI />
-      </main>
-    </div>
-  );
+import { RecruiterAI } from "@/components/recruiter/RecruiterAI";
+
+export const metadata: Metadata = { title: "AI Assistant" };
+
+type AIPageProps = { searchParams: Promise<{ candidate?: string | string[] }> };
+
+export default async function RecruiterAIPage({ searchParams }: AIPageProps) {
+  const { candidate } = await searchParams;
+  return <RecruiterAI initialCandidateId={typeof candidate === "string" ? candidate : undefined} />;
 }

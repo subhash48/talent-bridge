@@ -1,42 +1,45 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { X } from "lucide-react";
+import { Dialog } from "radix-ui";
+import type { ReactNode } from "react";
 
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 type ModalProps = {
   open: boolean;
   onClose: () => void;
   title: string;
+  description?: string;
   children: ReactNode;
   className?: string;
 };
 
-export function Modal({ open, onClose, title, children, className }: ModalProps) {
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => event.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
-
-  if (!open) return null;
-
+// Radix Dialog: focus trap, Escape, scroll lock and focus return to the trigger.
+export function Modal({ open, onClose, title, description, children, className }: ModalProps) {
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/20 p-4 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className={cn("w-full max-w-lg rounded-[20px] bg-surface-raised p-6 shadow-raised", className)}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <h2 className="font-display text-2xl text-ink">{title}</h2>
-        <div className="mt-4">{children}</div>
-      </div>
-    </div>
+    <Dialog.Root open={open} onOpenChange={(next) => !next && onClose()}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in" />
+        <Dialog.Content
+          // Without a description, opt out explicitly so Radix doesn't point at a missing element.
+          {...(description ? {} : { "aria-describedby": undefined })}
+          className={cn(
+            "fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[20px] border border-border bg-overlay p-6 shadow-[0_40px_80px_-20px_rgb(0_0_0/0.8)] focus:outline-none data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in",
+            className,
+          )}
+        >
+          <Dialog.Title className="pr-10 text-lg font-semibold tracking-tight text-ink">{title}</Dialog.Title>
+          {description && <Dialog.Description className="mt-1.5 text-sm text-stone">{description}</Dialog.Description>}
+          <div className="mt-6">{children}</div>
+          <Dialog.Close asChild>
+            <Button variant="ghost" size="icon-sm" className="absolute top-5 right-5" aria-label="Close">
+              <X />
+            </Button>
+          </Dialog.Close>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }

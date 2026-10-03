@@ -1,15 +1,22 @@
-import { CandidateTable } from "@/components/recruiter/CandidateTable";
-import { RecruiterHeader } from "@/components/recruiter/RecruiterHeader";
-import { RecruiterSidebar } from "@/components/recruiter/RecruiterSidebar";
+import type { Metadata } from "next";
 
-export default function CandidatesPage() {
+import { CandidatesWorkspace } from "@/components/recruiter/CandidatesWorkspace";
+import { greetingFor } from "@/lib/format";
+import { getDashboardSummary } from "@/services/candidates";
+
+export const metadata: Metadata = { title: "Candidates" };
+
+type CandidatesPageProps = {
+  searchParams: Promise<{ candidate?: string | string[] }>;
+};
+
+export default async function CandidatesPage({ searchParams }: CandidatesPageProps) {
+  const [{ candidate }, summary] = await Promise.all([searchParams, getDashboardSummary()]);
   return (
-    <div className="flex min-h-screen">
-      <RecruiterSidebar />
-      <main className="flex-1 px-10 py-10">
-        <RecruiterHeader title="Candidates" />
-        <CandidateTable rows={[]} />
-      </main>
-    </div>
+    <CandidatesWorkspace
+      greeting={greetingFor()}
+      trends={summary.trends}
+      initialCandidateId={typeof candidate === "string" ? candidate : undefined}
+    />
   );
 }

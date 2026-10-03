@@ -1,16 +1,20 @@
-import { EmptyState } from "@/components/shared/EmptyState";
-import { RecruiterHeader } from "@/components/recruiter/RecruiterHeader";
-import { RecruiterSidebar } from "@/components/recruiter/RecruiterSidebar";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
-export default async function JobPage({ params }: { params: Promise<{ id: string }> }) {
+import { JobPipeline } from "@/components/recruiter/JobPipeline";
+import { getJob } from "@/services/jobs";
+
+type JobPageProps = { params: Promise<{ id: string }> };
+
+export async function generateMetadata({ params }: JobPageProps): Promise<Metadata> {
   const { id } = await params;
-  return (
-    <div className="flex min-h-screen">
-      <RecruiterSidebar />
-      <main className="flex-1 px-10 py-10">
-        <RecruiterHeader title="Job" />
-        <EmptyState title="Job details" description={`Applicants for job ${id} will be grouped by stage here.`} />
-      </main>
-    </div>
-  );
+  const job = await getJob(id);
+  return { title: job?.title ?? "Job" };
+}
+
+export default async function JobPage({ params }: JobPageProps) {
+  const { id } = await params;
+  const job = await getJob(id);
+  if (!job) notFound();
+  return <JobPipeline job={job} />;
 }

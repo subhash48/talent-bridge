@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { EncordLogo } from "@/components/shared/EncordLogo";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -20,7 +21,7 @@ export function CandidateSidebar() {
 
   return (
     <aside className="w-60 shrink-0 border-r border-border bg-surface px-4 py-8">
-      <p className="px-3 font-display text-2xl text-ink">HireMesh</p>
+      <EncordLogo className="px-3" />
       <nav className="mt-8 flex flex-col gap-1">
         {NAV.map((item) => {
           const active =

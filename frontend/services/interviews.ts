@@ -1,19 +1,9 @@
-import { apiFetch } from "@/services/api";
-import type { PortalInterview } from "@/types/interview";
+import { USE_MOCK_API, apiFetch } from "@/services/api";
+import { mockApi } from "@/services/mock/api";
+import type { ScheduledInterview } from "@/types/workspace";
 
-// Candidate commands; each emits its event on the server (ARCHITECTURE.md 5.4, 8.3).
-export function confirmInterview(token: string, interviewId: string, idempotencyKey = crypto.randomUUID()) {
-  return apiFetch<PortalInterview>(`/v1/portal/interviews/${interviewId}/confirm`, {
-    token,
-    method: "POST",
-    headers: { "Idempotency-Key": idempotencyKey },
-  });
-}
-
-export function requestReschedule(token: string, interviewId: string, reason?: string) {
-  return apiFetch<PortalInterview>(`/v1/portal/interviews/${interviewId}/reschedule-request`, {
-    token,
-    method: "POST",
-    body: JSON.stringify({ reason }),
-  });
+// Staff façade: interview schedule (ARCHITECTURE.md 8.2).
+export function getInterviews(token?: string): Promise<ScheduledInterview[]> {
+  if (USE_MOCK_API) return mockApi.getInterviews();
+  return apiFetch<ScheduledInterview[]>("/v1/interviews", { token });
 }

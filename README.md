@@ -18,6 +18,10 @@ HireMesh is an AI-native recruiting platform: one system, two experiences. Recru
 cd frontend && npm install && npm run dev
 ```
 
+`/` opens the recruiter dashboard (`/recruiter/candidates`). Other recruiter routes: `/recruiter/jobs` (and `/jobs/[id]`), `/recruiter/interviews`, `/recruiter/messages`, `/recruiter/ai`, `/recruiter/settings` and `/recruiter/candidates/[id]`. Short aliases such as `/dashboard` and `/jobs` redirect there.
+
+The frontend runs on seeded mock data by default, so no backend is needed. Every data call goes through `frontend/services/*`. Set `NEXT_PUBLIC_USE_MOCK_API=false` to send them to `NEXT_PUBLIC_API_URL` instead. Checks: `npm run lint`, `npm run typecheck`, `npm run build`.
+
 **Backend** (http://localhost:8000, health check at `/healthz`)
 
 ```bash

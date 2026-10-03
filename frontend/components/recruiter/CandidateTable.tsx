@@ -1,53 +1,92 @@
-import { Avatar } from "@/components/shared/Avatar";
-import { EmptyState } from "@/components/shared/EmptyState";
-import { StatusBadge } from "@/components/shared/StatusBadge";
-import type { DashboardRow } from "@/types/application";
-import { ENGAGEMENT_LABELS } from "@/types/event";
+"use client";
 
-const COLUMNS = ["Candidate", "Role", "Stage", "Last activity", "Engagement", "Next action"];
+import type { ReactNode } from "react";
 
-export function CandidateTable({ rows }: { rows: DashboardRow[] }) {
-  if (rows.length === 0) {
-    return (
-      <EmptyState
-        title="No candidates yet"
-        description="Candidates appear here as they apply or are added."
-      />
-    );
-  }
+import { CandidateCard } from "@/components/recruiter/CandidateCard";
+import { CandidateRow } from "@/components/recruiter/CandidateRow";
+import { Checkbox } from "@/components/ui/Checkbox";
+import type { PipelineCandidate } from "@/types/workspace";
+
+type CandidateTableProps = {
+  candidates: PipelineCandidate[];
+  selectedId?: string;
+  checkedIds: ReadonlySet<string>;
+  onSelect: (id: string) => void;
+  onCheckedChange: (id: string, checked: boolean) => void;
+  onCheckAll: (checked: boolean) => void;
+  onAskAI: (id: string) => void;
+  emptyState: ReactNode;
+};
+
+const headerCell = "border-b border-border pb-3 text-[13px] font-normal text-stone";
+
+/** A table from md up, a card list below. Columns collapse with the panel's width, not the viewport. */
+export function CandidateTable({
+  candidates,
+  selectedId,
+  checkedIds,
+  onSelect,
+  onCheckedChange,
+  onCheckAll,
+  onAskAI,
+  emptyState,
+}: CandidateTableProps) {
+  if (candidates.length === 0) return <div className="px-4 pb-6 sm:px-6">{emptyState}</div>;
+
+  const checkedOnPage = candidates.filter((candidate) => checkedIds.has(candidate.id)).length;
+  const headerState = checkedOnPage === 0 ? false : checkedOnPage === candidates.length ? true : "indeterminate";
+  const rowProps = (candidate: PipelineCandidate) => ({
+    candidate,
+    selected: candidate.id === selectedId,
+    checked: checkedIds.has(candidate.id),
+    onSelect,
+    onCheckedChange,
+    onAskAI,
+  });
 
   return (
-    <div className="overflow-hidden rounded-[14px] border border-border bg-surface-raised shadow-soft">
-      <table className="w-full text-left text-sm">
-        <thead className="text-xs uppercase tracking-wide text-stone">
+    <div className="@container px-1 pb-2 sm:px-3">
+      <table aria-labelledby="candidates-heading" className="hidden w-full border-separate border-spacing-0 text-left md:table">
+        <thead>
           <tr>
-            {COLUMNS.map((column) => (
-              <th key={column} className="px-4 py-3 font-medium">
-                {column}
-              </th>
-            ))}
+            <th scope="col" className={`${headerCell} w-12 pl-3`}>
+              <Checkbox
+                checked={headerState}
+                onCheckedChange={(value) => onCheckAll(value === true)}
+                aria-label="Select all candidates on this page"
+              />
+            </th>
+            <th scope="col" className={headerCell}>
+              Candidate
+            </th>
+            <th scope="col" className={`${headerCell} hidden @[44rem]:table-cell`}>
+              Role
+            </th>
+            <th scope="col" className={headerCell}>
+              Stage
+            </th>
+            <th scope="col" className={headerCell}>
+              Last activity
+            </th>
+            <th scope="col" className={`${headerCell} w-12`}>
+              <span className="sr-only">Actions</span>
+            </th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr key={row.application_id} className="border-t border-border">
-              <td className="px-4 py-3">
-                <div className="flex items-center gap-3 text-ink">
-                  <Avatar name={row.candidate.name} src={row.candidate.avatar_url} />
-                  {row.candidate.name}
-                </div>
-              </td>
-              <td className="px-4 py-3 text-stone">{row.job.title}</td>
-              <td className="px-4 py-3">
-                <StatusBadge stage={row.stage} />
-              </td>
-              <td className="px-4 py-3 text-stone">{row.last_activity?.label ?? "—"}</td>
-              <td className="px-4 py-3">{ENGAGEMENT_LABELS[row.engagement.level]}</td>
-              <td className="px-4 py-3">{row.next_action.label}</td>
-            </tr>
+          {candidates.map((candidate) => (
+            <CandidateRow key={candidate.id} {...rowProps(candidate)} />
           ))}
         </tbody>
       </table>
+
+      <ul aria-labelledby="candidates-heading" className="flex flex-col md:hidden">
+        {candidates.map((candidate) => (
+          <li key={candidate.id} className="border-b border-border last:border-0">
+            <CandidateCard {...rowProps(candidate)} />
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -1,15 +1,11 @@
-import { EmptyState } from "@/components/shared/EmptyState";
-import { RecruiterHeader } from "@/components/recruiter/RecruiterHeader";
-import { RecruiterSidebar } from "@/components/recruiter/RecruiterSidebar";
+import type { Metadata } from "next";
 
-export default function JobsPage() {
-  return (
-    <div className="flex min-h-screen">
-      <RecruiterSidebar />
-      <main className="flex-1 px-10 py-10">
-        <RecruiterHeader title="Jobs" />
-        <EmptyState title="No open roles yet" description="Jobs you create appear here." />
-      </main>
-    </div>
-  );
+import { JobsBoard } from "@/components/recruiter/JobsBoard";
+import { getJobs } from "@/services/jobs";
+
+export const metadata: Metadata = { title: "Jobs" };
+
+export default async function JobsPage() {
+  const jobs = await getJobs();
+  return <JobsBoard jobs={jobs} />;
 }

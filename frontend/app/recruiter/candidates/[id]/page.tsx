@@ -1,16 +1,17 @@
-import { CandidateDetail } from "@/components/recruiter/CandidateDetail";
-import { RecruiterHeader } from "@/components/recruiter/RecruiterHeader";
-import { RecruiterSidebar } from "@/components/recruiter/RecruiterSidebar";
+import type { Metadata } from "next";
 
-export default async function CandidatePage({ params }: { params: Promise<{ id: string }> }) {
+import { CandidateProfile } from "@/components/recruiter/CandidateProfile";
+import { getCandidate } from "@/services/candidates";
+
+type CandidatePageProps = { params: Promise<{ id: string }> };
+
+export async function generateMetadata({ params }: CandidatePageProps): Promise<Metadata> {
   const { id } = await params;
-  return (
-    <div className="flex min-h-screen">
-      <RecruiterSidebar />
-      <main className="flex-1 px-10 py-10">
-        <RecruiterHeader title="Candidate" />
-        <CandidateDetail candidateId={id} />
-      </main>
-    </div>
-  );
+  const candidate = await getCandidate(id);
+  return { title: candidate?.name ?? "Candidate" };
+}
+
+export default async function CandidatePage({ params }: CandidatePageProps) {
+  const { id } = await params;
+  return <CandidateProfile candidateId={id} />;
 }

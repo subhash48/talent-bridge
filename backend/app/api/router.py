@@ -7,6 +7,7 @@ from app.api import (
     ai,
     applications,
     auth,
+    candidate,
     candidates,
     dashboard,
     integrations,
@@ -27,5 +28,6 @@ for module in (
     dashboard,
     auth,
     integrations,
+    candidate,  # the candidate portal
 ):
     api_router.include_router(module.router)

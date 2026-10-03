@@ -54,6 +54,13 @@ class Settings(BaseSettings):
 
     # Every request acts as this recruiter until Supabase Auth is added (see core/security.py).
     default_user_email: str = "alex.chen@encord.example"
+    # The candidate portal acts as this candidate until Supabase Auth is added (see core/security.py).
+    dev_candidate_email: str = "sophia.martinez@example.com"
+    # Company-approved facts the candidate assistant may share. It never invents company details.
+    organization_overview: str = (
+        "Encord builds the data development platform AI teams use to curate, annotate and evaluate "
+        "multimodal training data, from images and video to documents and 3D sensor data."
+    )
 
     ai_provider: str = "mock"  # mock | gemini | groq
     gemini_api_key: SecretStr | None = None

@@ -11,7 +11,9 @@ from functools import cache
 
 from app.core.config import settings
 from app.schemas.ai import AnalysisContent, AskContent, DraftContent, DraftPurpose
+from app.schemas.portal import AssistContent, PrepContent
 from app.services.ai.context import CandidateContext
+from app.services.ai.portal_context import PortalContext
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +39,17 @@ class AIProvider(ABC):
         self, context: CandidateContext, purpose: DraftPurpose, instructions: str | None = None
     ) -> DraftContent:
         """A message draft for the recruiter to edit and send themselves."""
+
+    # The candidate assistant. It gets a PortalContext, never a CandidateContext, so it can only
+    # ever see what the candidate can. A provider without it falls back to the mock provider.
+
+    async def assist_candidate(self, context: PortalContext, question: str) -> AssistContent:
+        """Answer the candidate's own question about their application and interviews."""
+        raise AIProviderError(f"{self.name} has no candidate assistant")
+
+    async def prepare_candidate(self, context: PortalContext) -> PrepContent:
+        """Interview preparation for the candidate's next interview."""
+        raise AIProviderError(f"{self.name} has no candidate assistant")
 
 
 @cache

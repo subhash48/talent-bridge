@@ -18,5 +18,6 @@ class Message(UUIDPrimaryKey, Base):
     sender_type: Mapped[SenderType] = mapped_column(db_enum(SenderType, "message_sender_type"))
     content: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(default=utcnow, server_default=func.now())
-    # When a recruiter read a candidate's message; null means unread.
+    # When the recipient read it: the recruiter for a candidate's message, the candidate for anyone
+    # else's. Null means unread.
     read_at: Mapped[datetime | None]

@@ -41,7 +41,7 @@ async def analyze_candidate(
     session: AsyncSession, application_id: uuid.UUID, provider: AIProvider, actor: User | None
 ) -> AIAnalysisRead:
     context = await _context(session, application_id, actor)
-    content, model_name = await _run(provider, lambda p: p.analyze_candidate(context))
+    content, model_name = await with_fallback(provider, lambda p: p.analyze_candidate(context))
     content = enforce_review_policy(content)
 
     now = utcnow()
@@ -73,7 +73,7 @@ async def ask_candidate(
     session: AsyncSession, application_id: uuid.UUID, question: str, provider: AIProvider, actor: User | None
 ) -> AskCandidateResponse:
     context = await _context(session, application_id, actor)
-    content, model_name = await _run(provider, lambda p: p.ask_candidate(context, question))
+    content, model_name = await with_fallback(provider, lambda p: p.ask_candidate(context, question))
     return AskCandidateResponse(answer=content.answer, sources=content.sources, model_name=model_name)
 
 
@@ -86,7 +86,7 @@ async def draft_message(
     actor: User | None,
 ) -> DraftMessageResponse:
     context = await _context(session, application_id, actor)
-    content, model_name = await _run(provider, lambda p: p.draft_message(context, purpose, instructions))
+    content, model_name = await with_fallback(provider, lambda p: p.draft_message(context, purpose, instructions))
     return DraftMessageResponse(subject=content.subject, body=content.body, purpose=purpose, model_name=model_name)
 
 
@@ -107,7 +107,9 @@ async def _context(session: AsyncSession, application_id: uuid.UUID, actor: User
     )
 
 
-async def _run[Result](provider: AIProvider, call: Callable[[AIProvider], Awaitable[Result]]) -> tuple[Result, str]:
+async def with_fallback[Result](
+    provider: AIProvider, call: Callable[[AIProvider], Awaitable[Result]]
+) -> tuple[Result, str]:
     """Call the provider; if a hosted model fails, answer with the mock provider instead."""
     try:
         return await call(provider), provider.model

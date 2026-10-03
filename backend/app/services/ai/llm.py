@@ -12,8 +12,10 @@ import httpx
 from pydantic import BaseModel, ValidationError
 
 from app.schemas.ai import AnalysisContent, AskContent, DraftContent, DraftPurpose
+from app.schemas.portal import AssistContent, PrepContent
 from app.services.ai.client import AIProvider, AIProviderError
 from app.services.ai.context import SECTIONS, CandidateContext
+from app.services.ai.portal_context import PortalContext
 
 Model = TypeVar("Model", bound=BaseModel)
 
@@ -52,6 +54,33 @@ DRAFT_PROMPT = """{context}
 Write a {purpose} message from {recruiter} to {first_name}.{instructions}
 Keep it warm, specific to the context and under 150 words. Start the body with "Hi {first_name}," and end it with "Best,\\n{recruiter_first_name}".
 Return a JSON object: {{"subject": string, "body": string}}."""
+
+# The candidate assistant has its own prompts. Its context is the candidate's own record
+# (PortalContext), so even a model that ignored these rules has no internal data to reveal.
+CANDIDATE_SYSTEM_PROMPT = """You are the candidate assistant in {company}'s candidate portal, helping {first_name} with their application for the {role} role.
+
+Rules:
+- Use only the context provided: it is {first_name}'s own application record. If something isn't in it, say you don't know and suggest asking their recruiter.
+- You can't see interviewer feedback, evaluations, scores, rankings, other candidates, internal concerns or hiring decisions. Never guess at them or at the chances of an offer; if asked, say so kindly and point {first_name} to their recruiter.
+- Share company information only from the [company] section.
+- Never promise outcomes or timelines.
+- Be warm, encouraging, concise and practical.
+- Respond with a single JSON object only."""
+
+CANDIDATE_ASK_PROMPT = """{context}
+
+{first_name}'s question: {question}
+
+Answer in short paragraphs or "-" bullet lists, with **bold** for key facts.
+Return a JSON object: {{"answer": string}}."""
+
+CANDIDATE_PREP_PROMPT = """{context}
+
+Prepare {first_name} for {interview}.
+Return a JSON object with exactly these keys:
+- "interview_format": one sentence describing the format.
+- "what_to_expect", "role_focus", "topics_to_review", "questions_to_ask", "practice_questions": arrays of 3 to 5 short strings, grounded in the context.
+- "company_info": array of strings taken only from the [company] section."""
 
 PURPOSES = {
     DraftPurpose.FOLLOW_UP: "follow-up",
@@ -112,6 +141,21 @@ class LLMProvider(AIProvider):
         )
         return self._parse(await self._generate(_system(context), prompt), DraftContent)
 
+    async def assist_candidate(self, context: PortalContext, question: str) -> AssistContent:
+        prompt = CANDIDATE_ASK_PROMPT.format(
+            context=context.to_prompt(), first_name=context.first_name, question=question
+        )
+        return self._parse(await self._generate(_candidate_system(context), prompt), AssistContent)
+
+    async def prepare_candidate(self, context: PortalContext) -> PrepContent:
+        interview = context.next_interview
+        prompt = CANDIDATE_PREP_PROMPT.format(
+            context=context.to_prompt(),
+            first_name=context.first_name,
+            interview=f"the {interview.title}" if interview else "their next interview (none is scheduled yet)",
+        )
+        return self._parse(await self._generate(_candidate_system(context), prompt), PrepContent)
+
     async def _post(self, url: str, *, headers: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
         try:
             async with httpx.AsyncClient(timeout=self.timeout, transport=self._transport) as client:
@@ -134,3 +178,9 @@ class LLMProvider(AIProvider):
 
 def _system(context: CandidateContext) -> str:
     return SYSTEM_PROMPT.format(organization=context.organization, recruiter=context.recruiter_name)
+
+
+def _candidate_system(context: PortalContext) -> str:
+    return CANDIDATE_SYSTEM_PROMPT.format(
+        company=context.company, first_name=context.first_name, role=context.job_title
+    )

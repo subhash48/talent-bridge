@@ -218,6 +218,12 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
         unread = {id(m) for m in from_candidate[len(from_candidate) - thread.unread :]} if thread.unread else set()
         for index, message in enumerate(thread.messages):
             is_candidate = message.sender == SenderType.CANDIDATE
+            # The candidate read a recruiter message by the time they replied to it.
+            reply = next((m for m in thread.messages[index + 1 :] if m.sender == SenderType.CANDIDATE), None)
+            if is_candidate:
+                read_at = Ago(max(message.minutes_ago - 30, 0)) if id(message) not in unread else None
+            else:
+                read_at = Ago(reply.minutes_ago) if reply else None
             rows[Message].append(
                 {
                     "id": seed_id("message", f"{thread.candidate}:{index}"),
@@ -225,9 +231,7 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
                     "sender_type": message.sender,
                     "content": message.content,
                     "created_at": Ago(message.minutes_ago),
-                    "read_at": (
-                        Ago(max(message.minutes_ago - 30, 0)) if is_candidate and id(message) not in unread else None
-                    ),
+                    "read_at": read_at,
                 }
             )
     return rows

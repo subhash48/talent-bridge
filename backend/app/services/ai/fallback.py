@@ -2,6 +2,7 @@
 
 Used when no AI key is configured, in the tests, and as the automatic fallback when Gemini or
 Groq fails, so the recruiter always gets a grounded answer. It never recommends rejecting anyone.
+The candidate assistant's answers live in portal_fallback, which only sees a PortalContext.
 """
 
 import re
@@ -15,6 +16,8 @@ from app.schemas.ai import (
     SkillEvidence,
 )
 from app.schemas.event import EngagementLevel
+from app.schemas.portal import AssistContent, PrepContent
+from app.services.ai import portal_fallback
 from app.services.ai.client import AIProvider
 from app.services.ai.context import (
     ENGAGEMENT_DESCRIPTIONS,
@@ -25,6 +28,7 @@ from app.services.ai.context import (
     people,
     when,
 )
+from app.services.ai.portal_context import PortalContext
 
 FORMATS = {"video": "over video", "phone": "by phone", "onsite": "at our office"}
 
@@ -66,6 +70,12 @@ class MockProvider(AIProvider):
         self, context: CandidateContext, purpose: DraftPurpose, instructions: str | None = None
     ) -> DraftContent:
         return _draft(context, purpose)
+
+    async def assist_candidate(self, context: PortalContext, question: str) -> AssistContent:
+        return portal_fallback.answer(context, question)
+
+    async def prepare_candidate(self, context: PortalContext) -> PrepContent:
+        return portal_fallback.prepare(context)
 
 
 # Analysis

@@ -5,7 +5,7 @@ timestamptz) and on SQLite for local development and the tests.
 """
 
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from typing import Any, ClassVar
 
@@ -13,9 +13,22 @@ from sqlalchemy import JSON, DateTime, Dialect, Enum, TypeDecorator, Uuid, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
+_last_now = datetime.min.replace(tzinfo=UTC)
+
 
 def utcnow() -> datetime:
-    return datetime.now(UTC)
+    """The current UTC time, strictly increasing within the process.
+
+    Some clocks (Windows, before Python 3.13) only tick every ~15 ms, so two quick actions could
+    get the same timestamp and the timeline would order them at random. Each call is at least a
+    microsecond after the previous one instead.
+    """
+    global _last_now
+    now = datetime.now(UTC)
+    if now <= _last_now:
+        now = _last_now + timedelta(microseconds=1)
+    _last_now = now
+    return now
 
 
 class UTCDateTime(TypeDecorator[datetime]):

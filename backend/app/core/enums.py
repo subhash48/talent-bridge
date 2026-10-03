@@ -74,6 +74,7 @@ class ActivityType(StrEnum):
     OFFER_SENT = "offer_sent"
     OFFER_VIEWED = "offer_viewed"
     OFFER_ACCEPTED = "offer_accepted"
+    PROFILE_UPDATED = "profile_updated"  # the candidate edited their contact details
     AI_ANALYSIS_GENERATED = "ai_analysis_generated"
 
 
@@ -90,5 +91,6 @@ CANDIDATE_ACTIONS: frozenset[str] = frozenset(
         ActivityType.ASSESSMENT_COMPLETED,
         ActivityType.OFFER_VIEWED,
         ActivityType.OFFER_ACCEPTED,
+        ActivityType.PROFILE_UPDATED,
     }
 )

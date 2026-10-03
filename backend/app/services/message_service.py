@@ -88,12 +88,17 @@ async def send_message(
         application.id,
         ActivityType.MESSAGE_SENT,
         "Message sent",
-        description=content if len(content) <= 140 else f"{content[:139]}…",
+        description=excerpt(content),
         metadata={"message_id": message.id, "sent_by": actor.full_name if actor else None},
         at=now,
     )
     await session.commit()
     return MessageRead.model_validate(message)
+
+
+def excerpt(content: str, limit: int = 140) -> str:
+    """A message as a timeline description."""
+    return content if len(content) <= limit else f"{content[: limit - 1]}…"
 
 
 async def mark_read(session: AsyncSession, application_id: uuid.UUID) -> None:

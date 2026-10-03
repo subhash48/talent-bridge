@@ -10,7 +10,6 @@ import {
   Settings,
   Sparkles,
   UsersRound,
-  type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -18,6 +17,7 @@ import { usePathname } from "next/navigation";
 import { useWorkspace } from "@/components/recruiter/WorkspaceProvider";
 import { Avatar } from "@/components/shared/Avatar";
 import { EncordLogo } from "@/components/shared/EncordLogo";
+import { SidebarNavItem } from "@/components/shared/SidebarNavItem";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +26,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/DropdownMenu";
-import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/recruiter/candidates", label: "Candidates", icon: UsersRound },
@@ -35,43 +34,6 @@ const NAV = [
   { href: "/recruiter/messages", label: "Messages", icon: MessageSquareText },
   { href: "/recruiter/ai", label: "AI Assistant", icon: Sparkles },
 ] as const;
-
-type SidebarNavItemProps = {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-  active: boolean;
-  /** Screen-reader text for a small violet dot, e.g. unread conversations. */
-  indicator?: string;
-  onNavigate?: () => void;
-};
-
-export function SidebarNavItem({ href, label, icon: Icon, active, indicator, onNavigate }: SidebarNavItemProps) {
-  return (
-    <Link
-      href={href}
-      onClick={onNavigate}
-      aria-current={active ? "page" : undefined}
-      className={cn(
-        "group relative flex h-11 items-center gap-3 rounded-[12px] px-3 text-[15px] text-stone transition-[background-color,color] duration-200 hover:bg-white/[0.04] hover:text-ink",
-        active && "bg-white/[0.07] text-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.06)] ring-1 ring-white/[0.05] hover:bg-white/[0.07]",
-      )}
-    >
-      {active && <span aria-hidden className="absolute top-1/2 left-0 h-4 w-[3px] -translate-y-1/2 rounded-r-full bg-white/80" />}
-      <Icon
-        aria-hidden
-        strokeWidth={1.75}
-        className={cn("size-[19px] shrink-0 transition-colors", active ? "text-ink" : "text-stone group-hover:text-charcoal")}
-      />
-      <span className="flex-1">{label}</span>
-      {indicator && (
-        <span className="size-1.5 rounded-full bg-ai shadow-[0_0_8px_rgb(165_148_249/0.8)]">
-          <span className="sr-only">{indicator}</span>
-        </span>
-      )}
-    </Link>
-  );
-}
 
 export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();

@@ -3,7 +3,7 @@
 import { CalendarPlus } from "lucide-react";
 import { useState } from "react";
 
-import { InterviewFormat } from "@/components/recruiter/InterviewFormat";
+import { InterviewFormat } from "@/components/shared/InterviewFormat";
 import { InterviewStatusBadge } from "@/components/recruiter/InterviewStatusBadge";
 import { ScheduleInterviewDialog } from "@/components/recruiter/ScheduleInterviewDialog";
 import { Button } from "@/components/ui/Button";

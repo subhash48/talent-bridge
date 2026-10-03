@@ -59,26 +59,3 @@ export type DashboardResponse = {
   rows: DashboardRow[];
 };
 
-// Candidate-facing stage projection (ARCHITECTURE.md 4).
-export const JOURNEY_STAGES = [
-  { key: "applied", label: "Applied" },
-  { key: "screening", label: "Screening" },
-  { key: "interview", label: "Interview" },
-  { key: "final_interview", label: "Final interview" },
-  { key: "offer", label: "Offer" },
-] as const satisfies readonly { key: ApplicationStage; label: string }[];
-
-export type JourneyStageKey = (typeof JOURNEY_STAGES)[number]["key"];
-
-export type JourneyStep = {
-  key: JourneyStageKey;
-  label: string;
-  state: "done" | "current" | "upcoming";
-  date: string | null;
-};
-
-export type PortalApplication = {
-  id: string;
-  job_title: string;
-  stage: ApplicationStage;
-};

@@ -2,7 +2,14 @@ import { cn } from "@/lib/utils";
 import { STAGE_BADGE_STYLES } from "@/lib/stages";
 import { STAGE_LABELS, type ApplicationStage } from "@/types/application";
 
-export function StatusBadge({ stage, className }: { stage: ApplicationStage; className?: string }) {
+type StatusBadgeProps = {
+  stage: ApplicationStage;
+  /** Overrides the stage name, e.g. the candidate portal shows "Applied" for sourced. */
+  label?: string;
+  className?: string;
+};
+
+export function StatusBadge({ stage, label, className }: StatusBadgeProps) {
   return (
     <span
       className={cn(
@@ -11,7 +18,7 @@ export function StatusBadge({ stage, className }: { stage: ApplicationStage; cla
         className,
       )}
     >
-      {STAGE_LABELS[stage]}
+      {label ?? STAGE_LABELS[stage]}
     </span>
   );
 }

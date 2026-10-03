@@ -2,7 +2,7 @@
 
 HireMesh is an AI-native recruiting platform: one system, two experiences. Recruiters work in the Recruiter Workspace, candidates follow their journey in the Candidate Portal, and every candidate interaction flows back to the recruiter as activity, engagement signals and suggested next actions, explained by an AI copilot that cites its sources.
 
-**Status:** Recruiter Workspace running on the FastAPI backend and database. Candidate Portal and Ashby sync come next.
+**Status:** Recruiter Workspace and Candidate Portal running on the same FastAPI backend and database. Authentication, Supabase and Ashby sync come next.
 
 ## Repository
 
@@ -32,7 +32,9 @@ cd frontend && npm install && npm run dev
 
 `/` opens the recruiter dashboard (`/recruiter/candidates`). Other recruiter routes: `/recruiter/jobs` (and `/jobs/[id]`), `/recruiter/interviews`, `/recruiter/messages`, `/recruiter/ai`, `/recruiter/settings` and `/recruiter/candidates/[id]`. Short aliases such as `/dashboard` and `/jobs` redirect there.
 
-Every data call goes through `frontend/services/*` to `NEXT_PUBLIC_API_URL` (default `http://localhost:8000/api/v1`). For UI work without the backend, set `NEXT_PUBLIC_USE_MOCK_API=true` to use seeded in-browser data. Checks: `npm run lint`, `npm run typecheck`, `npm run build`.
+`/candidate` opens the Candidate Portal as the demo candidate, Sophia Martinez: `/candidate/application`, `/candidate/interviews`, `/candidate/messages`, `/candidate/prep` and `/candidate/profile`. It reads and writes the same records as the recruiter workspace through `/api/v1/candidate/*`, so an interview scheduled, confirmed or messaged about on one side shows on the other. Candidate responses are built in `backend/app/services/candidate_visibility.py`, which never returns interview feedback, internal notes, engagement or AI analysis; the candidate AI only ever sees that same candidate-safe record.
+
+Every data call goes through `frontend/services/*` to `NEXT_PUBLIC_API_URL` (default `http://localhost:8000/api/v1`). For UI work without the backend, set `NEXT_PUBLIC_USE_MOCK_API=true` to use seeded in-browser data (recruiter workspace only; the Candidate Portal always uses the API). Checks: `npm run lint`, `npm run typecheck`, `npm run build`.
 
 **Supabase**
 

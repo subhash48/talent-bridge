@@ -1,15 +1,12 @@
-import { ApplicationProgress } from "@/components/candidate/ApplicationProgress";
-import { CandidateHeader } from "@/components/candidate/CandidateHeader";
-import { CandidateSidebar } from "@/components/candidate/CandidateSidebar";
+import type { Metadata } from "next";
 
-export default function MyApplicationPage() {
-  return (
-    <div className="flex min-h-screen">
-      <CandidateSidebar />
-      <main className="flex-1 px-10 py-10">
-        <CandidateHeader title="My application" />
-        <ApplicationProgress />
-      </main>
-    </div>
-  );
+import { ApplicationView } from "@/components/candidate/ApplicationView";
+import { getCandidateApplication } from "@/services/portal";
+
+export const metadata: Metadata = { title: "My Application" };
+
+export default async function MyApplicationPage() {
+  // Rendered with data when the API answers; otherwise the view loads it and shows a retry.
+  const detail = await getCandidateApplication().catch(() => undefined);
+  return <ApplicationView initialDetail={detail} />;
 }

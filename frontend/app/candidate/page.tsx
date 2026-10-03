@@ -1,19 +1,11 @@
-import { ApplicationProgress } from "@/components/candidate/ApplicationProgress";
-import { UpcomingInterview } from "@/components/candidate/UpcomingInterview";
-import { CandidateHeader } from "@/components/candidate/CandidateHeader";
-import { CandidateSidebar } from "@/components/candidate/CandidateSidebar";
+import type { Metadata } from "next";
+
+import { CandidateDashboard } from "@/components/candidate/CandidateDashboard";
+import { greetingFor } from "@/lib/format";
+
+// The layout's title template only applies to child segments, so this page sets its title in full.
+export const metadata: Metadata = { title: { absolute: "Dashboard · Encord Candidate Portal" } };
 
 export default function CandidateHomePage() {
-  return (
-    <div className="flex min-h-screen">
-      <CandidateSidebar />
-      <main className="flex-1 px-10 py-10">
-        <CandidateHeader title="Welcome" />
-        <div className="flex flex-col gap-6">
-          <ApplicationProgress />
-          <UpcomingInterview interview={null} />
-        </div>
-      </main>
-    </div>
-  );
+  return <CandidateDashboard greeting={greetingFor()} />;
 }

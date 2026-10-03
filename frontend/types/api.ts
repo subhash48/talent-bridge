@@ -166,3 +166,98 @@ export type ApiAskResponse = { answer: string; sources: { type: string; id: stri
 export type ApiDraftPurpose = "follow_up" | "outreach" | "interview_confirmation" | "status_update" | "offer_check_in";
 
 export type ApiDraft = { subject: string; body: string; purpose: ApiDraftPurpose; model_name: string };
+
+// Candidate portal (/candidate/*): candidate-safe projections, mapped by services/portal.ts.
+
+export type ApiPortalCandidate = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  location: string | null;
+  headline: string | null;
+  pronouns: string | null;
+  avatar_url: string | null;
+  resume_url: string | null;
+  skills: string[];
+};
+
+export type ApiPortalJob = {
+  id: string;
+  title: string;
+  company: string;
+  department: string | null;
+  location: string | null;
+  employment_type: string;
+  description: string | null;
+  hiring_manager: string | null;
+};
+
+export type ApiPortalRecruiter = { name: string; email: string; title: string };
+
+export type ApiPortalApplication = {
+  id: string;
+  stage: ApiStage;
+  stage_label: string;
+  status: "active" | "hired" | "closed";
+  applied_at: string;
+  updated_at: string;
+  steps: { stage: ApiStage; label: string; state: "complete" | "current" | "upcoming"; reached_at: string | null }[];
+  next_step: string;
+};
+
+export type ApiPortalInterview = ApiInterviewBrief & {
+  meeting_url: string | null;
+  interviewers: string[];
+  confirmed_at: string | null;
+  upcoming: boolean;
+  can_confirm: boolean;
+};
+
+export type ApiPortalMessage = {
+  id: string;
+  sender_type: "candidate" | "recruiter" | "system";
+  sender_name: string;
+  content: string;
+  created_at: string;
+  read_at: string | null;
+};
+
+export type ApiPortalActivity = { id: string; kind: string; title: string; created_at: string };
+
+export type ApiCandidateMe = {
+  company: string;
+  candidate: ApiPortalCandidate;
+  application: ApiPortalApplication | null;
+  job: ApiPortalJob | null;
+  recruiter: ApiPortalRecruiter | null;
+  next_interview: ApiPortalInterview | null;
+  unread_messages: number;
+  latest_message: ApiPortalMessage | null;
+  recent_activity: ApiPortalActivity[];
+};
+
+export type ApiCandidateApplicationDetail = {
+  application: ApiPortalApplication;
+  job: ApiPortalJob;
+  recruiter: ApiPortalRecruiter | null;
+  timeline: ApiPortalActivity[];
+};
+
+export type ApiMessageThread = { recruiter: ApiPortalRecruiter | null; unread: number; messages: ApiPortalMessage[] };
+
+export type ApiCandidatePrep = {
+  interview: ApiPortalInterview | null;
+  role: string;
+  company: string;
+  interview_format: string;
+  what_to_expect: string[];
+  role_focus: string[];
+  topics_to_review: string[];
+  company_info: string[];
+  questions_to_ask: string[];
+  practice_questions: string[];
+  model_name: string;
+};

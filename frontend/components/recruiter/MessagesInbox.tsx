@@ -14,11 +14,12 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button, buttonStyles } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { useToast } from "@/components/ui/Toaster";
+import { useRefetchOnFocus } from "@/hooks/useRefetchOnFocus";
 import { firstName } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { draftMessage } from "@/services/ai";
 import { errorMessage } from "@/services/api";
-import { markConversationRead, sendMessage } from "@/services/messages";
+import { getConversations, markConversationRead, sendMessage } from "@/services/messages";
 import type { Conversation } from "@/types/workspace";
 
 type MessagesInboxProps = {
@@ -28,7 +29,7 @@ type MessagesInboxProps = {
 };
 
 export function MessagesInbox({ initialConversations, initialCandidateId }: MessagesInboxProps) {
-  const { candidates, markThreadRead } = useWorkspace();
+  const { candidates, markThreadRead, syncUnreadThreads } = useWorkspace();
   const firstId = initialCandidateId ?? initialConversations[0]?.candidate.id;
   const [conversations, setConversations] = useState(() =>
     initialConversations.map((conversation) => (conversation.candidate.id === firstId ? { ...conversation, unread: 0 } : conversation)),
@@ -45,6 +46,19 @@ export function MessagesInbox({ initialConversations, initialCandidateId }: Mess
     markThreadRead();
     void markConversationRead(firstId);
   }, [firstId, markThreadRead]);
+
+  // Candidates reply from the candidate portal: pick up new messages when the recruiter returns to
+  // this tab. The open thread counts as read.
+  useRefetchOnFocus(() => {
+    getConversations().then(
+      (fresh) => {
+        const open = fresh.find((conversation) => conversation.candidate.id === activeId && conversation.unread > 0);
+        setConversations(fresh.map((conversation) => (conversation === open ? { ...conversation, unread: 0 } : conversation)));
+        if (open) markConversationRead(open.candidate.id).then(syncUnreadThreads, () => undefined);
+      },
+      () => undefined, // keep showing what we have; the next focus retries
+    );
+  });
 
   // A candidate without a thread yet (e.g. "Message Daniel") gets an empty conversation to start.
   const threads = useMemo(() => {

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { InterviewFormat } from "@/components/recruiter/InterviewFormat";
+import { InterviewFormat } from "@/components/shared/InterviewFormat";
 import { InterviewStatusBadge } from "@/components/recruiter/InterviewStatusBadge";
 import { Avatar } from "@/components/shared/Avatar";
 import { RelativeTime } from "@/components/shared/RelativeTime";

@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
+import { useRefetchOnFocus } from "@/hooks/useRefetchOnFocus";
 import {
   archiveCandidate as archiveCandidateRequest,
   createCandidate,
@@ -9,6 +10,7 @@ import {
   restoreCandidate as restoreCandidateRequest,
   updateCandidateStage,
 } from "@/services/candidates";
+import { getUnreadThreadCount } from "@/services/messages";
 import type { CandidateStage, CurrentUser, JobOpening, NewCandidateInput, PipelineCandidate } from "@/types/workspace";
 
 type WorkspaceValue = {
@@ -25,6 +27,8 @@ type WorkspaceValue = {
   archiveCandidate: (id: string) => Promise<void>;
   restoreCandidate: (id: string) => Promise<void>;
   markThreadRead: () => void;
+  /** Re-read the unread conversation count, e.g. after a candidate's reply was marked read. */
+  syncUnreadThreads: () => Promise<void>;
 };
 
 const WorkspaceContext = createContext<WorkspaceValue | null>(null);
@@ -60,6 +64,17 @@ export function WorkspaceProvider({ user, initialCandidates, initialJobs, initia
     setCandidates(await getCandidates());
     changed();
   }, [changed]);
+
+  const syncUnreadThreads = useCallback(async () => {
+    setUnreadThreads(await getUnreadThreadCount());
+  }, []);
+
+  // Candidates confirm interviews, reply and edit their details in the candidate portal, which
+  // writes to these same records: re-read them when the recruiter comes back to this tab.
+  useRefetchOnFocus(() => {
+    refresh().catch(() => undefined);
+    syncUnreadThreads().catch(() => undefined);
+  });
 
   const addCandidate = useCallback(
     async (input: NewCandidateInput) => {
@@ -115,8 +130,22 @@ export function WorkspaceProvider({ user, initialCandidates, initialJobs, initia
       archiveCandidate,
       restoreCandidate,
       markThreadRead,
+      syncUnreadThreads,
     }),
-    [user, candidates, initialJobs, unreadThreads, revision, refresh, addCandidate, moveCandidate, archiveCandidate, restoreCandidate, markThreadRead],
+    [
+      user,
+      candidates,
+      initialJobs,
+      unreadThreads,
+      revision,
+      refresh,
+      addCandidate,
+      moveCandidate,
+      archiveCandidate,
+      restoreCandidate,
+      markThreadRead,
+      syncUnreadThreads,
+    ],
   );
 
   return <WorkspaceContext value={value}>{children}</WorkspaceContext>;

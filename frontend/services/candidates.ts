@@ -141,6 +141,7 @@ const ACTIVITY_KINDS: Record<string, ActivityKind> = {
   offer_sent: "offer",
   offer_viewed: "offer",
   offer_accepted: "offer",
+  profile_updated: "document",
   ai_analysis_generated: "ai",
 };
 

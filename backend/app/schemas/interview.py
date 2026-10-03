@@ -1,55 +1,69 @@
-"""Interview schemas: status enum, staff record, candidate projection (ARCHITECTURE.md 7.2, 8.3).
+"""Interview schemas. Status is scheduled, completed or cancelled; confirmed_at records the
+candidate's confirmation, and notes hold interviewer feedback."""
 
-Mirrors frontend/types/interview.ts. Portal (candidate-facing) models are separate classes in this
-file and never include internal fields such as feedback (10.2 L4).
-"""
-
-from datetime import datetime
-from enum import StrEnum
+from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import Field, field_validator
+
+from app.core.enums import InterviewStatus, InterviewType
+from app.schemas.common import APIModel, CandidateRef, OptionalText, OptionalURL, Timestamp
+
+Interviewers = Annotated[list[Annotated[str, Field(min_length=1, max_length=100)]], Field(max_length=10)]
+Duration = Annotated[int, Field(ge=15, le=480)]
 
 
-class InterviewStatus(StrEnum):
-    SCHEDULED = "scheduled"
-    CONFIRMED = "confirmed"
-    RESCHEDULE_REQUESTED = "reschedule_requested"
-    COMPLETED = "completed"
-    CANCELED = "canceled"
-    NO_SHOW = "no_show"
+class InterviewCreate(APIModel):
+    title: Annotated[str, Field(min_length=1, max_length=200)]
+    interview_type: InterviewType = InterviewType.VIDEO
+    scheduled_at: Timestamp
+    duration_minutes: Duration = 60
+    meeting_url: OptionalURL = None
+    notes: OptionalText(5000) = None
+    interviewers: Interviewers = []
 
 
-class Interview(BaseModel):
-    """Staff view of an interview."""
+class InterviewUpdate(APIModel):
+    """Only the fields sent are changed. confirmed=true records the candidate's confirmation."""
 
+    title: Annotated[str, Field(min_length=1, max_length=200)] | None = None
+    interview_type: InterviewType | None = None
+    scheduled_at: Timestamp | None = None
+    duration_minutes: Duration | None = None
+    status: InterviewStatus | None = None
+    meeting_url: OptionalURL = None
+    notes: OptionalText(5000) = None
+    interviewers: Interviewers | None = None
+    confirmed: bool | None = None
+
+    @field_validator("title", "interview_type", "scheduled_at", "duration_minutes", "status", mode="before")
+    @classmethod
+    def _required_if_sent(cls, value: object) -> object:
+        if value is None:
+            raise ValueError("can't be empty")
+        return value
+
+
+class InterviewBrief(APIModel):
     id: UUID
-    application_id: UUID
     title: str
-    interview_type: str
-    scheduled_at: datetime
-    duration_minutes: int = 60
-    meeting_url: str | None = None
-    status: InterviewStatus
-    confirmed_at: datetime | None = None
-
-
-class PortalInterviewer(BaseModel):
-    """Public interviewer fields, shown only for the candidate's own interviews (6.3)."""
-
-    name: str
-    title: str | None = None
-    bio: str | None = None
-    avatar_url: str | None = None
-
-
-class PortalInterview(BaseModel):
-    """Candidate projection of one of their own interviews."""
-
-    id: UUID
-    title: str
-    starts_at: datetime
+    interview_type: InterviewType
+    scheduled_at: Timestamp
     duration_minutes: int
-    meeting_url: str | None = None
     status: InterviewStatus
-    interviewers: list[PortalInterviewer] = []
+
+
+class InterviewRead(InterviewBrief):
+    application_id: UUID
+    meeting_url: str | None = None
+    notes: str | None = None
+    interviewers: list[str] = []
+    confirmed_at: Timestamp | None = None
+    created_at: Timestamp
+    updated_at: Timestamp
+
+
+class InterviewListItem(InterviewRead):
+    """An interview on the recruiter's schedule, with who it's with."""
+
+    candidate: CandidateRef

@@ -1,60 +1,73 @@
-"""Provider-neutral LLM interface and provider selection (ARCHITECTURE.md 6.8).
+"""Provider-neutral AI interface and provider selection.
 
-Call sites never name a vendor or model; adapters (Anthropic, OpenAI, template) implement LLMProvider.
+Call sites never name a vendor. AI_PROVIDER picks the implementation: mock (default, offline),
+gemini or groq. Without the matching API key the mock provider answers, so development and the
+demo always work.
 """
 
-from collections.abc import AsyncIterator
-from dataclasses import dataclass, field
-from typing import Any, Literal, Protocol
+import logging
+from abc import ABC, abstractmethod
+from functools import cache
 
-StopReason = Literal["end", "max_tokens", "refusal", "tool_use", "error"]
+from app.core.config import settings
+from app.schemas.ai import AnalysisContent, AskContent, DraftContent, DraftPurpose
+from app.services.ai.context import CandidateContext
 
-
-@dataclass(frozen=True)
-class PromptBlock:
-    text: str
-    cacheable: bool = False  # stable prefix: system prompt and knowledge pack
+logger = logging.getLogger(__name__)
 
 
-@dataclass(frozen=True)
-class ChatTurn:
-    role: Literal["user", "assistant"]
-    content: str
+class AIProviderError(Exception):
+    """The provider failed or returned something unusable."""
 
 
-@dataclass(frozen=True)
-class LLMRequest:
-    system: list[PromptBlock]
-    messages: list[ChatTurn]
-    model: str
-    effort: Literal["low", "medium", "high"] = "low"
-    max_tokens: int = 4096
-    response_schema: dict[str, Any] | None = None  # structured output (drafts, classification)
-
-
-@dataclass(frozen=True)
-class LLMChunk:
-    text: str = ""
-    stop_reason: StopReason | None = None  # set on the final chunk only
-
-
-@dataclass(frozen=True)
-class LLMResult:
-    text: str
-    stop_reason: StopReason
-    provider: str
-    model: str
-    usage: dict[str, int] = field(default_factory=dict)  # input, output, cache_read
-
-
-class LLMProvider(Protocol):
+class AIProvider(ABC):
     name: str
+    model: str
 
-    def stream(self, request: LLMRequest) -> AsyncIterator[LLMChunk]: ...
+    @abstractmethod
+    async def analyze_candidate(self, context: CandidateContext) -> AnalysisContent:
+        """Evidence for the recruiter: matched and missing skills, strengths, concerns, questions."""
 
-    async def complete(self, request: LLMRequest) -> LLMResult: ...
+    @abstractmethod
+    async def ask_candidate(self, context: CandidateContext, question: str) -> AskContent:
+        """Answer a recruiter's question about one application, citing the parts of the record used."""
+
+    @abstractmethod
+    async def draft_message(
+        self, context: CandidateContext, purpose: DraftPurpose, instructions: str | None = None
+    ) -> DraftContent:
+        """A message draft for the recruiter to edit and send themselves."""
 
 
-def get_provider() -> LLMProvider:
-    """Return the provider selected by AI_PROVIDER."""
-    raise NotImplementedError  # TODO: anthropic | openai | template (fallback.TemplateProvider)
+@cache
+def _warn_once(message: str) -> None:
+    logger.warning(message)
+
+
+def get_ai_provider() -> AIProvider:
+    from app.services.ai.fallback import MockProvider
+
+    choice = settings.ai_provider
+    if choice == "gemini":
+        if settings.gemini_api_key:
+            from app.services.ai.gemini import GeminiProvider
+
+            return GeminiProvider(
+                api_key=settings.gemini_api_key.get_secret_value(),
+                model=settings.gemini_model,
+                timeout=settings.ai_timeout_seconds,
+            )
+        _warn_once("AI_PROVIDER is gemini but GEMINI_API_KEY is empty; using the mock provider.")
+    elif choice == "groq":
+        if settings.groq_api_key:
+            from app.services.ai.groq import GroqProvider
+
+            return GroqProvider(
+                api_key=settings.groq_api_key.get_secret_value(),
+                model=settings.groq_model,
+                timeout=settings.ai_timeout_seconds,
+            )
+        _warn_once("AI_PROVIDER is groq but GROQ_API_KEY is empty; using the mock provider.")
+    elif choice != "mock":
+        _warn_once(f"Unknown AI_PROVIDER {choice!r} (use mock, gemini or groq); using the mock provider.")
+    return MockProvider()

@@ -1,24 +1,25 @@
-"""Authentication primitives: the request Principal and JWT verification (ARCHITECTURE.md 10.1).
+"""Who is making the request.
 
-The users row is authoritative for role and organization; token claims are used only for routing.
+There is no login yet, so every request acts as the configured recruiter (DEFAULT_USER_EMAIL).
+Routes already depend on get_current_user, so adding Supabase Auth only changes this module:
+read the Bearer token, verify it against the project's JWKS (SUPABASE_URL/auth/v1/.well-known/
+jwks.json), and load the users row for its subject. The users row, never the token, decides the
+role. The service role key stays on the server and is never needed for this.
 """
 
-from dataclasses import dataclass
-from typing import Any
-from uuid import UUID
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schemas.candidate import Role
+from app.core.config import settings
+from app.core.enums import UserRole
+from app.models import User
 
-
-@dataclass(frozen=True)
-class Principal:
-    user_id: UUID
-    role: Role
-    org_id: UUID | None = None  # staff
-    candidate_ids: frozenset[UUID] = frozenset()  # candidate: one per organization applied to
-    application_ids: frozenset[UUID] = frozenset()  # candidate: precomputed scope
+STAFF_ROLES = (UserRole.RECRUITER, UserRole.ADMIN)
 
 
-def verify_access_token(token: str) -> dict[str, Any]:
-    """Verify a Supabase access token's signature and expiry, and return its claims."""
-    raise NotImplementedError  # TODO: verify against Supabase JWKS (settings.supabase_jwks_url)
+async def resolve_current_user(session: AsyncSession) -> User | None:
+    """The acting recruiter: the configured user, else the first staff account, else nobody."""
+    user = await session.scalar(select(User).where(User.email == settings.default_user_email.lower()))
+    if user is not None:
+        return user
+    return await session.scalar(select(User).where(User.role.in_(STAFF_ROLES)).order_by(User.created_at).limit(1))

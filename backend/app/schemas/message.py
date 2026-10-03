@@ -1,28 +1,36 @@
-"""Message schemas: one thread per application (ARCHITECTURE.md 7.2, 8.2, 8.3).
+"""Message schemas: one thread per application."""
 
-Portal (candidate-facing) models are separate classes in this file and never include internal fields.
-"""
-
-from datetime import datetime
+from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
-from app.schemas.candidate import Role
+from app.core.enums import SenderType
+from app.schemas.common import APIModel, CandidateRef, Timestamp
 
 
-class Message(BaseModel):
+class MessageCreate(APIModel):
+    """A recruiter's message. The AI only drafts; this endpoint is always a person sending."""
+
+    content: Annotated[str, Field(min_length=1, max_length=5000)]
+
+
+class MessageRead(APIModel):
     id: UUID
     application_id: UUID
-    sender_user_id: UUID
-    sender_role: Role
-    body: str
-    channel: str = "portal"
-    read_at: datetime | None = None
-    created_at: datetime
+    sender_type: SenderType
+    content: str
+    created_at: Timestamp
+    read_at: Timestamp | None = None
 
 
-class MessageCreate(BaseModel):
-    """Body of POST .../messages on either façade."""
+class Conversation(APIModel):
+    candidate: CandidateRef
+    unread: int
+    messages: list[MessageRead]
 
-    body: str = Field(min_length=1)
+
+class UnreadCount(APIModel):
+    """Threads with at least one unread candidate message."""
+
+    count: int

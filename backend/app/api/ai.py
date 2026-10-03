@@ -1,18 +1,41 @@
-"""AI gateway: chat over SSE and structured staff recipes (ARCHITECTURE.md 6.1, 6.9, 8.4).
-
-The surface is derived from the principal's role; the client cannot choose it.
-
-Planned endpoints (prefix /v1/ai):
-    POST /chat    (SSE)
-    GET  /conversations/{conversation_id}
-    POST /candidate-summary
-    POST /next-actions
-    POST /draft-followup
-    POST /interview-brief
-    POST /feedback-summary
-    POST /missing-info
-"""
+"""Recruiter AI. It analyses and drafts for a recruiter to review; it never changes a stage,
+sends a message or makes a hiring decision."""
 
 from fastapi import APIRouter
 
-router = APIRouter(prefix="/v1/ai", tags=["ai"])
+from app.core.dependencies import AIProviderDep, CurrentUserDep, SessionDep
+from app.schemas.ai import (
+    AIAnalysisRead,
+    AnalyzeCandidateRequest,
+    AskCandidateRequest,
+    AskCandidateResponse,
+    DraftMessageRequest,
+    DraftMessageResponse,
+)
+from app.services import ai_service
+
+router = APIRouter(prefix="/ai", tags=["ai"])
+
+
+@router.post("/analyze-candidate", response_model=AIAnalysisRead, status_code=201, summary="Analyse an application")
+async def analyze_candidate(
+    body: AnalyzeCandidateRequest, session: SessionDep, provider: AIProviderDep, user: CurrentUserDep
+) -> AIAnalysisRead:
+    """Gathers the candidate, job, application and activity, asks the configured provider for an
+    evidence-based analysis, stores it and records a timeline entry."""
+    return await ai_service.analyze_candidate(session, body.application_id, provider, user)
+
+
+@router.post("/ask-candidate", response_model=AskCandidateResponse, summary="Ask about a candidate")
+async def ask_candidate(
+    body: AskCandidateRequest, session: SessionDep, provider: AIProviderDep, user: CurrentUserDep
+) -> AskCandidateResponse:
+    return await ai_service.ask_candidate(session, body.application_id, body.message, provider, user)
+
+
+@router.post("/draft-message", response_model=DraftMessageResponse, summary="Draft a message")
+async def draft_message(
+    body: DraftMessageRequest, session: SessionDep, provider: AIProviderDep, user: CurrentUserDep
+) -> DraftMessageResponse:
+    """A draft for the recruiter to edit and send. Nothing is sent."""
+    return await ai_service.draft_message(session, body.application_id, body.purpose, body.instructions, provider, user)

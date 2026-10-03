@@ -1,28 +1,91 @@
-"""AI request and response schemas (ARCHITECTURE.md 6.1, 6.9, 8.4).
+"""AI request and response schemas.
 
-The surface (Copilot or Assistant) is derived from the role on the server, never from the request.
-Portal (candidate-facing) models are separate classes in this file and never include internal fields.
+The AI analyses and drafts for a recruiter to review. Nothing here can change a stage, send a
+message or make a hiring decision.
 """
 
+from enum import StrEnum
+from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from app.schemas.common import APIModel, OptionalText, Timestamp
 
 
-class ChatFocus(BaseModel):
+class SkillEvidence(APIModel):
+    skill: str
+    evidence: str
+
+
+class AnalysisContent(APIModel):
+    """What a provider returns for an analysis, and what is stored in ai_analysis."""
+
+    summary: str
+    skills_matched: list[SkillEvidence] = []
+    missing_skills: list[str] = []
+    strengths: list[str] = []
+    concerns: list[str] = []
+    suggested_questions: list[str] = []
+    recommended_next_step: str
+
+
+class AIAnalysisRead(AnalysisContent):
+    id: UUID
+    application_id: UUID
+    model_name: str | None = None
+    created_at: Timestamp
+
+
+class AnalyzeCandidateRequest(APIModel):
     application_id: UUID
 
 
-class ChatRequest(BaseModel):
-    """Body of POST /v1/ai/chat."""
+class AISource(APIModel):
+    """A part of the record an answer was based on, shown as a source chip."""
 
-    message: str = Field(min_length=1)
-    conversation_id: UUID | None = None
-    focus: ChatFocus | None = None
+    type: str
+    id: str
+    label: str
 
 
-class FollowUpDraft(BaseModel):
-    """Structured output of POST /v1/ai/draft-followup. A draft only; never sent by the AI."""
+class AskCandidateRequest(APIModel):
+    application_id: UUID
+    message: Annotated[str, Field(min_length=1, max_length=2000)]
 
+
+class AskCandidateResponse(APIModel):
+    answer: str
+    sources: list[AISource] = []
+    model_name: str
+
+
+class DraftPurpose(StrEnum):
+    FOLLOW_UP = "follow_up"
+    OUTREACH = "outreach"
+    INTERVIEW_CONFIRMATION = "interview_confirmation"
+    STATUS_UPDATE = "status_update"
+    OFFER_CHECK_IN = "offer_check_in"
+
+
+class DraftMessageRequest(APIModel):
+    application_id: UUID
+    purpose: DraftPurpose = DraftPurpose.FOLLOW_UP
+    instructions: OptionalText(500) = None
+
+
+class DraftContent(APIModel):
     subject: str
     body: str
+
+
+class DraftMessageResponse(DraftContent):
+    """A draft for the recruiter to edit and send. It is never sent automatically."""
+
+    purpose: DraftPurpose
+    model_name: str
+
+
+class AskContent(APIModel):
+    answer: str
+    sources: list[AISource] = []

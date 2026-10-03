@@ -151,7 +151,7 @@ TalentBridge (one platform)
 │    application_insights (read model) │  └──────────────────────┘  │
 │    knowledge_documents · change_feed │                            │
 │    RLS on every table                │                            │
-│  Auth      JWT · app_metadata.role   │                            │
+│  Auth      JWT · role from users row │                            │
 │  Realtime  postgres_changes ─────────┼────────────────────────────┘
 │  Storage   private buckets           │
 └──────────────────────────────────────┘
@@ -1218,7 +1218,7 @@ The MVP stores events in Postgres and dispatches handlers in-process. Production
 ### 10.1 Authentication
 
 - **Supabase Auth.** The demo uses email and password for two seeded accounts. Production uses magic links for candidates (no password to forget) and SSO (SAML/OIDC) for recruiting teams.
-- **Role and organization in the token.** `role` and `org_id` live in `app_metadata`, which only the service role can write. They are present in every JWT, so `proxy.ts` (Next 16's name for middleware) can route without a database call.
+- **Role from the database, never the token.** The access token only identifies the person (`sub` = `auth.users.id`). The role comes from their `users` row (`users.auth_user_id`), so `proxy.ts` (Next 16's name for middleware) only refreshes the session and turns away signed-out visitors; the portal layouts ask `GET /me` for the role and redirect anyone in the wrong area. Accounts are linked by an operator (`python -m app.db.accounts link`), or, for candidates, automatically once they verify the email they applied with.
 - **Candidate invitations (production).** When a recruiter moves a sourced candidate to `applied`/`screening` or sends the first message, the system creates an invite. Accepting the magic link creates `users(role=candidate)` and links `candidates.user_id` after verifying the email matches.
 - **FastAPI** verifies the JWT signature against the project's JWKS (cached), then loads the `users` row. **The database row is authoritative for role and organization**; token claims are used only for routing.
 

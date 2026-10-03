@@ -33,38 +33,34 @@ export type CandidateQuery = {
   offset?: number;
 };
 
-export async function getDashboardSummary(token?: string): Promise<DashboardSummary> {
+export async function getDashboardSummary(): Promise<DashboardSummary> {
   if (USE_MOCK_API) return mockApi.getDashboardSummary();
-  const { trends } = await apiFetch<{ trends: { total: number | null; interviews: number | null; follow_up: number | null; offers: number | null } }>(
-    "/dashboard/summary",
-    { token },
-  );
+  const { trends } = await apiFetch<{ trends: { total: number | null; interviews: number | null; follow_up: number | null; offers: number | null } }>("/dashboard/summary");
   return { trends: { total: trends.total, interviews: trends.interviews, followUp: trends.follow_up, offers: trends.offers } };
 }
 
 /** GET /candidates: the pipeline, most recent activity first, filtered on the server. */
-export async function getCandidates(query: CandidateQuery = {}, token?: string): Promise<PipelineCandidate[]> {
+export async function getCandidates(query: CandidateQuery = {}): Promise<PipelineCandidate[]> {
   if (USE_MOCK_API) return mockApi.getCandidates(query);
   const params = new URLSearchParams({ limit: String(query.limit ?? 200) });
   if (query.stage) params.set("stage", query.stage);
   if (query.jobId) params.set("job_id", query.jobId);
   if (query.search?.trim()) params.set("search", query.search.trim());
   if (query.offset) params.set("offset", String(query.offset));
-  const page = await apiFetch<ApiPage<ApiCandidateListItem>>(`/candidates?${params}`, { token });
+  const page = await apiFetch<ApiPage<ApiCandidateListItem>>(`/candidates?${params}`);
   return page.items.filter(isPipelineStage).map(fromListItem);
 }
 
-export async function getCandidate(id: string, token?: string): Promise<PipelineCandidate | null> {
+export async function getCandidate(id: string): Promise<PipelineCandidate | null> {
   if (USE_MOCK_API) return mockApi.getCandidate(id);
-  const candidates = await getCandidates({}, token);
+  const candidates = await getCandidates();
   return candidates.find((candidate) => candidate.id === id) ?? null;
 }
 
 /** POST /candidates with the job, so the person and their application are created together. */
-export async function createCandidate(input: NewCandidateInput, token?: string): Promise<PipelineCandidate> {
+export async function createCandidate(input: NewCandidateInput): Promise<PipelineCandidate> {
   if (USE_MOCK_API) return mockApi.createCandidate(input);
   const detail = await apiFetch<ApiCandidateDetail>("/candidates", {
-    token,
     method: "POST",
     body: JSON.stringify({
       first_name: input.firstName,
@@ -79,36 +75,35 @@ export async function createCandidate(input: NewCandidateInput, token?: string):
 }
 
 /** PATCH /applications/{id}/stage. The server records stage history and an activity entry. */
-export async function updateCandidateStage(id: string, stage: CandidateStage, token?: string): Promise<PipelineCandidate> {
+export async function updateCandidateStage(id: string, stage: CandidateStage): Promise<PipelineCandidate> {
   if (USE_MOCK_API) return mockApi.updateCandidateStage(id, stage);
   const row = await apiFetch<ApiCandidateListItem>(`/applications/${id}/stage`, {
-    token,
     method: "PATCH",
     body: JSON.stringify({ stage }),
   });
   return fromListItem(row);
 }
 
-export async function archiveCandidate(id: string, token?: string): Promise<void> {
+export async function archiveCandidate(id: string): Promise<void> {
   if (USE_MOCK_API) return mockApi.archiveCandidate(id);
-  await apiFetch<ApiCandidateListItem>(`/applications/${id}/archive`, { token, method: "POST" });
+  await apiFetch<ApiCandidateListItem>(`/applications/${id}/archive`, { method: "POST" });
 }
 
-export async function restoreCandidate(id: string, token?: string): Promise<PipelineCandidate> {
+export async function restoreCandidate(id: string): Promise<PipelineCandidate> {
   if (USE_MOCK_API) return mockApi.restoreCandidate(id);
-  return fromListItem(await apiFetch<ApiCandidateListItem>(`/applications/${id}/restore`, { token, method: "POST" }));
+  return fromListItem(await apiFetch<ApiCandidateListItem>(`/applications/${id}/restore`, { method: "POST" }));
 }
 
-export async function getCandidateActivities(id: string, token?: string): Promise<CandidateActivity[]> {
+export async function getCandidateActivities(id: string): Promise<CandidateActivity[]> {
   if (USE_MOCK_API) return mockApi.getCandidateActivities(id);
-  const activity = await apiFetch<ApiActivity[]>(`/applications/${id}/activity`, { token });
+  const activity = await apiFetch<ApiActivity[]>(`/applications/${id}/activity`);
   return activity.map((item) => fromActivity(item, id));
 }
 
 /** Everything the candidate panel's tabs need: GET /candidates/{candidateId} for one application. */
-export async function getCandidateDetail(id: string, candidateId: string, token?: string): Promise<CandidateDetail> {
+export async function getCandidateDetail(id: string, candidateId: string): Promise<CandidateDetail> {
   if (USE_MOCK_API) return mockApi.getCandidateDetail(id);
-  const detail = await apiFetch<ApiCandidateDetail>(`/candidates/${candidateId}?application_id=${id}`, { token });
+  const detail = await apiFetch<ApiCandidateDetail>(`/candidates/${candidateId}?application_id=${id}`);
   const candidate = fromDetail(detail);
   return {
     activities: detail.activity.map((item) => fromActivity(item, id)),

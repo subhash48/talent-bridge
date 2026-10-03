@@ -19,6 +19,8 @@ export const SEED_USER: CurrentUser = {
   title: "Recruiter",
   email: "alex.chen@encord.example",
   organization: "Encord",
+  role: "recruiter",
+  candidateId: null,
 };
 
 export const SEED_TRENDS: Record<MetricKey, number> = {

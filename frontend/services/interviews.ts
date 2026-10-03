@@ -6,9 +6,9 @@ import type { CandidateRef, NewInterviewInput, ScheduledInterview } from "@/type
 
 // Interviews: the recruiter's schedule, and scheduling for one application.
 
-export async function getInterviews(token?: string): Promise<ScheduledInterview[]> {
+export async function getInterviews(): Promise<ScheduledInterview[]> {
   if (USE_MOCK_API) return mockApi.getInterviews();
-  const interviews = await apiFetch<ApiInterviewListItem[]>("/interviews", { token });
+  const interviews = await apiFetch<ApiInterviewListItem[]>("/interviews");
   return interviews.map((interview) =>
     fromInterview(interview, {
       id: interview.candidate.application_id,
@@ -20,10 +20,9 @@ export async function getInterviews(token?: string): Promise<ScheduledInterview[
 }
 
 /** POST /applications/{id}/interviews. The server also records it in the candidate's activity. */
-export async function scheduleInterview(candidate: CandidateRef, input: NewInterviewInput, token?: string): Promise<ScheduledInterview> {
+export async function scheduleInterview(candidate: CandidateRef, input: NewInterviewInput): Promise<ScheduledInterview> {
   if (USE_MOCK_API) return mockApi.scheduleInterview(candidate, input);
   const interview = await apiFetch<ApiInterview>(`/applications/${candidate.id}/interviews`, {
-    token,
     method: "POST",
     body: JSON.stringify({
       title: input.title,

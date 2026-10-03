@@ -1,26 +1,41 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
-import { EncordLogo } from "@/components/shared/EncordLogo";
-import { buttonStyles } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { AuthCard, authLinkStyles } from "@/components/auth/AuthCard";
+import { LoginForm } from "@/components/auth/LoginForm";
+import { landingPath, localPath } from "@/lib/auth";
+import { getSignedInUser } from "@/lib/session";
+import { USE_MOCK_API } from "@/services/api";
 
-// TODO: Supabase Auth sign-in form (ARCHITECTURE.md 10.1). Preview links keep the app navigable.
-export default function LoginPage() {
+export const metadata: Metadata = { title: "Sign in" };
+
+type LoginPageProps = { searchParams: Promise<Record<string, string | string[] | undefined>> };
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const params = await searchParams;
+  const next = typeof params.next === "string" ? params.next : null;
+  const reason = typeof params.reason === "string" ? params.reason : null;
+  // Mock mode previews the workspace with fake data and no sign-in.
+  if (USE_MOCK_API) redirect("/recruiter");
+  // Already signed in with a working account: straight to their workspace.
+  const user = await getSignedInUser();
+  if (user) redirect(landingPath(user.role, next));
+
   return (
-    <main className="app-backdrop flex min-h-dvh items-center justify-center px-4">
-      <Card className="w-full max-w-sm p-8">
-        <EncordLogo />
-        <h1 className="mt-8 text-2xl font-semibold tracking-tight text-ink">Welcome back</h1>
-        <p className="mt-1.5 text-sm text-stone">Sign-in is coming soon. Choose a workspace to preview.</p>
-        <div className="mt-8 flex flex-col gap-2">
-          <Link href="/recruiter/candidates" className={buttonStyles({ size: "lg" })}>
-            Recruiter workspace
+    <AuthCard
+      title="Welcome back"
+      description="Sign in to your hiring workspace or candidate portal."
+      footer={
+        <>
+          Applied for a role?{" "}
+          <Link href="/signup" className={authLinkStyles}>
+            Create your candidate account
           </Link>
-          <Link href="/candidate" className={buttonStyles({ variant: "secondary", size: "lg" })}>
-            Candidate portal
-          </Link>
-        </div>
-      </Card>
-    </main>
+        </>
+      }
+    >
+      <LoginForm next={localPath(next)} reason={reason} />
+    </AuthCard>
   );
 }

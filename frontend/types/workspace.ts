@@ -1,4 +1,5 @@
 import type { ApplicationStage } from "@/types/application";
+import type { Role } from "@/types/candidate";
 import type { EngagementLevel, EngagementSignal } from "@/types/event";
 import type { InterviewStatus } from "@/types/interview";
 import type { JobStatus } from "@/types/job";
@@ -137,6 +138,10 @@ export type CurrentUser = {
   title: string;
   email: string;
   organization: string;
+  /** From the API's users table, never from the browser or the token. Decides where they land. */
+  role: Role;
+  /** The candidate's own record, for candidates only. */
+  candidateId: string | null;
   avatarUrl?: string;
 };
 

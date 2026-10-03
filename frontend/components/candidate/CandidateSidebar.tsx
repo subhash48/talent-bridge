@@ -5,7 +5,6 @@ import {
   BriefcaseBusiness,
   CalendarDays,
   ChevronsUpDown,
-  ExternalLink,
   LayoutDashboard,
   LifeBuoy,
   LogOut,
@@ -29,6 +28,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/DropdownMenu";
+import { useSignOut } from "@/hooks/useSignOut";
 
 const NAV = [
   { href: "/candidate", label: "Dashboard", icon: LayoutDashboard },
@@ -43,6 +43,7 @@ export function CandidateSidebarContent({ onNavigate }: { onNavigate?: () => voi
   const pathname = usePathname();
   const { me } = useCandidatePortal();
   const [helpOpen, setHelpOpen] = useState(false);
+  const { signOut, signingOut } = useSignOut();
   const unread = me.unreadMessages;
 
   return (
@@ -91,15 +92,9 @@ export function CandidateSidebarContent({ onNavigate }: { onNavigate?: () => voi
                 <UserRound /> Your profile
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/recruiter/candidates" onClick={onNavigate}>
-                <ExternalLink /> Open recruiter workspace
-              </Link>
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            {/* Sign-in arrives with Supabase Auth; until then the portal always shows the demo candidate. */}
-            <DropdownMenuItem disabled>
-              <LogOut /> Sign out <span className="ml-auto text-xs text-faint">Soon</span>
+            <DropdownMenuItem disabled={signingOut} onSelect={() => void signOut()}>
+              <LogOut /> {signingOut ? "Signing out…" : "Sign out"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

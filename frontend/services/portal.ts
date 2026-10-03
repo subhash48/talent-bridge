@@ -27,12 +27,12 @@ import type {
 } from "@/types/portal";
 
 // The Candidate Portal's API (/candidate/*). There is no candidate id anywhere in these calls: the
-// server resolves who is signed in (the dev candidate until Supabase Auth), and every response is
+// server resolves who is signed in from their access token, and every response is
 // a candidate-safe projection of the records the recruiter workspace uses.
 
 /** GET /candidate/me: the portal home, navigation badges and notifications. */
-export async function getCandidateMe(token?: string): Promise<CandidateMeResponse> {
-  const me = await apiFetch<ApiCandidateMe>("/candidate/me", { token });
+export async function getCandidateMe(): Promise<CandidateMeResponse> {
+  const me = await apiFetch<ApiCandidateMe>("/candidate/me");
   return {
     company: me.company,
     candidate: fromCandidate(me.candidate),
@@ -46,8 +46,8 @@ export async function getCandidateMe(token?: string): Promise<CandidateMeRespons
   };
 }
 
-export async function getCandidateApplication(token?: string): Promise<CandidateApplicationDetail> {
-  const detail = await apiFetch<ApiCandidateApplicationDetail>("/candidate/application", { token });
+export async function getCandidateApplication(): Promise<CandidateApplicationDetail> {
+  const detail = await apiFetch<ApiCandidateApplicationDetail>("/candidate/application");
   return {
     application: fromApplication(detail.application),
     job: fromJob(detail.job),
@@ -56,46 +56,45 @@ export async function getCandidateApplication(token?: string): Promise<Candidate
   };
 }
 
-export async function getCandidateInterviews(token?: string): Promise<CandidateInterview[]> {
-  return (await apiFetch<ApiPortalInterview[]>("/candidate/interviews", { token })).map(fromInterview);
+export async function getCandidateInterviews(): Promise<CandidateInterview[]> {
+  return (await apiFetch<ApiPortalInterview[]>("/candidate/interviews")).map(fromInterview);
 }
 
 /** PATCH /candidate/interviews/{id}/confirm. The recruiter sees the confirmation straight away. */
-export async function confirmInterview(interviewId: string, token?: string): Promise<CandidateInterview> {
-  return fromInterview(await apiFetch<ApiPortalInterview>(`/candidate/interviews/${interviewId}/confirm`, { token, method: "PATCH" }));
+export async function confirmInterview(interviewId: string): Promise<CandidateInterview> {
+  return fromInterview(await apiFetch<ApiPortalInterview>(`/candidate/interviews/${interviewId}/confirm`, { method: "PATCH" }));
 }
 
-export async function getMessageThread(token?: string): Promise<CandidateMessageThread> {
-  const thread = await apiFetch<ApiMessageThread>("/candidate/messages", { token });
+export async function getMessageThread(): Promise<CandidateMessageThread> {
+  const thread = await apiFetch<ApiMessageThread>("/candidate/messages");
   return { recruiter: thread.recruiter, unread: thread.unread, messages: thread.messages.map(fromMessage) };
 }
 
 /** POST /candidate/messages. It arrives unread in the recruiter's inbox. */
-export async function sendCandidateMessage(body: string, token?: string): Promise<CandidateMessage> {
+export async function sendCandidateMessage(body: string): Promise<CandidateMessage> {
   const message = await apiFetch<ApiPortalMessage>("/candidate/messages", {
-    token,
     method: "POST",
     body: JSON.stringify({ content: body }),
   });
   return fromMessage(message);
 }
 
-export async function markMessagesRead(token?: string): Promise<void> {
-  await apiFetch<void>("/candidate/messages/read", { token, method: "POST" });
+export async function markMessagesRead(): Promise<void> {
+  await apiFetch<void>("/candidate/messages/read", { method: "POST" });
 }
 
-export async function getCandidateProfile(token?: string): Promise<CandidateProfile> {
-  return fromCandidate(await apiFetch<ApiPortalCandidate>("/candidate/profile", { token }));
+export async function getCandidateProfile(): Promise<CandidateProfile> {
+  return fromCandidate(await apiFetch<ApiPortalCandidate>("/candidate/profile"));
 }
 
-export async function updateCandidateProfile(input: ProfileUpdateInput, token?: string): Promise<CandidateProfile> {
-  const profile = await apiFetch<ApiPortalCandidate>("/candidate/profile", { token, method: "PATCH", body: JSON.stringify(input) });
+export async function updateCandidateProfile(input: ProfileUpdateInput): Promise<CandidateProfile> {
+  const profile = await apiFetch<ApiPortalCandidate>("/candidate/profile", { method: "PATCH", body: JSON.stringify(input) });
   return fromCandidate(profile);
 }
 
 /** GET /candidate/prep: AI interview prep built from candidate-safe context only. */
-export async function getCandidatePrep(signal?: AbortSignal, token?: string): Promise<CandidatePrep> {
-  const prep = await apiFetch<ApiCandidatePrep>(`/candidate/prep?utc_offset_minutes=${utcOffsetMinutes()}`, { token, signal });
+export async function getCandidatePrep(signal?: AbortSignal): Promise<CandidatePrep> {
+  const prep = await apiFetch<ApiCandidatePrep>(`/candidate/prep?utc_offset_minutes=${utcOffsetMinutes()}`, { signal });
   return {
     interview: prep.interview && fromInterview(prep.interview),
     role: prep.role,
@@ -112,14 +111,13 @@ export async function getCandidatePrep(signal?: AbortSignal, token?: string): Pr
 }
 
 /** Tells the recruiter the candidate opened their prep (once an hour at most, server-side). */
-export async function recordPrepViewed(token?: string): Promise<void> {
-  await apiFetch<void>("/candidate/prep/viewed", { token, method: "POST", keepalive: true });
+export async function recordPrepViewed(): Promise<void> {
+  await apiFetch<void>("/candidate/prep/viewed", { method: "POST", keepalive: true });
 }
 
 /** POST /candidate/ai/ask. The recruiter's timeline records the topic, never the question. */
-export async function askCandidateAssistant(message: string, signal?: AbortSignal, token?: string): Promise<string> {
+export async function askCandidateAssistant(message: string, signal?: AbortSignal): Promise<string> {
   const { answer } = await apiFetch<{ answer: string; model_name: string }>("/candidate/ai/ask", {
-    token,
     method: "POST",
     body: JSON.stringify({ message, utc_offset_minutes: utcOffsetMinutes() }),
     signal,

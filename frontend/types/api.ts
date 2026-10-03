@@ -158,6 +158,7 @@ export type ApiUser = {
   full_name: string;
   role: "recruiter" | "candidate" | "admin";
   organization: string;
+  candidate_id: string | null;
   created_at: string;
 };
 

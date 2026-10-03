@@ -20,12 +20,11 @@ export type ChatStreamEvent =
 export type AskCandidateAIInput = {
   candidateId: string;
   message: string;
-  token?: string;
   signal?: AbortSignal;
 };
 
 /** POST /ai/ask-candidate about one application (candidateId is the application id). */
-export async function* askCandidateAI({ candidateId, message, token, signal }: AskCandidateAIInput): AsyncGenerator<ChatStreamEvent> {
+export async function* askCandidateAI({ candidateId, message, signal }: AskCandidateAIInput): AsyncGenerator<ChatStreamEvent> {
   if (USE_MOCK_API) {
     yield* mockCandidateChat(candidateId, message, signal);
     return;
@@ -33,7 +32,6 @@ export async function* askCandidateAI({ candidateId, message, token, signal }: A
   let response: ApiAskResponse;
   try {
     response = await apiFetch<ApiAskResponse>("/ai/ask-candidate", {
-      token,
       method: "POST",
       body: JSON.stringify({ application_id: candidateId, message }),
       signal,
@@ -56,11 +54,9 @@ export async function draftMessage(
   candidateId: string,
   purpose: ApiDraftPurpose = "follow_up",
   signal?: AbortSignal,
-  token?: string,
 ): Promise<MessageDraft> {
   if (USE_MOCK_API) return mockDraft(candidateId, signal);
   const { subject, body } = await apiFetch<ApiDraft>("/ai/draft-message", {
-    token,
     method: "POST",
     body: JSON.stringify({ application_id: candidateId, purpose }),
     signal,
@@ -69,12 +65,11 @@ export async function draftMessage(
 }
 
 /** POST /ai/analyze-candidate: evidence, gaps and questions for the recruiter to review. */
-export async function analyzeCandidate(candidateId: string, token?: string): Promise<CandidateAnalysis> {
+export async function analyzeCandidate(candidateId: string): Promise<CandidateAnalysis> {
   if (USE_MOCK_API) {
     throw new ApiError("AI analysis needs the Talent Bridge API. Turn off mock mode to use it.", 0, "mock_mode");
   }
   const analysis = await apiFetch<ApiAnalysis>("/ai/analyze-candidate", {
-    token,
     method: "POST",
     body: JSON.stringify({ application_id: candidateId }),
   });

@@ -4,7 +4,6 @@ import {
   BriefcaseBusiness,
   CalendarDays,
   ChevronsUpDown,
-  ExternalLink,
   LogOut,
   MessageSquareText,
   Settings,
@@ -26,6 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/DropdownMenu";
+import { useSignOut } from "@/hooks/useSignOut";
 
 const NAV = [
   { href: "/recruiter/candidates", label: "Candidates", icon: UsersRound },
@@ -38,6 +38,7 @@ const NAV = [
 export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { user, unreadThreads } = useWorkspace();
+  const { signOut, signingOut } = useSignOut();
 
   return (
     <div className="flex h-full flex-col px-4 pt-7 pb-5">
@@ -90,16 +91,9 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 <Settings /> Profile and settings
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/candidate" onClick={onNavigate}>
-                <ExternalLink /> Preview candidate portal
-              </Link>
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/login">
-                <LogOut /> Sign out
-              </Link>
+            <DropdownMenuItem disabled={signingOut} onSelect={() => void signOut()}>
+              <LogOut /> {signingOut ? "Signing out…" : "Sign out"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+/* HireMesh design tokens (ARCHITECTURE.md 12.2). Light mode only for the MVP. */
+@theme {
+  --color-canvas: #faf8f5;
+  --color-surface: #f3f0ea;
+  --color-surface-raised: #ffffff;
+  --color-muted: #ece8e1;
+  --color-border: #e2ddd4;
+  --color-stone: #8c857b;
+  --color-charcoal: #2b2a28;
+  --color-ink: #141413;
+  --color-sage: #7e907a;
+  --color-accent-blue: #7f9cc0;
+  --color-accent-lavender: #9f92c6;
+  --color-accent-orange: #c98b5e;
+
+  --shadow-soft: 0 1px 2px rgb(20 20 19 / 0.04), 0 8px 24px -12px rgb(20 20 19 / 0.12);
+  --shadow-raised: 0 2px 4px rgb(20 20 19 / 0.05), 0 18px 36px -18px rgb(20 20 19 / 0.2);
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-instrument-serif), ui-serif, Georgia, serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-charcoal);
+    font-family: var(--font-sans);
+  }
+}

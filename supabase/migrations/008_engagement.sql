@@ -1,0 +1,13 @@
+-- HireMesh migration 008: engagement
+-- Purpose: derived per-application read model written by the backend engines.
+-- Reference: docs/ARCHITECTURE.md sections 5.7, 5.8 and 7.2.
+--
+-- Planned tables:
+--   application_insights 1:1 with applications; engagement_level, engagement_signals,
+--                        last candidate activity, next action, needs_follow_up,
+--                        rules_version, computed_at (no scoring logic in SQL)
+--
+-- Planned indexes:
+--   application_insights (organization_id, needs_follow_up)
+--
+-- Starter file: intentionally no DDL until the schema is approved.

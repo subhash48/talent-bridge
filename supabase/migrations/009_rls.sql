@@ -1,0 +1,15 @@
+-- HireMesh migration 009: rls
+-- Purpose: row-level security as defense in depth for Realtime, Storage and direct reads.
+-- Reference: docs/ARCHITECTURE.md sections 7.4 and 10.
+--
+-- Planned tables: none (security objects only)
+--   helper functions     auth_role(), auth_org(), auth_candidate_ids()
+--                        (security definer, fixed search_path)
+--   RLS policies         enabled on every table from 001-008; staff policies scoped to
+--                        auth_org(); candidate policies only where section 10.3 grants access;
+--                        internal tables (recruiter_notes, interview_feedback, activity_events,
+--                        application_insights, tasks) get no candidate policy
+--   change_feed policies staff_ping, candidate_ping
+--   publication          supabase_realtime adds change_feed
+--
+-- Starter file: intentionally no DDL until the schema is approved.

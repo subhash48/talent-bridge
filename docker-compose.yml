@@ -1,0 +1,15 @@
+# HireMesh local stack (docs/ARCHITECTURE.md section 18). Only the backend runs here:
+#   frontend: run "npm run dev" in frontend/ (http://localhost:3000)
+#   supabase: run locally with the Supabase CLI ("supabase start", API http://localhost:54321)
+# Inside the container localhost is the container itself; to reach the local Supabase stack,
+# point DATABASE_URL and SUPABASE_URL in backend/.env at host.docker.internal.
+
+services:
+  backend:
+    build: ./backend
+    env_file:
+      - ./backend/.env
+    environment:
+      - PORT=8000
+    ports:
+      - "8000:8000"

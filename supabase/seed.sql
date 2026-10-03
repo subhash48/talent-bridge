@@ -1,0 +1,19 @@
+-- HireMesh demo seed
+-- Purpose: demo data for local development and DEMO_MODE, run by the Supabase CLI after the
+-- migrations (supabase db reset). Must stay consistent with POST /v1/demo/reset.
+-- Reference: docs/ARCHITECTURE.md Appendix A and section 10.4.
+--
+-- Planned contents:
+--   organization    Halden Labs (America/New_York)
+--   teams           Product, Platform Engineering, Data & ML
+--   demo auth users alex@halden.demo (recruiter: Alex Rivera, Senior Recruiter)
+--                   sophia@candidate.demo (candidate: Sophia Martinez)
+--                   role and org_id in app_metadata; demo-only credentials, never real ones
+--   interviewers    Maya Okafor, Ravi Patel, three engineering interviewers
+--   candidates      the 8 in Appendix A, with their jobs, applications, interviews,
+--                   messages, activity_events and application_insights
+--
+-- All timestamps are relative to now() so the demo replays identically
+-- (Sophia's portfolio review is always tomorrow at 14:00 org time).
+--
+-- Starter file: intentionally no INSERTs until the seed is approved.

@@ -1,0 +1,14 @@
+-- HireMesh migration 005: interviews
+-- Purpose: interviewers, scheduled interviews, panels and internal feedback.
+-- Reference: docs/ARCHITECTURE.md sections 7.2 and 7.3.
+--
+-- Planned tables:
+--   interviewers           org-scoped; bio_public is candidate-safe
+--   interviews             per application; status (interview_status); candidate_note
+--   interview_participants interview x interviewer; role lead | panel | shadow
+--   interview_feedback     internal only; one per interviewer per interview
+--
+-- Planned indexes:
+--   interviews             (application_id, scheduled_at)
+--
+-- Starter file: intentionally no DDL until the schema is approved.

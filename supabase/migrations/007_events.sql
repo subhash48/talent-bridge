@@ -1,0 +1,15 @@
+-- HireMesh migration 007: events
+-- Purpose: the append-only activity log and the realtime ping table.
+-- Reference: docs/ARCHITECTURE.md sections 5.6, 7.2, 7.3 and 9.
+--
+-- Planned tables:
+--   activity_events append-only; event_type checked by the app against the section 9.2
+--                   catalog; source (event_source); unique idempotency_key; schema_version
+--   change_feed     realtime pings, not payloads; audience staff | candidate | both;
+--                   topics; pruned after 24h
+--
+-- Planned indexes:
+--   activity_events (application_id, occurred_at desc); (organization_id, occurred_at desc)
+--   change_feed     (created_at)
+--
+-- Starter file: intentionally no DDL until the schema is approved.

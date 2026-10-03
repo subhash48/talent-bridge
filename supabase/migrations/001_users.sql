@@ -1,0 +1,21 @@
+-- HireMesh migration 001: users
+-- Purpose: shared enums plus identity and tenancy (organizations, staff and candidate users).
+-- Reference: docs/ARCHITECTURE.md sections 7.2 and 10.1.
+--
+-- Planned extensions:
+--   pg_trgm         trigram index on candidates.name (see 003)
+--
+-- Planned tables:
+--   enums           user_role          recruiter | candidate | admin
+--                   application_stage  sourced | applied | screening | interview |
+--                                      final_interview | offer | hired | rejected
+--                   application_status active | on_hold | withdrawn | archived
+--                   interview_status   scheduled | confirmed | reschedule_requested |
+--                                      completed | canceled | no_show
+--                   event_source       candidate_portal | recruiter_dashboard | system | ai
+--                   engagement_level   high | medium | low | insufficient
+--                   visibility_level   public | candidate | internal
+--   organizations   tenant root (name, domain, timezone, settings)
+--   users           1:1 with auth.users; role; organization_id set for staff only
+--
+-- Starter file: intentionally no DDL until the schema is approved.

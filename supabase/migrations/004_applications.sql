@@ -1,0 +1,14 @@
+-- HireMesh migration 004: applications
+-- Purpose: the candidate-to-job pipeline record and its recruiter-side artifacts.
+-- Reference: docs/ARCHITECTURE.md sections 7.2 and 7.3.
+--
+-- Planned tables:
+--   applications    candidate x job; stage (application_stage), status (application_status),
+--                   owner recruiter; unique (candidate_id, job_id)
+--   recruiter_notes internal only; visibility private | team
+--   tasks           status open | done | dismissed; origin recruiter | system | ai
+--
+-- Planned indexes:
+--   applications    (organization_id, stage) where status = 'active'; (candidate_id)
+--
+-- Starter file: intentionally no DDL until the schema is approved.

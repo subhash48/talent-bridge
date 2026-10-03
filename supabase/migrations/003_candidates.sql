@@ -1,0 +1,13 @@
+-- HireMesh migration 003: candidates
+-- Purpose: org-scoped candidate records and their files.
+-- Reference: docs/ARCHITECTURE.md sections 7.2 and 7.3.
+--
+-- Planned tables:
+--   candidates      org-scoped person; user_id null until the portal is activated;
+--                   unique (organization_id, email); resume stored by path, never public URL
+--   documents       candidate files in a private bucket; visibility internal | shared
+--
+-- Planned indexes:
+--   candidates      gin trigram on name (fuzzy search, Copilot name resolution)
+--
+-- Starter file: intentionally no DDL until the schema is approved.

@@ -1,0 +1,10 @@
+-- HireMesh migration 002: jobs
+-- Purpose: organization teams and the open roles candidates apply to.
+-- Reference: docs/ARCHITECTURE.md section 7.2.
+--
+-- Planned tables:
+--   teams           org-scoped; summary_public is candidate-safe
+--   jobs            org-scoped role; optional team; salary_range_public;
+--                   status draft | open | paused | closed
+--
+-- Starter file: intentionally no DDL until the schema is approved.

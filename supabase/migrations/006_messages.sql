@@ -1,0 +1,12 @@
+-- HireMesh migration 006: messages
+-- Purpose: per-application message threads between recruiters and candidates.
+-- Reference: docs/ARCHITECTURE.md sections 7.2 and 7.3.
+--
+-- Planned tables:
+--   messages        per application; sender_user_id, sender_role (user_role);
+--                   channel portal | email; read_at
+--
+-- Planned indexes:
+--   messages        (application_id, created_at)
+--
+-- Starter file: intentionally no DDL until the schema is approved.

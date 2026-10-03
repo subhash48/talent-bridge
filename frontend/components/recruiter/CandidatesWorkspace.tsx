@@ -16,6 +16,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Sheet } from "@/components/ui/Sheet";
 import { useToast } from "@/components/ui/Toaster";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useStageCandidates } from "@/hooks/useStageCandidates";
 import {
   EMPTY_FILTERS,
   activeFilterCount,
@@ -28,6 +29,7 @@ import {
   type StageFilter,
 } from "@/lib/candidate-query";
 import { firstName, pluralize } from "@/lib/format";
+import { errorMessage } from "@/services/api";
 import { STAGE_LABELS } from "@/types/application";
 import { PIPELINE_STAGES, type CandidateStage, type MetricKey } from "@/types/workspace";
 
@@ -37,13 +39,13 @@ const PANEL_QUERY = "(min-width: 1280px)";
 
 type CandidatesWorkspaceProps = {
   greeting: string;
-  trends: Record<MetricKey, number>;
+  trends: Record<MetricKey, number | null>;
   /** From ?candidate=, so notifications and other pages can deep-link a candidate. */
   initialCandidateId?: string;
 };
 
 export function CandidatesWorkspace({ greeting, trends, initialCandidateId }: CandidatesWorkspaceProps) {
-  const { user, candidates, moveCandidate } = useWorkspace();
+  const { user, candidates, jobs, revision, moveCandidate } = useWorkspace();
   const toast = useToast();
   const panelInline = useMediaQuery(PANEL_QUERY);
 
@@ -72,10 +74,16 @@ export function CandidatesWorkspace({ greeting, trends, initialCandidateId }: Ca
     [candidates, query, filters],
   );
   const counts = useMemo(() => countByStage(searched), [searched]);
-  const visible = useMemo(
-    () => sortCandidates(stage === "all" ? searched : searched.filter((candidate) => candidate.stage === stage), sort),
-    [searched, stage, sort],
-  );
+  // Stage chips filter on the server; the local filter fills in until its response arrives.
+  const stageCandidates = useStageCandidates(stage, revision);
+  const visible = useMemo(() => {
+    if (stage === "all") return sortCandidates(searched, sort);
+    const inStage = stageCandidates
+      ? stageCandidates.filter((candidate) => matchesQuery(candidate, query) && matchesFilters(candidate, filters))
+      : searched.filter((candidate) => candidate.stage === stage);
+    return sortCandidates(inStage, sort);
+  }, [searched, stage, stageCandidates, query, filters, sort]);
+  const openJobs = useMemo(() => jobs.filter((job) => job.status === "open"), [jobs]);
 
   const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
@@ -134,15 +142,20 @@ export function CandidatesWorkspace({ greeting, trends, initialCandidateId }: Ca
 
   async function moveChecked(target: CandidateStage) {
     setBulkBusy(true);
-    try {
-      await Promise.all(checked.map((candidate) => moveCandidate(candidate.id, target)));
-      toast({ title: `${pluralize(checked.length, "candidate")} moved to ${STAGE_LABELS[target]}`, tone: "success" });
+    const results = await Promise.allSettled(checked.map((candidate) => moveCandidate(candidate.id, target)));
+    const failed = results.filter((result): result is PromiseRejectedResult => result.status === "rejected");
+    const moved = results.length - failed.length;
+    if (failed.length === 0) {
+      toast({ title: `${pluralize(moved, "candidate")} moved to ${STAGE_LABELS[target]}`, tone: "success" });
       setCheckedIds(new Set());
-    } catch {
-      toast({ title: "Some candidates couldn't be moved", description: "Please try again.", tone: "error" });
-    } finally {
-      setBulkBusy(false);
+    } else {
+      toast({
+        title: moved ? `${pluralize(moved, "candidate")} moved, ${failed.length} couldn't be` : "Couldn't move the selected candidates",
+        description: errorMessage(failed[0].reason),
+        tone: "error",
+      });
     }
+    setBulkBusy(false);
   }
 
   function clearAll() {
@@ -282,7 +295,7 @@ export function CandidatesWorkspace({ greeting, trends, initialCandidateId }: Ca
       <AddCandidateDialog
         open={addOpen}
         onOpenChange={setAddOpen}
-        roles={roles}
+        jobs={openJobs}
         onCreated={(candidate) => {
           setAddOpen(false);
           changeView(() => {

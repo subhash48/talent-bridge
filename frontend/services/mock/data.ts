@@ -899,7 +899,7 @@ export const JOB_SEEDS: JobSeed[] = [
     department: "Customer",
     location: "New York, NY",
     employmentType: "Full-time",
-    status: "paused",
+    status: "closed",
     hiringManager: "Kai Tanaka",
     openedDaysAgo: 50,
     summary: "Partner with AI teams to design data pipelines and get them to production on Encord.",

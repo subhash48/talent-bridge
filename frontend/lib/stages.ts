@@ -50,7 +50,6 @@ export const ENGAGEMENT_DESCRIPTIONS: Record<EngagementLevel, string> = {
 
 export const JOB_STATUS: Record<JobStatus, { label: string; className: string }> = {
   open: { label: "Open", className: "bg-emerald-400/10 text-emerald-200 ring-emerald-300/20" },
-  paused: { label: "Paused", className: "bg-amber-400/10 text-amber-200 ring-amber-300/20" },
   draft: { label: "Draft", className: "bg-white/[0.06] text-charcoal ring-white/10" },
   closed: { label: "Closed", className: "bg-white/[0.06] text-stone ring-white/10" },
 };

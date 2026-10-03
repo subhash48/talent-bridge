@@ -1,30 +1,51 @@
 import { USE_MOCK_API, apiFetch } from "@/services/api";
 import { mockApi } from "@/services/mock/api";
+import type { ApiConversation, ApiMessage } from "@/types/api";
 import type { Conversation, ThreadMessage } from "@/types/workspace";
 
-// Staff façade: application threads (ARCHITECTURE.md 8.2). Recruiters send; the AI only drafts.
+// Application threads. Recruiters send; the AI only drafts.
 
-export function getConversations(token?: string): Promise<Conversation[]> {
+export async function getConversations(token?: string): Promise<Conversation[]> {
   if (USE_MOCK_API) return mockApi.getConversations();
-  return apiFetch<Conversation[]>("/v1/messages", { token });
+  const conversations = await apiFetch<ApiConversation[]>("/messages/conversations", { token });
+  return conversations.map(({ candidate, unread, messages }) => ({
+    candidate: {
+      id: candidate.application_id,
+      name: candidate.full_name,
+      role: candidate.job_title,
+      avatarUrl: candidate.avatar_url ?? undefined,
+    },
+    unread,
+    messages: messages.map(fromMessage),
+  }));
 }
 
-export function getUnreadThreadCount(token?: string): Promise<number> {
+export async function getUnreadThreadCount(token?: string): Promise<number> {
   if (USE_MOCK_API) return mockApi.getUnreadThreadCount();
-  return apiFetch<{ count: number }>("/v1/messages/unread-count", { token }).then(({ count }) => count);
+  const { count } = await apiFetch<{ count: number }>("/messages/unread-count", { token });
+  return count;
 }
 
-export function sendMessage(candidateId: string, body: string, token?: string): Promise<ThreadMessage> {
+export async function sendMessage(candidateId: string, body: string, token?: string): Promise<ThreadMessage> {
   if (USE_MOCK_API) return mockApi.sendMessage(candidateId, body);
-  return apiFetch<ThreadMessage>(`/v1/applications/${candidateId}/messages`, {
+  const message = await apiFetch<ApiMessage>(`/applications/${candidateId}/messages`, {
     token,
     method: "POST",
-    headers: { "Idempotency-Key": crypto.randomUUID() },
-    body: JSON.stringify({ body }),
+    body: JSON.stringify({ content: body }),
   });
+  return fromMessage(message);
 }
 
-export function markConversationRead(candidateId: string, token?: string): Promise<void> {
+export async function markConversationRead(candidateId: string, token?: string): Promise<void> {
   if (USE_MOCK_API) return mockApi.markConversationRead(candidateId);
-  return apiFetch<void>(`/v1/applications/${candidateId}/messages/read`, { token, method: "POST" });
+  await apiFetch<void>(`/applications/${candidateId}/messages/read`, { token, method: "POST" });
+}
+
+export function fromMessage(message: ApiMessage): ThreadMessage {
+  return {
+    id: message.id,
+    author: message.sender_type === "candidate" ? "candidate" : "recruiter",
+    body: message.content,
+    sentAt: message.created_at,
+  };
 }

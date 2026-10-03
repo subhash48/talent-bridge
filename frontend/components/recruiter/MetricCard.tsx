@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils";
 type MetricCardProps = {
   label: string;
   value: number;
-  /** Percentage change against the previous period. */
-  trend: number;
+  /** Percentage change against the previous period; hidden when it can't be measured. */
+  trend: number | null;
   icon: LucideIcon;
   active?: boolean;
   onSelect?: () => void;
@@ -14,7 +14,7 @@ type MetricCardProps = {
 
 /** A pipeline metric that doubles as a shortcut to filter the table. */
 export function MetricCard({ label, value, trend, icon: Icon, active, onSelect }: MetricCardProps) {
-  const TrendIcon = trend < 0 ? ArrowDown : ArrowUp;
+  const TrendIcon = trend !== null && trend < 0 ? ArrowDown : ArrowUp;
   return (
     <button
       type="button"
@@ -31,16 +31,18 @@ export function MetricCard({ label, value, trend, icon: Icon, active, onSelect }
       <span className="min-w-0">
         <span className="flex items-baseline gap-2">
           <span className="text-[28px] leading-none font-semibold tracking-tight text-ink tabular-nums">{value}</span>
-          <span
-            className={cn(
-              "inline-flex items-center gap-0.5 text-xs font-medium tabular-nums",
-              trend < 0 ? "text-red-300" : "text-emerald-300",
-            )}
-          >
-            <TrendIcon aria-hidden className="size-3" strokeWidth={2.5} />
-            <span className="sr-only">{trend < 0 ? "down" : "up"}</span>
-            {Math.abs(trend)}%
-          </span>
+          {trend !== null && (
+            <span
+              className={cn(
+                "inline-flex items-center gap-0.5 text-xs font-medium tabular-nums",
+                trend < 0 ? "text-red-300" : "text-emerald-300",
+              )}
+            >
+              <TrendIcon aria-hidden className="size-3" strokeWidth={2.5} />
+              <span className="sr-only">{trend < 0 ? "down" : "up"}</span>
+              {Math.abs(trend)}%
+            </span>
+          )}
         </span>
         <span className="mt-2 block truncate text-[12.5px] leading-snug text-stone">{label}</span>
       </span>

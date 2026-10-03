@@ -19,14 +19,15 @@ export type CandidateDetailState = {
 export function useCandidateDetail(candidate: PipelineCandidate | undefined): CandidateDetailState {
   const [entries, setEntries] = useState<Record<string, Entry>>({});
   const id = candidate?.id;
+  const candidateId = candidate?.candidateId;
   const version = candidate?.lastActivityAt ?? "";
   const entry = id ? entries[id] : undefined;
   const isCurrent = entry?.version === version;
 
   useEffect(() => {
-    if (!id || isCurrent) return;
+    if (!id || !candidateId || isCurrent) return;
     let cancelled = false;
-    getCandidateDetail(id).then(
+    getCandidateDetail(id, candidateId).then(
       (detail) => {
         if (!cancelled) setEntries((current) => ({ ...current, [id]: { version, detail } }));
       },
@@ -42,7 +43,7 @@ export function useCandidateDetail(candidate: PipelineCandidate | undefined): Ca
     return () => {
       cancelled = true;
     };
-  }, [id, version, isCurrent]);
+  }, [id, candidateId, version, isCurrent]);
 
   const retry = useCallback(() => {
     if (!id) return;

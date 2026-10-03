@@ -94,6 +94,8 @@ function createMockDb(now: number): MockDb {
     const upcoming = nextInterview(seed.id);
     return {
       id: seed.id,
+      candidateId: seed.id,
+      jobId: JOB_SEEDS.find((job) => job.title === seed.role)?.id,
       name: seed.name,
       role: seed.role,
       email: emailFor(seed.name),

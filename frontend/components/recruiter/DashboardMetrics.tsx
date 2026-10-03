@@ -12,7 +12,7 @@ const METRICS = [
 
 type DashboardMetricsProps = {
   candidates: PipelineCandidate[];
-  trends: Record<MetricKey, number>;
+  trends: Record<MetricKey, number | null>;
   active?: MetricKey;
   onSelect: (metric: MetricKey) => void;
 };

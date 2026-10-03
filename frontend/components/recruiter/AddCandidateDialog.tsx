@@ -10,17 +10,22 @@ import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toaster";
+import { errorMessage } from "@/services/api";
 import { STAGE_LABELS } from "@/types/application";
-import { PIPELINE_STAGES, type CandidateStage, type NewCandidateInput, type PipelineCandidate } from "@/types/workspace";
+import { PIPELINE_STAGES, type CandidateStage, type JobOpening, type NewCandidateInput, type PipelineCandidate } from "@/types/workspace";
+
+// Hired needs an offer first, so new candidates start at one of the earlier stages.
+const STARTING_STAGES = PIPELINE_STAGES.filter((stage) => stage !== "hired");
 
 type AddCandidateDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  roles: string[];
+  /** Open jobs the candidate can be added to. */
+  jobs: JobOpening[];
   onCreated: (candidate: PipelineCandidate) => void;
 };
 
-export function AddCandidateDialog({ open, onOpenChange, roles, onCreated }: AddCandidateDialogProps) {
+export function AddCandidateDialog({ open, onOpenChange, jobs, onCreated }: AddCandidateDialogProps) {
   return (
     <Modal
       open={open}
@@ -29,7 +34,7 @@ export function AddCandidateDialog({ open, onOpenChange, roles, onCreated }: Add
       description="Add someone to your pipeline. Nothing is sent to them until you message them."
     >
       {/* Mounted only while open, so the form starts empty every time. */}
-      <AddCandidateForm roles={roles} onCancel={() => onOpenChange(false)} onCreated={onCreated} />
+      <AddCandidateForm jobs={jobs} onCancel={() => onOpenChange(false)} onCreated={onCreated} />
     </Modal>
   );
 }
@@ -37,7 +42,7 @@ export function AddCandidateDialog({ open, onOpenChange, roles, onCreated }: Add
 type FormValues = NewCandidateInput;
 type Errors = Partial<Record<keyof FormValues, string>>;
 
-const EMPTY: FormValues = { firstName: "", lastName: "", email: "", role: "", location: "", stage: "sourced" };
+const EMPTY: FormValues = { firstName: "", lastName: "", email: "", jobId: "", location: "", stage: "sourced" };
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function validate(values: FormValues, existingEmails: Set<string>): Errors {
@@ -48,11 +53,11 @@ function validate(values: FormValues, existingEmails: Set<string>): Errors {
   if (!email) errors.email = "Enter an email address.";
   else if (!EMAIL_PATTERN.test(email)) errors.email = "Enter a valid email, like name@company.com.";
   else if (existingEmails.has(email)) errors.email = "This person is already in your pipeline.";
-  if (!values.role) errors.role = "Choose the role they're being considered for.";
+  if (!values.jobId) errors.jobId = "Choose the role they're being considered for.";
   return errors;
 }
 
-function AddCandidateForm({ roles, onCancel, onCreated }: Omit<AddCandidateDialogProps, "open" | "onOpenChange"> & { onCancel: () => void }) {
+function AddCandidateForm({ jobs, onCancel, onCreated }: Omit<AddCandidateDialogProps, "open" | "onOpenChange"> & { onCancel: () => void }) {
   const { candidates, addCandidate } = useWorkspace();
   const toast = useToast();
   const [values, setValues] = useState<FormValues>(EMPTY);
@@ -90,7 +95,7 @@ function AddCandidateForm({ roles, onCancel, onCreated }: Omit<AddCandidateDialo
       toast({ title: `${candidate.name} added`, description: `${STAGE_LABELS[candidate.stage]} · ${candidate.role}`, tone: "success" });
       onCreated(candidate);
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Couldn't add the candidate. Please try again.");
+      setFormError(errorMessage(error, "Couldn't add the candidate. Please try again."));
       setSaving(false);
     }
   }
@@ -107,14 +112,14 @@ function AddCandidateForm({ roles, onCancel, onCreated }: Omit<AddCandidateDialo
         <Field label="Email" htmlFor="new-candidate-email" error={errors.email} required className="sm:col-span-2">
           <Input {...control("email")} type="email" inputMode="email" autoComplete="off" placeholder="name@company.com" />
         </Field>
-        <Field label="Role" htmlFor="new-candidate-role" error={errors.role} required>
-          <Select {...control("role")} className={values.role ? undefined : "text-faint"}>
+        <Field label="Role" htmlFor="new-candidate-jobId" error={errors.jobId} required>
+          <Select {...control("jobId")} className={values.jobId ? undefined : "text-faint"}>
             <option value="" disabled>
               Select a role
             </option>
-            {roles.map((role) => (
-              <option key={role} value={role}>
-                {role}
+            {jobs.map((job) => (
+              <option key={job.id} value={job.id}>
+                {job.title}
               </option>
             ))}
           </Select>
@@ -124,7 +129,7 @@ function AddCandidateForm({ roles, onCancel, onCreated }: Omit<AddCandidateDialo
         </Field>
         <Field label="Pipeline stage" htmlFor="new-candidate-stage" className="sm:col-span-2">
           <Select {...control("stage")} onChange={(event) => setValues((current) => ({ ...current, stage: event.target.value as CandidateStage }))}>
-            {PIPELINE_STAGES.map((stage) => (
+            {STARTING_STAGES.map((stage) => (
               <option key={stage} value={stage}>
                 {STAGE_LABELS[stage]}
               </option>

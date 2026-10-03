@@ -2,6 +2,7 @@ import { ArrowRight, CalendarClock, ChartNoAxesColumnIncreasing, CircleAlert, Sp
 import type { ReactNode } from "react";
 
 import { CandidateActivity, CandidateActivitySkeleton } from "@/components/recruiter/CandidateActivity";
+import { CandidateAnalysis } from "@/components/recruiter/CandidateAnalysis";
 import { Button } from "@/components/ui/Button";
 import type { CandidateDetailState } from "@/hooks/useCandidateDetail";
 import { formatSchedule } from "@/lib/format";
@@ -49,6 +50,8 @@ export function CandidateOverview({ candidate, state, onViewAll, onDraftFollowUp
           hint={<span suppressHydrationWarning>{candidate.nextStep ? formatSchedule(candidate.nextStep.date) : "Plan the next touchpoint"}</span>}
         />
       </div>
+
+      <CandidateAnalysis candidate={candidate} analysis={state.detail ? state.detail.analysis : state.error ? null : undefined} />
 
       <section aria-label="Recent activity">
         <div className="flex items-center justify-between gap-3">

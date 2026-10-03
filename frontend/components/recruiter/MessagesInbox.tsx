@@ -16,7 +16,8 @@ import { Textarea } from "@/components/ui/Textarea";
 import { useToast } from "@/components/ui/Toaster";
 import { firstName } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { askCandidateAI } from "@/services/ai";
+import { draftMessage } from "@/services/ai";
+import { errorMessage } from "@/services/api";
 import { markConversationRead, sendMessage } from "@/services/messages";
 import type { Conversation } from "@/types/workspace";
 
@@ -147,7 +148,7 @@ type ThreadProps = {
 };
 
 function Thread({ conversation, onBack, onSent }: ThreadProps) {
-  const { candidates } = useWorkspace();
+  const { candidates, refresh } = useWorkspace();
   const toast = useToast();
   const composerId = useId();
   const [draft, setDraft] = useState("");
@@ -169,21 +170,13 @@ function Thread({ conversation, onBack, onSent }: ThreadProps) {
     const controller = new AbortController();
     draftController.current = controller;
     setDrafting(true);
-    let text = "";
     try {
-      for await (const event of askCandidateAI({
-        candidateId: conversation.candidate.id,
-        message: "Draft a follow-up message",
-        signal: controller.signal,
-      })) {
-        if (event.event !== "delta") continue;
-        text += event.data.text;
-        // Keep only the message itself: drop the AI's preamble and subject line.
-        const start = text.indexOf(`Hi ${first}`);
-        if (start !== -1) setDraft(text.slice(start).replace(/\*\*/g, ""));
+      const { body } = await draftMessage(conversation.candidate.id, "follow_up", controller.signal);
+      setDraft(body);
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        toast({ title: "Couldn't draft a message", description: errorMessage(error, "Try again in a moment."), tone: "error" });
       }
-    } catch {
-      if (!controller.signal.aborted) toast({ title: "Couldn't draft a message", description: "Try again in a moment.", tone: "error" });
     } finally {
       setDrafting(false);
     }
@@ -197,8 +190,10 @@ function Thread({ conversation, onBack, onSent }: ThreadProps) {
       const message = await sendMessage(conversation.candidate.id, body);
       onSent(conversation, message);
       setDraft("");
-    } catch {
-      toast({ title: "Message not sent", description: "Check your connection and try again.", tone: "error" });
+      // Sending is recorded on the candidate's timeline; reload so the pipeline shows it.
+      refresh().catch(() => undefined);
+    } catch (error) {
+      toast({ title: "Message not sent", description: errorMessage(error, "Check your connection and try again."), tone: "error" });
     } finally {
       setSending(false);
     }

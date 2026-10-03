@@ -1,65 +1,21 @@
-import { API_URL, USE_MOCK_API } from "@/services/api";
+import { ApiError, USE_MOCK_API, apiFetch, errorMessage } from "@/services/api";
+import { fromAnalysis } from "@/services/candidates";
 import { mockCandidateChat } from "@/services/mock/ai";
+import type { ApiAnalysis, ApiAskResponse, ApiDraft, ApiDraftPurpose } from "@/types/api";
+import type { CandidateAnalysis } from "@/types/workspace";
 
-export type ChatInput = {
-  message: string;
-  conversation_id?: string;
-  focus?: { application_id: string };
-};
+// Recruiter AI. The browser sends only the application id and the question; the server builds the
+// context and holds every model key. The AI analyses and drafts; it never sends or decides.
 
 export type ChatSource = { type: string; id: string; label: string };
 
-// Server-Sent Events from POST /v1/ai/chat (ARCHITECTURE.md 6.9).
+// The events the AI panel renders. Answers arrive whole from the API and stream in mock mode.
 export type ChatStreamEvent =
   | { event: "meta"; data: { conversation_id: string; message_id: string; sources: ChatSource[] } }
   | { event: "delta"; data: { text: string } }
   | { event: "action"; data: { type: "handoff"; label: string; prefill: string } }
   | { event: "done"; data: { stop_reason: string; usage: Record<string, number> } }
   | { event: "error"; data: { code: string; fallback?: string } };
-
-// fetch + ReadableStream, because EventSource can't send a Bearer header.
-export async function* streamChat(
-  token: string | undefined,
-  input: ChatInput,
-  signal?: AbortSignal,
-): AsyncGenerator<ChatStreamEvent> {
-  const headers = new Headers({ "Content-Type": "application/json", Accept: "text/event-stream" });
-  if (token) headers.set("Authorization", `Bearer ${token}`);
-
-  const response = await fetch(`${API_URL}/v1/ai/chat`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(input),
-    signal,
-  });
-  if (!response.ok || !response.body) throw new Error(`AI chat failed with ${response.status}`);
-
-  const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
-  let buffer = "";
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += value.replace(/\r\n/g, "\n");
-    let boundary = buffer.indexOf("\n\n");
-    while (boundary !== -1) {
-      const event = parseFrame(buffer.slice(0, boundary));
-      buffer = buffer.slice(boundary + 2);
-      if (event) yield event;
-      boundary = buffer.indexOf("\n\n");
-    }
-  }
-}
-
-function parseFrame(frame: string): ChatStreamEvent | null {
-  let name = "message";
-  const data: string[] = [];
-  for (const line of frame.split("\n")) {
-    if (line.startsWith("event:")) name = line.slice(6).trim();
-    else if (line.startsWith("data:")) data.push(line.slice(5).trimStart());
-  }
-  if (data.length === 0) return null;
-  return { event: name, data: JSON.parse(data.join("\n")) } as ChatStreamEvent;
-}
 
 export type AskCandidateAIInput = {
   candidateId: string;
@@ -68,14 +24,69 @@ export type AskCandidateAIInput = {
   signal?: AbortSignal;
 };
 
-/**
- * Ask the Recruiter Copilot about one candidate. The server builds the context from the
- * application id, so the browser only sends the question; no API keys live in the frontend.
- */
-export async function* askCandidateAI({ candidateId, message, token, signal }: AskCandidateAIInput) {
+/** POST /ai/ask-candidate about one application (candidateId is the application id). */
+export async function* askCandidateAI({ candidateId, message, token, signal }: AskCandidateAIInput): AsyncGenerator<ChatStreamEvent> {
   if (USE_MOCK_API) {
     yield* mockCandidateChat(candidateId, message, signal);
     return;
   }
-  yield* streamChat(token, { message, focus: { application_id: candidateId } }, signal);
+  let response: ApiAskResponse;
+  try {
+    response = await apiFetch<ApiAskResponse>("/ai/ask-candidate", {
+      token,
+      method: "POST",
+      body: JSON.stringify({ application_id: candidateId, message }),
+      signal,
+    });
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    const code = error instanceof ApiError ? error.code : "error";
+    yield { event: "error", data: { code, fallback: errorMessage(error, "I couldn't reach the AI service. Try again in a moment.") } };
+    return;
+  }
+  yield { event: "meta", data: { conversation_id: "", message_id: "", sources: response.sources } };
+  yield { event: "delta", data: { text: response.answer } };
+  yield { event: "done", data: { stop_reason: "end", usage: {} } };
+}
+
+export type MessageDraft = { subject: string; body: string };
+
+/** POST /ai/draft-message. A draft for the recruiter to edit; nothing is sent. */
+export async function draftMessage(
+  candidateId: string,
+  purpose: ApiDraftPurpose = "follow_up",
+  signal?: AbortSignal,
+  token?: string,
+): Promise<MessageDraft> {
+  if (USE_MOCK_API) return mockDraft(candidateId, signal);
+  const { subject, body } = await apiFetch<ApiDraft>("/ai/draft-message", {
+    token,
+    method: "POST",
+    body: JSON.stringify({ application_id: candidateId, purpose }),
+    signal,
+  });
+  return { subject, body };
+}
+
+/** POST /ai/analyze-candidate: evidence, gaps and questions for the recruiter to review. */
+export async function analyzeCandidate(candidateId: string, token?: string): Promise<CandidateAnalysis> {
+  if (USE_MOCK_API) {
+    throw new ApiError("AI analysis needs the Talent Bridge API. Turn off mock mode to use it.", 0, "mock_mode");
+  }
+  const analysis = await apiFetch<ApiAnalysis>("/ai/analyze-candidate", {
+    token,
+    method: "POST",
+    body: JSON.stringify({ application_id: candidateId }),
+  });
+  return fromAnalysis(analysis);
+}
+
+async function mockDraft(candidateId: string, signal?: AbortSignal): Promise<MessageDraft> {
+  let text = "";
+  for await (const event of mockCandidateChat(candidateId, "Draft a follow-up message", signal)) {
+    if (event.event === "delta") text += event.data.text;
+  }
+  const subject = /\*\*Subject:\*\*\s*(.+)/.exec(text)?.[1]?.trim() ?? "";
+  const start = text.indexOf("Hi ");
+  return { subject, body: start === -1 ? text : text.slice(start).replace(/\*\*/g, "") };
 }

@@ -1,12 +1,16 @@
 import { STAGE_LABELS } from "@/types/application";
 import type { EngagementSignal } from "@/types/event";
+import type { CandidateQuery } from "@/services/candidates";
 import type {
   CandidateActivity,
   CandidateDetail,
+  CandidateRef,
   CandidateStage,
   Conversation,
   NewCandidateInput,
+  NewInterviewInput,
   PipelineCandidate,
+  ScheduledInterview,
   ThreadMessage,
 } from "@/types/workspace";
 
@@ -64,8 +68,12 @@ export const mockApi = {
     return { trends: clone(getMockDb().trends) };
   },
 
-  async getCandidates() {
-    return clone(getMockDb().candidates);
+  async getCandidates(query: CandidateQuery = {}) {
+    return clone(
+      getMockDb().candidates.filter(
+        (candidate) => (!query.stage || candidate.stage === query.stage) && (!query.jobId || candidate.jobId === query.jobId),
+      ),
+    );
   },
 
   async getCandidate(id: string) {
@@ -80,12 +88,17 @@ export const mockApi = {
     if (db.candidates.some((candidate) => candidate.email === email)) {
       throw new Error("A candidate with this email is already in the pipeline.");
     }
+    const job = db.jobs.find((item) => item.id === input.jobId);
+    if (!job) throw new Error("Choose the role they're being considered for.");
     const now = new Date().toISOString();
+    const id = `${slugify(name)}-${crypto.randomUUID().slice(0, 4)}`;
     const candidate: PipelineCandidate = {
-      id: `${slugify(name)}-${crypto.randomUUID().slice(0, 4)}`,
+      id,
+      candidateId: id,
+      jobId: job.id,
       name,
       email,
-      role: input.role,
+      role: job.title,
       location: input.location.trim() || undefined,
       stage: input.stage,
       lastActivity: "Added to pipeline",
@@ -148,7 +161,24 @@ export const mockApi = {
         return aUpcoming ? a.scheduledAt.localeCompare(b.scheduledAt) : b.scheduledAt.localeCompare(a.scheduledAt);
       });
     const messages = db.conversations.find((conversation) => conversation.candidate.id === id)?.messages ?? [];
-    return clone({ activities, interviews, messages, signals: engagementSignals(candidate, activities) });
+    return clone({ activities, interviews, messages, signals: engagementSignals(candidate, activities), analysis: null });
+  },
+
+  async scheduleInterview(candidate: CandidateRef, input: NewInterviewInput): Promise<ScheduledInterview> {
+    await mockDelay(400);
+    const interview: ScheduledInterview = {
+      id: newId("interview"),
+      candidate,
+      title: input.title,
+      scheduledAt: input.scheduledAt,
+      durationMinutes: input.durationMinutes,
+      format: input.format,
+      interviewers: input.interviewers,
+      status: "scheduled",
+    };
+    getMockDb().interviews.push(interview);
+    recordActivity(findCandidate(candidate.id), "interview", `${input.title} scheduled`);
+    return clone(interview);
   },
 
   async getJobs() {

@@ -1,5 +1,5 @@
 // Mirrors backend/app/schemas/job.py.
-export type JobStatus = "draft" | "open" | "paused" | "closed";
+export type JobStatus = "draft" | "open" | "closed";
 
 export type Job = {
   id: string;

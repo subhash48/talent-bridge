@@ -8,7 +8,7 @@ export function trackEvent(
   applicationId?: string,
   metadata: Record<string, unknown> = {},
 ) {
-  return apiFetch<void>("/v1/events", {
+  return apiFetch<void>("/events", {
     token,
     method: "POST",
     keepalive: true,

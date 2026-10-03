@@ -42,11 +42,11 @@ export default async function SettingsPage() {
           <h2 className="flex items-center gap-2 text-sm font-medium text-stone">
             <Database aria-hidden className="size-4" /> Data source
           </h2>
-          <p className="mt-4 text-[15px] text-ink">{USE_MOCK_API ? "Demo data (mock mode)" : "Encord recruiting API"}</p>
+          <p className="mt-4 text-[15px] text-ink">{USE_MOCK_API ? "Demo data (mock mode)" : "Talent Bridge API"}</p>
           <p className="mt-1.5 text-sm leading-relaxed text-stone">
             {USE_MOCK_API
-              ? "Candidates, jobs, interviews and messages come from seeded demo data. Changes last for this browser session. Set NEXT_PUBLIC_USE_MOCK_API=false to use the API."
-              : `Requests go to ${API_URL}.`}
+              ? "Candidates, jobs, interviews and messages come from seeded demo data in this browser. Changes last for this session. Remove NEXT_PUBLIC_USE_MOCK_API to use the API."
+              : `Candidates, jobs, interviews and messages are stored in the database behind ${API_URL}.`}
           </p>
         </Card>
 
@@ -54,7 +54,7 @@ export default async function SettingsPage() {
           <h2 className="flex items-center gap-2 text-sm font-medium text-stone">
             <Sparkles aria-hidden className="size-4 text-ai" /> AI assistant
           </h2>
-          <p className="mt-4 text-[15px] text-ink">{USE_MOCK_API ? "Template responses" : "Recruiter Copilot via /v1/ai/chat"}</p>
+          <p className="mt-4 text-[15px] text-ink">{USE_MOCK_API ? "Template responses" : "Recruiter Copilot via the Talent Bridge API"}</p>
           <p className="mt-1.5 text-sm leading-relaxed text-stone">
             The browser never holds model API keys. Answers are generated on the server from the candidate&apos;s record,
             and the assistant only drafts: you review and send every message.

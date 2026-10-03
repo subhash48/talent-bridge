@@ -25,6 +25,9 @@ export type CandidateRef = {
 };
 
 export type PipelineCandidate = CandidateRef & {
+  /** The person; one person can have applications to several jobs. */
+  candidateId: string;
+  jobId?: string;
   email?: string;
   location?: string;
   pronouns?: string;
@@ -47,7 +50,8 @@ export type ActivityKind =
   | "question"
   | "assessment"
   | "interview"
-  | "offer";
+  | "offer"
+  | "ai";
 
 export type CandidateActivity = {
   id: string;
@@ -86,11 +90,26 @@ export type Conversation = {
   unread: number;
 };
 
+export type CandidateAnalysis = {
+  id: string;
+  summary: string;
+  skillsMatched: { skill: string; evidence: string }[];
+  missingSkills: string[];
+  strengths: string[];
+  concerns: string[];
+  suggestedQuestions: string[];
+  recommendedNextStep: string;
+  modelName: string | null;
+  createdAt: string;
+};
+
 export type CandidateDetail = {
   activities: CandidateActivity[];
   interviews: ScheduledInterview[];
   messages: ThreadMessage[];
   signals: EngagementSignal[];
+  /** The latest AI analysis, if one has been generated. */
+  analysis: CandidateAnalysis | null;
 };
 
 export type JobOpening = {
@@ -108,8 +127,8 @@ export type JobOpening = {
 export type MetricKey = "total" | "interviews" | "followUp" | "offers";
 
 export type DashboardSummary = {
-  /** Percentage change against the previous 30 days, per metric. */
-  trends: Record<MetricKey, number>;
+  /** Percentage change against the previous 30 days, per metric; null when it can't be measured. */
+  trends: Record<MetricKey, number | null>;
 };
 
 export type CurrentUser = {
@@ -125,7 +144,17 @@ export type NewCandidateInput = {
   firstName: string;
   lastName: string;
   email: string;
-  role: string;
+  jobId: string;
   location: string;
   stage: CandidateStage;
+};
+
+export type NewInterviewInput = {
+  title: string;
+  format: InterviewFormat;
+  /** ISO timestamp. */
+  scheduledAt: string;
+  durationMinutes: number;
+  interviewers: string[];
+  meetingUrl?: string;
 };

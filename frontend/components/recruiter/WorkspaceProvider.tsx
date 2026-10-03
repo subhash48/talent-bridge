@@ -5,15 +5,21 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
 import {
   archiveCandidate as archiveCandidateRequest,
   createCandidate,
+  getCandidates,
   restoreCandidate as restoreCandidateRequest,
   updateCandidateStage,
 } from "@/services/candidates";
-import type { CandidateStage, CurrentUser, NewCandidateInput, PipelineCandidate } from "@/types/workspace";
+import type { CandidateStage, CurrentUser, JobOpening, NewCandidateInput, PipelineCandidate } from "@/types/workspace";
 
 type WorkspaceValue = {
   user: CurrentUser;
   candidates: PipelineCandidate[];
+  jobs: JobOpening[];
   unreadThreads: number;
+  /** Increases after every change, so views that query the API themselves know to refetch. */
+  revision: number;
+  /** Reload the pipeline from the API, e.g. after scheduling an interview or messaging. */
+  refresh: () => Promise<void>;
   addCandidate: (input: NewCandidateInput) => Promise<PipelineCandidate>;
   moveCandidate: (id: string, stage: CandidateStage) => Promise<PipelineCandidate>;
   archiveCandidate: (id: string) => Promise<void>;
@@ -26,6 +32,7 @@ const WorkspaceContext = createContext<WorkspaceValue | null>(null);
 type WorkspaceProviderProps = {
   user: CurrentUser;
   initialCandidates: PipelineCandidate[];
+  initialJobs: JobOpening[];
   initialUnreadThreads: number;
   children: ReactNode;
 };
@@ -34,19 +41,37 @@ type WorkspaceProviderProps = {
  * Candidate state shared by every recruiter page, seeded by the server layout. Mutations go through
  * services/candidates and apply the returned record, so they survive client-side navigation.
  */
-export function WorkspaceProvider({ user, initialCandidates, initialUnreadThreads, children }: WorkspaceProviderProps) {
+export function WorkspaceProvider({ user, initialCandidates, initialJobs, initialUnreadThreads, children }: WorkspaceProviderProps) {
   const [candidates, setCandidates] = useState(initialCandidates);
   const [unreadThreads, setUnreadThreads] = useState(initialUnreadThreads);
+  const [revision, setRevision] = useState(0);
 
-  const replace = useCallback((next: PipelineCandidate) => {
-    setCandidates((current) => current.map((candidate) => (candidate.id === next.id ? next : candidate)));
-  }, []);
+  const changed = useCallback(() => setRevision((current) => current + 1), []);
 
-  const addCandidate = useCallback(async (input: NewCandidateInput) => {
-    const created = await createCandidate(input);
-    setCandidates((current) => [created, ...current]);
-    return created;
-  }, []);
+  const replace = useCallback(
+    (next: PipelineCandidate) => {
+      setCandidates((current) => current.map((candidate) => (candidate.id === next.id ? next : candidate)));
+      changed();
+    },
+    [changed],
+  );
+
+  const refresh = useCallback(async () => {
+    setCandidates(await getCandidates());
+    changed();
+  }, [changed]);
+
+  const addCandidate = useCallback(
+    async (input: NewCandidateInput) => {
+      const created = await createCandidate(input);
+      setCandidates((current) => [created, ...current.filter((candidate) => candidate.id !== created.id)]);
+      changed();
+      // The new row shows straight away; then the list is re-read from the server.
+      refresh().catch(() => undefined);
+      return created;
+    },
+    [changed, refresh],
+  );
 
   const moveCandidate = useCallback(
     async (id: string, stage: CandidateStage) => {
@@ -57,15 +82,23 @@ export function WorkspaceProvider({ user, initialCandidates, initialUnreadThread
     [replace],
   );
 
-  const archiveCandidate = useCallback(async (id: string) => {
-    await archiveCandidateRequest(id);
-    setCandidates((current) => current.filter((candidate) => candidate.id !== id));
-  }, []);
+  const archiveCandidate = useCallback(
+    async (id: string) => {
+      await archiveCandidateRequest(id);
+      setCandidates((current) => current.filter((candidate) => candidate.id !== id));
+      changed();
+    },
+    [changed],
+  );
 
-  const restoreCandidate = useCallback(async (id: string) => {
-    const restored = await restoreCandidateRequest(id);
-    setCandidates((current) => [...current.filter((candidate) => candidate.id !== id), restored]);
-  }, []);
+  const restoreCandidate = useCallback(
+    async (id: string) => {
+      const restored = await restoreCandidateRequest(id);
+      setCandidates((current) => [...current.filter((candidate) => candidate.id !== id), restored]);
+      changed();
+    },
+    [changed],
+  );
 
   const markThreadRead = useCallback(() => setUnreadThreads((count) => Math.max(0, count - 1)), []);
 
@@ -73,14 +106,17 @@ export function WorkspaceProvider({ user, initialCandidates, initialUnreadThread
     () => ({
       user,
       candidates,
+      jobs: initialJobs,
       unreadThreads,
+      revision,
+      refresh,
       addCandidate,
       moveCandidate,
       archiveCandidate,
       restoreCandidate,
       markThreadRead,
     }),
-    [user, candidates, unreadThreads, addCandidate, moveCandidate, archiveCandidate, restoreCandidate, markThreadRead],
+    [user, candidates, initialJobs, unreadThreads, revision, refresh, addCandidate, moveCandidate, archiveCandidate, restoreCandidate, markThreadRead],
   );
 
   return <WorkspaceContext value={value}>{children}</WorkspaceContext>;

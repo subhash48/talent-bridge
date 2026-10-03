@@ -146,7 +146,7 @@ function CandidateDetailBody({ candidate, variant, tab, onTabChange, state, aiFo
           />
         </TabsContent>
         <TabsContent value="interviews">
-          <WithDetail state={state}>{(detail) => <CandidateInterviewList interviews={detail.interviews} />}</WithDetail>
+          <WithDetail state={state}>{(detail) => <CandidateInterviewList candidate={candidate} interviews={detail.interviews} />}</WithDetail>
         </TabsContent>
         <TabsContent value="messages">
           <WithDetail state={state}>{(detail) => <CandidateMessagesPreview candidate={candidate} messages={detail.messages} />}</WithDetail>

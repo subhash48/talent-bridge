@@ -17,8 +17,8 @@ import type { JobOpening, PipelineCandidate } from "@/types/workspace";
 const STATUS_FILTERS: { value: "all" | JobStatus; label: string }[] = [
   { value: "all", label: "All roles" },
   { value: "open", label: "Open" },
-  { value: "paused", label: "Paused" },
   { value: "draft", label: "Draft" },
+  { value: "closed", label: "Closed" },
 ];
 
 /** Candidates per stage for each job title, from the live workspace list. */

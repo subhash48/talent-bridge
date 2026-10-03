@@ -6,6 +6,7 @@ import {
   Handshake,
   MessageCircleMore,
   MessageSquareText,
+  Sparkles,
   UserPlus,
   type LucideIcon,
 } from "lucide-react";
@@ -24,6 +25,7 @@ const ICONS: Record<ActivityKind, LucideIcon> = {
   assessment: ClipboardCheck,
   interview: CalendarCheck,
   offer: Handshake,
+  ai: Sparkles,
 };
 
 type CandidateActivityProps = {

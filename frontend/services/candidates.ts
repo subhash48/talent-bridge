@@ -1,140 +1,222 @@
 import { USE_MOCK_API, apiFetch } from "@/services/api";
+import { fromInterview } from "@/services/interviews";
+import { fromMessage } from "@/services/messages";
 import { mockApi } from "@/services/mock/api";
-import type { DashboardRow } from "@/types/application";
-import type { ActivityEvent, EngagementSignal, EventType } from "@/types/event";
+import type {
+  ApiActivity,
+  ApiAnalysis,
+  ApiCandidateDetail,
+  ApiCandidateListItem,
+  ApiPage,
+} from "@/types/api";
 import {
   PIPELINE_STAGES,
   type ActivityKind,
   type CandidateActivity,
+  type CandidateAnalysis,
   type CandidateDetail,
   type CandidateStage,
   type DashboardSummary,
   type NewCandidateInput,
   type PipelineCandidate,
   type ScheduledInterview,
-  type ThreadMessage,
 } from "@/types/workspace";
 
-// Staff façade for candidates and applications (ARCHITECTURE.md 8.2).
+// Candidates and their applications. A pipeline row is one application: one person applying to
+// one job, so PipelineCandidate.id is the application id and candidateId is the person.
 
-export function getDashboardSummary(token?: string): Promise<DashboardSummary> {
+export type CandidateQuery = {
+  stage?: CandidateStage;
+  jobId?: string;
+  search?: string;
+  limit?: number;
+  offset?: number;
+};
+
+export async function getDashboardSummary(token?: string): Promise<DashboardSummary> {
   if (USE_MOCK_API) return mockApi.getDashboardSummary();
-  return apiFetch<DashboardSummary>("/v1/dashboard/summary", { token });
+  const { trends } = await apiFetch<{ trends: { total: number | null; interviews: number | null; follow_up: number | null; offers: number | null } }>(
+    "/dashboard/summary",
+    { token },
+  );
+  return { trends: { total: trends.total, interviews: trends.interviews, followUp: trends.follow_up, offers: trends.offers } };
 }
 
-export async function getCandidates(token?: string): Promise<PipelineCandidate[]> {
-  if (USE_MOCK_API) return mockApi.getCandidates();
-  const { rows } = await apiFetch<{ rows: DashboardRow[] }>("/v1/dashboard", { token });
-  return rows.filter(isPipelineRow).map(fromDashboardRow);
+/** GET /candidates: the pipeline, most recent activity first, filtered on the server. */
+export async function getCandidates(query: CandidateQuery = {}, token?: string): Promise<PipelineCandidate[]> {
+  if (USE_MOCK_API) return mockApi.getCandidates(query);
+  const params = new URLSearchParams({ limit: String(query.limit ?? 200) });
+  if (query.stage) params.set("stage", query.stage);
+  if (query.jobId) params.set("job_id", query.jobId);
+  if (query.search?.trim()) params.set("search", query.search.trim());
+  if (query.offset) params.set("offset", String(query.offset));
+  const page = await apiFetch<ApiPage<ApiCandidateListItem>>(`/candidates?${params}`, { token });
+  return page.items.filter(isPipelineStage).map(fromListItem);
 }
 
 export async function getCandidate(id: string, token?: string): Promise<PipelineCandidate | null> {
   if (USE_MOCK_API) return mockApi.getCandidate(id);
-  const candidates = await getCandidates(token);
+  const candidates = await getCandidates({}, token);
   return candidates.find((candidate) => candidate.id === id) ?? null;
 }
 
+/** POST /candidates with the job, so the person and their application are created together. */
 export async function createCandidate(input: NewCandidateInput, token?: string): Promise<PipelineCandidate> {
   if (USE_MOCK_API) return mockApi.createCandidate(input);
-  const row = await apiFetch<DashboardRow>("/v1/candidates", {
+  const detail = await apiFetch<ApiCandidateDetail>("/candidates", {
     token,
     method: "POST",
-    headers: { "Idempotency-Key": crypto.randomUUID() },
     body: JSON.stringify({
       first_name: input.firstName,
       last_name: input.lastName,
       email: input.email,
-      role: input.role,
       location: input.location || null,
+      job_id: input.jobId,
       stage: input.stage,
     }),
   });
-  return fromDashboardRow(row);
+  return fromDetail(detail);
 }
 
+/** PATCH /applications/{id}/stage. The server records stage history and an activity entry. */
 export async function updateCandidateStage(id: string, stage: CandidateStage, token?: string): Promise<PipelineCandidate> {
   if (USE_MOCK_API) return mockApi.updateCandidateStage(id, stage);
-  const row = await apiFetch<DashboardRow>(`/v1/applications/${id}/stage`, {
+  const row = await apiFetch<ApiCandidateListItem>(`/applications/${id}/stage`, {
     token,
     method: "PATCH",
-    body: JSON.stringify({ to: stage }),
+    body: JSON.stringify({ stage }),
   });
-  return fromDashboardRow(row);
+  return fromListItem(row);
 }
 
 export async function archiveCandidate(id: string, token?: string): Promise<void> {
   if (USE_MOCK_API) return mockApi.archiveCandidate(id);
-  await apiFetch<void>(`/v1/applications/${id}`, { token, method: "PATCH", body: JSON.stringify({ status: "archived" }) });
+  await apiFetch<ApiCandidateListItem>(`/applications/${id}/archive`, { token, method: "POST" });
 }
 
 export async function restoreCandidate(id: string, token?: string): Promise<PipelineCandidate> {
   if (USE_MOCK_API) return mockApi.restoreCandidate(id);
-  const row = await apiFetch<DashboardRow>(`/v1/applications/${id}`, {
-    token,
-    method: "PATCH",
-    body: JSON.stringify({ status: "active" }),
-  });
-  return fromDashboardRow(row);
+  return fromListItem(await apiFetch<ApiCandidateListItem>(`/applications/${id}/restore`, { token, method: "POST" }));
 }
 
 export async function getCandidateActivities(id: string, token?: string): Promise<CandidateActivity[]> {
   if (USE_MOCK_API) return mockApi.getCandidateActivities(id);
-  const events = await apiFetch<ActivityEvent[]>(`/v1/applications/${id}/events`, { token });
-  return events.map((event) => ({
-    id: event.id,
-    candidateId: id,
-    kind: ACTIVITY_KINDS[event.event_type] ?? "stage",
-    label: event.label,
-    occurredAt: event.occurred_at,
-  }));
+  const activity = await apiFetch<ApiActivity[]>(`/applications/${id}/activity`, { token });
+  return activity.map((item) => fromActivity(item, id));
 }
 
-/** Everything the candidate panel's tabs need, loaded when a candidate is selected. */
-export async function getCandidateDetail(id: string, token?: string): Promise<CandidateDetail> {
+/** Everything the candidate panel's tabs need: GET /candidates/{candidateId} for one application. */
+export async function getCandidateDetail(id: string, candidateId: string, token?: string): Promise<CandidateDetail> {
   if (USE_MOCK_API) return mockApi.getCandidateDetail(id);
-  const [activities, interviews, messages, engagement] = await Promise.all([
-    getCandidateActivities(id, token),
-    apiFetch<ScheduledInterview[]>(`/v1/interviews?application_id=${id}`, { token }),
-    apiFetch<ThreadMessage[]>(`/v1/applications/${id}/messages`, { token }),
-    apiFetch<{ signals: EngagementSignal[] }>(`/v1/applications/${id}/engagement`, { token }),
-  ]);
-  return { activities, interviews, messages, signals: engagement.signals };
+  const detail = await apiFetch<ApiCandidateDetail>(`/candidates/${candidateId}?application_id=${id}`, { token });
+  const candidate = fromDetail(detail);
+  return {
+    activities: detail.activity.map((item) => fromActivity(item, id)),
+    interviews: forPanel(detail.interviews.map((interview) => fromInterview(interview, candidate))),
+    messages: detail.messages.map(fromMessage),
+    signals: detail.engagement?.signals ?? [],
+    analysis: detail.ai_analysis && fromAnalysis(detail.ai_analysis),
+  };
 }
 
-const ACTIVITY_KINDS: Partial<Record<EventType, ActivityKind>> = {
-  interview_confirmed: "interview",
+const ACTIVITY_KINDS: Record<string, ActivityKind> = {
+  application_created: "sourced",
+  stage_changed: "stage",
+  application_archived: "stage",
+  application_restored: "stage",
+  onboarding_started: "stage",
   interview_scheduled: "interview",
-  interview_completed: "interview",
+  interview_confirmed: "interview",
   interview_reschedule_requested: "interview",
-  interview_prep_viewed: "document",
-  resource_viewed: "document",
-  document_uploaded: "document",
-  ai_question_asked: "question",
-  message_received: "message",
+  interview_completed: "interview",
+  interview_cancelled: "interview",
   message_sent: "message",
+  message_received: "message",
+  resume_viewed: "document",
+  document_shared: "document",
+  prep_viewed: "document",
+  question_asked: "question",
+  assessment_sent: "assessment",
   assessment_completed: "assessment",
+  offer_sent: "offer",
   offer_viewed: "offer",
-  application_stage_changed: "stage",
+  offer_accepted: "offer",
+  ai_analysis_generated: "ai",
 };
 
-function isPipelineRow(row: DashboardRow): boolean {
-  return (PIPELINE_STAGES as readonly string[]).includes(row.stage);
+function fromActivity(activity: ApiActivity, applicationId: string): CandidateActivity {
+  return {
+    id: activity.id,
+    candidateId: applicationId,
+    kind: ACTIVITY_KINDS[activity.activity_type] ?? "stage",
+    label: activity.title,
+    occurredAt: activity.created_at,
+  };
 }
 
-/** Maps the documented GET /v1/dashboard row (ARCHITECTURE.md 8.5) to the workspace view model. */
-function fromDashboardRow(row: DashboardRow): PipelineCandidate {
-  const stage = (PIPELINE_STAGES as readonly string[]).includes(row.stage) ? (row.stage as CandidateStage) : "screening";
+export function fromAnalysis(analysis: ApiAnalysis): CandidateAnalysis {
   return {
-    id: row.application_id,
-    name: row.candidate.name,
-    avatarUrl: row.candidate.avatar_url ?? undefined,
-    role: row.job.title,
-    stage,
-    lastActivity: row.last_activity?.label ?? "No activity yet",
-    lastActivityAt: row.last_activity?.at ?? new Date(0).toISOString(),
-    engagement: row.engagement.level,
-    followUp: row.next_action.follow_up ? { reason: row.next_action.reason ?? row.next_action.label } : undefined,
-    skills: [],
-    addedAt: row.last_activity?.at ?? new Date(0).toISOString(),
+    id: analysis.id,
+    summary: analysis.summary,
+    skillsMatched: analysis.skills_matched,
+    missingSkills: analysis.missing_skills,
+    strengths: analysis.strengths,
+    concerns: analysis.concerns,
+    suggestedQuestions: analysis.suggested_questions,
+    recommendedNextStep: analysis.recommended_next_step,
+    modelName: analysis.model_name,
+    createdAt: analysis.created_at,
   };
+}
+
+// The workspace shows the five pipeline stages; rejected applications leave the board.
+function isPipelineStage(item: { stage: string }): boolean {
+  return (PIPELINE_STAGES as readonly string[]).includes(item.stage);
+}
+
+function fromListItem(item: ApiCandidateListItem): PipelineCandidate {
+  return {
+    id: item.application_id,
+    candidateId: item.candidate.id,
+    jobId: item.job.id,
+    name: item.candidate.full_name,
+    avatarUrl: item.candidate.avatar_url ?? undefined,
+    role: item.job.title,
+    email: item.candidate.email,
+    location: item.candidate.location ?? undefined,
+    pronouns: item.candidate.pronouns ?? undefined,
+    stage: item.stage as CandidateStage,
+    lastActivity: item.last_activity?.title ?? "No activity yet",
+    lastActivityAt: item.last_activity?.created_at ?? item.applied_at,
+    engagement: item.engagement.level,
+    followUp: item.engagement.follow_up_reason ? { reason: item.engagement.follow_up_reason } : undefined,
+    nextStep: item.next_interview ? { title: item.next_interview.title, date: item.next_interview.scheduled_at } : undefined,
+    skills: item.candidate.skills,
+    addedAt: item.applied_at,
+  };
+}
+
+function fromDetail(detail: ApiCandidateDetail): PipelineCandidate {
+  const { application, job, engagement, stage } = detail;
+  if (!application || !job || !engagement || !stage) throw new Error("This candidate has no application yet.");
+  return fromListItem({
+    application_id: application.id,
+    candidate: detail.candidate,
+    job,
+    stage,
+    source: application.source,
+    applied_at: application.applied_at,
+    updated_at: application.updated_at,
+    archived_at: application.archived_at,
+    last_activity: detail.activity[0] ?? null,
+    engagement,
+    next_interview: detail.next_interview,
+  });
+}
+
+/** Upcoming interviews first (soonest first), then past ones (most recent first). */
+function forPanel(interviews: ScheduledInterview[], now = Date.now()): ScheduledInterview[] {
+  const upcoming = interviews.filter((interview) => new Date(interview.scheduledAt).getTime() > now);
+  const past = interviews.filter((interview) => new Date(interview.scheduledAt).getTime() <= now).reverse();
+  return [...upcoming, ...past];
 }

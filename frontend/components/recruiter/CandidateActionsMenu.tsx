@@ -21,6 +21,7 @@ import {
 import { useToast } from "@/components/ui/Toaster";
 import { firstName } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { errorMessage } from "@/services/api";
 import { STAGE_LABELS } from "@/types/application";
 import { PIPELINE_STAGES, type CandidateStage, type PipelineCandidate } from "@/types/workspace";
 
@@ -44,8 +45,8 @@ export function CandidateActionsMenu({ candidate, onAskAI, className }: Candidat
     try {
       await moveCandidate(candidate.id, stage);
       toast({ title: `${first} moved to ${STAGE_LABELS[stage]}`, tone: "success" });
-    } catch {
-      toast({ title: "Couldn't update the stage", description: "Please try again.", tone: "error" });
+    } catch (error) {
+      toast({ title: "Couldn't update the stage", description: errorMessage(error), tone: "error" });
     }
   }
 
@@ -65,10 +66,16 @@ export function CandidateActionsMenu({ candidate, onAskAI, className }: Candidat
       toast({
         title: `${candidate.name} archived`,
         description: "Removed from the active pipeline.",
-        action: { label: "Undo", onClick: () => void restoreCandidate(candidate.id) },
+        action: {
+          label: "Undo",
+          onClick: () =>
+            restoreCandidate(candidate.id).catch((error: unknown) =>
+              toast({ title: "Couldn't restore this candidate", description: errorMessage(error), tone: "error" }),
+            ),
+        },
       });
-    } catch {
-      toast({ title: "Couldn't archive this candidate", tone: "error" });
+    } catch (error) {
+      toast({ title: "Couldn't archive this candidate", description: errorMessage(error), tone: "error" });
     }
   }
 

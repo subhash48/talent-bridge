@@ -1,15 +1,16 @@
--- HireMesh migration 007: events
--- Purpose: the append-only activity log and the realtime ping table.
--- Reference: docs/ARCHITECTURE.md sections 5.6, 7.2, 7.3 and 9.
---
--- Planned tables:
---   activity_events append-only; event_type checked by the app against the section 9.2
---                   catalog; source (event_source); unique idempotency_key; schema_version
---   change_feed     realtime pings, not payloads; audience staff | candidate | both;
---                   topics; pruned after 24h
---
--- Planned indexes:
---   activity_events (application_id, occurred_at desc); (organization_id, occurred_at desc)
---   change_feed     (created_at)
---
--- Starter file: intentionally no DDL until the schema is approved.
+-- Talent Bridge migration 007: candidate activity
+-- Purpose: the append-only timeline of each application. activity_type is text (see ActivityType
+-- in backend/app/core/enums.py), so new kinds of activity don't need a migration.
+
+create table public.candidate_activity (
+  id             uuid primary key default gen_random_uuid(),
+  application_id uuid not null references public.applications (id) on delete cascade,
+  activity_type  text not null,
+  title          text not null,
+  description    text,
+  metadata       jsonb,
+  created_at     timestamptz not null default now()
+);
+
+create index candidate_activity_application_idx
+  on public.candidate_activity (application_id, created_at desc);

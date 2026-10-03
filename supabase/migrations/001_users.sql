@@ -1,21 +1,32 @@
--- HireMesh migration 001: users
--- Purpose: shared enums plus identity and tenancy (organizations, staff and candidate users).
--- Reference: docs/ARCHITECTURE.md sections 7.2 and 10.1.
---
--- Planned extensions:
---   pg_trgm         trigram index on candidates.name (see 003)
---
--- Planned tables:
---   enums           user_role          recruiter | candidate | admin
---                   application_stage  sourced | applied | screening | interview |
---                                      final_interview | offer | hired | rejected
---                   application_status active | on_hold | withdrawn | archived
---                   interview_status   scheduled | confirmed | reschedule_requested |
---                                      completed | canceled | no_show
---                   event_source       candidate_portal | recruiter_dashboard | system | ai
---                   engagement_level   high | medium | low | insufficient
---                   visibility_level   public | candidate | internal
---   organizations   tenant root (name, domain, timezone, settings)
---   users           1:1 with auth.users; role; organization_id set for staff only
---
--- Starter file: intentionally no DDL until the schema is approved.
+-- Talent Bridge migration 001: users
+-- Purpose: shared helpers and the people who sign in (recruiters and admins now, candidates later).
+-- The backend models in backend/app/models mirror this schema.
+
+-- Keeps updated_at current on every UPDATE, including edits made outside the API.
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+create type public.user_role as enum ('recruiter', 'candidate', 'admin');
+
+-- When Supabase Auth is added, link rows to auth.users(id); the API will resolve the signed-in
+-- user from the access token and keep using this table for role.
+create table public.users (
+  id         uuid primary key default gen_random_uuid(),
+  email      text not null unique check (email = lower(email)),
+  full_name  text not null,
+  role       public.user_role not null default 'recruiter',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create trigger users_set_updated_at
+  before update on public.users
+  for each row execute function public.set_updated_at();

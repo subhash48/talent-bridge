@@ -12,6 +12,10 @@ class UserRole(StrEnum):
     ADMIN = "admin"
 
 
+# Roles that may use the recruiter workspace.
+STAFF_ROLES: frozenset[UserRole] = frozenset({UserRole.RECRUITER, UserRole.ADMIN})
+
+
 class JobStatus(StrEnum):
     DRAFT = "draft"
     OPEN = "open"

@@ -5,7 +5,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query
 
-from app.core.dependencies import CurrentUserDep, SessionDep
+from app.core.dependencies import RecruiterDep, SessionDep
 from app.core.enums import ApplicationStage
 from app.schemas.candidate import CandidateCreate, CandidateDetail, CandidateListItem
 from app.schemas.common import Page
@@ -45,6 +45,6 @@ async def get_candidate(candidate_id: UUID, session: SessionDep, application_id:
 
 
 @router.post("", response_model=CandidateDetail, status_code=201, summary="Add a candidate")
-async def create_candidate(body: CandidateCreate, session: SessionDep, user: CurrentUserDep) -> CandidateDetail:
+async def create_candidate(body: CandidateCreate, session: SessionDep, user: RecruiterDep) -> CandidateDetail:
     """Creates the person and, when job_id is set, their application at the given stage."""
     return await candidate_service.create_candidate(session, body, user)

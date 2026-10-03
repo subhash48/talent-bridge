@@ -1,6 +1,7 @@
+import uuid
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Text
+from sqlalchemy import ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, JSONType, Timestamps, UUIDPrimaryKey
@@ -25,6 +26,8 @@ class Candidate(UUIDPrimaryKey, Timestamps, Base):
     resume_url: Mapped[str | None] = mapped_column(Text)
     pronouns: Mapped[str | None] = mapped_column(Text)
     skills: Mapped[list[str]] = mapped_column(JSONType, default=list)
+    # The candidate's own sign-in (a users row with role candidate). Null until they have one.
+    user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), unique=True)
 
     applications: Mapped[list["Application"]] = relationship(back_populates="candidate", passive_deletes=True)
 

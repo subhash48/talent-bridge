@@ -6,7 +6,7 @@ Every error response has the same shape, so the frontend can always show a frien
 """
 
 import logging
-from typing import Any
+from typing import Any, ClassVar
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 class AppError(Exception):
     status_code = 500
     code = "internal_error"
+    headers: ClassVar[dict[str, str] | None] = None
 
     def __init__(self, message: str, *, code: str | None = None, details: Any = None) -> None:
         super().__init__(message)
@@ -42,6 +43,12 @@ class InvalidStageTransitionError(BadRequestError):
 class UnauthorizedError(AppError):
     status_code = 401
     code = "unauthorized"
+    headers: ClassVar[dict[str, str] | None] = {"WWW-Authenticate": "Bearer"}
+
+
+class ForbiddenError(AppError):
+    status_code = 403
+    code = "forbidden"
 
 
 class NotFoundError(AppError):
@@ -76,7 +83,9 @@ HTTP_CODES = {
 
 async def _app_error(_request: Request, exc: Exception) -> JSONResponse:
     assert isinstance(exc, AppError)
-    return JSONResponse(error_body(exc.code, exc.message, exc.details), status_code=exc.status_code)
+    return JSONResponse(
+        error_body(exc.code, exc.message, exc.details), status_code=exc.status_code, headers=exc.headers
+    )
 
 
 async def _http_error(_request: Request, exc: Exception) -> JSONResponse:

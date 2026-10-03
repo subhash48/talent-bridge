@@ -4,7 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Response
 
-from app.core.dependencies import CurrentUserDep, SessionDep
+from app.core.dependencies import RecruiterDep, SessionDep
 from app.schemas.message import Conversation, MessageCreate, MessageRead, UnreadCount
 from app.services import message_service
 
@@ -35,7 +35,7 @@ async def list_messages(application_id: UUID, session: SessionDep) -> list[Messa
     summary="Send a message",
 )
 async def send_message(
-    application_id: UUID, body: MessageCreate, session: SessionDep, user: CurrentUserDep
+    application_id: UUID, body: MessageCreate, session: SessionDep, user: RecruiterDep
 ) -> MessageRead:
     return await message_service.send_message(session, application_id, body.content, user)
 

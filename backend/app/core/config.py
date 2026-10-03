@@ -2,7 +2,8 @@
 
 Every setting has a safe default, so the API boots with no .env at all: a local SQLite file
 instead of Supabase, the mock AI provider instead of Gemini or Groq, and no Ashby connection.
-Secrets are SecretStr so they never show up in logs or reprs, and none of them are ever sent
+Sign-in is the exception: without SUPABASE_URL no access token can be verified, so every route
+except /health refuses the request. Secrets are SecretStr so they never show up in logs or reprs, and none of them are ever sent
 to the frontend.
 """
 
@@ -45,17 +46,14 @@ class Settings(BaseSettings):
     # Load the demo pipeline into an empty database on startup.
     seed_demo_data: bool = True
 
-    # Server-side only. The frontend never receives these.
+    # Supabase Auth. Access tokens are verified with the project's public signing keys (JWKS), so
+    # sign-in needs no secret. SUPABASE_JWKS_URL defaults to SUPABASE_URL's.
     supabase_url: str | None = None
-    supabase_service_role_key: SecretStr | None = None
+    supabase_jwks_url: str | None = None
 
     frontend_url: str = "http://localhost:3000"
     cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:3000"]
 
-    # Every request acts as this recruiter until Supabase Auth is added (see core/security.py).
-    default_user_email: str = "alex.chen@encord.example"
-    # The candidate portal acts as this candidate until Supabase Auth is added (see core/security.py).
-    dev_candidate_email: str = "sophia.martinez@example.com"
     # Company-approved facts the candidate assistant may share. It never invents company details.
     organization_overview: str = (
         "Encord builds the data development platform AI teams use to curate, annotate and evaluate "
@@ -88,6 +86,21 @@ class Settings(BaseSettings):
     @classmethod
     def _lowercase_provider(cls, value: str) -> str:
         return value.strip().lower()
+
+    @property
+    def jwt_issuer(self) -> str | None:
+        """Supabase Auth's issuer (iss claim): https://<project>.supabase.co/auth/v1."""
+        if self.supabase_url:
+            return f"{self.supabase_url.rstrip('/')}/auth/v1"
+        if self.supabase_jwks_url:
+            return self.supabase_jwks_url.removesuffix("/.well-known/jwks.json").rstrip("/")
+        return None
+
+    @property
+    def jwks_url(self) -> str | None:
+        if self.supabase_jwks_url:
+            return self.supabase_jwks_url
+        return f"{self.jwt_issuer}/.well-known/jwks.json" if self.jwt_issuer else None
 
     @property
     def allowed_origins(self) -> list[str]:

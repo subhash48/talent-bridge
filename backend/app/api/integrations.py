@@ -2,20 +2,24 @@
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Header, Request
+from fastapi import APIRouter, Depends, Header, Request
 
-from app.core.dependencies import SessionDep
+from app.core.dependencies import SessionDep, require_recruiter
 from app.integrations.ashby import AshbyClient
 
 router = APIRouter(prefix="/integrations/ashby", tags=["integrations"])
 
 
-@router.get("", summary="Ashby connection status")
+@router.get("", dependencies=[Depends(require_recruiter)], summary="Ashby connection status")
 async def status() -> dict[str, bool]:
     return {"configured": AshbyClient.from_settings().configured}
 
 
-@router.post("/sync", summary="Pull jobs, candidates and applications from Ashby")
+@router.post(
+    "/sync",
+    dependencies=[Depends(require_recruiter)],
+    summary="Pull jobs, candidates and applications from Ashby",
+)
 async def sync(session: SessionDep) -> dict[str, Any]:
     """503 until ASHBY_API_KEY is set."""
     client = AshbyClient.from_settings()
@@ -26,6 +30,7 @@ async def sync(session: SessionDep) -> dict[str, Any]:
     }
 
 
+# No sign-in: Ashby calls this, and the request is verified by its signature instead.
 @router.post("/webhook", status_code=202, summary="Ashby webhook receiver")
 async def webhook(
     request: Request, ashby_signature: Annotated[str | None, Header(alias="Ashby-Signature")] = None

@@ -5,7 +5,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query
 
-from app.core.dependencies import CurrentUserDep, SessionDep
+from app.core.dependencies import RecruiterDep, SessionDep
 from app.core.enums import InterviewStatus
 from app.schemas.interview import InterviewCreate, InterviewListItem, InterviewRead, InterviewUpdate
 from app.services import interview_service
@@ -26,7 +26,7 @@ async def list_interviews(
 
 @router.patch("/interviews/{interview_id}", response_model=InterviewRead, summary="Update an interview")
 async def update_interview(
-    interview_id: UUID, body: InterviewUpdate, session: SessionDep, user: CurrentUserDep
+    interview_id: UUID, body: InterviewUpdate, session: SessionDep, user: RecruiterDep
 ) -> InterviewRead:
     """Reschedule, record the candidate's confirmation, complete (with feedback notes) or cancel."""
     return await interview_service.update_interview(session, interview_id, body, user)
@@ -48,7 +48,7 @@ async def list_application_interviews(application_id: UUID, session: SessionDep)
     summary="Schedule an interview",
 )
 async def schedule_interview(
-    application_id: UUID, body: InterviewCreate, session: SessionDep, user: CurrentUserDep
+    application_id: UUID, body: InterviewCreate, session: SessionDep, user: RecruiterDep
 ) -> InterviewRead:
     """Also records an interview_scheduled timeline entry."""
     return await interview_service.schedule_interview(session, application_id, body, user)

@@ -36,6 +36,7 @@ from app.models import (
     User,
 )
 from app.models.base import utcnow
+from app.services.account_service import AccountLinkError, link_account
 
 NAMESPACE = uuid.UUID("6f1c0d1e-7a51-4c1e-9b8a-5e1d2c3b4a10")
 PIPELINE = [
@@ -276,9 +277,17 @@ async def seed_if_empty(session: AsyncSession) -> bool:
 
 
 async def reset_and_seed(session: AsyncSession) -> None:
+    """Replace everything with the demo data. Sign-in links are kept: whoever was linked to Alex Chen
+    or a demo candidate before the reset still is afterwards."""
+    links = (await session.execute(select(User.email, User.auth_user_id).where(User.auth_user_id.is_not(None)))).all()
     for table in [AIAnalysis, *reversed(TABLES)]:
         await session.execute(delete(table))
     await load_seed(session)
+    for email, auth_user_id in links:
+        try:
+            await link_account(session, email, auth_user_id)
+        except AccountLinkError:  # that person isn't in the demo data
+            await session.rollback()
 
 
 # SQL output for supabase/seed.sql

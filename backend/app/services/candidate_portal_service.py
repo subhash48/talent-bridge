@@ -15,9 +15,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
-from app.core.enums import ActivityType, ApplicationStage, SenderType, UserRole
+from app.core.enums import STAFF_ROLES, ActivityType, ApplicationStage, SenderType, UserRole
 from app.core.errors import NotFoundError
-from app.core.security import resolve_current_user
 from app.models import Application, Candidate, CandidateStageHistory, User
 from app.models.base import utcnow
 from app.schemas.portal import (
@@ -155,7 +154,7 @@ async def require_record(session: AsyncSession, candidate: Candidate) -> PortalR
 
 
 async def recruiter_for(session: AsyncSession, application_id: uuid.UUID) -> PortalRecruiter | None:
-    """The recruiter who last moved the application, else the workspace's default recruiter."""
+    """The recruiter who last moved the application, else the workspace's first recruiter."""
     user = await session.scalar(
         select(User)
         .join(CandidateStageHistory, CandidateStageHistory.changed_by == User.id)
@@ -163,7 +162,9 @@ async def recruiter_for(session: AsyncSession, application_id: uuid.UUID) -> Por
         .order_by(CandidateStageHistory.changed_at.desc())
         .limit(1)
     )
-    user = user or await resolve_current_user(session)
+    user = user or await session.scalar(
+        select(User).where(User.role.in_(STAFF_ROLES)).order_by(User.created_at).limit(1)
+    )
     if user is None:
         return None
     return PortalRecruiter(

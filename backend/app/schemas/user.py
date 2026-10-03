@@ -14,3 +14,4 @@ class UserRead(APIModel):
 
 class CurrentUserRead(UserRead):
     organization: str
+    candidate_id: UUID | None = None  # the candidate's own record; null for staff

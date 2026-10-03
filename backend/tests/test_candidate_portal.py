@@ -18,7 +18,7 @@ from app.models import Candidate
 from app.services import candidate_portal_service
 from app.services.ai.gemini import GeminiProvider
 from app.services.candidate_ai_service import build_portal_context
-from tests.conftest import API, application_id, candidate_id
+from tests.conftest import API, application_id, candidate_id, link
 
 SOPHIA_APP = application_id("sophia-martinez")
 SOPHIA = candidate_id("sophia-martinez")
@@ -414,24 +414,19 @@ async def test_candidate_cannot_change_protected_fields(client: AsyncClient, bod
 # Identity
 
 
-async def test_candidate_without_an_application(client: AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_candidate_without_an_application(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
     created = await client.post(
         f"{API}/candidates", json={"first_name": "Nina", "last_name": "Patel", "email": "nina.patel@example.com"}
     )
     assert created.status_code == 201
-    monkeypatch.setattr(settings, "dev_candidate_email", "nina.patel@example.com")
+    nina = await link(sessions, "nina.patel@example.com")
 
-    me = (await client.get(f"{API}/candidate/me")).json()
+    me = (await client.get(f"{API}/candidate/me", headers=nina)).json()
     assert me["candidate"]["full_name"] == "Nina Patel"
     assert me["application"] is None and me["next_interview"] is None and me["recent_activity"] == []
-    assert (await client.get(f"{API}/candidate/interviews")).json() == []
-    missing = await client.get(f"{API}/candidate/application")
+    assert (await client.get(f"{API}/candidate/interviews", headers=nina)).json() == []
+    missing = await client.get(f"{API}/candidate/application", headers=nina)
     assert missing.status_code == 404 and missing.json()["error"]["code"] == "no_application"
-    assert (await client.post(f"{API}/candidate/messages", json={"content": "Hi"})).status_code == 404
-
-
-async def test_unknown_dev_candidate(client: AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(settings, "dev_candidate_email", "nobody@example.com")
-    response = await client.get(f"{API}/candidate/me")
-    assert response.status_code == 404
-    assert response.json()["error"]["code"] == "candidate_not_found"
+    assert (await client.post(f"{API}/candidate/messages", json={"content": "Hi"}, headers=nina)).status_code == 404

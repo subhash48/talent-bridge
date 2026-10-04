@@ -89,6 +89,10 @@ class Settings(BaseSettings):
     # Custom Ashby stage titles to Talent Bridge stages, as JSON: {"Take-home": "screening"}.
     # Stages not listed map by their Ashby type (integrations/ashby/mapping.py).
     ashby_stage_title_map: dict[str, ApplicationStage] = {}
+    # Development only: recruiter-created demo jobs and the public demo careers site (/demo/careers),
+    # whose applications reach Talent Bridge through the Ashby simulator. Every demo route answers 404
+    # unless this is true, and always when ENVIRONMENT=production.
+    enable_ashby_demo: bool = False
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -138,6 +142,11 @@ class Settings(BaseSettings):
         that appends &token_hash=...&type=invite also works: the page hands those to /auth/confirm.
         """
         return f"{self.frontend_url.rstrip('/')}/auth/callback?next=/welcome"
+
+    @property
+    def ashby_demo_enabled(self) -> bool:
+        """Demo jobs and the demo careers site are on: ENABLE_ASHBY_DEMO=true, outside production."""
+        return self.enable_ashby_demo and self.environment != "production"
 
     @property
     def allowed_origins(self) -> list[str]:

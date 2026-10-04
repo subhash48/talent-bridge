@@ -5,6 +5,7 @@ from app.models.ai_analysis import AIAnalysis
 from app.models.application import Application, CandidateStageHistory
 from app.models.base import Base
 from app.models.candidate import Candidate
+from app.models.demo import DemoApplication, DemoJobPosting, DemoResume
 from app.models.engagement import CandidateEngagementEvent, PortalSession
 from app.models.integration import AshbySyncState, AshbyWebhookEvent
 from app.models.interview import Interview
@@ -22,6 +23,9 @@ __all__ = [
     "CandidateActivity",
     "CandidateEngagementEvent",
     "CandidateStageHistory",
+    "DemoApplication",
+    "DemoJobPosting",
+    "DemoResume",
     "Interview",
     "Job",
     "Message",

@@ -173,6 +173,25 @@ class PortalPage(StrEnum):
     PROFILE = "profile"
 
 
+class DemoPostingStatus(StrEnum):
+    """A demo job's posting on the development-only careers site (migration 013). Separate from the
+    job's own status (JobStatus), which is the ATS's: unpublishing takes a posting off the site but
+    leaves the job open for the candidates who already applied."""
+
+    DRAFT = "draft"  # not on the careers site: never published, or unpublished
+    PUBLISHED = "published"  # listed on /demo/careers and taking applications
+    CLOSED = "closed"  # the job closed: not listed and no new applications; existing ones stay
+
+
+class DemoApplicationStatus(StrEnum):
+    """An application made on the demo careers site (migration 013). Recruiters see it only once it
+    is submitted, which needs the applicant to prove they own the email."""
+
+    AWAITING_ACTIVATION = "awaiting_activation"  # invited to the portal; submitted when they accept
+    AWAITING_SIGN_IN = "awaiting_sign_in"  # they already have an account; submitted when they sign in
+    SUBMITTED = "submitted"  # delivered through the Ashby simulator: the candidate and application exist
+
+
 class WebhookEventStatus(StrEnum):
     PROCESSING = "processing"
     PROCESSED = "processed"

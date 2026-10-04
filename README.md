@@ -52,13 +52,13 @@ Supabase Auth (email and password) proves who someone is; the API decides what t
 - **Candidates** use `/candidate` and `/api/v1/candidate/*` only, always scoped to their own record (`candidates.user_id`); the API never takes a candidate id from the browser.
 - No token or an invalid one is `401`; a valid token without a linked account, or with the wrong role, is `403`. `users.disabled_at` revokes access immediately.
 
-Pages: `/login`, `/signup` (candidates), `/forgot-password`, `/reset-password`, and `/auth/confirm`, where Supabase's confirmation and reset emails land.
+Pages: `/login`, `/signup` (candidates), `/forgot-password`, `/reset-password`, `/auth/confirm`, where Supabase's confirmation and reset emails land, `/auth/callback`, where portal invitations land, and `/welcome`, where an invited candidate chooses their password.
 
 **Configure** (values from Project Settings > API):
 
 - `backend/.env`: `SUPABASE_URL=https://<project-ref>.supabase.co`. No secret key is needed.
 - `frontend/.env.local`: `NEXT_PUBLIC_SUPABASE_URL` (the same URL) and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (`sb_publishable_...`). Never put a secret or service role key in a `NEXT_PUBLIC_` variable.
-- In the dashboard, under Authentication > URL Configuration, set the Site URL to `http://localhost:3000` and add `http://localhost:3000/**` to the Redirect URLs, so confirmation and reset links can return to `/auth/confirm`. Keep **Confirm email** on (the default).
+- In the dashboard, under Authentication > URL Configuration, set the Site URL to `http://localhost:3000` and add `http://localhost:3000/**` to the Redirect URLs, so confirmation and reset links can return to `/auth/confirm` and invitations to `/auth/callback`. Keep **Confirm email** on (the default).
 
 **Demo accounts.** The demo data has Alex Chen (recruiter) and Sophia Martinez (candidate) but no sign-ins. To give each one:
 
@@ -99,10 +99,16 @@ or the recruiter Settings page's **Sync now** (`POST /api/v1/integrations/ashby/
 
 **Stages.** Ashby stages map by their type (pre-interview screen > Screening, active > Interview, offer > Offer, hired > Hired). Map custom stage titles with `ASHBY_STAGE_TITLE_MAP='{"Take-home": "screening"}'`. Ashby's own stage, status and archive reason *type* are kept on the application; the reason's text never is. In the candidate portal an application is **Active**, **No longer under consideration** (rejected by the team) or **Inactive** (withdrawn, hired, or the role closed). The tables live in `integrations/ashby/mapping.py` and `services/candidate_visibility.py`.
 
-**Candidate portal invitations.** Applying through Ashby gives the candidate portal access at the email they applied with. If they already have a Talent Bridge sign-in it's reused, never duplicated; otherwise Supabase emails them an invitation and they choose their own password (no password is ever generated, stored or sent). One person with several applications has one account. This needs, in `backend/.env`, `SUPABASE_SECRET_KEY` (Project Settings > API: the secret or service role key; server-side only, never in the frontend), and in Supabase:
+**Candidate portal invitations.** Applying through Ashby gives the candidate portal access at the email they applied with. If they already have a Talent Bridge sign-in it's reused, never duplicated; otherwise Supabase emails them an invitation and they choose their own password (no password is ever generated, stored or sent). One person with several applications has one account. This needs, in `backend/.env`, `SUPABASE_SECRET_KEY` (Project Settings > API: the secret or service role key; server-side only, never in the frontend), and in Supabase, your frontend's `/**` in Authentication > URL Configuration > Redirect URLs (already there for sign-up).
 
-- Authentication > Emails > **Invite user** template: point the link at `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=invite` (the redirect is `<FRONTEND_URL>/auth/confirm?next=/welcome`, where they set their password).
-- Authentication > URL Configuration: your frontend's `/**` in Redirect URLs (already there for sign-up).
+Supabase's default **Invite user** email works as it is, so no custom SMTP or template is needed:
+
+1. Its **Accept the invite** link opens Supabase's own `/auth/v1/verify`.
+2. That checks the one-time token, then redirects to `<FRONTEND_URL>/auth/callback?next=/welcome` with the new session in the URL fragment (`#access_token=…&refresh_token=…&type=invite`).
+3. `/auth/callback` takes the tokens out of the address bar, has Supabase check them, and opens `/welcome`.
+4. On `/welcome` the candidate sees the address the account is for and chooses their password, then lands in `/candidate`.
+
+An expired or already-used link shows "This link has expired or was already used" with sign-in and new-link options. Optionally, once custom SMTP lets you edit templates, you can point the invite link at `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=invite`. That works in any browser and keeps tokens out of the URL entirely, because `/auth/callback` hands it to the server route `/auth/confirm`.
 
 A failed invitation never affects the import: the candidate shows "Invitation failed" to recruiters with a retry button, and the sync retries automatically. The reconciliation sync only invites people who applied in the last 14 days (`ASHBY_SYNC_INVITE_MAX_AGE_DAYS`), so a first sync never emails a backlog. Recruiters can also invite anyone from their engagement card. New applications also get an AI analysis in the background (`ASHBY_AUTO_ANALYZE=false` to turn it off); a failed analysis never fails the import.
 

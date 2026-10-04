@@ -8,7 +8,7 @@ HireMesh is an AI-native recruiting platform: one system, two experiences. Recru
 
 - `frontend/` — Next.js app with the Recruiter Workspace (`/recruiter`) and the Candidate Portal (`/candidate`).
 - `backend/` — FastAPI service under `/api/v1`: candidates, applications, jobs, interviews, activity, messages, AI and an optional Ashby integration.
-- `supabase/` — Postgres migrations (`001`–`012`) and the demo seed (`seed.sql`, generated from `backend/app/db/seed_data.py`).
+- `supabase/` — Postgres migrations (`001`–`013`) and the demo seed (`seed.sql`, generated from `backend/app/db/seed_data.py`).
 
 ## Quickstart
 
@@ -38,7 +38,7 @@ Every data call goes through `frontend/services/*` to `NEXT_PUBLIC_API_URL` (def
 
 **Supabase**
 
-1. Apply `supabase/migrations/001`–`012` in order (`supabase db push --db-url "$DATABASE_URL"`, the SQL editor, or `supabase db reset` locally with the [Supabase CLI](https://supabase.com/docs/guides/local-development)). Never edit a migration that has been applied; add the next number instead.
+1. Apply `supabase/migrations/001`–`013` in order (`supabase db push --db-url "$DATABASE_URL"`, the SQL editor, or `supabase db reset` locally with the [Supabase CLI](https://supabase.com/docs/guides/local-development)). Never edit a migration that has been applied; add the next number instead.
 2. Set `DATABASE_URL` in `backend/.env` to the project's connection string (direct or pooler), replacing `[YOUR-PASSWORD]` including the brackets.
 3. Load the demo data: `python -m app.db.seed` (or `--reset` to replace existing data). The API also loads it into an empty database on startup while `SEED_DEMO_DATA=true`.
 
@@ -112,17 +112,49 @@ An expired or already-used link shows "This link has expired or was already used
 
 A failed invitation never affects the import: the candidate shows "Invitation failed" to recruiters with a retry button, and the sync retries automatically. The reconciliation sync only invites people who applied in the last 14 days (`ASHBY_SYNC_INVITE_MAX_AGE_DAYS`), so a first sync never emails a backlog. Recruiters can also invite anyone from their engagement card. New applications also get an AI analysis in the background (`ASHBY_AUTO_ANALYZE=false` to turn it off); a failed analysis never fails the import.
 
-**Trying it without an Ashby account (development only).** A simulator builds the webhooks Ashby would send from the test fixtures and runs them through the same webhook processor, importer, stage mapping, portal provisioning and AI analysis as real ones. It has no HTTP endpoint and refuses to run when `ENVIRONMENT=production`. From `backend/`:
+**Trying it without an Ashby account (development only).** A simulator builds the webhooks Ashby would send from the test fixtures and runs them through the same webhook processor, importer, stage mapping, portal provisioning and AI analysis as real ones. It has no HTTP endpoint of its own (only the demo careers site below uses it from the API) and refuses to run when `ENVIRONMENT=production`. From `backend/`:
 
 ```bash
 python -m app.integrations.ashby.demo apply --email testcandidate1@example.com --first-name Maya --last-name Patel --job "TEST - ML Engineer"
 python -m app.integrations.ashby.demo stage --email testcandidate1@example.com --stage interview   # screening, offer, hired, rejected, withdrawn
 python -m app.integrations.ashby.demo interview --email testcandidate1@example.com                 # --in-days N, at 16:00 UTC
 python -m app.integrations.ashby.demo status
-python -m app.integrations.ashby.demo reset                                                         # deletes only what the simulator made
+python -m app.integrations.ashby.demo reset                                                         # deletes only what the simulator and the demo careers site made
 ```
 
-It writes to the database in `DATABASE_URL` and prints which one first. Its records carry `tb-demo-` Ashby ids, and `reset` deletes only those (Supabase Auth accounts are never touched). Rerunning `apply` counts as a redelivery, so nothing is created twice. It won't use an email that belongs to anyone outside the simulator. No invitation email is sent unless you add `--send-invite`, which only works for addresses that can receive mail. To open the candidate portal as the demo candidate, either use `--send-invite` with an address you own and accept the email, or add the user in Supabase (Authentication > Users > Add user, auto-confirmed) and run `python -m app.db.accounts link <email>`. Then sign in at `/login`.
+It writes to the database in `DATABASE_URL` and prints which one first. Its records carry `tb-demo-` Ashby ids, and `reset` deletes only those and the applications made on the demo careers site (Supabase Auth accounts are never touched). Rerunning `apply` counts as a redelivery, so nothing is created twice. It won't use an email that belongs to anyone outside the simulator. No invitation email is sent unless you add `--send-invite`, which only works for addresses that can receive mail. To open the candidate portal as the demo candidate, either use `--send-invite` with an address you own and accept the email, or add the user in Supabase (Authentication > Users > Add user, auto-confirmed) and run `python -m app.db.accounts link <email>`. Then sign in at `/login`.
+
+### Demo careers site (development only)
+
+Recruiters can post made-up demo jobs on a public careers page, and anyone can apply to them there. Each application then reaches Talent Bridge through the simulator above, as a real Ashby application would. It writes to the database in `DATABASE_URL` and sends real Supabase invitations, so turn it on only with a development database.
+
+**Turn it on.**
+
+1. Apply migration `013`. It only adds tables.
+2. Set `ENABLE_ASHBY_DEMO=true` in `backend/.env`. It's ignored when `ENVIRONMENT=production`: there, as whenever it's off, every demo route answers 404.
+3. Run the API from a source checkout (`uvicorn` from `backend/`, as in the quickstart), not the Docker image. The simulator builds its webhooks from `backend/tests`, which the image doesn't include; without those files the careers site still lists roles, but nobody can apply.
+4. Set up portal invitations as for Ashby applicants (above): `SUPABASE_SECRET_KEY`, and your frontend's `/**` in the Redirect URLs. Supabase's default **Invite user** email works as it is.
+
+The frontend needs no setting of its own: the demo shows up when the API has it on (never in mock mode), and from then on everything happens in the browser.
+
+**Recruiters.** On `/recruiter/jobs`, **+ Create Demo Job** opens the editor. Fill in the basics (job title, department, location, work arrangement, employment type, seniority, skills, and short notes for the AI, which never appear on the careers site), then click **Generate with AI**. The AI provider in `backend/.env` (Groq with `AI_PROVIDER=groq` and `GROQ_API_KEY`) drafts the summary, about the role, responsibilities, requirements, preferred qualifications, skills and about the team. Without a provider, or when it fails, a template writes the draft, and the editor says so. Lines that mention personal characteristics, such as age or nationality, are left out. Edit anything, then **Save Draft** or **Publish Demo Job**. Nothing is published until you click it, and publishing needs a summary, a description of the role, and at least one responsibility and one requirement.
+
+The **Demo jobs** section of the Jobs page shows each demo job's status, applicants and publish date, with **Edit**, **Publish**, **Unpublish** (off the careers site; the job stays open for whoever applied), **Close** (off the site and no new applications; existing ones stay, and the candidate portal shows them as "Role closed") and **View public page**. A demo job is an ordinary job too, with its pipeline at `/recruiter/jobs/[id]`.
+
+**Applicants.** `/demo/careers` lists the published demo jobs; no sign-in is needed. Each role's **Apply for this role** opens a form for first and last name, email, phone number, a résumé (PDF, DOC or DOCX, up to 5 MB) and optionally a LinkedIn URL. The résumé is stored privately in the database. The email has to be one that can receive mail (`example.com` and the like are refused) and can't be a staff member's.
+
+**After applying.** The application waits, and recruiters see nothing of it beyond "N awaiting activation" in the demo job's applicants, until the applicant proves they own the email:
+
+- A new email gets a candidate portal invitation. Accepting it opens `/welcome`, where they choose a password.
+- An email that already has an account is asked to sign in with it instead. No second account is made.
+
+Either way, the `GET /me` that follows (from `/welcome`, the sign-in page or the portal) submits every application waiting for that email through the Ashby simulator. The same webhook processor and importer as a real Ashby application create the application, and the candidate if they're new, with the source "Ashby Simulator / Demo Careers", at Screening. The sign-in is linked to the candidate, recruiters see them with their phone, résumé and source, the candidate portal shows the application, and the AI analysis runs in the background (unless `ASHBY_AUTO_ANALYZE=false`). An application waits 24 hours: after that, signing in no longer submits it until they apply again.
+
+**Several jobs.** One email is one candidate and one portal account, with one application per role. One invitation covers every role applied for while its link is valid (an hour, Supabase's default); after that, applying again sends a new one. If the email belongs to someone already in Talent Bridge, the application joins their record without changing their name, phone or a résumé link the hiring team set, and for a role they're already in the pipeline for, the existing application stands.
+
+**Supabase.** Keep **Confirm email** on. With it off, Supabase signs anyone straight in as whatever address they sign up with, so an invitation proves nothing. Its built-in email service also sends only a few emails an hour for the whole project; past that, applying says "Your application is saved" with **Try again**. [Custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp) raises the limit.
+
+**Reset.** `python -m app.integrations.ashby.demo reset` also deletes the demo jobs with their postings, and every application made on the careers site, pending or submitted, with its résumé. Demo jobs that have applications from outside the simulator are kept, and so is anyone who was in Talent Bridge before applying: only their careers applications go.
 
 ## Candidate engagement
 

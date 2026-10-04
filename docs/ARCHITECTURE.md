@@ -29,6 +29,7 @@
 18. [Deployment architecture](#18-deployment-architecture)
 19. [Security considerations](#19-security-considerations)
 20. [Implementation order](#20-implementation-order)
+21. [Demo careers site (development only)](#21-demo-careers-site-development-only)
 
 Appendices: [A. Seed data](#appendix-a-seed-data) · [B. Demo script](#appendix-b-demo-script) · [C. Decisions to confirm](#appendix-c-decisions-to-confirm)
 
@@ -1737,6 +1738,59 @@ Sourcing, calendar sync and scheduling UI, email delivery, file uploads, offer w
 | 18 | **Rehearse.** Time the script (Appendix B); record a backup video | Under 3 minutes, no dead air |
 
 **Buffer:** if time runs short, cut in this order: step 15 (secondary pages) → Copilot drafts → assistant handoff → full-page candidate route (keep the panel). **Never cut** steps 5, 8, 10, 11 or 16. They are the product.
+
+---
+
+## 21. Demo careers site (development only)
+
+A way to run the Ashby flow end to end without an Ashby account, for development and testing only. A recruiter writes and publishes a demo job, anyone applies to it on a public careers page, and once the applicant proves they own the email, the application reaches Talent Bridge through the Ashby simulator (`integrations/ashby/demo.py`) on the same webhook path as a real Ashby application. Setup and use are in the README.
+
+```
+Recruiter  /recruiter/jobs/demo/new ─▶ POST /demo/jobs/generate (AI draft; saves nothing) ─▶ edits
+           ─▶ POST /demo/jobs (a draft) ─▶ POST /demo/jobs/{id}/publish (job open) ─▶ on /demo/careers
+Applicant  /demo/careers/{id}/apply ─▶ POST /demo/careers/jobs/{id}/apply
+           ─▶ pending demo_applications row + résumé ─▶ portal invitation, or "sign in to submit"
+           ─▶ accepts the invitation (/auth/callback ─▶ /welcome) or signs in ─▶ GET /me
+GET /me    ─▶ submit_on_sign_in ─▶ demo.submit(): applicationSubmit ─▶ WebhookProcessor ─▶ AshbyImporter
+           ─▶ candidate + application (source "Ashby Simulator / Demo Careers", Screening)
+           ─▶ sign-in linked ─▶ AI analysis queued ─▶ /me answers as usual
+```
+
+The AI job writer drafts with the configured provider (the template provider when it fails) and drops any line that mentions a protected characteristic (`services/ai/job_posting_policy.py`). It saves nothing; only the recruiter publishes.
+
+**Gate.** `settings.ashby_demo_enabled`: `ENABLE_ASHBY_DEMO=true` and an `ENVIRONMENT` other than `production`. `api/router.py` mounts the demo routers with `require_demo_enabled` ahead of any sign-in check, so with the gate shut every demo route answers 404 to everyone:
+
+| Router | Routes (under `/api/v1`) | Who |
+|---|---|---|
+| `api/demo_jobs.py` | `/demo/jobs`, `/demo/jobs/generate`, `/demo/jobs/{id}` and its `/publish`, `/unpublish` and `/close` | Recruiters and admins |
+| `api/demo_resumes.py` | `/demo/resumes/{demo_application_id}`, once the application is submitted | Recruiters and admins |
+| `api/demo_careers.py` | `/demo/careers/jobs`, `/demo/careers/jobs/{id}` (published only) and its `/apply` | Anyone; no sign-in |
+
+Apart from those routes, only `GET /me` reads the demo tables, and only with the gate open, so the API runs on a database without migration 013 while the demo is off. The careers pages are public: `proxy.ts` guards only `/recruiter` and `/candidate`.
+
+**Tables** (migration 013; additive, RLS on with no policies):
+
+| Table | Holds |
+|---|---|
+| `demo_job_postings` | One per demo job, keyed by `job_id`: the posting's text and its status (`draft`, `published`, `closed`). The job is an ordinary `jobs` row with a `tb-demo-` Ashby id, so its pipeline and AI analysis work as for any job, and `demo reset` treats it as simulator data. `jobs.status` stays the ATS status: publishing opens the job, closing closes it, and unpublishing only takes the posting off the site. `jobs.description` is rendered from the posting on every save |
+| `demo_applications` | One per email and job: the applicant's details, `status` (`awaiting_activation`, `awaiting_sign_in`, `submitted`), the Supabase account invited or found for the email (`auth_user_id`, `invited_at`), a submission lease (`finalizing_at`), and `application_id` once submitted |
+| `demo_resumes` | The résumé's bytes, apart so lists never load them. Its type comes from its content: PDF, DOC or DOCX |
+
+**Applying** checks that the posting is published (404) and not closed (409), that the email can receive mail and isn't a staff member's, and that the résumé is a PDF, DOC or DOCX of up to 5 MB (422). In one transaction, under a per-email advisory lock on Postgres, it stores the pending row and its résumé, then arranges the proof of ownership. An email with a portal sign-in or a confirmed Supabase account waits for a sign-in (`awaiting_sign_in`). Any other gets a Supabase invitation (`admin.invite`, with account provisioning's redirect) and waits for it to be accepted (`awaiting_activation`); one invitation covers every role applied for while its link is valid (an hour). No candidate or application exists yet, so recruiters see only a pending count.
+
+**Submission on `GET /me`.** The frontend calls `GET /me` after every sign-in and whenever a portal loads, so `/me`, and only `/me`, uses `get_current_user_submitting_demo`: it verifies the token, runs `demo_careers.submit_on_sign_in`, then finds the user exactly as `get_current_user` does. `submit_on_sign_in`:
+
+1. Finds the pending rows for the token's account or email updated in the last 24 hours: one indexed query, which usually finds none.
+2. Keeps the ones this sign-in proves the applicant owns. Staff never submit. A linked candidate submits the rows made with their record's email, unless the token carries another email (which `/me` refuses anyway). An unlinked sign-in submits the rows made with its email when it is the account our invitation created, or when `auth.users` shows its owner confirmed the address by following an email Supabase sent; an auto-confirmed address proves nothing.
+3. Leases them in one compare-and-swap `UPDATE` (`finalizing_at`), so concurrent sign-ins never deliver anything twice, and waits up to 5 seconds for rows another request has freshly leased.
+4. Delivers each through `demo.submit()`: an `applicationSubmit` webhook for the existing job (no `jobCreate`), signed with a one-off key and handed to `WebhookProcessor` and `AshbyImporter`. Its Ashby ids derive from the email and the job, so a retry is a duplicate delivery. Careers data never rewrites someone already in Talent Bridge: an existing candidate is delivered without a name or phone, `resume_url` is set only when it is empty or already a demo résumé, and an empty `external_id` is restored afterwards, so `demo reset` never deletes them. If they already have an application for the job (a recruiter added them meanwhile), nothing is delivered and the row records that application.
+5. Links the sign-in (`account_service.link_account`) when there's no users row yet, marks the rows `submitted`, and queues the AI analysis for each delivered application that has none yet (when `ASHBY_AUTO_ANALYZE` is on). The portal invitation follow-up never runs: they're signed in already.
+
+It never raises. A failed delivery gives its lease back and is retried on the next `GET /me`; the person signs in either way.
+
+**Import rule.** `integrations/ashby/demo.py` builds its payloads from `backend/tests` (`tests/ashby_support.py` and the Ashby fixtures), which the production image doesn't ship. So nothing loaded at startup imports it at module level: that code takes ids and address checks from `integrations/ashby/demo_ids.py`, and `services/demo_careers.py` imports the simulator only when it needs it (`_simulator()`). Without `backend/tests` the API starts as usual; applying answers 503 `demo_unavailable` and stores nothing, and pending applications wait.
+
+**Reset.** `python -m app.integrations.ashby.demo reset` also deletes every demo careers application (their résumés cascade, and candidates' links to them are cleared) and the demo jobs with their postings, except demo jobs that still have applications from outside the simulator. On a database without migration 013 it skips the careers tables.
 
 ---
 

@@ -1,16 +1,19 @@
 "use client";
 
-import { BriefcaseBusiness, MapPin, UserRound } from "lucide-react";
+import { BriefcaseBusiness, MapPin, Plus, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import { DemoJobsSection } from "@/components/recruiter/DemoJobsSection";
 import { JobStatusBadge } from "@/components/recruiter/JobStatusBadge";
 import { RecruiterHeader } from "@/components/recruiter/RecruiterHeader";
 import { StageBreakdown, emptyStageCounts, type StageCounts } from "@/components/recruiter/StageBreakdown";
 import { useWorkspace } from "@/components/recruiter/WorkspaceProvider";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { RelativeTime } from "@/components/shared/RelativeTime";
+import { buttonStyles } from "@/components/ui/Button";
 import { FilterChip } from "@/components/ui/FilterChip";
+import type { DemoJob } from "@/types/demo";
 import type { JobStatus } from "@/types/job";
 import type { JobOpening, PipelineCandidate } from "@/types/workspace";
 
@@ -21,29 +24,54 @@ const STATUS_FILTERS: { value: "all" | JobStatus; label: string }[] = [
   { value: "closed", label: "Closed" },
 ];
 
-/** Candidates per stage for each job title, from the live workspace list. */
-function useStageCountsByRole(candidates: PipelineCandidate[]) {
+/** Candidates per stage for each job id, from the live workspace list. */
+function useStageCountsByJob(jobs: JobOpening[], candidates: PipelineCandidate[]) {
   return useMemo(() => {
-    const byRole = new Map<string, StageCounts>();
+    const byJob = new Map<string, StageCounts>();
     for (const candidate of candidates) {
-      const counts = byRole.get(candidate.role) ?? emptyStageCounts();
-      counts[candidate.stage] += 1;
-      byRole.set(candidate.role, counts);
+      // By id: a demo job can have the same title as another job. The title is only a fallback for rows without one.
+      const jobIds = candidate.jobId ? [candidate.jobId] : jobs.filter((job) => job.title === candidate.role).map((job) => job.id);
+      for (const jobId of jobIds) {
+        const counts = byJob.get(jobId) ?? emptyStageCounts();
+        counts[candidate.stage] += 1;
+        byJob.set(jobId, counts);
+      }
     }
-    return byRole;
-  }, [candidates]);
+    return byJob;
+  }, [jobs, candidates]);
 }
 
-export function JobsBoard({ jobs }: { jobs: JobOpening[] }) {
+type JobsBoardProps = {
+  jobs: JobOpening[];
+  /** Development only (ENABLE_ASHBY_DEMO): null while the demo is off, and in mock mode. */
+  demoJobs?: DemoJob[] | null;
+  /** Why the demo jobs couldn't load, if they couldn't. */
+  demoError?: string;
+};
+
+export function JobsBoard({ jobs, demoJobs = null, demoError }: JobsBoardProps) {
   const { candidates } = useWorkspace();
   const [status, setStatus] = useState<"all" | JobStatus>("all");
-  const countsByRole = useStageCountsByRole(candidates);
+  const countsByJob = useStageCountsByJob(jobs, candidates);
   const shown = jobs.filter((job) => status === "all" || job.status === status);
   const openRoles = jobs.filter((job) => job.status === "open").length;
 
   return (
     <div>
-      <RecruiterHeader title="Jobs" subtitle={`${openRoles} open roles · ${candidates.length} candidates in the pipeline`} />
+      <RecruiterHeader
+        title="Jobs"
+        subtitle={`${openRoles} open roles · ${candidates.length} candidates in the pipeline`}
+        actions={
+          demoJobs &&
+          !demoError && (
+            <Link href="/recruiter/jobs/demo/new" className={buttonStyles()}>
+              <Plus aria-hidden /> Create Demo Job
+            </Link>
+          )
+        }
+      />
+
+      {demoJobs && <DemoJobsSection jobs={demoJobs} error={demoError} />}
 
       <div role="group" aria-label="Filter by status" className="scrollbar-none mb-6 flex gap-2 overflow-x-auto">
         {STATUS_FILTERS.map((filter) => {
@@ -62,7 +90,7 @@ export function JobsBoard({ jobs }: { jobs: JobOpening[] }) {
         <ul className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
           {shown.map((job) => (
             <li key={job.id}>
-              <JobCard job={job} counts={countsByRole.get(job.title) ?? emptyStageCounts()} />
+              <JobCard job={job} counts={countsByJob.get(job.id) ?? emptyStageCounts()} />
             </li>
           ))}
         </ul>

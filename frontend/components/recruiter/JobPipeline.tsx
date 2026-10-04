@@ -19,8 +19,13 @@ import { PIPELINE_STAGES, type JobOpening } from "@/types/workspace";
 export function JobPipeline({ job }: { job: JobOpening }) {
   const { candidates } = useWorkspace();
   const applicants = useMemo(
-    () => sortCandidates(candidates.filter((candidate) => candidate.role === job.title), "recent"),
-    [candidates, job.title],
+    () =>
+      sortCandidates(
+        // By id: a demo job can have the same title as another job. The title is only a fallback for rows without one.
+        candidates.filter((candidate) => (candidate.jobId ? candidate.jobId === job.id : candidate.role === job.title)),
+        "recent",
+      ),
+    [candidates, job.id, job.title],
   );
   const counts = useMemo(() => {
     const result = emptyStageCounts();

@@ -1322,7 +1322,7 @@ class Principal:
 **Navigation**
 
 - Recruiter: Candidates (dashboard) · Jobs · Interviews · Messages · Analytics · AI Assistant · Settings.
-- Candidate: Home · My application · Interviews · Messages · Company · Resources · AI Assistant. "My application" links straight to the detail page when there is only one.
+- Candidate: Dashboard · Applications · Interviews · Messages · Company · Ask AI · Profile. Interview prep opens from Interviews and the dashboard's next step.
 
 **Data fetching**
 

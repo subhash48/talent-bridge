@@ -14,13 +14,14 @@ from app.api import (
     candidate_engagement,
     candidates,
     dashboard,
+    demo_jobs,
     engagement,
     integrations,
     interviews,
     jobs,
     messages,
 )
-from app.core.dependencies import require_candidate, require_recruiter
+from app.core.dependencies import require_candidate, require_demo_enabled, require_recruiter
 
 api_router = APIRouter()
 # The recruiter workspace: recruiters and admins.
@@ -33,3 +34,6 @@ for module in (candidate, candidate_engagement):
 # and the other Ashby routes require a recruiter.
 api_router.include_router(auth.router)
 api_router.include_router(integrations.router)
+# Development only (ENABLE_ASHBY_DEMO=true, never in production): demo jobs for recruiters. The flag is
+# checked first, so elsewhere these routes answer 404 to everyone.
+api_router.include_router(demo_jobs.router, dependencies=[Depends(require_demo_enabled), Depends(require_recruiter)])

@@ -20,6 +20,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.core.config import settings
 from app.core.database import get_session, get_session_factory
 from app.core.enums import STAFF_ROLES, UserRole
 from app.core.errors import ForbiddenError, NotFoundError, ServiceUnavailableError, UnauthorizedError
@@ -109,3 +110,10 @@ CurrentCandidateDep = Annotated[Candidate, Depends(get_current_candidate)]
 AIProviderDep = Annotated[AIProvider, Depends(get_ai_provider)]
 AshbyClientDep = Annotated[AshbyClient | None, Depends(get_ashby_client)]
 SupabaseAdminDep = Annotated[SupabaseAdmin | None, Depends(get_supabase_admin)]
+
+
+def require_demo_enabled() -> None:
+    """The development-only demo routes answer 404, as if they didn't exist, unless ENABLE_ASHBY_DEMO
+    is true outside production. Checked before sign-in, so production refuses them to everyone."""
+    if not settings.ashby_demo_enabled:
+        raise NotFoundError("This endpoint doesn't exist.")

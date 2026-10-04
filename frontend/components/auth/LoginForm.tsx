@@ -1,25 +1,31 @@
 "use client";
 
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { AuthAlert } from "@/components/auth/AuthAlert";
-import { authLinkStyles } from "@/components/auth/AuthCard";
 import { SignInLoading } from "@/components/auth/SignInLoading";
 import { Button } from "@/components/ui/Button";
-import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { LOGIN_NOTICES, authErrorMessage, landingPath } from "@/lib/auth";
 import { SUPABASE_CONFIGURED, createClient } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 import { ApiError, errorMessage } from "@/services/api";
 import { getCurrentUser } from "@/services/me";
 
 // Reasons that mean the current session can't be used, so it's ended before anyone signs in again.
 const UNUSABLE_SESSION = new Set(["account_not_linked", "account_disabled", "account_mismatch"]);
 
+// The sign-in card's own field styles (components/auth/LoginCard.tsx): larger than the app's, and in its ivory.
+const labelStyles = "text-sm font-medium text-ink";
+const inputStyles =
+  "h-11 bg-black/25 px-3.5 text-[15px] focus-visible:border-ink/60 focus-visible:bg-black/25 focus-visible:ring-ink/15";
+
 export function LoginForm({ next, reason }: { next: string | null; reason: string | null }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordShown, setPasswordShown] = useState(false);
   // Signing in, or signed in and waiting for the workspace: the loading screen is up.
   const [pending, setPending] = useState(false);
   // Set before the first await and cleared only by a failure, so the form is never sent twice at once.
@@ -72,35 +78,63 @@ export function LoginForm({ next, reason }: { next: string | null; reason: strin
   }
 
   return (
-    <form onSubmit={signIn} aria-busy={pending} className="flex flex-col gap-4">
+    <form onSubmit={signIn} aria-busy={pending} className="flex flex-col gap-4.5">
       {error ? <AuthAlert>{error}</AuthAlert> : notice && <AuthAlert tone="info">{notice}</AuthAlert>}
-      <Field label="Email" htmlFor="email">
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="email" className={labelStyles}>
+          Email
+        </label>
         <Input
           id="email"
           type="email"
           autoComplete="email"
+          placeholder="you@example.com"
           required
           autoFocus
           value={email}
           onChange={(event) => setEmail(event.target.value)}
+          className={inputStyles}
         />
-      </Field>
-      <Field label="Password" htmlFor="password">
-        <Input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-        />
-      </Field>
-      <div className="-mt-1 text-right text-xs">
-        <Link href="/forgot-password" className={authLinkStyles}>
-          Forgot password?
-        </Link>
       </div>
-      <Button type="submit" size="lg" disabled={pending} className="mt-1 w-full">
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="password" className={labelStyles}>
+          Password
+        </label>
+        <div className="relative">
+          <Input
+            id="password"
+            type={passwordShown ? "text" : "password"}
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className={cn(inputStyles, "pr-11")}
+          />
+          <button
+            type="button"
+            aria-label="Show password"
+            aria-pressed={passwordShown}
+            onClick={() => setPasswordShown((shown) => !shown)}
+            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-[10px] text-stone transition-colors hover:text-ink"
+          >
+            {passwordShown ? <EyeOff aria-hidden className="size-[18px]" /> : <Eye aria-hidden className="size-[18px]" />}
+          </button>
+        </div>
+        <div className="text-right text-[13px]">
+          <Link
+            href="/forgot-password"
+            className="rounded-sm font-medium text-charcoal underline-offset-4 transition-colors hover:text-ink hover:underline"
+          >
+            Forgot password?
+          </Link>
+        </div>
+      </div>
+      <Button
+        type="submit"
+        size="lg"
+        disabled={pending}
+        className="h-11 w-full rounded-[10px] text-base font-semibold shadow-none hover:bg-[#f4f1e6]"
+      >
         {pending ? "Signing in…" : "Sign in"}
       </Button>
       <SignInLoading active={pending} />

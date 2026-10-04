@@ -1,14 +1,18 @@
-import type { Metadata } from "next";
+import { ArrowRight } from "lucide-react";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { AuthCard, authLinkStyles } from "@/components/auth/AuthCard";
+import { LoginCard } from "@/components/auth/LoginCard";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { landingPath, localPath } from "@/lib/auth";
 import { getSignedInUser } from "@/lib/session";
 import { USE_MOCK_API } from "@/services/api";
 
 export const metadata: Metadata = { title: "Sign in" };
+
+// The browser's own bars take the page's ink black.
+export const viewport: Viewport = { themeColor: "#031211" };
 
 type LoginPageProps = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -23,19 +27,22 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   if (user) redirect(landingPath(user.role, next));
 
   return (
-    <AuthCard
+    <LoginCard
       title="Welcome back"
       description="Sign in to your hiring workspace or candidate portal."
       footer={
         <>
-          Applied for a role?{" "}
-          <Link href="/signup" className={authLinkStyles}>
-            Create your candidate account
+          <p className="text-[13px] text-stone">Applied for a role?</p>
+          <Link
+            href="/signup"
+            className="mt-0.5 inline-flex items-center gap-2 rounded-md text-[15px] text-ink underline-offset-4 hover:underline"
+          >
+            Create your candidate account <ArrowRight aria-hidden className="size-4" />
           </Link>
         </>
       }
     >
       <LoginForm next={localPath(next)} reason={reason} />
-    </AuthCard>
+    </LoginCard>
   );
 }

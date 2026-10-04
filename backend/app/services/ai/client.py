@@ -11,6 +11,7 @@ from functools import cache
 
 from app.core.config import settings
 from app.schemas.ai import AnalysisContent, AskContent, DraftContent, DraftPurpose
+from app.schemas.demo import JobPostingBrief, JobPostingContent
 from app.schemas.portal import AssistContent, PrepContent
 from app.services.ai.context import CandidateContext
 from app.services.ai.portal_context import PortalContext
@@ -50,6 +51,13 @@ class AIProvider(ABC):
     async def prepare_candidate(self, context: PortalContext) -> PrepContent:
         """Interview preparation for the candidate's next interview."""
         raise AIProviderError(f"{self.name} has no candidate assistant")
+
+    # The AI job writer, for the development-only demo jobs. It only ever drafts: the recruiter
+    # reviews, edits and publishes. A provider without it falls back to the mock provider.
+
+    async def write_job_posting(self, brief: JobPostingBrief, organization: str, overview: str) -> JobPostingContent:
+        """A job posting drafted from the recruiter's brief and the company overview, and nothing else."""
+        raise AIProviderError(f"{self.name} has no job writer")
 
 
 @cache

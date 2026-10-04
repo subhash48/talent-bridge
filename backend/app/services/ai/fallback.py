@@ -3,9 +3,11 @@
 Used when no AI key is configured, in the tests, and as the automatic fallback when Gemini or
 Groq fails, so the recruiter always gets a grounded answer. It never recommends rejecting anyone.
 The candidate assistant's answers live in portal_fallback, which only sees a PortalContext.
+Job postings for demo jobs are composed from the recruiter's brief alone.
 """
 
 import re
+from dataclasses import dataclass
 
 from app.core.enums import ActivityType, ApplicationStage, SenderType
 from app.schemas.ai import (
@@ -15,6 +17,7 @@ from app.schemas.ai import (
     DraftPurpose,
     SkillEvidence,
 )
+from app.schemas.demo import MAX_ABOUT_ROLE, MAX_ABOUT_TEAM, MAX_SUMMARY, JobPostingBrief, JobPostingContent, clean_list
 from app.schemas.portal import AssistContent, PrepContent
 from app.services.ai import portal_fallback
 from app.services.ai.client import AIProvider
@@ -73,6 +76,9 @@ class MockProvider(AIProvider):
 
     async def prepare_candidate(self, context: PortalContext) -> PrepContent:
         return portal_fallback.prepare(context)
+
+    async def write_job_posting(self, brief: JobPostingBrief, organization: str, overview: str) -> JobPostingContent:
+        return _job_posting(brief, organization, overview)
 
 
 # Analysis
@@ -423,6 +429,331 @@ def _draft(context: CandidateContext, purpose: DraftPurpose) -> DraftContent:
         )
     body = f"Hi {first},\n\n{text}\n\nBest,\n{context.recruiter_first_name}"
     return DraftContent(subject=subject, body=body)
+
+
+# Job postings
+
+
+@dataclass(frozen=True)
+class RoleFamily:
+    """How the mock job writer describes one kind of role. The job title picks it (ROLE_FAMILIES)."""
+
+    team: str  # what a manager in this family leads
+    work: str  # what the role does, after "you'll"; may name {organization}
+    collaboration: str  # who the role works with, and how; may name {organization}
+    impact: str  # why the work matters, without claims about the company
+    responsibilities: tuple[str, ...]
+    fundamentals: str  # the requirement that changes with seniority: entry level
+    practice: str  # mid level
+    track_record: str  # senior and above
+    preferred: str
+    skills: tuple[str, ...]  # suggested when the brief lists fewer than three
+
+
+MACHINE_LEARNING_ROLE = RoleFamily(
+    team="a machine learning team",
+    work="build, evaluate and ship machine learning systems",
+    collaboration=(
+        "You'll work closely with product managers, engineers and researchers to decide what to build, then take "
+        "it from experiment to production."
+    ),
+    impact="The models you build will shape how well the product works for the people who use it.",
+    responsibilities=(
+        "Build, train and evaluate machine learning models for real product use cases.",
+        "Turn experiments into reliable production services, with the monitoring to keep them healthy.",
+        "Build the data pipelines and evaluation sets that show whether a model is improving.",
+        "Work with product and engineering teammates to decide what to build and how to measure success.",
+        "Document experiments and results so the whole team can build on them.",
+    ),
+    fundamentals="A grasp of machine learning fundamentals: training, evaluation and common model architectures.",
+    practice="Experience taking machine learning models from experiment to production.",
+    track_record="A track record of shipping machine learning systems that people rely on.",
+    preferred="Experience with large-scale data processing or distributed training.",
+    skills=("Python", "Machine learning", "Model evaluation"),
+)
+
+ENGINEERING_ROLE = RoleFamily(
+    team="an engineering team",
+    work="design, build and run the software behind {organization}'s product",
+    collaboration=(
+        "You'll work closely with product managers, designers and other engineers, from scoping a problem to "
+        "shipping and running the solution."
+    ),
+    impact="The systems you build will shape how reliably and quickly the product works for the people who use it.",
+    responsibilities=(
+        "Design, build and maintain production features end to end.",
+        "Write clear, well-tested code and review your teammates' changes.",
+        "Monitor, debug and improve the reliability and performance of the systems you own.",
+        "Work with product and design to scope problems and agree on solutions.",
+        "Document your work and share what you learn with the team.",
+    ),
+    fundamentals="A grasp of software fundamentals such as data structures, testing and version control.",
+    practice="Experience shipping and maintaining production software, including testing and code review.",
+    track_record="A track record of designing, shipping and running production systems.",
+    preferred="Experience with cloud infrastructure and production monitoring.",
+    skills=("Software engineering", "Testing", "Debugging"),
+)
+
+DESIGN_ROLE = RoleFamily(
+    team="a design team",
+    work="design clear, usable experiences for the people who use {organization}'s product",
+    collaboration=(
+        "You'll work closely with product managers, engineers and researchers, from early research and concepts to "
+        "polished, production-ready designs."
+    ),
+    impact="Your designs will shape how people get their work done in the product every day.",
+    responsibilities=(
+        "Design end-to-end workflows, from early concepts to production-ready designs.",
+        "Prototype and test ideas with users, and turn what you learn into better designs.",
+        "Contribute to a consistent, well-documented design system.",
+        "Work with engineers through delivery so the details ship as intended.",
+        "Present your work and the reasoning behind it to the wider team.",
+    ),
+    fundamentals="A portfolio, from work, study or personal projects, that shows how you approach design problems.",
+    practice="A portfolio of shipped work that shows your process as well as the result.",
+    track_record="A portfolio of shipped work that shows strong craft and clear reasoning on complex problems.",
+    preferred="Experience designing data-heavy or technical tools.",
+    skills=("Interaction design", "Prototyping", "User research"),
+)
+
+PRODUCT_ROLE = RoleFamily(
+    team="a product team",
+    work="decide what {organization} builds next, and see it through to launch",
+    collaboration=(
+        "You'll work closely with engineering, design and customer-facing teams to understand problems, set "
+        "priorities and ship."
+    ),
+    impact="Your decisions will shape what the product does next for the people who rely on it.",
+    responsibilities=(
+        "Talk to customers and users to understand their problems and the outcomes they need.",
+        "Own the roadmap for your area, and explain the reasoning behind your priorities.",
+        "Write clear product requirements, and work with engineering and design through delivery.",
+        "Define how success is measured, track it after launch and act on what you learn.",
+        "Keep stakeholders across the company informed and aligned.",
+    ),
+    fundamentals="A structured approach to breaking down problems and making decisions with data.",
+    practice="Experience owning a product area from discovery through launch.",
+    track_record="A track record of shipping products that customers rely on.",
+    preferred="Experience with B2B or technical products.",
+    skills=("Product discovery", "Roadmapping", "Analytics"),
+)
+
+GENERAL_ROLE = RoleFamily(
+    team="a team",
+    work="own important work end to end and help shape how the team operates",
+    collaboration=(
+        "You'll work closely with teammates across {organization}, planning, delivering and improving the work your "
+        "team owns."
+    ),
+    impact="Your work will make a visible difference to the team and the people it serves.",
+    responsibilities=(
+        "Own projects from planning through delivery, and keep everyone informed along the way.",
+        "Work with teammates across the company to understand needs and agree on priorities.",
+        "Improve the processes and tools the team relies on.",
+        "Track results, and use what you learn to improve how the team works.",
+        "Document your work so others can pick it up and build on it.",
+    ),
+    fundamentals="Strong organisation, and care for the details of your work.",
+    practice="Experience delivering projects from planning through completion.",
+    track_record="A track record of leading complex projects to successful outcomes.",
+    preferred="Experience working with technical teams.",
+    skills=("Communication", "Project management", "Collaboration"),
+)
+
+# Checked in order: "ML Product Manager" is a product role, "Design Engineer" an engineering one.
+ROLE_FAMILIES: list[tuple[re.Pattern[str], RoleFamily]] = [
+    (re.compile(r"\bproduct (manager|owner|lead|director)\b|\bhead of product\b", re.IGNORECASE), PRODUCT_ROLE),
+    (
+        re.compile(
+            r"\b(ml|ai|machine learning|deep learning|data scien\w*|computer vision|nlp"
+            r"|research (scientist|engineer)|applied scientist)\b",
+            re.IGNORECASE,
+        ),
+        MACHINE_LEARNING_ROLE,
+    ),
+    (re.compile(r"\b(engineer\w*|developer|devops|sre|programmer|architect)\b", re.IGNORECASE), ENGINEERING_ROLE),
+    (re.compile(r"\b(design\w*|ux|ui)\b", re.IGNORECASE), DESIGN_ROLE),
+]
+
+LEVEL_PREFIXES = {
+    "Entry Level": "entry-level",
+    "Mid Level": "mid-level",
+    "Senior": "senior",
+    "Staff": "staff",
+    "Principal": "principal",
+}
+LEVEL_SENTENCES = {
+    "Internship": (
+        "As an intern, you'll work on real projects with support from the team, and learn how it plans, builds "
+        "and ships."
+    ),
+    "Entry Level": (
+        "It's an entry-level role: you'll learn the product and the domain with support from the team, and take on "
+        "more ownership as you grow."
+    ),
+    "Mid Level": "You'll own projects from start to finish and help shape how the team works.",
+    "Senior": "You'll lead projects from start to finish, set direction for your area and help others grow.",
+    "Staff": "You'll set direction across teams, take on the most complex problems and help others grow.",
+    "Principal": (
+        "You'll shape direction across the organisation, take on the hardest problems and raise the bar for "
+        "everyone around you."
+    ),
+    "Manager": "You'll lead and grow the team, set priorities with stakeholders and help everyone do their best work.",
+    "Director": (
+        "You'll lead several teams, set strategy and priorities with leadership, and develop the managers who "
+        "report to you."
+    ),
+}
+ENTRY_LEVELS = frozenset({"Internship", "Entry Level"})
+SENIOR_LEVELS = frozenset({"Senior", "Staff", "Principal"})
+LEAD_LEVELS = frozenset({"Manager", "Director"})
+# A manager's or director's work is the team's, whatever the discipline.
+LEAD_RESPONSIBILITIES = (
+    "Lead, support and grow the team through hiring, regular one-to-ones, feedback and career development.",
+    "Set goals and priorities with stakeholders, and keep the team focused on what matters most.",
+    "Make sure the team delivers high-quality work reliably and at a sustainable pace.",
+    "Improve how the team plans, collaborates and shares what it learns.",
+    "Represent the team's work and needs across the company.",
+)
+
+_SENTENCE_BREAK = re.compile(r"(?<=[.!?])\s+")
+
+
+def _job_posting(brief: JobPostingBrief, organization: str, overview: str) -> JobPostingContent:
+    """A complete draft from the brief alone: the recruiter's notes, title, level, team, location and
+    skills, and the company overview for About the team. It states nothing else about the company."""
+    family = next((family for pattern, family in ROLE_FAMILIES if pattern.search(brief.title)), GENERAL_ROLE)
+    role = _level_title(brief)
+    opening = f"{organization} is hiring {_article(role)} {role}"
+    if brief.department:
+        opening += f" to join the {_team(brief.department)}"
+    if brief.location and brief.location.lower() != "remote":
+        opening += f" in {brief.location}"
+    work = family.work.format(organization=organization)
+    team = [f"You'll join the {_team(brief.department)} at {organization}." if brief.department else ""]
+    team += _SENTENCE_BREAK.split(overview.strip())
+    return JobPostingContent(
+        summary=_fit([f"{opening}.", f"In this {_arrangement(brief)}, you'll {work}."], MAX_SUMMARY),
+        about_role=_fit(
+            [
+                _as_sentence(brief.notes) if brief.notes else "",
+                family.collaboration.format(organization=organization),
+                family.impact,
+                LEVEL_SENTENCES.get(brief.seniority or "", ""),
+            ],
+            MAX_ABOUT_ROLE,
+        ),
+        responsibilities=list(LEAD_RESPONSIBILITIES if brief.seniority in LEAD_LEVELS else family.responsibilities),
+        requirements=_requirements(brief, family),
+        preferred_qualifications=_preferred(brief, family, organization),
+        skills=clean_list([*brief.skills, *family.skills])[: max(len(brief.skills), 3)],
+        about_team=_fit([sentence for sentence in team if sentence][:3], MAX_ABOUT_TEAM) or None,
+    )
+
+
+def _requirements(brief: JobPostingBrief, family: RoleFamily) -> list[str]:
+    """Matched to the level. Only the recruiter's skills are named: a suggested one is just a suggestion."""
+    title, level = brief.title, brief.seniority
+    primary, secondary = _join(brief.skills[:2]), _join(brief.skills[2:5])
+    if level in ENTRY_LEVELS:
+        items = [
+            f"Working knowledge of {primary}, from work, internships, projects or study."
+            if primary
+            else f"Experience relevant to the {title} role, from work, internships, projects or study.",
+            f"Familiarity with {secondary}, or the drive to pick {'them' if len(brief.skills) > 3 else 'it'} up quickly."
+            if secondary
+            else "",
+            family.fundamentals,
+            "Clear written and spoken communication, and the confidence to ask questions.",
+            "A habit of learning from feedback and sharing what you learn.",
+        ]
+    elif level in LEAD_LEVELS:
+        items = [
+            "Experience leading several teams and the managers who run them."
+            if level == "Director"
+            else f"Experience leading and growing {family.team}: hiring, coaching and developing people.",
+            f"A strong background in {primary}." if primary else family.track_record,
+            "Experience setting goals and priorities with stakeholders across the company.",
+            "A track record of building teams where everyone can do their best work.",
+            "Clear written and spoken communication.",
+        ]
+    elif level in SENIOR_LEVELS:
+        items = [
+            f"Extensive professional experience with {primary}."
+            if primary
+            else f"Extensive experience as {_article(title)} {title} or in a similar role.",
+            f"Deep, hands-on experience with {secondary}." if secondary else "",
+            family.track_record,
+            "Experience leading projects across teams and mentoring others.",
+            "Clear written and spoken communication, including written proposals.",
+        ]
+    else:  # mid level, or not given
+        items = [
+            f"Professional experience with {primary}."
+            if primary
+            else f"Professional experience as {_article(title)} {title} or in a similar role.",
+            f"Hands-on experience with {secondary}." if secondary else "",
+            family.practice,
+            "The ability to take a project from idea to delivery with little guidance.",
+            "Clear written and spoken communication.",
+        ]
+    return [item for item in items if item]
+
+
+def _preferred(brief: JobPostingBrief, family: RoleFamily, organization: str) -> list[str]:
+    items = [family.preferred]
+    if len(brief.skills) > 5:
+        items.append(f"Experience with {_join(brief.skills[5:8])}.")
+    if brief.seniority in ENTRY_LEVELS:
+        items.append("Personal, open-source or academic projects you can walk us through.")
+    items.append(f"Interest in {organization}'s product and the problems it solves.")
+    return items[:4]
+
+
+def _level_title(brief: JobPostingBrief) -> str:
+    """The title with its level, unless the title already says it: "entry-level ML Engineer"."""
+    title = brief.title
+    if brief.seniority == "Internship":
+        return title if "intern" in title.lower() else f"{title} intern"
+    prefix = LEVEL_PREFIXES.get(brief.seniority or "")
+    if prefix and prefix.split("-")[0] not in title.lower():
+        return f"{prefix} {title}"
+    return title
+
+
+def _arrangement(brief: JobPostingBrief) -> str:
+    """The kind of role, as in "hybrid, full-time role", "remote internship" or "full-time role"."""
+    words = [brief.work_arrangement.lower()] if brief.work_arrangement else []
+    if brief.employment_type == "Internship":
+        return " ".join([*words, "internship"])
+    return ", ".join([*words, brief.employment_type.lower()]) + " role"
+
+
+def _team(department: str) -> str:
+    return department if department.lower().endswith("team") else f"{department} team"
+
+
+def _article(phrase: str) -> str:
+    """The article the phrase takes, by how it sounds: an ML Engineer, a UX Designer, an entry-level role."""
+    word = phrase.split()[0] if phrase.split() else ""
+    if word[:2].isupper():  # an abbreviation, said letter by letter
+        return "an" if word[0] in "AEFHILMNORSX" else "a"
+    return "an" if word[:1].lower() in "aeio" else "a"
+
+
+def _as_sentence(text: str) -> str:
+    text = " ".join(text.split())
+    return text if text.endswith((".", "!", "?")) else f"{text}."
+
+
+def _fit(sentences: list[str], limit: int) -> str:
+    """The sentences, skipping blanks, up to the last one that fits in limit characters whole."""
+    text = ""
+    for sentence in filter(None, sentences):
+        if len(text) + len(sentence) + 1 > limit:
+            break
+        text = f"{text} {sentence}".lstrip()
+    return text
 
 
 # Helpers

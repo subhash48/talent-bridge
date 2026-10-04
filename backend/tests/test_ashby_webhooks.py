@@ -162,7 +162,7 @@ async def test_application_submit_imports_everything(
         assert candidate.portal_status == "invited" and candidate.user_id is not None
         assert await session.scalar(select(func.count()).select_from(AIAnalysis).where(AIAnalysis.application_id == application.id)) == 1
     assert [invite["email"] for invite in ashby.invites] == [EMAIL]
-    assert ashby.invites[0]["redirect_to"].endswith("/auth/confirm?next=/welcome")
+    assert ashby.invites[0]["redirect_to"].endswith("/auth/callback?next=/welcome")
     assert "password" not in json.dumps(ashby.invites)
     titles = await timeline(sessions, application.id)
     assert titles[0] == "Application received"

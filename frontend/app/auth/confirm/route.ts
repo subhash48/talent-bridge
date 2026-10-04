@@ -10,6 +10,11 @@ import { createServerSupabase } from "@/lib/supabase-server";
  * session cookie, then continues to `next` (a local path only). Handles both the default email
  * templates (?code=, which must be opened in the browser that asked for it) and templates that link
  * here with ?token_hash=&type= (which work in any browser).
+ *
+ * A link with neither carries its session in the URL fragment instead (Supabase's default invitation
+ * email, and invitations sent before they were redirected to /auth/callback). A fragment never reaches
+ * the server, but the browser keeps it across a redirect, so it goes on to /auth/callback, which reads
+ * it in the browser.
  */
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
@@ -17,6 +22,8 @@ export async function GET(request: NextRequest) {
   const code = params.get("code");
   const tokenHash = params.get("token_hash");
   const type = params.get("type") as EmailOtpType | null;
+
+  if (!code && !tokenHash) redirect(`/auth/callback${request.nextUrl.search}`);
 
   const supabase = await createServerSupabase();
   let ok = false;

@@ -12,8 +12,14 @@ import { createClient } from "@/lib/supabase";
 const MIN_PASSWORD = 8;
 
 /** Sets a password for the session a reset or invitation link started, then opens the user's
- * workspace. The password is chosen here by its owner and goes only to Supabase Auth. */
-export function ResetPasswordForm({ submitLabel = "Set new password" }: { submitLabel?: string }) {
+ * workspace (or redirectTo). The password is chosen here by its owner and goes only to Supabase Auth. */
+export function ResetPasswordForm({
+  submitLabel = "Set new password",
+  redirectTo = "/",
+}: {
+  submitLabel?: string;
+  redirectTo?: string;
+}) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [pending, setPending] = useState(false);
@@ -38,7 +44,7 @@ export function ResetPasswordForm({ submitLabel = "Set new password" }: { submit
       setPending(false);
       return;
     }
-    window.location.replace("/"); // their workspace, by the role the API has on record
+    window.location.replace(redirectTo); // "/" opens their workspace, by the role the API has on record
   }
 
   return (

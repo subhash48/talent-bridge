@@ -129,8 +129,15 @@ class Settings(BaseSettings):
 
     @property
     def portal_invite_redirect_url(self) -> str:
-        """Where the invitation email's link lands: /auth/confirm, then the page to choose a password."""
-        return f"{self.frontend_url.rstrip('/')}/auth/confirm?next=/welcome"
+        """Where Supabase sends an invited candidate once it has verified the invitation link.
+
+        Supabase's default invitation email links to its own /auth/v1/verify, which redirects here
+        with the new session in the URL fragment (#access_token=...). Only the browser can read a
+        fragment, so this is a page, not a server route: it keeps the session, clears the tokens
+        from the address bar and continues to /welcome to choose a password. A customised template
+        that appends &token_hash=...&type=invite also works: the page hands those to /auth/confirm.
+        """
+        return f"{self.frontend_url.rstrip('/')}/auth/callback?next=/welcome"
 
     @property
     def allowed_origins(self) -> list[str]:

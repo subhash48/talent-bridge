@@ -33,6 +33,9 @@ export type PipelineCandidate = CandidateRef & {
   candidateId: string;
   jobId?: string;
   email?: string;
+  phone?: string;
+  /** An http(s) link, or an API path (/api/v1/...) to a file only signed-in recruiters can download. */
+  resumeUrl?: string;
   location?: string;
   pronouns?: string;
   stage: CandidateStage;
@@ -46,6 +49,8 @@ export type PipelineCandidate = CandidateRef & {
   portalStatus?: PortalAccessStatus;
   /** Synced from Ashby, the system of record, or added in Talent Bridge. */
   origin?: "ashby" | "talent_bridge";
+  /** Where the application came from, e.g. "Referral" or "Ashby Simulator / Demo Careers". */
+  source?: string;
   /** Present when the next-action engine says the recruiter owes this candidate a reply. */
   followUp?: { reason: string };
   nextStep?: { title: string; date: string };

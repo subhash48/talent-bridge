@@ -46,7 +46,7 @@ export function CandidateOverview({ candidate, state, onViewAll, onDraftFollowUp
         <StatCard
           icon={Link2}
           label="Source"
-          value={candidate.origin === "ashby" ? "Ashby" : "Talent Bridge"}
+          value={candidate.source || (candidate.origin === "ashby" ? "Ashby" : "Talent Bridge")}
           hint={
             candidate.origin === "ashby"
               ? state.detail?.ashby?.stageTitle

@@ -78,7 +78,27 @@ export function isServerUnavailable(error: unknown): boolean {
  * Thin client for the FastAPI backend: JSON in and out, and the signed-in user's access token on
  * every request. Callers never handle tokens; the API decides what that user may do.
  */
-export async function apiFetch<T>(path: string, { headers, ...init }: RequestInit = {}): Promise<T> {
+export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const response = await send(`${API_URL}${path}`, init);
+  const text = await response.text();
+  return (text ? JSON.parse(text) : undefined) as T;
+}
+
+/**
+ * A file the API serves only to signed-in users, such as a résumé, sent with their token like
+ * apiFetch. path is the API's own path for it (/api/v1/...), as API responses give it; it must
+ * resolve to the API's origin, so the token never goes anywhere else.
+ */
+export async function apiDownload(path: string): Promise<Blob> {
+  const url = new URL(path, API_URL);
+  if (url.origin !== new URL(API_URL).origin) {
+    throw new ApiError("This file isn't served by the Talent Bridge API.", 0, "invalid_path");
+  }
+  return (await send(url.href)).blob();
+}
+
+/** fetch with the user's token. Anything but a 2xx is an ApiError, and a session that's no longer valid leaves the page. */
+async function send(url: string, { headers, ...init }: RequestInit = {}): Promise<Response> {
   const merged = new Headers(headers);
   if (init.body !== undefined) merged.set("Content-Type", "application/json");
   const token = await accessToken();
@@ -86,7 +106,7 @@ export async function apiFetch<T>(path: string, { headers, ...init }: RequestIni
 
   let response: Response;
   try {
-    response = await fetch(`${API_URL}${path}`, { cache: "no-store", ...init, headers: merged });
+    response = await fetch(url, { cache: "no-store", ...init, headers: merged });
   } catch (cause) {
     if (init.signal?.aborted) throw cause;
     throw new ApiError(`Can't reach the Talent Bridge API at ${API_URL}. Is the backend running?`, 0, "network_error");
@@ -96,8 +116,7 @@ export async function apiFetch<T>(path: string, { headers, ...init }: RequestIni
     if ((error.status === 401 || error.status === 403) && typeof window !== "undefined") onAccessLost(error);
     throw error;
   }
-  const text = await response.text();
-  return (text ? JSON.parse(text) : undefined) as T;
+  return response;
 }
 
 async function toApiError(response: Response): Promise<ApiError> {

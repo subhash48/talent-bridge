@@ -1,6 +1,6 @@
 "use client";
 
-import { Mail } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { CandidateAIPanel } from "@/components/ai/CandidateAIPanel";
@@ -11,6 +11,7 @@ import { CandidateMessagesPreview } from "@/components/recruiter/CandidateMessag
 import { CandidateOverview } from "@/components/recruiter/CandidateOverview";
 import { CandidatePipeline } from "@/components/recruiter/CandidatePipeline";
 import { DetailError } from "@/components/recruiter/DetailError";
+import { ResumeLink } from "@/components/recruiter/ResumeLink";
 import { Avatar } from "@/components/shared/Avatar";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/Tabs";
@@ -28,6 +29,10 @@ const TABS = [
 ] as const;
 
 type TabValue = (typeof TABS)[number]["value"];
+
+// Email, phone and résumé in the full profile's header.
+const CONTACT_LINK =
+  "inline-flex h-7 items-center gap-1.5 rounded-[8px] px-2 text-sm text-charcoal transition-colors hover:bg-white/[0.06] hover:text-ink";
 
 /** panel: the dashboard's right column · sheet: the same, in a drawer below xl · page: the full profile. */
 type Variant = "panel" | "sheet" | "page";
@@ -98,13 +103,16 @@ function CandidateDetailBody({ candidate, variant, tab, onTabChange, state, aiFo
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <StatusBadge stage={candidate.stage} />
               {candidate.email && (
-                <a
-                  href={`mailto:${candidate.email}`}
-                  className="inline-flex h-7 items-center gap-1.5 rounded-[8px] px-2 text-sm text-charcoal transition-colors hover:bg-white/[0.06] hover:text-ink"
-                >
+                <a href={`mailto:${candidate.email}`} className={CONTACT_LINK}>
                   <Mail aria-hidden className="size-4 text-stone" /> {candidate.email}
                 </a>
               )}
+              {candidate.phone && (
+                <a href={`tel:${candidate.phone.replace(/[^\d+]/g, "")}`} className={CONTACT_LINK}>
+                  <Phone aria-hidden className="size-4 text-stone" /> {candidate.phone}
+                </a>
+              )}
+              {candidate.resumeUrl && <ResumeLink url={candidate.resumeUrl} candidateName={candidate.name} className={CONTACT_LINK} />}
               <span className="text-sm text-faint" suppressHydrationWarning>
                 Added {formatDate(candidate.addedAt)}
               </span>

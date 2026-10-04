@@ -1,4 +1,4 @@
-import type { EngagementLevel, EngagementSignal } from "@/types/event";
+import type { EngagementLevel } from "@/types/event";
 import type { JobStatus } from "@/types/job";
 
 // The FastAPI wire format (backend/app/schemas). services/* map these into the view models in
@@ -8,6 +8,11 @@ export type ApiStage = "sourced" | "screening" | "interview" | "offer" | "hired"
 export type ApiInterviewType = "video" | "phone" | "onsite";
 export type ApiInterviewStatus = "scheduled" | "completed" | "cancelled";
 export type ApiSenderType = "candidate" | "recruiter" | "system" | "ai";
+/** The candidate's own label for a message, chosen in the portal (never inferred from its text). */
+export type ApiMessageKind = "message" | "thank_you" | "follow_up" | "question";
+export type ApiPortalAccountStatus = "not_required" | "pending_invitation" | "invited" | "active" | "invite_failed";
+/** Synced from Ashby (the system of record) or created in Talent Bridge. */
+export type ApiOrigin = "ashby" | "talent_bridge";
 
 export type ApiPage<T> = { items: T[]; total: number; limit: number; offset: number };
 
@@ -25,6 +30,7 @@ export type ApiCandidate = {
   resume_url: string | null;
   pronouns: string | null;
   skills: string[];
+  portal_status: ApiPortalAccountStatus;
   created_at: string;
   updated_at: string;
 };
@@ -56,7 +62,10 @@ export type ApiActivity = ApiActivityBrief & {
 
 export type ApiEngagement = {
   level: EngagementLevel;
-  signals: EngagementSignal[];
+  /** 0-100, or null while there's too little data. Never a measure of candidate quality. */
+  score: number | null;
+  label: string;
+  last_active_at: string | null;
   follow_up_reason: string | null;
 };
 
@@ -95,6 +104,7 @@ export type ApiCandidateListItem = {
   job: ApiJobBrief;
   stage: ApiStage;
   source: string | null;
+  origin: ApiOrigin;
   applied_at: string;
   updated_at: string;
   archived_at: string | null;
@@ -108,6 +118,7 @@ export type ApiMessage = {
   application_id: string;
   sender_type: ApiSenderType;
   content: string;
+  kind: ApiMessageKind;
   created_at: string;
   read_at: string | null;
 };
@@ -137,6 +148,11 @@ export type ApiApplication = {
   applied_at: string;
   updated_at: string;
   archived_at: string | null;
+  external_id: string | null;
+  external_status: string | null;
+  /** Ashby's own name for the stage, e.g. "Hiring Manager Screen". */
+  external_stage_title: string | null;
+  origin: ApiOrigin;
 };
 
 export type ApiCandidateDetail = {
@@ -202,7 +218,7 @@ export type ApiPortalApplication = {
   id: string;
   stage: ApiStage;
   stage_label: string;
-  status: "active" | "hired" | "closed";
+  status: ApiApplicationBucket;
   applied_at: string;
   updated_at: string;
   steps: { stage: ApiStage; label: string; state: "complete" | "current" | "upcoming"; reached_at: string | null }[];
@@ -222,15 +238,34 @@ export type ApiPortalMessage = {
   sender_type: "candidate" | "recruiter" | "system";
   sender_name: string;
   content: string;
+  kind: ApiMessageKind;
   created_at: string;
   read_at: string | null;
 };
 
 export type ApiPortalActivity = { id: string; kind: string; title: string; created_at: string };
 
+export type ApiApplicationBucket = "active" | "inactive" | "no_longer_considered";
+
+export type ApiPortalApplicationSummary = {
+  id: string;
+  job_title: string;
+  company: string;
+  department: string | null;
+  location: string | null;
+  stage: ApiStage;
+  stage_label: string;
+  status: ApiApplicationBucket;
+  applied_at: string;
+  updated_at: string;
+  next_interview_at: string | null;
+  unread_messages: number;
+};
+
 export type ApiCandidateMe = {
   company: string;
   candidate: ApiPortalCandidate;
+  applications: ApiPortalApplicationSummary[];
   application: ApiPortalApplication | null;
   job: ApiPortalJob | null;
   recruiter: ApiPortalRecruiter | null;
@@ -261,4 +296,73 @@ export type ApiCandidatePrep = {
   questions_to_ask: string[];
   practice_questions: string[];
   model_name: string;
+};
+
+// Candidate engagement (GET /candidates/{id}/engagement): recruiter-only, informational. It never
+// ranks, advances or rejects anyone, and nothing in the candidate portal can read it.
+
+export type ApiPortalAccess = {
+  status: ApiPortalAccountStatus;
+  invited_at: string | null;
+  activated_at: string | null;
+  problem: string | null;
+};
+
+export type ApiEngagementBreakdown = {
+  candidate_id: string;
+  application_id: string | null;
+  score: number | null;
+  label: string;
+  level: EngagementLevel;
+  sufficient_data: boolean;
+  portal_activity: {
+    score: number;
+    max: number;
+    neutral: boolean;
+    sessions: number;
+    active_minutes: number;
+    meaningful_views: number;
+    last_active_at: string | null;
+  };
+  responsiveness: {
+    score: number;
+    max: number;
+    neutral: boolean;
+    response_opportunities: number;
+    responses: number;
+    pending: number;
+    median_response_minutes: number | null;
+    last_response_minutes: number | null;
+  };
+  communication: {
+    score: number;
+    max: number;
+    initiated_messages: number;
+    confirmations: number;
+    confirmation_opportunities: number;
+    thank_you_notes: number;
+    follow_ups: number;
+  };
+  proactive_actions: number;
+  overall: { visits: number; active_minutes: number; last_active_at: string | null };
+  portal_access: ApiPortalAccess;
+  recent_portal_activity: { label: string; occurred_at: string; count: number }[];
+  formula_version: string;
+  note: string;
+};
+
+// Ashby integration health (GET /integrations/ashby/status). Never carries a key or a payload.
+export type ApiAshbyStatus = {
+  status: "connected" | "disconnected" | "error";
+  api_key_configured: boolean;
+  webhook_secret_configured: boolean;
+  portal_invites_configured: boolean;
+  last_webhook_at: string | null;
+  last_webhook_action: string | null;
+  webhooks_failed_last_7_days: number;
+  last_successful_sync_at: string | null;
+  last_error: string | null;
+  last_error_at: string | null;
+  invitations_pending: number;
+  invitations_failed: number;
 };

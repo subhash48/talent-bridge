@@ -11,8 +11,9 @@ import { createClient } from "@/lib/supabase";
 
 const MIN_PASSWORD = 8;
 
-/** Sets a new password for the session the reset link started, then opens the user's workspace. */
-export function ResetPasswordForm() {
+/** Sets a password for the session a reset or invitation link started, then opens the user's
+ * workspace. The password is chosen here by its owner and goes only to Supabase Auth. */
+export function ResetPasswordForm({ submitLabel = "Set new password" }: { submitLabel?: string }) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [pending, setPending] = useState(false);
@@ -70,7 +71,7 @@ export function ResetPasswordForm() {
         />
       </Field>
       <Button type="submit" size="lg" disabled={pending} className="mt-1 w-full">
-        {pending ? "Saving…" : "Set new password"}
+        {pending ? "Saving…" : submitLabel}
       </Button>
     </form>
   );

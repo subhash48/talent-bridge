@@ -1,7 +1,7 @@
 "use client";
 
 import { LoaderCircle, Mail, MessageSquareText, SendHorizontal } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
 import { CandidateHeader } from "@/components/candidate/CandidateHeader";
@@ -16,15 +16,35 @@ import { useLiveQuery } from "@/hooks/useLiveQuery";
 import { firstName, formatDayLabel } from "@/lib/format";
 import { errorMessage } from "@/services/api";
 import { getMessageThread, markMessagesRead, sendCandidateMessage } from "@/services/portal";
-import type { CandidateMessage, CandidateMessageThread } from "@/types/portal";
+import { cn } from "@/lib/utils";
+import type { CandidateMessage, CandidateMessageThread, MessageKind } from "@/types/portal";
 
 const MESSAGE_REFRESH_MS = 8_000;
 
 const isIncomingUnread = (message: CandidateMessage) => message.sender !== "candidate" && !message.readAt;
 
-export function MessagesView({ initialThread }: { initialThread?: CandidateMessageThread }) {
+// What the candidate can say their message is. The hiring team sees the label; the text is never
+// analysed to guess it.
+const KINDS: { value: MessageKind; label: string }[] = [
+  { value: "message", label: "Message" },
+  { value: "question", label: "Question" },
+  { value: "thank_you", label: "Thank-you note" },
+  { value: "follow_up", label: "Follow-up" },
+];
+
+/** The thread for the application the portal is showing; the server-rendered thread is only used
+ * when it was rendered for that same application. */
+export function CandidateMessages({ renderedFor, initialThread }: { renderedFor: string | null; initialThread?: CandidateMessageThread }) {
+  const { applicationId } = useCandidatePortal();
+  return (
+    <MessagesView key={applicationId ?? "none"} applicationId={applicationId} initialThread={renderedFor === applicationId ? initialThread : undefined} />
+  );
+}
+
+function MessagesView({ applicationId, initialThread }: { applicationId: string | null; initialThread?: CandidateMessageThread }) {
   const { me, update, refresh: refreshPortal } = useCandidatePortal();
-  const { data: thread, error, refresh, setData } = useLiveQuery(getMessageThread, {
+  const load = useCallback(() => getMessageThread(applicationId), [applicationId]);
+  const { data: thread, error, refresh, setData } = useLiveQuery(load, {
     initialData: initialThread,
     intervalMs: MESSAGE_REFRESH_MS,
   });
@@ -36,7 +56,7 @@ export function MessagesView({ initialThread }: { initialThread?: CandidateMessa
   useEffect(() => {
     if (unread === 0 || document.visibilityState !== "visible") return;
     let cancelled = false;
-    markMessagesRead().then(
+    markMessagesRead(applicationId).then(
       () => {
         if (cancelled) return;
         const readAt = new Date().toISOString();
@@ -48,7 +68,7 @@ export function MessagesView({ initialThread }: { initialThread?: CandidateMessa
     return () => {
       cancelled = true;
     };
-  }, [unread, setData, update]);
+  }, [unread, applicationId, setData, update]);
 
   if (!thread) {
     return (
@@ -90,6 +110,7 @@ export function MessagesView({ initialThread }: { initialThread?: CandidateMessa
         </header>
         <MessageList messages={thread.messages} firstUnreadId={firstUnreadId} recruiterFirst={recruiterFirst} />
         <Composer
+          applicationId={applicationId}
           recruiterFirst={recruiterFirst}
           onSent={(message) => {
             setData((current) => current && { ...current, messages: [...current.messages, message] });
@@ -150,10 +171,13 @@ function MessageList({ messages, firstUnreadId, recruiterFirst }: { messages: Ca
   );
 }
 
-function Composer({ recruiterFirst, onSent }: { recruiterFirst: string; onSent: (message: CandidateMessage) => void }) {
+type ComposerProps = { applicationId: string | null; recruiterFirst: string; onSent: (message: CandidateMessage) => void };
+
+function Composer({ applicationId, recruiterFirst, onSent }: ComposerProps) {
   const toast = useToast();
   const composerId = useId();
   const [draft, setDraft] = useState("");
+  const [kind, setKind] = useState<MessageKind>("message");
   const [sending, setSending] = useState(false);
 
   async function send() {
@@ -161,8 +185,9 @@ function Composer({ recruiterFirst, onSent }: { recruiterFirst: string; onSent: 
     if (!body || sending) return;
     setSending(true);
     try {
-      onSent(await sendCandidateMessage(body));
+      onSent(await sendCandidateMessage(body, { kind, applicationId }));
       setDraft("");
+      setKind("message");
     } catch (error) {
       toast({ title: "Message not sent", description: errorMessage(error, "Check your connection and try again."), tone: "error" });
     } finally {
@@ -178,6 +203,23 @@ function Composer({ recruiterFirst, onSent }: { recruiterFirst: string; onSent: 
         void send();
       }}
     >
+      <div role="radiogroup" aria-label="What kind of message is this?" className="mb-2.5 flex flex-wrap gap-1.5">
+        {KINDS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={kind === option.value}
+            onClick={() => setKind(option.value)}
+            className={cn(
+              "h-7 rounded-full px-3 text-xs font-medium ring-1 transition-colors",
+              kind === option.value ? "bg-white/[0.1] text-ink ring-white/20" : "text-stone ring-white/[0.08] hover:text-ink",
+            )}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
       <label htmlFor={composerId} className="sr-only">
         Message {recruiterFirst}
       </label>

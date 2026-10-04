@@ -45,7 +45,7 @@ async function accessToken(): Promise<string | null> {
   return data.session?.access_token ?? null;
 }
 
-const AUTH_PAGES = ["/login", "/signup", "/forgot-password", "/reset-password"];
+const AUTH_PAGES = ["/login", "/signup", "/forgot-password", "/reset-password", "/welcome"];
 
 /**
  * This page's session can't be used any more, so leave for a page that fits it rather than show an

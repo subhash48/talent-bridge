@@ -7,6 +7,7 @@ import { CandidatePortalProvider } from "@/components/candidate/CandidatePortalP
 import { CandidateShell } from "@/components/candidate/CandidateShell";
 import { ApiUnavailable } from "@/components/shared/ApiUnavailable";
 import { SessionWatcher } from "@/components/shared/SessionWatcher";
+import { selectedApplicationId } from "@/lib/selected-application-server";
 import { requireRole } from "@/lib/session";
 import { errorMessage, isServerUnavailable } from "@/services/api";
 import { getCandidateMe } from "@/services/portal";
@@ -40,5 +41,5 @@ export default async function CandidateLayout({ children }: { children: ReactNod
 
 async function loadPortal() {
   await requireRole("candidate");
-  return getCandidateMe();
+  return getCandidateMe(await selectedApplicationId());
 }

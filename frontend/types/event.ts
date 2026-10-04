@@ -40,16 +40,9 @@ export type EngagementLevel = "high" | "medium" | "low" | "insufficient";
 
 export const ENGAGEMENT_LABELS: Record<EngagementLevel, string> = {
   high: "High",
-  medium: "Medium",
+  medium: "Moderate",
   low: "Low",
-  insufficient: "Not enough signal",
-};
-
-export type EngagementSignal = {
-  key: string;
-  label: string;
-  polarity: "positive" | "neutral" | "negative";
-  observed_at: string | null;
+  insufficient: "Insufficient data",
 };
 
 export type ActivityEvent = {

@@ -1,5 +1,4 @@
 import { STAGE_LABELS } from "@/types/application";
-import type { EngagementSignal } from "@/types/event";
 import type { CandidateQuery } from "@/services/candidates";
 import type {
   CandidateActivity,
@@ -41,22 +40,6 @@ function slugify(name: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
-}
-
-function engagementSignals(candidate: PipelineCandidate, activities: CandidateActivity[]): EngagementSignal[] {
-  const signals: EngagementSignal[] = activities
-    .filter((activity) => ["interview", "document", "question", "assessment"].includes(activity.kind))
-    .slice(0, 3)
-    .map((activity) => ({
-      key: activity.id,
-      label: activity.label,
-      polarity: "positive",
-      observed_at: activity.occurredAt,
-    }));
-  if (candidate.followUp) {
-    signals.unshift({ key: "follow-up", label: candidate.followUp.reason, polarity: "negative", observed_at: null });
-  }
-  return signals;
 }
 
 export const mockApi = {
@@ -149,7 +132,7 @@ export const mockApi = {
   async getCandidateDetail(id: string): Promise<CandidateDetail> {
     await mockDelay(350);
     const db = getMockDb();
-    const candidate = findCandidate(id);
+    findCandidate(id); // throws for an unknown id, like the API's 404
     const activities = await mockApi.getCandidateActivities(id);
     const now = Date.now();
     const interviews = db.interviews
@@ -161,7 +144,7 @@ export const mockApi = {
         return aUpcoming ? a.scheduledAt.localeCompare(b.scheduledAt) : b.scheduledAt.localeCompare(a.scheduledAt);
       });
     const messages = db.conversations.find((conversation) => conversation.candidate.id === id)?.messages ?? [];
-    return clone({ activities, interviews, messages, signals: engagementSignals(candidate, activities), analysis: null });
+    return clone({ activities, interviews, messages, analysis: null });
   },
 
   async scheduleInterview(candidate: CandidateRef, input: NewInterviewInput): Promise<ScheduledInterview> {

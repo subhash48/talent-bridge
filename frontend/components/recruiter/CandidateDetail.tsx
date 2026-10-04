@@ -8,9 +8,9 @@ import { CandidateActionsMenu } from "@/components/recruiter/CandidateActionsMen
 import { CandidateActivity, CandidateActivitySkeleton } from "@/components/recruiter/CandidateActivity";
 import { CandidateInterviewList } from "@/components/recruiter/CandidateInterviewList";
 import { CandidateMessagesPreview } from "@/components/recruiter/CandidateMessagesPreview";
-import { CandidateOverview, DetailError } from "@/components/recruiter/CandidateOverview";
+import { CandidateOverview } from "@/components/recruiter/CandidateOverview";
 import { CandidatePipeline } from "@/components/recruiter/CandidatePipeline";
-import { EngagementPanel } from "@/components/recruiter/EngagementPanel";
+import { DetailError } from "@/components/recruiter/DetailError";
 import { Avatar } from "@/components/shared/Avatar";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/Tabs";
@@ -168,10 +168,7 @@ function CandidateDetailBody({ candidate, variant, tab, onTabChange, state, aiFo
           <div className="px-5 sm:px-7">{header}</div>
           {tabs}
         </section>
-        <div className="flex flex-col gap-4 lg:sticky lg:top-6">
-          {aiPanel}
-          <EngagementPanel level={candidate.engagement} signals={state.detail?.signals ?? []} />
-        </div>
+        <div className="flex flex-col gap-4 lg:sticky lg:top-6">{aiPanel}</div>
       </div>
     );
   }

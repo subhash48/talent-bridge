@@ -12,7 +12,7 @@ import {
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { HelpDialog } from "@/components/candidate/HelpDialog";
@@ -25,6 +25,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/DropdownMenu";
@@ -51,7 +53,8 @@ export function CandidateSidebarContent({ onNavigate }: { onNavigate?: () => voi
       <Link href="/candidate" onClick={onNavigate} aria-label="Candidate portal home" className="mb-2 flex w-fit items-center rounded-md px-3">
         <EncordLogo />
       </Link>
-      <p className="mb-8 px-3 text-[13px] text-faint">Candidate portal</p>
+      <p className={me.applications.length > 1 ? "mb-4 px-3 text-[13px] text-faint" : "mb-8 px-3 text-[13px] text-faint"}>Candidate portal</p>
+      {me.applications.length > 1 && <ApplicationSwitcher onNavigate={onNavigate} />}
 
       <nav aria-label="Candidate portal" className="flex flex-col gap-1">
         {NAV.map((item) => (
@@ -81,7 +84,7 @@ export function CandidateSidebarContent({ onNavigate }: { onNavigate?: () => voi
             <Avatar name={me.candidate.fullName} src={me.candidate.avatarUrl} size={36} />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[15px] font-medium text-ink">{me.candidate.fullName}</span>
-              <span className="block truncate text-[13px] text-stone">{me.job?.title ?? "Candidate"}</span>
+              <span className="block truncate text-[13px] text-stone">{me.candidate.email}</span>
             </span>
             <ChevronsUpDown aria-hidden className="size-4 shrink-0 text-stone" />
           </DropdownMenuTrigger>
@@ -100,5 +103,44 @@ export function CandidateSidebarContent({ onNavigate }: { onNavigate?: () => voi
         </DropdownMenu>
       </div>
     </div>
+  );
+}
+
+/** Which application the portal shows. Interviews, messages and prep all follow the choice. */
+function ApplicationSwitcher({ onNavigate }: { onNavigate?: () => void }) {
+  const { me, applicationId, selectApplication } = useCandidatePortal();
+  const pathname = usePathname();
+  const router = useRouter();
+  const current = me.applications.find((application) => application.id === applicationId);
+
+  function choose(id: string) {
+    selectApplication(id);
+    if (pathname.startsWith("/candidate/application/")) router.push(`/candidate/application/${id}`);
+    onNavigate?.();
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className="mb-6 flex w-full items-center gap-2 rounded-[12px] bg-white/[0.04] px-3 py-2.5 text-left ring-1 ring-white/[0.08] transition-colors hover:bg-white/[0.07]">
+        <span className="min-w-0 flex-1">
+          <span className="block text-[11px] text-faint">Viewing application</span>
+          <span className="block truncate text-sm font-medium text-ink">{current?.jobTitle ?? "Choose an application"}</span>
+        </span>
+        <ChevronsUpDown aria-hidden className="size-4 shrink-0 text-stone" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-[260px]">
+        <DropdownMenuLabel>Your applications</DropdownMenuLabel>
+        <DropdownMenuRadioGroup value={applicationId ?? ""} onValueChange={choose}>
+          {me.applications.map((application) => (
+            <DropdownMenuRadioItem key={application.id} value={application.id} className="items-start py-2">
+              <span className="min-w-0">
+                <span className="block truncate">{application.jobTitle}</span>
+                <span className="block text-xs text-stone">{application.stageLabel}</span>
+              </span>
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

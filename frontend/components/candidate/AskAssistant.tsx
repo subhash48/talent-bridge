@@ -5,6 +5,7 @@ import { useId } from "react";
 
 import { AIComposer } from "@/components/ai/AIComposer";
 import { AIThread } from "@/components/ai/AIThread";
+import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
 import { Card } from "@/components/ui/Card";
 import { usePortalAssistant } from "@/hooks/usePortalAssistant";
 import { cn } from "@/lib/utils";
@@ -17,7 +18,8 @@ const QUICK_PROMPTS = ["What should I prepare?", "What will the interview be lik
  */
 export function AskAssistant({ className }: { className?: string }) {
   const composerId = useId();
-  const { messages, pending, send, stop } = usePortalAssistant();
+  const { applicationId } = useCandidatePortal();
+  const { messages, pending, send, stop } = usePortalAssistant(applicationId);
 
   return (
     <Card className={cn("flex flex-col p-5 sm:p-6", className)}>

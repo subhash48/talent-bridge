@@ -9,7 +9,8 @@ import type { CandidateApplication } from "@/types/portal";
  * application shows how far it got. Scrolls sideways on narrow screens rather than squashing.
  */
 export function ApplicationProgress({ application, showDates = false }: { application: CandidateApplication; showDates?: boolean }) {
-  const { steps, status } = application;
+  const { steps, status, stage } = application;
+  const closed = status !== "active" && stage !== "hired";
   const reached = steps.findLastIndex((step) => step.state !== "upcoming");
   const filled = Math.max(reached, 0) / (steps.length - 1);
   const inset = 100 / (steps.length * 2);
@@ -21,7 +22,7 @@ export function ApplicationProgress({ application, showDates = false }: { applic
           <div
             className={cn(
               "h-full rounded-full transition-[width] duration-500 ease-out",
-              status === "closed" ? "bg-white/25" : "bg-linear-to-r from-white/30 to-ai/80",
+              closed ? "bg-white/25" : "bg-linear-to-r from-white/30 to-ai/80",
             )}
             style={{ width: `${filled * 100}%` }}
           />

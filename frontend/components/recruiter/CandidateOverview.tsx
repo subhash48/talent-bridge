@@ -1,13 +1,13 @@
-import { ArrowRight, CalendarClock, ChartNoAxesColumnIncreasing, CircleAlert, Sparkles, type LucideIcon } from "lucide-react";
+import { ArrowRight, CalendarClock, CircleAlert, Link2, Sparkles, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { CandidateActivity, CandidateActivitySkeleton } from "@/components/recruiter/CandidateActivity";
 import { CandidateAnalysis } from "@/components/recruiter/CandidateAnalysis";
+import { DetailError } from "@/components/recruiter/DetailError";
+import { EngagementCard } from "@/components/recruiter/EngagementCard";
 import { Button } from "@/components/ui/Button";
 import type { CandidateDetailState } from "@/hooks/useCandidateDetail";
 import { formatSchedule } from "@/lib/format";
-import { ENGAGEMENT_DESCRIPTIONS } from "@/lib/stages";
-import { ENGAGEMENT_LABELS } from "@/types/event";
 import type { PipelineCandidate } from "@/types/workspace";
 
 type CandidateOverviewProps = {
@@ -38,18 +38,26 @@ export function CandidateOverview({ candidate, state, onViewAll, onDraftFollowUp
       {/* Side by side when the panel is wide enough to show "Design interview" in full. */}
       <div className="grid grid-cols-1 gap-3 @[25rem]:grid-cols-2">
         <StatCard
-          icon={ChartNoAxesColumnIncreasing}
-          label="Engagement"
-          value={ENGAGEMENT_LABELS[candidate.engagement]}
-          hint={ENGAGEMENT_DESCRIPTIONS[candidate.engagement]}
-        />
-        <StatCard
           icon={CalendarClock}
           label="Next step"
           value={candidate.nextStep?.title ?? "Nothing scheduled"}
           hint={<span suppressHydrationWarning>{candidate.nextStep ? formatSchedule(candidate.nextStep.date) : "Plan the next touchpoint"}</span>}
         />
+        <StatCard
+          icon={Link2}
+          label="Source"
+          value={candidate.origin === "ashby" ? "Ashby" : "Talent Bridge"}
+          hint={
+            candidate.origin === "ashby"
+              ? state.detail?.ashby?.stageTitle
+                ? `Ashby stage: ${state.detail.ashby.stageTitle}`
+                : "Synced from Ashby"
+              : "Added in Talent Bridge"
+          }
+        />
       </div>
+
+      <EngagementCard candidate={candidate} />
 
       <CandidateAnalysis candidate={candidate} analysis={state.detail ? state.detail.analysis : state.error ? null : undefined} />
 
@@ -89,17 +97,6 @@ function StatCard({ icon: Icon, label, value, hint }: { icon: LucideIcon; label:
         <p className="line-clamp-2 text-[15px] leading-tight font-semibold tracking-tight text-ink">{value}</p>
         <p className="mt-0.5 text-xs text-stone">{hint}</p>
       </div>
-    </div>
-  );
-}
-
-export function DetailError({ message, onRetry }: { message: string; onRetry: () => void }) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-[12px] border border-red-400/20 bg-red-400/[0.06] px-3.5 py-3 text-sm text-red-100">
-      <span>{message}</span>
-      <Button variant="secondary" size="sm" onClick={onRetry}>
-        Retry
-      </Button>
     </div>
   );
 }

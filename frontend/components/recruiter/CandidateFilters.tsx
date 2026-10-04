@@ -20,6 +20,7 @@ import {
   SORT_OPTIONS,
   activeFilterCount,
   type CandidateFilters as Filters,
+  type PortalFilter,
   type SortKey,
   type StageFilter,
 } from "@/lib/candidate-query";
@@ -34,6 +35,10 @@ const STAGE_CHIPS: { value: StageFilter; label: string }[] = [
 ];
 
 const ENGAGEMENT_LEVELS = Object.keys(ENGAGEMENT_LABELS) as EngagementLevel[];
+const PORTAL_OPTIONS: { value: PortalFilter; label: string }[] = [
+  { value: "active", label: "Portal activated" },
+  { value: "invited", label: "Invited, not signed in yet" },
+];
 
 type CandidateFiltersProps = {
   stage: StageFilter;
@@ -111,6 +116,25 @@ export function CandidateFilters({
               >
                 Needs follow-up only
               </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={filters.recentlyActive}
+                onSelect={keepOpen}
+                onCheckedChange={(checked) => onFiltersChange({ ...filters, recentlyActive: checked === true })}
+              >
+                Active in the portal this week
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Candidate portal</DropdownMenuLabel>
+              {PORTAL_OPTIONS.map((option) => (
+                <DropdownMenuCheckboxItem
+                  key={option.value}
+                  checked={filters.portal.includes(option.value)}
+                  onSelect={keepOpen}
+                  onCheckedChange={() => onFiltersChange({ ...filters, portal: toggle(filters.portal, option.value) })}
+                >
+                  {option.label}
+                </DropdownMenuCheckboxItem>
+              ))}
               <DropdownMenuSeparator />
               <DropdownMenuLabel>Engagement</DropdownMenuLabel>
               {ENGAGEMENT_LEVELS.map((level) => (

@@ -1,26 +1,40 @@
 "use client";
 
-import { ArrowRight, Mail } from "lucide-react";
+import { ArrowRight, BriefcaseBusiness, Mail } from "lucide-react";
 import Link from "next/link";
+import { useCallback, useEffect } from "react";
 
 import { ActivityList } from "@/components/candidate/ActivityList";
 import { ApplicationProgress } from "@/components/candidate/ApplicationProgress";
+import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
 import { CandidateHeader } from "@/components/candidate/CandidateHeader";
 import { LoadError } from "@/components/candidate/LoadError";
 import { Avatar } from "@/components/shared/Avatar";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { RelativeTime } from "@/components/shared/RelativeTime";
-import { StatusBadge } from "@/components/shared/StatusBadge";
+import { PortalStatusBadge } from "@/components/candidate/PortalStatusBadge";
 import { buttonStyles } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useLiveQuery } from "@/hooks/useLiveQuery";
+import { engagement } from "@/lib/engagement";
 import { firstName, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { getCandidateApplication } from "@/services/portal";
 import type { CandidateApplicationDetail } from "@/types/portal";
 
-export function ApplicationView({ initialDetail }: { initialDetail?: CandidateApplicationDetail }) {
-  const { data, error, refresh } = useLiveQuery(getCandidateApplication, { initialData: initialDetail });
+type ApplicationViewProps = { applicationId: string; initialDetail?: CandidateApplicationDetail };
+
+/** One of the candidate's applications. Opening it makes it the one the whole portal shows. */
+export function ApplicationView({ applicationId, initialDetail }: ApplicationViewProps) {
+  const { applicationId: selected, selectApplication } = useCandidatePortal();
+  const load = useCallback(() => getCandidateApplication(applicationId), [applicationId]);
+  const { data, error, refresh } = useLiveQuery(load, { initialData: initialDetail });
+
+  useEffect(() => selectApplication(applicationId), [applicationId, selectApplication]);
+  useEffect(() => {
+    if (selected === applicationId) engagement.track({ type: "application_viewed" });
+  }, [selected, applicationId]);
 
   if (!data) {
     return (
@@ -32,6 +46,7 @@ export function ApplicationView({ initialDetail }: { initialDetail?: CandidateAp
   }
 
   const { application, job, recruiter, timeline } = data;
+  const active = application.status === "active";
   const details = [
     { label: "Company", value: job.company },
     { label: "Team", value: job.department },
@@ -47,7 +62,7 @@ export function ApplicationView({ initialDetail }: { initialDetail?: CandidateAp
         <Card className="p-5 sm:p-7">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-semibold tracking-tight text-ink">Hiring progress</h2>
-            <StatusBadge stage={application.stage} label={application.stageLabel} />
+            <PortalStatusBadge stage={application.stage} status={application.status} label={application.stageLabel} />
           </div>
           <div className="mt-8">
             <ApplicationProgress application={application} showDates />
@@ -55,16 +70,17 @@ export function ApplicationView({ initialDetail }: { initialDetail?: CandidateAp
           <div
             className={cn(
               "mt-8 rounded-[14px] px-4 py-3.5 ring-1",
-              application.status === "closed" ? "bg-white/[0.03] ring-white/[0.08]" : "bg-ai/[0.08] ring-ai/20",
+              active ? "bg-ai/[0.08] ring-ai/20" : "bg-white/[0.03] ring-white/[0.08]",
             )}
           >
-            <p className="text-xs font-medium text-stone">{application.status === "closed" ? "Status" : "Next step"}</p>
+            <p className="text-xs font-medium text-stone">{active ? "Next step" : "Status"}</p>
             <p className="mt-1 text-sm text-ink">{application.nextStep}</p>
           </div>
         </Card>
 
         <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="flex flex-col gap-5">
+            {(job.summary || job.requirements.length > 0) && (
             <Card className="p-5 sm:p-6">
               <h2 className="font-semibold tracking-tight text-ink">About the role</h2>
               {job.summary && <p className="mt-3 text-sm leading-relaxed text-charcoal">{job.summary}</p>}
@@ -81,6 +97,7 @@ export function ApplicationView({ initialDetail }: { initialDetail?: CandidateAp
                 </>
               )}
             </Card>
+            )}
 
             <Card className="p-5 sm:p-6">
               <h2 className="mb-5 font-semibold tracking-tight text-ink">Timeline</h2>
@@ -140,6 +157,19 @@ export function ApplicationView({ initialDetail }: { initialDetail?: CandidateAp
           </div>
         </div>
       </div>
+    </>
+  );
+}
+
+export function NoApplication({ company }: { company: string }) {
+  return (
+    <>
+      <CandidateHeader title="My Application" />
+      <EmptyState
+        icon={BriefcaseBusiness}
+        title="No application yet"
+        description={`When you apply for a role at ${company}, its progress, interviews and messages appear here.`}
+      />
     </>
   );
 }

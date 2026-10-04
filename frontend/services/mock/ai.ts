@@ -1,8 +1,6 @@
 import { firstName, formatDayLabel, formatDuration, formatRelativeTime, formatSchedule, formatTime, possessivePronoun } from "@/lib/format";
-import { ENGAGEMENT_DESCRIPTIONS } from "@/lib/stages";
 import type { ChatSource, ChatStreamEvent } from "@/services/ai";
 import { STAGE_LABELS } from "@/types/application";
-import { ENGAGEMENT_LABELS } from "@/types/event";
 import type { CandidateDetail, PipelineCandidate, ScheduledInterview } from "@/types/workspace";
 
 import { mockApi } from "./api";
@@ -105,17 +103,14 @@ const COMPOSERS: Record<Intent, (context: Context) => { text: string; sources: C
     const lines = [
       `**${candidate.name}** is a ${candidate.role}${candidate.location ? ` based in ${candidate.location}` : ""}, currently in the **${STAGE_LABELS[candidate.stage]}** stage.`,
       "",
-      `- **Engagement: ${ENGAGEMENT_LABELS[candidate.engagement]}.** ${ENGAGEMENT_DESCRIPTIONS[candidate.engagement]}; most recently ${recentActivity(context, 2)}.`,
+      `- **Recent activity:** ${recentActivity(context, 2)}.`,
     ];
     if (candidate.skills.length) lines.push(`- **Skills:** ${candidate.skills.join(", ")}.`);
     lines.push(`- **Next step:** ${nextStepLine(context)}`);
     if (question) lines.push(`- **Worth covering:** ${question.label.toLowerCase()}; a good topic for the next conversation.`);
     if (candidate.followUp) lines.push(`- **Needs attention:** ${candidate.followUp.reason}.`);
     lines.push("");
-    if (candidate.followUp) lines.push(`I'd prioritise a follow-up today so ${first} doesn't go cold.`);
-    else if (candidate.engagement === "high") lines.push("Overall, a responsive candidate moving on schedule. No follow-up needed right now.");
-    else if (candidate.engagement === "insufficient") lines.push("There isn't much signal yet. A personal outreach message is the best next move.");
-    else lines.push(`Momentum is steady. A quick check-in would keep ${first} engaged.`);
+    lines.push(candidate.followUp ? `I'd follow up today so ${first} isn't left waiting.` : "Nothing is waiting on you right now.");
     return { text: lines.join("\n"), sources: sourcesFor(context, "activity", "interviews") };
   },
 
@@ -139,7 +134,7 @@ const COMPOSERS: Record<Intent, (context: Context) => { text: string; sources: C
           `**Review the latest update:** ${candidate.lastActivity.toLowerCase()} ${formatRelativeTime(candidate.lastActivityAt)}.`,
           upcoming
             ? `**Prepare ${people(upcoming.interviewers)}** for the ${upcoming.title.toLowerCase()} ${dayPhrase(upcoming.scheduledAt)}.`
-            : "**Book a hiring-manager screen** while engagement is fresh.",
+            : "**Book a hiring-manager screen** while the conversation is fresh.",
           `**Send a short update** so ${first} knows what happens next and when.`,
         );
         break;
@@ -242,7 +237,6 @@ const COMPOSERS: Record<Intent, (context: Context) => { text: string; sources: C
       `Here's the latest on **${candidate.name}** (${candidate.role}, ${STAGE_LABELS[candidate.stage]}):`,
       "",
       `- **Last activity:** ${candidate.lastActivity} ${formatRelativeTime(candidate.lastActivityAt)}.`,
-      `- **Engagement:** ${ENGAGEMENT_LABELS[candidate.engagement]}. ${ENGAGEMENT_DESCRIPTIONS[candidate.engagement]}.`,
       `- **Next step:** ${nextStepLine(context)}`,
       "",
       `I can summarize ${their} profile, suggest next steps, draft a message, or prepare an interview brief.`,

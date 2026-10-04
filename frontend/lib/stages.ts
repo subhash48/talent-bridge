@@ -41,13 +41,6 @@ export const ENGAGEMENT_STYLES: Record<EngagementLevel, string> = {
   insufficient: "text-stone",
 };
 
-export const ENGAGEMENT_DESCRIPTIONS: Record<EngagementLevel, string> = {
-  high: "Active this week",
-  medium: "Some activity this week",
-  low: "Quiet for over a week",
-  insufficient: "Not enough activity yet",
-};
-
 export const JOB_STATUS: Record<JobStatus, { label: string; className: string }> = {
   open: { label: "Open", className: "bg-emerald-400/10 text-emerald-200 ring-emerald-300/20" },
   draft: { label: "Draft", className: "bg-white/[0.06] text-charcoal ring-white/10" },

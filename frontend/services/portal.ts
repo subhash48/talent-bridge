@@ -6,6 +6,7 @@ import type {
   ApiMessageThread,
   ApiPortalActivity,
   ApiPortalApplication,
+  ApiPortalApplicationSummary,
   ApiPortalCandidate,
   ApiPortalInterview,
   ApiPortalJob,
@@ -16,26 +17,40 @@ import type {
   CandidateActivity,
   CandidateApplication,
   CandidateApplicationDetail,
+  CandidateApplicationSummary,
   CandidateInterview,
   CandidateMeResponse,
   CandidateMessage,
   CandidateMessageThread,
   CandidatePrep,
   CandidateProfile,
+  MessageKind,
   PortalJob,
   ProfileUpdateInput,
 } from "@/types/portal";
 
 // The Candidate Portal's API (/candidate/*). There is no candidate id anywhere in these calls: the
-// server resolves who is signed in from their access token, and every response is
-// a candidate-safe projection of the records the recruiter workspace uses.
+// server resolves who is signed in from their access token, and every response is a candidate-safe
+// projection of the records the recruiter workspace uses.
+//
+// A candidate can have several applications. Calls about one take its id (the selected application);
+// the API checks it is the candidate's own, and without one uses their latest active application.
 
-/** GET /candidate/me: the portal home, navigation badges and notifications. */
-export async function getCandidateMe(): Promise<CandidateMeResponse> {
-  const me = await apiFetch<ApiCandidateMe>("/candidate/me");
+/** "?application_id=..." when an application is given, else "". */
+function forApplication(applicationId?: string | null, extra?: Record<string, string>): string {
+  const params = new URLSearchParams(extra);
+  if (applicationId) params.set("application_id", applicationId);
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
+
+/** GET /candidate/me: the portal home, navigation badges and notifications, for one application. */
+export async function getCandidateMe(applicationId?: string | null): Promise<CandidateMeResponse> {
+  const me = await apiFetch<ApiCandidateMe>(`/candidate/me${forApplication(applicationId)}`);
   return {
     company: me.company,
     candidate: fromCandidate(me.candidate),
+    applications: me.applications.map(fromSummary),
     application: me.application && fromApplication(me.application),
     job: me.job && fromJob(me.job),
     recruiter: me.recruiter,
@@ -46,8 +61,15 @@ export async function getCandidateMe(): Promise<CandidateMeResponse> {
   };
 }
 
-export async function getCandidateApplication(): Promise<CandidateApplicationDetail> {
-  const detail = await apiFetch<ApiCandidateApplicationDetail>("/candidate/application");
+/** GET /candidate/applications: every application, active first. */
+export async function getCandidateApplications(): Promise<CandidateApplicationSummary[]> {
+  return (await apiFetch<ApiPortalApplicationSummary[]>("/candidate/applications")).map(fromSummary);
+}
+
+/** One application in full. A 404 means it isn't one of the candidate's. */
+export async function getCandidateApplication(applicationId?: string | null): Promise<CandidateApplicationDetail> {
+  const path = applicationId ? `/candidate/applications/${encodeURIComponent(applicationId)}` : "/candidate/application";
+  const detail = await apiFetch<ApiCandidateApplicationDetail>(path);
   return {
     application: fromApplication(detail.application),
     job: fromJob(detail.job),
@@ -56,8 +78,8 @@ export async function getCandidateApplication(): Promise<CandidateApplicationDet
   };
 }
 
-export async function getCandidateInterviews(): Promise<CandidateInterview[]> {
-  return (await apiFetch<ApiPortalInterview[]>("/candidate/interviews")).map(fromInterview);
+export async function getCandidateInterviews(applicationId?: string | null): Promise<CandidateInterview[]> {
+  return (await apiFetch<ApiPortalInterview[]>(`/candidate/interviews${forApplication(applicationId)}`)).map(fromInterview);
 }
 
 /** PATCH /candidate/interviews/{id}/confirm. The recruiter sees the confirmation straight away. */
@@ -65,22 +87,25 @@ export async function confirmInterview(interviewId: string): Promise<CandidateIn
   return fromInterview(await apiFetch<ApiPortalInterview>(`/candidate/interviews/${interviewId}/confirm`, { method: "PATCH" }));
 }
 
-export async function getMessageThread(): Promise<CandidateMessageThread> {
-  const thread = await apiFetch<ApiMessageThread>("/candidate/messages");
+export async function getMessageThread(applicationId?: string | null): Promise<CandidateMessageThread> {
+  const thread = await apiFetch<ApiMessageThread>(`/candidate/messages${forApplication(applicationId)}`);
   return { recruiter: thread.recruiter, unread: thread.unread, messages: thread.messages.map(fromMessage) };
 }
 
-/** POST /candidate/messages. It arrives unread in the recruiter's inbox. */
-export async function sendCandidateMessage(body: string): Promise<CandidateMessage> {
+/** POST /candidate/messages. It arrives unread in the recruiter's inbox, labelled with the kind chosen. */
+export async function sendCandidateMessage(
+  body: string,
+  { kind = "message", applicationId }: { kind?: MessageKind; applicationId?: string | null } = {},
+): Promise<CandidateMessage> {
   const message = await apiFetch<ApiPortalMessage>("/candidate/messages", {
     method: "POST",
-    body: JSON.stringify({ content: body }),
+    body: JSON.stringify({ content: body, kind, application_id: applicationId ?? null }),
   });
   return fromMessage(message);
 }
 
-export async function markMessagesRead(): Promise<void> {
-  await apiFetch<void>("/candidate/messages/read", { method: "POST" });
+export async function markMessagesRead(applicationId?: string | null): Promise<void> {
+  await apiFetch<void>(`/candidate/messages/read${forApplication(applicationId)}`, { method: "POST" });
 }
 
 export async function getCandidateProfile(): Promise<CandidateProfile> {
@@ -93,8 +118,9 @@ export async function updateCandidateProfile(input: ProfileUpdateInput): Promise
 }
 
 /** GET /candidate/prep: AI interview prep built from candidate-safe context only. */
-export async function getCandidatePrep(signal?: AbortSignal): Promise<CandidatePrep> {
-  const prep = await apiFetch<ApiCandidatePrep>(`/candidate/prep?utc_offset_minutes=${utcOffsetMinutes()}`, { signal });
+export async function getCandidatePrep(applicationId?: string | null, signal?: AbortSignal): Promise<CandidatePrep> {
+  const query = forApplication(applicationId, { utc_offset_minutes: String(utcOffsetMinutes()) });
+  const prep = await apiFetch<ApiCandidatePrep>(`/candidate/prep${query}`, { signal });
   return {
     interview: prep.interview && fromInterview(prep.interview),
     role: prep.role,
@@ -111,15 +137,15 @@ export async function getCandidatePrep(signal?: AbortSignal): Promise<CandidateP
 }
 
 /** Tells the recruiter the candidate opened their prep (once an hour at most, server-side). */
-export async function recordPrepViewed(): Promise<void> {
-  await apiFetch<void>("/candidate/prep/viewed", { method: "POST", keepalive: true });
+export async function recordPrepViewed(applicationId?: string | null): Promise<void> {
+  await apiFetch<void>(`/candidate/prep/viewed${forApplication(applicationId)}`, { method: "POST", keepalive: true });
 }
 
 /** POST /candidate/ai/ask. The recruiter's timeline records the topic, never the question. */
-export async function askCandidateAssistant(message: string, signal?: AbortSignal): Promise<string> {
+export async function askCandidateAssistant(message: string, applicationId?: string | null, signal?: AbortSignal): Promise<string> {
   const { answer } = await apiFetch<{ answer: string; model_name: string }>("/candidate/ai/ask", {
     method: "POST",
-    body: JSON.stringify({ message, utc_offset_minutes: utcOffsetMinutes() }),
+    body: JSON.stringify({ message, utc_offset_minutes: utcOffsetMinutes(), application_id: applicationId ?? null }),
     signal,
   });
   return answer;
@@ -151,6 +177,23 @@ function fromCandidate(candidate: ApiPortalCandidate): CandidateProfile {
     avatarUrl: candidate.avatar_url,
     resumeUrl: candidate.resume_url,
     skills: candidate.skills,
+  };
+}
+
+function fromSummary(summary: ApiPortalApplicationSummary): CandidateApplicationSummary {
+  return {
+    id: summary.id,
+    jobTitle: summary.job_title,
+    company: summary.company,
+    department: summary.department,
+    location: summary.location,
+    stage: summary.stage,
+    stageLabel: summary.stage_label,
+    status: summary.status,
+    appliedAt: summary.applied_at,
+    updatedAt: summary.updated_at,
+    nextInterviewAt: summary.next_interview_at,
+    unreadMessages: summary.unread_messages,
   };
 }
 
@@ -208,6 +251,7 @@ function fromMessage(message: ApiPortalMessage): CandidateMessage {
     sender: message.sender_type,
     senderName: message.sender_name,
     body: message.content,
+    kind: message.kind,
     sentAt: message.created_at,
     readAt: message.read_at,
   };

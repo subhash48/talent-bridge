@@ -13,7 +13,7 @@ import {
   Target,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 
 import { AskAssistant } from "@/components/candidate/AskAssistant";
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
@@ -31,7 +31,6 @@ import { formatDayLabel, formatDuration, formatTime } from "@/lib/format";
 import { getCandidatePrep, recordPrepViewed } from "@/services/portal";
 import type { CandidateInterview, CandidatePrep } from "@/types/portal";
 
-const loadPrep = () => getCandidatePrep();
 const PREP_REFRESH_MS = 5 * 60_000;
 
 type PrepList = "whatToExpect" | "roleFocus" | "topicsToReview" | "companyInfo" | "questionsToAsk" | "practiceQuestions";
@@ -45,13 +44,20 @@ const SECTIONS: { field: PrepList; title: string; icon: LucideIcon; hint?: strin
   { field: "practiceQuestions", title: "Practice questions", icon: Lightbulb },
 ];
 
-export function PrepView() {
+/** Prep for the application the portal is showing. */
+export function InterviewPrep() {
+  const { applicationId } = useCandidatePortal();
+  return <PrepView key={applicationId ?? "none"} applicationId={applicationId} />;
+}
+
+function PrepView({ applicationId }: { applicationId: string | null }) {
+  const loadPrep = useCallback(() => getCandidatePrep(applicationId), [applicationId]);
   const { data: prep, error, loading, refresh, setData } = useLiveQuery(loadPrep, { intervalMs: PREP_REFRESH_MS });
 
   // Opening prep is a signal the recruiter sees ("Viewed prep materials"); the API records it at most hourly.
   useEffect(() => {
-    void recordPrepViewed().catch(() => undefined);
-  }, []);
+    void recordPrepViewed(applicationId).catch(() => undefined);
+  }, [applicationId]);
 
   const subtitle = prep?.interview ? `Get ready for your ${prep.interview.title}` : prep ? `Stay ready for the ${prep.role} role` : undefined;
 

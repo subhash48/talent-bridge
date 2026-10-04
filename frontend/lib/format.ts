@@ -72,6 +72,19 @@ export function formatDuration(minutes: number): string {
   return rest ? `${hours} hr ${rest} min` : `${hours} hr`;
 }
 
+/** Time spent, rounded so it never looks more precise than it is: "Under a minute", "23 min", "1 hr 5 min". */
+export function formatActiveTime(minutes: number): string {
+  return minutes < 1 ? "Under a minute" : formatDuration(Math.round(minutes));
+}
+
+/** A typical response time, approximately: "~34 min", "~5 hr", "~2 days". */
+export function formatResponseTime(minutes: number): string {
+  if (minutes < 1) return "Under a minute";
+  if (minutes < 60) return `~${Math.round(minutes)} min`;
+  if (minutes < 48 * 60) return `~${Math.round(minutes / 60)} hr`;
+  return `~${Math.round(minutes / (24 * 60))} days`;
+}
+
 export function isWithin(iso: string, milliseconds: number, now = Date.now()): boolean {
   return now - new Date(iso).getTime() < milliseconds;
 }

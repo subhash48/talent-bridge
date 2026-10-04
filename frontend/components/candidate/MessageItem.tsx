@@ -3,7 +3,13 @@ import { Check, CheckCheck } from "lucide-react";
 import { Avatar } from "@/components/shared/Avatar";
 import { formatDateTime, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { CandidateMessage } from "@/types/portal";
+import type { CandidateMessage, MessageKind } from "@/types/portal";
+
+const KIND_LABELS: Partial<Record<MessageKind, string>> = {
+  thank_you: "Thank-you note",
+  follow_up: "Follow-up",
+  question: "Question",
+};
 
 /**
  * One message in the thread. Compact and document-like rather than chat bubbles: the hiring team's
@@ -26,6 +32,7 @@ export function MessageItem({ message, grouped, receipt = false }: MessageItemPr
         {!grouped && (
           <p className="mb-1 flex items-baseline gap-2 px-1 text-xs">
             <span className="font-medium text-charcoal">{own ? "You" : message.senderName}</span>
+            {KIND_LABELS[message.kind] && <span className="text-stone">{KIND_LABELS[message.kind]}</span>}
             <time dateTime={message.sentAt} title={formatDateTime(message.sentAt)} className="text-faint tabular-nums" suppressHydrationWarning>
               {formatTime(message.sentAt)}
             </time>

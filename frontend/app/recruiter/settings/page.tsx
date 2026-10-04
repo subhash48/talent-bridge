@@ -2,6 +2,7 @@ import { Database, Mail, Sparkles, UserRound } from "lucide-react";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
+import { AshbyIntegrationCard } from "@/components/recruiter/AshbyIntegrationCard";
 import { RecruiterHeader } from "@/components/recruiter/RecruiterHeader";
 import { Avatar } from "@/components/shared/Avatar";
 import { Card } from "@/components/ui/Card";
@@ -49,6 +50,8 @@ export default async function SettingsPage() {
               : `Candidates, jobs, interviews and messages are stored in the database behind ${API_URL}.`}
           </p>
         </Card>
+
+        <AshbyIntegrationCard />
 
         <Card>
           <h2 className="flex items-center gap-2 text-sm font-medium text-stone">

@@ -2,8 +2,8 @@ import { ArrowRight, BriefcaseBusiness } from "lucide-react";
 import Link from "next/link";
 
 import { ApplicationProgress } from "@/components/candidate/ApplicationProgress";
+import { PortalStatusBadge } from "@/components/candidate/PortalStatusBadge";
 import { RelativeTime } from "@/components/shared/RelativeTime";
-import { StatusBadge } from "@/components/shared/StatusBadge";
 import { buttonStyles } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { formatDate } from "@/lib/format";
@@ -23,8 +23,8 @@ export function ApplicationStatusCard({ application, job }: { application: Candi
           <p className="mt-1 text-sm text-stone">{meta}</p>
         </div>
         <div className="flex items-center gap-2 sm:flex-col sm:items-end">
-          <span className="text-xs text-faint sm:order-2">Current stage</span>
-          <StatusBadge stage={application.stage} label={application.stageLabel} />
+          <span className="text-xs text-faint sm:order-2">{application.status === "active" ? "Current stage" : "Status"}</span>
+          <PortalStatusBadge stage={application.stage} status={application.status} label={application.stageLabel} />
         </div>
       </div>
 
@@ -40,7 +40,7 @@ export function ApplicationStatusCard({ application, job }: { application: Candi
             <RelativeTime iso={application.updatedAt} />
           </p>
         </div>
-        <Link href="/candidate/application" className={buttonStyles({ variant: "secondary", size: "sm", className: "self-start md:self-auto" })}>
+        <Link href={`/candidate/application/${application.id}`} className={buttonStyles({ variant: "secondary", size: "sm", className: "self-start md:self-auto" })}>
           View application <ArrowRight />
         </Link>
       </div>

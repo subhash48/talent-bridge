@@ -1,20 +1,30 @@
+import { DURATION, isWithin } from "@/lib/format";
 import { stageOrder } from "@/lib/stages";
 import type { EngagementLevel } from "@/types/event";
 import type { CandidateStage, PipelineCandidate } from "@/types/workspace";
 
 // Search, filter and sort for the candidate table. Pure functions, so the server-backed version
 // can map the same state onto GET /v1/candidates?q=&stage=&engagement=&follow_up= later.
+// Engagement can narrow the list but never orders it: it isn't a measure of candidate quality.
 
 export type StageFilter = "all" | CandidateStage;
 export type SortKey = "recent" | "oldest" | "name" | "stage";
+
+/** Portal access as a filter: signed in, or invited and not yet signed in. */
+export type PortalFilter = "active" | "invited";
 
 export type CandidateFilters = {
   engagement: EngagementLevel[];
   roles: string[];
   followUpOnly: boolean;
+  portal: PortalFilter[];
+  /** Used the candidate portal in the last week. */
+  recentlyActive: boolean;
 };
 
-export const EMPTY_FILTERS: CandidateFilters = { engagement: [], roles: [], followUpOnly: false };
+export const EMPTY_FILTERS: CandidateFilters = { engagement: [], roles: [], followUpOnly: false, portal: [], recentlyActive: false };
+
+const RECENTLY_ACTIVE = 7 * DURATION.DAY;
 
 export const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: "recent", label: "Most recent" },
@@ -24,7 +34,13 @@ export const SORT_OPTIONS: { value: SortKey; label: string }[] = [
 ];
 
 export function activeFilterCount(filters: CandidateFilters): number {
-  return filters.engagement.length + filters.roles.length + (filters.followUpOnly ? 1 : 0);
+  return (
+    filters.engagement.length +
+    filters.roles.length +
+    filters.portal.length +
+    (filters.followUpOnly ? 1 : 0) +
+    (filters.recentlyActive ? 1 : 0)
+  );
 }
 
 /** Matches name, role (the job), skills, location and email. */
@@ -42,6 +58,8 @@ export function matchesFilters(candidate: PipelineCandidate, filters: CandidateF
   if (filters.followUpOnly && !candidate.followUp) return false;
   if (filters.engagement.length && !filters.engagement.includes(candidate.engagement)) return false;
   if (filters.roles.length && !filters.roles.includes(candidate.role)) return false;
+  if (filters.portal.length && !filters.portal.some((status) => status === candidate.portalStatus)) return false;
+  if (filters.recentlyActive && !(candidate.portalLastActiveAt && isWithin(candidate.portalLastActiveAt, RECENTLY_ACTIVE))) return false;
   return true;
 }
 

@@ -1,6 +1,6 @@
 import type { ApplicationStage } from "@/types/application";
 import type { Role } from "@/types/candidate";
-import type { EngagementLevel, EngagementSignal } from "@/types/event";
+import type { EngagementLevel } from "@/types/event";
 import type { InterviewStatus } from "@/types/interview";
 import type { JobStatus } from "@/types/job";
 
@@ -16,6 +16,9 @@ export const PIPELINE_STAGES = [
 ] as const satisfies readonly ApplicationStage[];
 
 export type CandidateStage = (typeof PIPELINE_STAGES)[number];
+
+/** The candidate's portal sign-in: never set up, waiting to be invited, invited, signed in, or failed. */
+export type PortalAccessStatus = "not_required" | "pending_invitation" | "invited" | "active" | "invite_failed";
 
 export type CandidateRef = {
   /** Application id: one candidate applying to one job. */
@@ -36,6 +39,13 @@ export type PipelineCandidate = CandidateRef & {
   lastActivity: string;
   lastActivityAt: string;
   engagement: EngagementLevel;
+  /** 0-100, or null while there's too little data. Informational only: never used to rank or reject. */
+  engagementScore?: number | null;
+  /** When they last used the candidate portal for this application. */
+  portalLastActiveAt?: string;
+  portalStatus?: PortalAccessStatus;
+  /** Synced from Ashby, the system of record, or added in Talent Bridge. */
+  origin?: "ashby" | "talent_bridge";
   /** Present when the next-action engine says the recruiter owes this candidate a reply. */
   followUp?: { reason: string };
   nextStep?: { title: string; date: string };
@@ -108,9 +118,60 @@ export type CandidateDetail = {
   activities: CandidateActivity[];
   interviews: ScheduledInterview[];
   messages: ThreadMessage[];
-  signals: EngagementSignal[];
   /** The latest AI analysis, if one has been generated. */
   analysis: CandidateAnalysis | null;
+  /** Ashby's own view of the application, when it was synced from Ashby. */
+  ashby?: { stageTitle: string | null; status: string | null } | null;
+};
+
+/** GET /candidates/{id}/engagement, for one application. Operational information for recruiters:
+ * how the candidate has engaged with the process, never how good they are. */
+export type EngagementBreakdown = {
+  score: number | null;
+  label: string;
+  level: EngagementLevel;
+  sufficientData: boolean;
+  portalActivity: {
+    score: number;
+    max: number;
+    neutral: boolean;
+    visits: number;
+    activeMinutes: number;
+    meaningfulViews: number;
+    lastActiveAt: string | null;
+  };
+  responsiveness: {
+    score: number;
+    max: number;
+    neutral: boolean;
+    opportunities: number;
+    responses: number;
+    pending: number;
+    medianMinutes: number | null;
+  };
+  communication: {
+    score: number;
+    max: number;
+    initiatedMessages: number;
+    confirmations: number;
+    confirmationOpportunities: number;
+    thankYouNotes: number;
+    followUps: number;
+  };
+  proactiveActions: number;
+  overall: { visits: number; activeMinutes: number; lastActiveAt: string | null };
+  portalAccess: PortalAccess;
+  /** Newest first; a run of the same action is one entry with its count. */
+  recentPortalActivity: { label: string; occurredAt: string; count: number }[];
+  note: string;
+};
+
+export type PortalAccess = {
+  status: PortalAccessStatus;
+  invitedAt: string | null;
+  activatedAt: string | null;
+  /** A safe summary when an invitation failed or is waiting. */
+  problem: string | null;
 };
 
 export type JobOpening = {

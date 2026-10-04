@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarDays } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
 import { CandidateHeader } from "@/components/candidate/CandidateHeader";
@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/Tabs";
 import { useConfirmInterview } from "@/hooks/useConfirmInterview";
 import { useLiveQuery } from "@/hooks/useLiveQuery";
+import { engagement } from "@/lib/engagement";
 import { pluralize } from "@/lib/format";
 import { getCandidateInterviews } from "@/services/portal";
 import type { CandidateInterview } from "@/types/portal";
@@ -29,13 +30,35 @@ function groupOf(interview: CandidateInterview): Group {
   return interview.upcoming ? "upcoming" : "completed";
 }
 
-export function InterviewsView({ initialInterviews }: { initialInterviews?: CandidateInterview[] }) {
+/** The interviews for the application the portal is showing; the server-rendered list is only used
+ * when it was rendered for that same application. */
+export function CandidateInterviews({ renderedFor, initialInterviews }: { renderedFor: string | null; initialInterviews?: CandidateInterview[] }) {
+  const { applicationId } = useCandidatePortal();
+  return (
+    <InterviewsView
+      key={applicationId ?? "none"}
+      applicationId={applicationId}
+      initialInterviews={renderedFor === applicationId ? initialInterviews : undefined}
+    />
+  );
+}
+
+type InterviewsViewProps = { applicationId: string | null; initialInterviews?: CandidateInterview[] };
+
+function InterviewsView({ applicationId, initialInterviews }: InterviewsViewProps) {
   const { me } = useCandidatePortal();
-  const { data, error, refresh, setData } = useLiveQuery(getCandidateInterviews, { initialData: initialInterviews });
+  const load = useCallback(() => getCandidateInterviews(applicationId), [applicationId]);
+  const { data, error, refresh, setData } = useLiveQuery(load, { initialData: initialInterviews });
   const { confirm, pendingId } = useConfirmInterview((confirmed) =>
     setData((list) => list?.map((interview) => (interview.id === confirmed.id ? confirmed : interview))),
   );
   const [tab, setTab] = useState<Group>("upcoming");
+  const nextId = data?.find((interview) => groupOf(interview) === "upcoming")?.id;
+
+  // Opening the page shows the next interview's details: that is the one recorded as viewed.
+  useEffect(() => {
+    if (nextId) engagement.track({ type: "interview_viewed", interviewId: nextId });
+  }, [nextId]);
 
   const upcomingCount = data?.filter((interview) => groupOf(interview) === "upcoming").length ?? 0;
   const header = (

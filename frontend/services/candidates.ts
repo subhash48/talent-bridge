@@ -109,8 +109,11 @@ export async function getCandidateDetail(id: string, candidateId: string): Promi
     activities: detail.activity.map((item) => fromActivity(item, id)),
     interviews: forPanel(detail.interviews.map((interview) => fromInterview(interview, candidate))),
     messages: detail.messages.map(fromMessage),
-    signals: detail.engagement?.signals ?? [],
     analysis: detail.ai_analysis && fromAnalysis(detail.ai_analysis),
+    ashby:
+      detail.application?.origin === "ashby"
+        ? { stageTitle: detail.application.external_stage_title, status: detail.application.external_status }
+        : null,
   };
 }
 
@@ -185,6 +188,10 @@ function fromListItem(item: ApiCandidateListItem): PipelineCandidate {
     lastActivity: item.last_activity?.title ?? "No activity yet",
     lastActivityAt: item.last_activity?.created_at ?? item.applied_at,
     engagement: item.engagement.level,
+    engagementScore: item.engagement.score,
+    portalLastActiveAt: item.engagement.last_active_at ?? undefined,
+    portalStatus: item.candidate.portal_status,
+    origin: item.origin,
     followUp: item.engagement.follow_up_reason ? { reason: item.engagement.follow_up_reason } : undefined,
     nextStep: item.next_interview ? { title: item.next_interview.title, date: item.next_interview.scheduled_at } : undefined,
     skills: item.candidate.skills,
@@ -201,6 +208,7 @@ function fromDetail(detail: ApiCandidateDetail): PipelineCandidate {
     job,
     stage,
     source: application.source,
+    origin: application.origin,
     applied_at: application.applied_at,
     updated_at: application.updated_at,
     archived_at: application.archived_at,

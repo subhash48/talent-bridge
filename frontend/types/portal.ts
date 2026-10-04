@@ -1,4 +1,4 @@
-import type { ApiInterviewStatus, ApiStage } from "@/types/api";
+import type { ApiInterviewStatus, ApiMessageKind, ApiStage } from "@/types/api";
 import type { InterviewFormat } from "@/types/workspace";
 
 // View models for the Candidate Portal. services/portal.ts maps the /candidate API (backend
@@ -6,7 +6,9 @@ import type { InterviewFormat } from "@/types/workspace";
 // feedback, engagement and internal notes don't exist in these types.
 
 export type StepState = "complete" | "current" | "upcoming";
-export type ApplicationStatus = "active" | "hired" | "closed";
+/** Where an application sits for the candidate. The real stage is kept separately. */
+export type ApplicationStatus = "active" | "inactive" | "no_longer_considered";
+export type MessageKind = ApiMessageKind;
 export type ActivityKind = "application" | "stage" | "interview" | "message" | "prep" | "question" | "document" | "offer" | "profile";
 
 export type CandidateProfile = {
@@ -50,6 +52,7 @@ export type ApplicationStep = {
 export type CandidateApplication = {
   id: string;
   stage: ApiStage;
+  /** "Interview", "Withdrawn", "No longer under consideration"... */
   stageLabel: string;
   status: ApplicationStatus;
   appliedAt: string;
@@ -81,6 +84,7 @@ export type CandidateMessage = {
   sender: MessageSender;
   senderName: string;
   body: string;
+  kind: MessageKind;
   sentAt: string;
   readAt: string | null;
 };
@@ -92,9 +96,28 @@ export type CandidateActivity = {
   occurredAt: string;
 };
 
+/** One of the candidate's applications, for the list grouped by status. */
+export type CandidateApplicationSummary = {
+  id: string;
+  jobTitle: string;
+  company: string;
+  department: string | null;
+  location: string | null;
+  stage: ApiStage;
+  stageLabel: string;
+  status: ApplicationStatus;
+  appliedAt: string;
+  updatedAt: string;
+  nextInterviewAt: string | null;
+  unreadMessages: number;
+};
+
 export type CandidateMeResponse = {
   company: string;
   candidate: CandidateProfile;
+  /** Every application, active first. */
+  applications: CandidateApplicationSummary[];
+  /** The one the portal is showing (the selected application). */
   application: CandidateApplication | null;
   job: PortalJob | null;
   recruiter: PortalRecruiter | null;

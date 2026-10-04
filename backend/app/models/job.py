@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Text
@@ -14,6 +15,7 @@ class Job(UUIDPrimaryKey, Timestamps, Base):
     __tablename__ = "jobs"
 
     external_id: Mapped[str | None] = mapped_column(Text, unique=True)  # Ashby job id
+    external_updated_at: Mapped[datetime | None]  # Ashby's updatedAt for the version applied here
     title: Mapped[str] = mapped_column(Text)
     department: Mapped[str | None] = mapped_column(Text)
     location: Mapped[str | None] = mapped_column(Text)

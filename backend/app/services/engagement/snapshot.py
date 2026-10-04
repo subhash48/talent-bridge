@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from app.core.enums import CANDIDATE_ACTIONS, InterviewStatus
-from app.models import Application, CandidateActivity, Interview, Message
+from app.models import Application, CandidateActivity, CandidateEngagementEvent, Interview, Message, PortalSession
 
 
 @dataclass(frozen=True)
@@ -14,6 +14,9 @@ class ApplicationSnapshot:
     activities: Sequence[CandidateActivity]  # newest first
     messages: Sequence[Message]  # oldest first
     interviews: Sequence[Interview]  # by scheduled time
+    # Loaded only where engagement is computed (load_snapshots(with_engagement=True)).
+    sessions: Sequence[PortalSession] = ()
+    engagement_events: Sequence[CandidateEngagementEvent] = ()
 
     def candidate_actions(self) -> list[CandidateActivity]:
         """Activity the candidate initiated, newest first."""

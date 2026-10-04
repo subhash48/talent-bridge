@@ -9,7 +9,7 @@ import re
 import uuid
 from collections.abc import Awaitable, Callable
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import settings
 from app.core.enums import ActivityType
@@ -118,3 +118,16 @@ async def with_fallback[Result](
             raise
         logger.warning("%s failed (%s); answering with the mock provider instead.", provider.name, exc)
         return await call(MockProvider()), f"mock (fallback from {provider.name})"
+
+
+async def analyze_in_background(
+    session_factory: async_sessionmaker[AsyncSession], application_id: uuid.UUID, provider: AIProvider
+) -> None:
+    """Analyse an application Ashby just submitted, after the import has committed. Never raises: if
+    the analysis fails the application is still there, and a recruiter can run it by hand."""
+    try:
+        async with session_factory() as session:
+            analysis = await analyze_candidate(session, application_id, provider, actor=None)
+        logger.info("ai.auto_analysis application=%s model=%s", application_id, analysis.model_name)
+    except Exception:
+        logger.exception("ai.auto_analysis_failed application=%s", application_id)

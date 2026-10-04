@@ -4,17 +4,16 @@ A candidate is a person. The pipeline row (CandidateListItem) is one of their ap
 because stage, activity, engagement and interviews all belong to an application.
 """
 
-from typing import Annotated, Literal
+from typing import Annotated
 from uuid import UUID
 
 from pydantic import EmailStr, Field, field_validator
 
-from app.core.enums import ApplicationStage
+from app.core.enums import ApplicationStage, EngagementLevel, PortalAccountStatus
 from app.schemas.activity import ActivityBrief, ActivityRead
 from app.schemas.ai import AIAnalysisRead
-from app.schemas.application import ApplicationBrief, ApplicationRead, StageHistoryRead
+from app.schemas.application import ApplicationBrief, ApplicationRead, Origin, StageHistoryRead
 from app.schemas.common import APIModel, OptionalText, OptionalURL, Timestamp
-from app.schemas.event import EngagementLevel
 from app.schemas.interview import InterviewBrief, InterviewRead
 from app.schemas.job import JobBrief, JobRead
 from app.schemas.message import MessageRead
@@ -66,22 +65,19 @@ class CandidateRead(APIModel):
     resume_url: str | None = None
     pronouns: str | None = None
     skills: list[str] = []
+    portal_status: PortalAccountStatus = PortalAccountStatus.NOT_REQUIRED
     created_at: Timestamp
     updated_at: Timestamp
 
 
-class EngagementSignal(APIModel):
-    key: str
-    label: str
-    polarity: Literal["positive", "neutral", "negative"]
-    observed_at: Timestamp | None = None
-
-
 class EngagementRead(APIModel):
-    """Responsiveness to our process, never a judgement of the candidate."""
+    """How the candidate has engaged with our process, never a judgement of the candidate. The full
+    breakdown is GET /candidates/{id}/engagement. follow_up_reason is what the recruiter owes them."""
 
     level: EngagementLevel
-    signals: list[EngagementSignal] = []
+    score: int | None = None  # null while there's too little data
+    label: str
+    last_active_at: Timestamp | None = None  # in the portal, for this application
     follow_up_reason: str | None = None
 
 
@@ -93,6 +89,7 @@ class CandidateListItem(APIModel):
     job: JobBrief
     stage: ApplicationStage
     source: str | None = None
+    origin: Origin
     applied_at: Timestamp
     updated_at: Timestamp
     archived_at: Timestamp | None = None

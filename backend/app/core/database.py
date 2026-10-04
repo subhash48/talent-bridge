@@ -36,11 +36,12 @@ def create_engine_for(url: str, *, echo: bool = False) -> AsyncEngine:
     options: dict[str, Any] = {"echo": echo}
 
     if parsed.get_backend_name() == "sqlite":
-        if parsed.database in (None, "", ":memory:"):
+        in_memory = parsed.database in (None, "", ":memory:")
+        if in_memory:
             # One shared connection, or every session would see its own empty database.
             options["poolclass"] = StaticPool
         engine = create_async_engine(url, **options)
-        event.listen(engine.sync_engine, "connect", _enable_sqlite_foreign_keys)
+        event.listen(engine.sync_engine, "connect", _configure_sqlite if not in_memory else _enable_sqlite_foreign_keys)
         return engine
 
     # Supabase's pooler (Supavisor, transaction mode) can't keep prepared statements between
@@ -60,6 +61,16 @@ def create_engine_for(url: str, *, echo: bool = False) -> AsyncEngine:
 def _enable_sqlite_foreign_keys(dbapi_connection: Any, _record: Any) -> None:
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
+
+
+def _configure_sqlite(dbapi_connection: Any, record: Any) -> None:
+    """A SQLite file shared by concurrent requests (webhooks, background tasks): write-ahead logging
+    lets reads run alongside the one writer, and a writer waits for the lock instead of failing."""
+    _enable_sqlite_foreign_keys(dbapi_connection, record)
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA busy_timeout=30000")
     cursor.close()
 
 
@@ -96,6 +107,25 @@ async def dispose_engine() -> None:
 async def get_session() -> AsyncIterator[AsyncSession]:
     async with get_sessionmaker()() as session:
         yield session
+
+
+def get_session_factory() -> async_sessionmaker[AsyncSession]:
+    """For work that outlives the request, such as background tasks, which need their own session."""
+    return get_sessionmaker()
+
+
+async def insert_if_absent(session: AsyncSession, table: Any, values: dict[str, Any]) -> bool:
+    """INSERT ... ON CONFLICT DO NOTHING. Returns whether the row was inserted.
+
+    For upserts that race: the loser of a unique-key conflict inserts nothing instead of failing,
+    then reads the winner's row. Works the same on Postgres and SQLite.
+    """
+    if session.get_bind().dialect.name == "postgresql":
+        from sqlalchemy.dialects.postgresql import insert
+    else:
+        from sqlalchemy.dialects.sqlite import insert
+    result = await session.execute(insert(table).values(**values).on_conflict_do_nothing())
+    return bool(result.rowcount)  # type: ignore[attr-defined]
 
 
 async def create_tables(engine: AsyncEngine) -> None:

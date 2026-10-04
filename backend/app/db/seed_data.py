@@ -7,7 +7,14 @@ current. Ported from the frontend's original mock data (frontend/services/mock/d
 from dataclasses import dataclass
 
 from app.core.enums import ActivityType as A
-from app.core.enums import ApplicationStage, InterviewStatus, InterviewType, JobStatus, SenderType
+from app.core.enums import (
+    ApplicationStage,
+    EngagementEventType,
+    InterviewStatus,
+    InterviewType,
+    JobStatus,
+    SenderType,
+)
 
 DAY = 24 * 60
 
@@ -83,6 +90,26 @@ class ThreadSeed:
     candidate: str
     messages: tuple[MessageSeed, ...]
     unread: int = 0  # the last N candidate messages are unread
+
+
+@dataclass(frozen=True)
+class VisitSeed:
+    """A candidate portal visit: when it started and how long the candidate was active in it."""
+
+    candidate: str
+    started_minutes_ago: int
+    active_minutes: int
+    page_views: int
+
+
+@dataclass(frozen=True)
+class ViewSeed:
+    """An explicit portal action. interview names the interview viewed, by title."""
+
+    candidate: str
+    event: EngagementEventType
+    minutes_ago: int
+    interview: str | None = None
 
 
 JOBS: tuple[JobSeed, ...] = (
@@ -763,4 +790,22 @@ THREADS: tuple[ThreadSeed, ...] = (
             ),
         ),
     ),
+)
+
+E = EngagementEventType
+
+# Sophia Martinez, the demo candidate, has been using her portal this week.
+PORTAL_VISITS: tuple[VisitSeed, ...] = (
+    VisitSeed("sophia-martinez", 6 * DAY, 6, 4),
+    VisitSeed("sophia-martinez", 3 * DAY, 7, 5),
+    VisitSeed("sophia-martinez", 1500, 8, 6),
+    VisitSeed("sophia-martinez", 130, 5, 3),
+)
+
+PORTAL_VIEWS: tuple[ViewSeed, ...] = (
+    ViewSeed("sophia-martinez", E.INTERVIEW_VIEWED, 3 * DAY - 5, "Design interview"),
+    ViewSeed("sophia-martinez", E.APPLICATION_VIEWED, 1495),
+    ViewSeed("sophia-martinez", E.PREP_VIEWED, 1440),
+    ViewSeed("sophia-martinez", E.INTERVIEW_VIEWED, 126, "Design interview"),
+    ViewSeed("sophia-martinez", E.MESSAGE_READ, 122),
 )

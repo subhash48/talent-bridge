@@ -13,7 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.enums import ActivityType, SenderType
+from app.core.enums import ActivityType, EngagementEventType, SenderType
 from app.models import Candidate, CandidateActivity
 from app.models.base import utcnow
 from app.schemas.portal import CandidateAskResponse, CandidatePrep
@@ -23,7 +23,8 @@ from app.services.ai.context import parse_requirements
 from app.services.ai.portal_context import PortalContext, PortalInterviewFact
 from app.services.ai.portal_fallback import TOPIC_LABELS, topic_of
 from app.services.ai_service import with_fallback
-from app.services.candidate_portal_service import PortalRecord, require_application, require_record
+from app.services.candidate_portal_service import PortalRecord, owned_application, require_record
+from app.services.engagement.events import record_unless_recent
 
 # Repeat views and questions within this window are one timeline entry, not many.
 REPEAT_WINDOW = timedelta(hours=1)
@@ -81,8 +82,9 @@ async def ask(
     provider: AIProvider,
     *,
     utc_offset_minutes: int | None = None,
+    application_id: uuid.UUID | None = None,
 ) -> CandidateAskResponse:
-    record = await require_record(session, candidate)
+    record = await require_record(session, candidate, application_id)
     context = build_portal_context(record, utc_offset_minutes=utc_offset_minutes)
     content, model_name = await with_fallback(provider, lambda p: p.assist_candidate(context, question))
     await _record_once(
@@ -92,9 +94,14 @@ async def ask(
 
 
 async def prepare(
-    session: AsyncSession, candidate: Candidate, provider: AIProvider, *, utc_offset_minutes: int | None = None
+    session: AsyncSession,
+    candidate: Candidate,
+    provider: AIProvider,
+    *,
+    utc_offset_minutes: int | None = None,
+    application_id: uuid.UUID | None = None,
 ) -> CandidatePrep:
-    record = await require_record(session, candidate)
+    record = await require_record(session, candidate, application_id)
     context = build_portal_context(record, utc_offset_minutes=utc_offset_minutes)
     content, model_name = await with_fallback(provider, lambda p: p.prepare_candidate(context))
     return CandidatePrep(
@@ -108,9 +115,13 @@ async def prepare(
     )
 
 
-async def record_prep_viewed(session: AsyncSession, candidate: Candidate) -> None:
-    application = await require_application(session, candidate.id)
+async def record_prep_viewed(
+    session: AsyncSession, candidate: Candidate, application_id: uuid.UUID | None = None
+) -> None:
+    application = await owned_application(session, candidate, application_id)
+    await record_unless_recent(session, candidate.id, EngagementEventType.PREP_VIEWED, application_id=application.id)
     await _record_once(session, application.id, ActivityType.PREP_VIEWED, "Viewed prep materials")
+    await session.commit()  # the engagement event, when the timeline entry was a repeat
 
 
 async def _record_once(

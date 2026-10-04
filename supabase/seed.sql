@@ -362,4 +362,17 @@ insert into public.candidate_activity (id, application_id, activity_type, title,
   ('5ef1ee9e-1c27-54fe-a907-2e01865436c5', '6f12e11b-a961-544b-93ce-d7371ce1410a', 'stage_changed', 'Moved to Hired', null, '{"from": "offer", "to": "hired"}'::jsonb, now() - interval '39840 minutes'),
   ('577d19a5-130c-5774-b6eb-a08eac86773d', '6f12e11b-a961-544b-93ce-d7371ce1410a', 'offer_accepted', 'Accepted offer', null, null, now() - interval '21000 minutes');
 
+insert into public.portal_sessions (id, candidate_id, application_id, client_session_id, started_at, last_active_at, ended_at, active_seconds, page_views) values
+  ('50625801-4421-56a0-af78-277cf7266b7b', '6392a87e-e72e-5d60-be2b-d0a1841558f1', '9ba87e3b-2ac4-5432-a823-4e50d03eabc4', '1be86bcb-1a8b-5584-92f2-00aec3ec7866', now() - interval '8640 minutes', now() - interval '8634 minutes', now() - interval '8634 minutes', 360, 4),
+  ('57e9e0f2-76d0-512e-bcf8-84347b2e5ffc', '6392a87e-e72e-5d60-be2b-d0a1841558f1', '9ba87e3b-2ac4-5432-a823-4e50d03eabc4', '0689081f-77a8-5d4e-9fd8-422e7ec2c7eb', now() - interval '4320 minutes', now() - interval '4313 minutes', now() - interval '4313 minutes', 420, 5),
+  ('d35cf968-cf56-5bb1-bd0a-f5c84eea770d', '6392a87e-e72e-5d60-be2b-d0a1841558f1', '9ba87e3b-2ac4-5432-a823-4e50d03eabc4', '66a777db-37c6-5de7-b70a-e1c70a6ee436', now() - interval '1500 minutes', now() - interval '1492 minutes', now() - interval '1492 minutes', 480, 6),
+  ('39d86e42-5aef-57eb-9dec-5b2c7304fa4c', '6392a87e-e72e-5d60-be2b-d0a1841558f1', '9ba87e3b-2ac4-5432-a823-4e50d03eabc4', 'b518f79e-163b-52eb-a98b-3f6c3f3ac29b', now() - interval '130 minutes', now() - interval '125 minutes', now() - interval '125 minutes', 300, 3);
+
+insert into public.candidate_engagement_events (id, candidate_id, application_id, session_id, event_type, source, occurred_at, metadata, dedupe_key) values
+  ('ce807b19-0cd1-5767-b470-b60f615e01ad', '6392a87e-e72e-5d60-be2b-d0a1841558f1', '9ba87e3b-2ac4-5432-a823-4e50d03eabc4', null, 'interview_viewed', 'candidate_portal', now() - interval '4315 minutes', '{"target": "812585a6-2bfb-50e2-a3c2-7801f0704487"}'::jsonb, null),
+  ('37965e11-7db8-5696-8f6a-21b58ae97475', '6392a87e-e72e-5d60-be2b-d0a1841558f1', '9ba87e3b-2ac4-5432-a823-4e50d03eabc4', null, 'application_viewed', 'candidate_portal', now() - interval '1495 minutes', null, null),
+  ('94b7d715-9509-51e1-b7e4-3623ed5d0305', '6392a87e-e72e-5d60-be2b-d0a1841558f1', '9ba87e3b-2ac4-5432-a823-4e50d03eabc4', null, 'prep_viewed', 'candidate_portal', now() - interval '1440 minutes', null, null),
+  ('546c2cec-3ac0-5c6d-8343-a9d1b88bc28e', '6392a87e-e72e-5d60-be2b-d0a1841558f1', '9ba87e3b-2ac4-5432-a823-4e50d03eabc4', null, 'interview_viewed', 'candidate_portal', now() - interval '126 minutes', '{"target": "812585a6-2bfb-50e2-a3c2-7801f0704487"}'::jsonb, null),
+  ('cf85a6ac-f64c-5294-8b50-58076a87fca0', '6392a87e-e72e-5d60-be2b-d0a1841558f1', '9ba87e3b-2ac4-5432-a823-4e50d03eabc4', null, 'message_read', 'candidate_portal', now() - interval '122 minutes', null, null);
+
 commit;

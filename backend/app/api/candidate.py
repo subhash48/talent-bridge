@@ -1,5 +1,9 @@
 """The candidate portal. Every route acts as the signed-in candidate and only ever sees their own
-application, through candidate-safe projections (schemas/portal.py).
+applications, through candidate-safe projections (schemas/portal.py).
+
+A candidate can have several applications. Routes that work on one take an optional application_id
+(the query string, or the body for POSTs); it must be one of the candidate's own, or the answer is
+404. Without it they use the application the portal opens on: the most recently updated active one.
 
 Same tables as the recruiter workspace, so changes on either side show on the other at once. A
 candidate can confirm interviews, message the hiring team and edit their contact details; they
@@ -20,6 +24,7 @@ from app.schemas.portal import (
     CandidatePrep,
     MessageThread,
     PortalActivity,
+    PortalApplicationSummary,
     PortalCandidate,
     PortalInterview,
     PortalMessage,
@@ -37,31 +42,56 @@ from app.services.candidate_visibility import present_candidate
 
 router = APIRouter(prefix="/candidate", tags=["candidate portal"])
 
+ApplicationParam = Annotated[UUID | None, Query(description="One of your applications; default: the latest active one")]
+
 
 @router.get("/me", response_model=CandidateMe, summary="Portal home")
-async def me(session: SessionDep, candidate: CurrentCandidateDep) -> CandidateMe:
-    """The candidate, their application and job, next interview, unread messages and recent activity."""
-    return await candidate_portal_service.get_me(session, candidate)
+async def me(session: SessionDep, candidate: CurrentCandidateDep, application_id: ApplicationParam = None) -> CandidateMe:
+    """The candidate, all their applications, and the selected one's job, next interview, unread
+    messages and recent activity."""
+    return await candidate_portal_service.get_me(session, candidate, application_id)
 
 
-@router.get("/application", response_model=CandidateApplicationDetail, summary="My application")
-async def application(session: SessionDep, candidate: CurrentCandidateDep) -> CandidateApplicationDetail:
+@router.get("/applications", response_model=list[PortalApplicationSummary], summary="My applications")
+async def applications(session: SessionDep, candidate: CurrentCandidateDep) -> list[PortalApplicationSummary]:
+    """Every application, active first, each with its status: active, inactive or no longer under
+    consideration."""
+    return await candidate_portal_service.list_applications(session, candidate)
+
+
+@router.get("/applications/{application_id}", response_model=CandidateApplicationDetail, summary="An application")
+async def application_detail(
+    application_id: UUID, session: SessionDep, candidate: CurrentCandidateDep
+) -> CandidateApplicationDetail:
+    """404 unless it's one of the candidate's own applications."""
+    return await candidate_portal_service.get_application(session, candidate, application_id)
+
+
+@router.get("/application", response_model=CandidateApplicationDetail, summary="My current application")
+async def application(
+    session: SessionDep, candidate: CurrentCandidateDep, application_id: ApplicationParam = None
+) -> CandidateApplicationDetail:
     """The application with its pipeline steps, the job, the recruiter and the timeline (oldest first)."""
-    return await candidate_portal_service.get_application(session, candidate)
+    return await candidate_portal_service.get_application(session, candidate, application_id)
 
 
 @router.get("/activity", response_model=list[PortalActivity], summary="My activity")
 async def activity(
-    session: SessionDep, candidate: CurrentCandidateDep, limit: Annotated[int, Query(ge=1, le=200)] = 50
+    session: SessionDep,
+    candidate: CurrentCandidateDep,
+    application_id: ApplicationParam = None,
+    limit: Annotated[int, Query(ge=1, le=200)] = 50,
 ) -> list[PortalActivity]:
     """Candidate-visible timeline entries, newest first. Internal entries are never included."""
-    return await candidate_portal_service.list_activity(session, candidate, limit=limit)
+    return await candidate_portal_service.list_activity(session, candidate, application_id=application_id, limit=limit)
 
 
 @router.get("/interviews", response_model=list[PortalInterview], summary="My interviews")
-async def interviews(session: SessionDep, candidate: CurrentCandidateDep) -> list[PortalInterview]:
+async def interviews(
+    session: SessionDep, candidate: CurrentCandidateDep, application_id: ApplicationParam = None
+) -> list[PortalInterview]:
     """By scheduled time. Interviewer feedback is never included."""
-    return await candidate_interview_service.list_interviews(session, candidate)
+    return await candidate_interview_service.list_interviews(session, candidate, application_id)
 
 
 @router.get("/interviews/{interview_id}", response_model=PortalInterview, summary="An interview")
@@ -76,20 +106,27 @@ async def confirm_interview(interview_id: UUID, session: SessionDep, candidate: 
 
 
 @router.get("/messages", response_model=MessageThread, summary="My messages")
-async def messages(session: SessionDep, candidate: CurrentCandidateDep) -> MessageThread:
-    """The thread with the hiring team, oldest first."""
-    return await candidate_message_service.get_thread(session, candidate)
+async def messages(
+    session: SessionDep, candidate: CurrentCandidateDep, application_id: ApplicationParam = None
+) -> MessageThread:
+    """The thread with the hiring team about one application, oldest first."""
+    return await candidate_message_service.get_thread(session, candidate, application_id)
 
 
 @router.post("/messages", response_model=PortalMessage, status_code=201, summary="Message the hiring team")
 async def send_message(body: PortalMessageCreate, session: SessionDep, candidate: CurrentCandidateDep) -> PortalMessage:
-    """Arrives unread in the recruiter's inbox and on their timeline."""
-    return await candidate_message_service.send_message(session, candidate, body.content)
+    """Arrives unread in the recruiter's inbox and on their timeline. kind is the candidate's own
+    label for it (a thank-you note, a follow-up, a question)."""
+    return await candidate_message_service.send_message(
+        session, candidate, body.content, kind=body.kind, application_id=body.application_id
+    )
 
 
 @router.post("/messages/read", status_code=204, summary="Mark my messages read")
-async def mark_messages_read(session: SessionDep, candidate: CurrentCandidateDep) -> Response:
-    await candidate_message_service.mark_read(session, candidate)
+async def mark_messages_read(
+    session: SessionDep, candidate: CurrentCandidateDep, application_id: ApplicationParam = None
+) -> Response:
+    await candidate_message_service.mark_read(session, candidate, application_id)
     return Response(status_code=204)
 
 
@@ -110,14 +147,19 @@ async def prep(
     candidate: CurrentCandidateDep,
     provider: AIProviderDep,
     utc_offset_minutes: UTCOffset | None = None,
+    application_id: ApplicationParam = None,
 ) -> CandidatePrep:
     """Preparation for the next interview from the candidate assistant, using candidate-safe context only."""
-    return await candidate_ai_service.prepare(session, candidate, provider, utc_offset_minutes=utc_offset_minutes)
+    return await candidate_ai_service.prepare(
+        session, candidate, provider, utc_offset_minutes=utc_offset_minutes, application_id=application_id
+    )
 
 
 @router.post("/prep/viewed", status_code=204, summary="Record that I opened interview prep")
-async def prep_viewed(session: SessionDep, candidate: CurrentCandidateDep) -> Response:
-    await candidate_ai_service.record_prep_viewed(session, candidate)
+async def prep_viewed(
+    session: SessionDep, candidate: CurrentCandidateDep, application_id: ApplicationParam = None
+) -> Response:
+    await candidate_ai_service.record_prep_viewed(session, candidate, application_id)
     return Response(status_code=204)
 
 
@@ -127,5 +169,10 @@ async def ask(
 ) -> CandidateAskResponse:
     """Answers from the candidate's own record. The recruiter sees the topic, never the question."""
     return await candidate_ai_service.ask(
-        session, candidate, body.message, provider, utc_offset_minutes=body.utc_offset_minutes
+        session,
+        candidate,
+        body.message,
+        provider,
+        utc_offset_minutes=body.utc_offset_minutes,
+        application_id=body.application_id,
     )

@@ -25,7 +25,7 @@ from app.models import (
 from app.models.base import utcnow
 from app.schemas.activity import ActivityRead
 from app.schemas.ai import AIAnalysisRead
-from app.schemas.application import ApplicationBrief, ApplicationRead, StageHistoryRead
+from app.schemas.application import ApplicationBrief, ApplicationRead, StageHistoryRead, origin_of
 from app.schemas.candidate import CandidateCreate, CandidateDetail, CandidateListItem, CandidateRead
 from app.schemas.common import Page
 from app.schemas.interview import InterviewRead
@@ -33,7 +33,8 @@ from app.schemas.job import JobRead
 from app.schemas.message import MessageRead
 from app.services.activity_service import record_activity
 from app.services.application_service import check_initial_stage, record_stage
-from app.services.pipeline_service import build_list_items, engagement_for, load_snapshots
+from app.services.engagement.service import engagement_read
+from app.services.pipeline_service import build_list_items, load_snapshots
 
 DETAIL_ACTIVITY_LIMIT = 100
 
@@ -126,6 +127,7 @@ async def get_candidate_detail(
             job_title=item.job.title,
             stage=item.stage,
             archived=item.archived_at is not None,
+            origin=origin_of(item.external_id),
         )
         for item in applications
     ]
@@ -140,7 +142,7 @@ async def get_candidate_detail(
     if focus is None:
         return CandidateDetail(candidate=candidate_read, applications=briefs)
 
-    [snapshot] = await load_snapshots(session, [focus])
+    [snapshot] = await load_snapshots(session, [focus], with_engagement=True)
     history = await session.scalars(
         select(CandidateStageHistory)
         .where(CandidateStageHistory.application_id == focus.id)
@@ -155,7 +157,7 @@ async def get_candidate_detail(
         application=ApplicationRead.model_validate(focus),
         job=JobRead.model_validate(focus.job),
         stage=focus.stage,
-        engagement=engagement_for(snapshot, now),
+        engagement=engagement_read(snapshot, candidate, now),
         next_interview=InterviewRead.model_validate(upcoming) if upcoming else None,
         activity=[ActivityRead.model_validate(row) for row in snapshot.activities[:DETAIL_ACTIVITY_LIMIT]],
         interviews=[InterviewRead.model_validate(row) for row in snapshot.interviews],
@@ -201,7 +203,7 @@ async def create_candidate(session: AsyncSession, data: CandidateCreate, actor: 
         )
         session.add(application)
         await session.flush()
-        record_stage(session, application, None, actor, now)
+        record_stage(session, application.id, None, application.stage, now, actor)
         record_activity(
             session,
             application.id,

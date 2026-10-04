@@ -2,6 +2,10 @@
 
 Providers only ever see a CandidateContext, so the model's knowledge is explicit and every answer
 can cite its sources. Contact details are left out on purpose: no answer needs them.
+
+Candidate engagement (services/engagement) is deliberately not part of it: portal visits, time spent
+and response speed say nothing about whether someone can do the job, so they can never reach an
+analysis, a strength, a concern or anything else the AI writes.
 """
 
 import re
@@ -14,20 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import ActivityType, ApplicationStage, InterviewStatus, SenderType
 from app.schemas.ai import AISource
-from app.schemas.event import EngagementLevel
 
-ENGAGEMENT_LABELS = {
-    EngagementLevel.HIGH: "High",
-    EngagementLevel.MEDIUM: "Medium",
-    EngagementLevel.LOW: "Low",
-    EngagementLevel.INSUFFICIENT: "Not enough signal",
-}
-ENGAGEMENT_DESCRIPTIONS = {
-    EngagementLevel.HIGH: "several candidate actions in the last three days",
-    EngagementLevel.MEDIUM: "active in the last week",
-    EngagementLevel.LOW: "quiet for over a week",
-    EngagementLevel.INSUFFICIENT: "no candidate activity yet",
-}
 SECTIONS = ("profile", "job", "activity", "interviews", "messages")
 
 _REQUIREMENTS = re.compile(
@@ -80,8 +71,7 @@ class CandidateContext:
     stage: ApplicationStage
     source: str | None
     applied_at: datetime
-    engagement_level: EngagementLevel
-    follow_up_reason: str | None
+    follow_up_reason: str | None  # what the recruiter owes the candidate (next_actions), not engagement
     activities: tuple[ActivityFact, ...]  # newest first
     interviews: tuple[InterviewFact, ...]  # by scheduled time
     messages: tuple[MessageFact, ...]  # oldest first
@@ -149,10 +139,6 @@ class CandidateContext:
             "",
             "[application]",
             f"Stage: {self.stage.label}. Source: {self.source or 'unknown'}. Applied {ago(self.applied_at, self.now)}.",
-            (
-                f"Engagement: {ENGAGEMENT_LABELS[self.engagement_level]} "
-                f"({ENGAGEMENT_DESCRIPTIONS[self.engagement_level]}). This measures responsiveness, not quality."
-            ),
             f"Needs follow-up: {self.follow_up_reason or 'no'}",
             "",
             "[activity] newest first",
@@ -237,7 +223,7 @@ async def build_candidate_context(
 
     application = await get_application(session, application_id)
     detail = await get_candidate_detail(session, application.candidate_id, application.id, now=now)
-    assert detail.job is not None and detail.engagement is not None and detail.stage is not None
+    assert detail.job is not None and detail.stage is not None
     candidate = detail.candidate
     return CandidateContext(
         application_id=application.id,
@@ -256,8 +242,7 @@ async def build_candidate_context(
         stage=detail.stage,
         source=application.source,
         applied_at=application.applied_at,
-        engagement_level=detail.engagement.level,
-        follow_up_reason=detail.engagement.follow_up_reason,
+        follow_up_reason=detail.engagement.follow_up_reason if detail.engagement else None,
         activities=tuple(ActivityFact(a.activity_type, a.title, a.description, a.created_at) for a in detail.activity),
         interviews=tuple(
             InterviewFact(

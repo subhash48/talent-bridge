@@ -65,6 +65,18 @@ def db_enum(enum_class: type[StrEnum], name: str) -> Enum:
     )
 
 
+def text_enum(enum_class: type[StrEnum]) -> Enum:
+    """An enum stored as text, for columns whose allowed values a check constraint lists (or none)."""
+    return Enum(
+        enum_class,
+        native_enum=False,
+        length=32,
+        values_callable=lambda members: [member.value for member in members],
+        validate_strings=True,
+        create_constraint=False,
+    )
+
+
 class Base(DeclarativeBase):
     type_annotation_map: ClassVar[dict[Any, Any]] = {datetime: UTCDateTime, uuid.UUID: Uuid, dict[str, Any]: JSONType}
 

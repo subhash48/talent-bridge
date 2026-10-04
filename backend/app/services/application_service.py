@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import ActivityType, ApplicationStage
 from app.core.errors import BadRequestError, InvalidStageTransitionError
-from app.models import Application, CandidateStageHistory, User
+from app.models import CandidateStageHistory, User
 from app.models.base import utcnow
 from app.schemas.candidate import CandidateListItem
 from app.services.activity_service import record_activity
@@ -59,16 +59,18 @@ def check_initial_stage(stage: ApplicationStage) -> None:
 
 def record_stage(
     session: AsyncSession,
-    application: Application,
+    application_id: uuid.UUID,
     previous: ApplicationStage | None,
-    actor: User | None,
+    stage: ApplicationStage,
     at: datetime,
+    actor: User | None = None,
 ) -> None:
+    """Append to the stage history. actor is None for changes that came from Ashby."""
     session.add(
         CandidateStageHistory(
-            application_id=application.id,
+            application_id=application_id,
             previous_stage=previous,
-            new_stage=application.stage,
+            new_stage=stage,
             changed_by=actor.id if actor else None,
             changed_at=at,
         )
@@ -95,7 +97,7 @@ async def change_stage(
     previous = application.stage
     application.stage = stage
     application.updated_at = now
-    record_stage(session, application, previous, actor, now)
+    record_stage(session, application.id, previous, stage, now, actor)
     record_activity(
         session,
         application.id,

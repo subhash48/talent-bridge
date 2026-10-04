@@ -22,17 +22,29 @@ from sqlalchemy import delete, func, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import ActivityType, ApplicationStage, InterviewStatus, InterviewType, SenderType, UserRole
-from app.db.seed_data import CANDIDATES, DAY, INTERVIEWS, JOBS, RECRUITER, THREADS, CandidateSeed
+from app.db.seed_data import (
+    CANDIDATES,
+    DAY,
+    INTERVIEWS,
+    JOBS,
+    PORTAL_VIEWS,
+    PORTAL_VISITS,
+    RECRUITER,
+    THREADS,
+    CandidateSeed,
+)
 from app.models import (
     AIAnalysis,
     Application,
     Base,
     Candidate,
     CandidateActivity,
+    CandidateEngagementEvent,
     CandidateStageHistory,
     Interview,
     Job,
     Message,
+    PortalSession,
     User,
 )
 from app.models.base import utcnow
@@ -55,6 +67,8 @@ TABLES: list[type[Base]] = [
     Interview,
     Message,
     CandidateActivity,
+    PortalSession,
+    CandidateEngagementEvent,
 ]
 
 
@@ -235,6 +249,37 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
                     "read_at": read_at,
                 }
             )
+
+    for index, visit in enumerate(PORTAL_VISITS):
+        row_id = seed_id("portal_session", f"{visit.candidate}:{index}")
+        rows[PortalSession].append(
+            {
+                "id": row_id,
+                "candidate_id": seed_id("candidate", visit.candidate),
+                "application_id": application_ids[visit.candidate],
+                "client_session_id": seed_id("visit", f"{visit.candidate}:{index}"),
+                "started_at": Ago(visit.started_minutes_ago),
+                "last_active_at": Ago(visit.started_minutes_ago - visit.active_minutes),
+                "ended_at": Ago(visit.started_minutes_ago - visit.active_minutes),
+                "active_seconds": visit.active_minutes * 60,
+                "page_views": visit.page_views,
+            }
+        )
+    for index, view in enumerate(PORTAL_VIEWS):
+        target = str(seed_id("interview", f"{view.candidate}:{view.interview}")) if view.interview else None
+        rows[CandidateEngagementEvent].append(
+            {
+                "id": seed_id("engagement_event", f"{view.candidate}:{index}"),
+                "candidate_id": seed_id("candidate", view.candidate),
+                "application_id": application_ids[view.candidate],
+                "session_id": None,
+                "event_type": view.event.value,
+                "source": "candidate_portal",
+                "occurred_at": Ago(view.minutes_ago),
+                "metadata": {"target": target} if target else None,
+                "dedupe_key": None,
+            }
+        )
     return rows
 
 

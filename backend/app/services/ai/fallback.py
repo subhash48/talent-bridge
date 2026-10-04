@@ -7,7 +7,7 @@ The candidate assistant's answers live in portal_fallback, which only sees a Por
 
 import re
 
-from app.core.enums import CANDIDATE_ACTIONS, ActivityType, ApplicationStage, SenderType
+from app.core.enums import ActivityType, ApplicationStage, SenderType
 from app.schemas.ai import (
     AnalysisContent,
     AskContent,
@@ -15,13 +15,10 @@ from app.schemas.ai import (
     DraftPurpose,
     SkillEvidence,
 )
-from app.schemas.event import EngagementLevel
 from app.schemas.portal import AssistContent, PrepContent
 from app.services.ai import portal_fallback
 from app.services.ai.client import AIProvider
 from app.services.ai.context import (
-    ENGAGEMENT_DESCRIPTIONS,
-    ENGAGEMENT_LABELS,
     CandidateContext,
     InterviewFact,
     ago,
@@ -118,8 +115,6 @@ def _summary(context: CandidateContext, matched: list[SkillEvidence], missing: l
         parts.append(f"{evidenced}; {_join(missing)} still need evidence." if missing else f"{evidenced}.")
     else:
         parts.append("The job lists no requirements, so skills weren't compared.")
-    level = context.engagement_level
-    parts.append(f"Engagement is {ENGAGEMENT_LABELS[level].lower()}: {ENGAGEMENT_DESCRIPTIONS[level]}.")
     if context.follow_up_reason:
         parts.append(f"Needs follow-up: {_lower_first(context.follow_up_reason)}.")
     return " ".join(parts)
@@ -135,11 +130,6 @@ def _strengths(context: CandidateContext, matched: list[SkillEvidence]) -> list[
     for interview in context.completed_interviews:
         if interview.notes:
             items.append(f"{interview.title}: {interview.notes}")
-    actions = _recent_candidate_actions(context)
-    if context.engagement_level == EngagementLevel.HIGH and actions:
-        items.append(f"Responsive: {_join([a.lower() for a in actions[:3]])} in the last few days.")
-    elif context.engagement_level == EngagementLevel.MEDIUM and actions:
-        items.append(f"Engaged this week: {actions[0].lower()}.")
     if context.candidate_questions:
         items.append(f"Shows interest in the role: {_lower_first(context.candidate_questions[0].title)}.")
     extra = [
@@ -164,10 +154,6 @@ def _concerns(context: CandidateContext, missing: list[str]) -> list[str]:
         items.append(f"No evidence yet for {_join(missing)}; worth probing in the next conversation.")
     if context.follow_up_reason:
         items.append(f"Needs attention: {_lower_first(context.follow_up_reason)}.")
-    if context.engagement_level == EngagementLevel.LOW:
-        items.append("Engagement has dropped: no candidate activity for over a week.")
-    elif context.engagement_level == EngagementLevel.INSUFFICIENT:
-        items.append("No candidate activity yet, so there's little signal on interest.")
     reschedule = next((a for a in context.activities if a.type == ActivityType.INTERVIEW_RESCHEDULE_REQUESTED), None)
     if reschedule:
         items.append(f"Asked to reschedule an interview {ago(reschedule.at, context.now)}.")
@@ -225,13 +211,11 @@ def _next_step(context: CandidateContext, missing: list[str]) -> str:
 
 
 def _summary_answer(context: CandidateContext) -> AskContent:
-    level = context.engagement_level
     where = f" based in {context.location}" if context.location else ""
     lines = [
         f"**{context.name}** is a {context.job_title} candidate{where}, currently in the **{context.stage.label}** stage.",
         "",
-        f"- **Engagement: {ENGAGEMENT_LABELS[level]}.** {ENGAGEMENT_DESCRIPTIONS[level].capitalize()}"
-        + (f"; most recently {_recent(context, 2)}." if context.activities else "."),
+        f"- **Recent activity:** {_recent(context, 2)}." if context.activities else "- **Recent activity:** none yet.",
     ]
     if context.skills:
         lines.append(f"- **Skills:** {', '.join(context.skills)}.")
@@ -242,13 +226,9 @@ def _summary_answer(context: CandidateContext) -> AskContent:
         lines.append(f"- **Needs attention:** {context.follow_up_reason}.")
     lines.append("")
     if context.follow_up_reason:
-        lines.append(f"I'd follow up today so {context.first_name} doesn't go cold.")
-    elif level == EngagementLevel.HIGH:
-        lines.append("A responsive candidate moving on schedule. No follow-up needed right now.")
-    elif level == EngagementLevel.INSUFFICIENT:
-        lines.append("There isn't much signal yet. A personal outreach message is the best next move.")
+        lines.append(f"I'd follow up today so {context.first_name} isn't left waiting.")
     else:
-        lines.append(f"Momentum is steady. A quick check-in would keep {context.first_name} engaged.")
+        lines.append("Nothing is waiting on you right now.")
     return AskContent(answer="\n".join(lines), sources=context.sources("profile", "activity", "interviews"))
 
 
@@ -273,7 +253,7 @@ def _next_steps_answer(context: CandidateContext) -> AskContent:
             steps.append(
                 f"**Prepare {people(upcoming.interviewers)}** for the {upcoming.title.lower()} {when(upcoming.scheduled_at, context.now)}."
                 if upcoming
-                else "**Book a hiring-manager screen** while engagement is fresh."
+                else "**Book a hiring-manager screen** while the conversation is fresh."
             )
             steps.append(f"**Send {first} a short update** on what happens next and when.")
         case ApplicationStage.INTERVIEW:
@@ -368,7 +348,6 @@ def _concerns_answer(context: CandidateContext) -> AskContent:
 
 
 def _general_answer(context: CandidateContext) -> AskContent:
-    level = context.engagement_level
     latest = context.activities[0] if context.activities else None
     lines = [
         f"Here's the latest on **{context.name}** ({context.job_title}, {context.stage.label}):",
@@ -376,7 +355,6 @@ def _general_answer(context: CandidateContext) -> AskContent:
         f"- **Last activity:** {latest.title}, {ago(latest.at, context.now)}."
         if latest
         else "- **Last activity:** none yet.",
-        f"- **Engagement:** {ENGAGEMENT_LABELS[level]}. {ENGAGEMENT_DESCRIPTIONS[level].capitalize()}.",
         f"- **Next step:** {_next_step_line(context)}",
         "",
         (
@@ -452,10 +430,6 @@ def _draft(context: CandidateContext, purpose: DraftPurpose) -> DraftContent:
 
 def _latest_completed(context: CandidateContext) -> InterviewFact | None:
     return context.completed_interviews[0] if context.completed_interviews else None
-
-
-def _recent_candidate_actions(context: CandidateContext) -> list[str]:
-    return [a.title for a in context.activities if a.type in CANDIDATE_ACTIONS and (context.now - a.at).days < 3]
 
 
 def _recent(context: CandidateContext, count: int) -> str:

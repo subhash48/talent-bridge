@@ -1,0 +1,43 @@
+{
+  "webhookActionId": "1b2c3d4e-5f6a-4b7c-8d9e-0f1a2b3c4d5e",
+  "action": "candidateStageChange",
+  "data": {
+    "application": {
+      "id": "c2a6e1d4-0b1f-4e8a-9d3c-7f5e2a1b4c01",
+      "createdAt": "2026-10-01T09:15:22.481Z",
+      "updatedAt": "2026-10-02T14:03:10.112Z",
+      "status": "Active",
+      "customFields": [],
+      "candidate": {
+        "id": "5d0c3b7a-9e2f-4a1d-8c6b-2f4e6a8c0d12",
+        "name": "Taylor Applicant",
+        "primaryEmailAddress": { "value": "taylor.applicant@example.com", "type": "Personal", "isPrimary": true },
+        "primaryPhoneNumber": { "value": "+1 415 555 0100", "type": "Mobile", "isPrimary": true }
+      },
+      "currentInterviewStage": {
+        "id": "b8a4d3f2-5c6e-4f7a-9b0c-1d2e3f4a5b62",
+        "title": "Technical Interview",
+        "type": "Active",
+        "orderInInterviewPlan": 3,
+        "interviewStageGroupId": "f4e3d2c1-b0a9-4f8e-9d7c-6b5a4f3e2d10",
+        "interviewPlanId": "f1e2d3c4-b5a6-4978-8a9b-0c1d2e3f4a77"
+      },
+      "source": {
+        "id": "0b1c2d3e-4f5a-4b6c-8d7e-9f0a1b2c3d4e",
+        "title": "Applied",
+        "isArchived": false,
+        "sourceType": { "id": "1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f", "title": "Inbound", "isArchived": false }
+      },
+      "archiveReason": null,
+      "archivedAt": null,
+      "job": {
+        "id": "4071538b-3c2a-4f1e-9d8c-7b6a5f4e3d21",
+        "title": "TEST - ML Engineer",
+        "locationId": "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d",
+        "departmentId": "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e"
+      },
+      "hiringTeam": [],
+      "appliedViaJobPostingId": "3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b"
+    }
+  }
+}

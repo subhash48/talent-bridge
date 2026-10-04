@@ -12,17 +12,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.errors import NotFoundError
-from app.models import Application, CandidateActivity, Interview, Message
+from app.models import Application, CandidateActivity, CandidateEngagementEvent, Interview, Message, PortalSession
 from app.models.base import utcnow
 from app.schemas.activity import ActivityBrief
-from app.schemas.candidate import CandidateListItem, CandidateRead, EngagementRead, EngagementSignal
+from app.schemas.application import origin_of
+from app.schemas.candidate import CandidateListItem, CandidateRead
 from app.schemas.interview import InterviewBrief
 from app.schemas.job import JobBrief
-from app.services.engagement import calculator
+from app.services.engagement.scoring import MEANINGFUL_VIEWS
+from app.services.engagement.service import engagement_read
 from app.services.engagement.snapshot import ApplicationSnapshot
-from app.services.orchestration import next_actions
 
-Row = TypeVar("Row", CandidateActivity, Message, Interview)
+Row = TypeVar("Row", CandidateActivity, Message, Interview, PortalSession, CandidateEngagementEvent)
 
 
 async def get_application(session: AsyncSession, application_id: uuid.UUID, *, for_update: bool = False) -> Application:
@@ -40,8 +41,11 @@ async def get_application(session: AsyncSession, application_id: uuid.UUID, *, f
     return application
 
 
-async def load_snapshots(session: AsyncSession, applications: Sequence[Application]) -> list[ApplicationSnapshot]:
-    """Three queries for any number of applications, instead of three per application."""
+async def load_snapshots(
+    session: AsyncSession, applications: Sequence[Application], *, with_engagement: bool = False
+) -> list[ApplicationSnapshot]:
+    """Three queries for any number of applications (five with engagement), instead of that many
+    per application."""
     ids = [application.id for application in applications]
     if not ids:
         return []
@@ -60,12 +64,30 @@ async def load_snapshots(session: AsyncSession, applications: Sequence[Applicati
         session,
         select(Interview).where(Interview.application_id.in_(ids)).order_by(Interview.scheduled_at, Interview.id),
     )
+    sessions: dict[uuid.UUID, list] = defaultdict(list)
+    views: dict[uuid.UUID, list] = defaultdict(list)
+    if with_engagement:
+        sessions = await _grouped(
+            session,
+            select(PortalSession).where(PortalSession.application_id.in_(ids)).order_by(PortalSession.started_at),
+        )
+        views = await _grouped(
+            session,
+            select(CandidateEngagementEvent)
+            .where(
+                CandidateEngagementEvent.application_id.in_(ids),
+                CandidateEngagementEvent.event_type.in_([event.value for event in MEANINGFUL_VIEWS]),
+            )
+            .order_by(CandidateEngagementEvent.occurred_at),
+        )
     return [
         ApplicationSnapshot(
             application=application,
             activities=activities[application.id],
             messages=messages[application.id],
             interviews=interviews[application.id],
+            sessions=sessions[application.id],
+            engagement_events=views[application.id],
         )
         for application in applications
     ]
@@ -78,22 +100,6 @@ async def _grouped(session: AsyncSession, query) -> dict[uuid.UUID, list]:  # ty
     return groups
 
 
-def engagement_for(snapshot: ApplicationSnapshot, now: datetime) -> EngagementRead:
-    result = calculator.evaluate(snapshot, now)
-    action = next_actions.evaluate(snapshot, now)
-    signals = [
-        EngagementSignal(key=signal.key, label=signal.label, polarity=signal.polarity, observed_at=signal.observed_at)
-        for signal in result.signals
-    ]
-    if action.follow_up and action.reason:
-        signals.insert(0, EngagementSignal(key="follow-up", label=action.reason, polarity="negative"))
-    return EngagementRead(
-        level=result.level,
-        signals=signals,
-        follow_up_reason=action.reason if action.follow_up else None,
-    )
-
-
 def to_list_item(snapshot: ApplicationSnapshot, now: datetime) -> CandidateListItem:
     application = snapshot.application
     upcoming = snapshot.upcoming_interview(now)
@@ -103,11 +109,12 @@ def to_list_item(snapshot: ApplicationSnapshot, now: datetime) -> CandidateListI
         job=JobBrief.model_validate(application.job),
         stage=application.stage,
         source=application.source,
+        origin=origin_of(application.external_id),
         applied_at=application.applied_at,
         updated_at=application.updated_at,
         archived_at=application.archived_at,
         last_activity=ActivityBrief.model_validate(snapshot.activities[0]) if snapshot.activities else None,
-        engagement=engagement_for(snapshot, now),
+        engagement=engagement_read(snapshot, application.candidate, now),
         next_interview=InterviewBrief.model_validate(upcoming) if upcoming else None,
     )
 
@@ -117,4 +124,5 @@ async def build_list_items(
 ) -> list[CandidateListItem]:
     """Applications must have their candidate and job loaded."""
     now = now or utcnow()
-    return [to_list_item(snapshot, now) for snapshot in await load_snapshots(session, applications)]
+    snapshots = await load_snapshots(session, applications, with_engagement=True)
+    return [to_list_item(snapshot, now) for snapshot in snapshots]

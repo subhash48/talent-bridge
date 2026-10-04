@@ -1,8 +1,8 @@
-"""Candidate portal schemas: what a candidate may see about their own application.
+"""Candidate portal schemas: what a candidate may see about their own applications.
 
-These are projections, never the recruiter schemas. Interviewer feedback, stage-change reasons,
-engagement, AI analysis, sources and activity metadata have no field here, so they can't leave
-the API through the portal. services/candidate_visibility.py builds them.
+These are projections, never the recruiter schemas. Interviewer feedback, stage-change and archive
+reasons, engagement, AI analysis, sources and activity metadata have no field here, so they can't
+leave the API through the portal. services/candidate_visibility.py builds them.
 """
 
 from typing import Annotated, Literal
@@ -10,12 +10,11 @@ from uuid import UUID
 
 from pydantic import ConfigDict, Field, field_validator
 
-from app.core.enums import ApplicationStage, InterviewStatus, InterviewType, SenderType
+from app.core.enums import ApplicationBucket, ApplicationStage, InterviewStatus, InterviewType, MessageKind, SenderType
 from app.schemas.candidate import Skills
 from app.schemas.common import APIModel, OptionalText, Timestamp
 
 StepState = Literal["complete", "current", "upcoming"]
-ApplicationStatus = Literal["active", "hired", "closed"]
 ActivityKind = Literal[
     "application", "stage", "interview", "message", "prep", "question", "document", "offer", "profile"
 ]
@@ -65,8 +64,8 @@ class PortalStep(APIModel):
 class PortalApplication(APIModel):
     id: UUID
     stage: ApplicationStage
-    stage_label: str
-    status: ApplicationStatus
+    stage_label: str  # e.g. "Interview", "Withdrawn", "No longer under consideration"
+    status: ApplicationBucket  # active, inactive or no_longer_considered
     applied_at: Timestamp
     updated_at: Timestamp
     steps: list[PortalStep]
@@ -94,6 +93,7 @@ class PortalMessage(APIModel):
     sender_type: SenderType
     sender_name: str
     content: str
+    kind: MessageKind = MessageKind.MESSAGE
     created_at: Timestamp
     read_at: Timestamp | None = None
 
@@ -107,11 +107,32 @@ class PortalActivity(APIModel):
     created_at: Timestamp
 
 
+class PortalApplicationSummary(APIModel):
+    """One of the candidate's applications, for the list grouped by status."""
+
+    id: UUID
+    job_title: str
+    company: str
+    department: str | None = None
+    location: str | None = None
+    stage: ApplicationStage
+    stage_label: str
+    status: ApplicationBucket
+    applied_at: Timestamp
+    updated_at: Timestamp
+    next_interview_at: Timestamp | None = None
+    unread_messages: int = 0
+
+
 class CandidateMe(APIModel):
-    """GET /candidate/me: everything the portal home and its navigation need."""
+    """GET /candidate/me: everything the portal home and its navigation need.
+
+    application is the one the portal is showing: the one asked for, else the most recently updated
+    active one. applications lists all of them (active first)."""
 
     company: str
     candidate: PortalCandidate
+    applications: list[PortalApplicationSummary] = []
     application: PortalApplication | None = None
     job: PortalJob | None = None
     recruiter: PortalRecruiter | None = None
@@ -136,6 +157,9 @@ class MessageThread(APIModel):
 
 class PortalMessageCreate(APIModel):
     content: Annotated[str, Field(min_length=1, max_length=5000)]
+    # Chosen by the candidate (a thank-you note, a follow-up); never inferred from the text.
+    kind: MessageKind = MessageKind.MESSAGE
+    application_id: UUID | None = None  # default: the application the portal opens on
 
 
 class ProfileUpdate(APIModel):
@@ -184,6 +208,7 @@ UTCOffset = Annotated[int, Field(ge=-840, le=840, description="Minutes ahead of 
 class CandidateAskRequest(APIModel):
     message: Annotated[str, Field(min_length=1, max_length=2000)]
     utc_offset_minutes: UTCOffset | None = None
+    application_id: UUID | None = None
 
 
 class AssistContent(APIModel):

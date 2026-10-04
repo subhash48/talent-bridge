@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import Field
 
-from app.core.enums import SenderType
+from app.core.enums import MessageKind, SenderType
 from app.schemas.common import APIModel, CandidateRef, Timestamp
 
 
@@ -20,6 +20,7 @@ class MessageRead(APIModel):
     application_id: UUID
     sender_type: SenderType
     content: str
+    kind: MessageKind = MessageKind.MESSAGE  # the candidate's own label: a thank-you note, a follow-up
     created_at: Timestamp
     read_at: Timestamp | None = None
 

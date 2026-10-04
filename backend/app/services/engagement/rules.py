@@ -1,15 +1,11 @@
-"""Engagement and follow-up thresholds, versioned so every label can be explained later."""
+"""Follow-up thresholds, versioned so every label can be explained later.
+
+The engagement score's own numbers live in config.py.
+"""
 
 from datetime import timedelta
 
-RULES_VERSION = "1.0.0"
-
-# Engagement level, from the candidate's own actions (core.enums.CANDIDATE_ACTIONS).
-HIGH_WINDOW = timedelta(days=3)  # high: at least HIGH_MIN_ACTIONS actions within this window
-HIGH_MIN_ACTIONS = 2
-MEDIUM_WINDOW = timedelta(days=7)  # medium: the latest action is within this window
-SIGNAL_WINDOW = timedelta(days=14)  # actions shown as positive signals
-MAX_SIGNALS = 3
+RULES_VERSION = "2.0.0"
 
 # Follow-up rules (services/orchestration/next_actions.py), checked in this order.
 FEEDBACK_DUE_AFTER = timedelta(hours=24)  # a completed interview still has no feedback

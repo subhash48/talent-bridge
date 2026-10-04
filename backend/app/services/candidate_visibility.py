@@ -8,16 +8,27 @@ Everything the portal returns about an application is built here, and it works a
   analyses, archiving and resume views are never shown.
 - Interviews lose their notes, which hold interviewer feedback, and the meeting link once over.
 - Messages are the candidate's own thread with the hiring team.
+- An application's status is one of three plain buckets (active, inactive, no longer under
+  consideration). Why an application closed, and Ashby's internal stage names, never reach the
+  candidate.
 """
 
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from app.core.enums import ActivityType, ApplicationStage, InterviewStatus, SenderType
+from app.core.enums import (
+    ActivityType,
+    ApplicationBucket,
+    ApplicationStage,
+    InterviewStatus,
+    JobStatus,
+    MessageKind,
+    SenderType,
+)
 from app.models import Application, Candidate, CandidateActivity, CandidateStageHistory, Interview, Job, Message
 from app.schemas.portal import (
     ActivityKind,
-    ApplicationStatus,
     PortalActivity,
     PortalCandidate,
     PortalInterview,
@@ -29,8 +40,11 @@ from app.schemas.portal import (
 
 S = ApplicationStage
 A = ActivityType
+B = ApplicationBucket
 
-# The pipeline as the candidate sees it. Sourced reads as Applied; rejected is shown as closed.
+NO_LONGER_CONSIDERED = "No longer under consideration"
+
+# The pipeline as the candidate sees it. Sourced reads as Applied.
 PROGRESS: tuple[ApplicationStage, ...] = (S.SOURCED, S.SCREENING, S.INTERVIEW, S.OFFER, S.HIRED)
 STAGE_LABELS: dict[ApplicationStage, str] = {
     S.SOURCED: "Applied",
@@ -38,8 +52,27 @@ STAGE_LABELS: dict[ApplicationStage, str] = {
     S.INTERVIEW: "Interview",
     S.OFFER: "Offer",
     S.HIRED: "Hired",
-    S.REJECTED: "Closed",
+    S.REJECTED: NO_LONGER_CONSIDERED,
 }
+
+# Archived applications (Ashby's archive, or a recruiter's here), by archive reason type. The
+# organisation's non-selection reads as no longer under consideration; anything else (the candidate
+# withdrew, the role was filled, a duplicate) as inactive. Edit these tables to change the mapping.
+ARCHIVE_REASON_BUCKETS: dict[str | None, ApplicationBucket] = {
+    "RejectedByOrg": B.NO_LONGER_CONSIDERED,
+    "RejectedByCandidate": B.INACTIVE,
+    "Other": B.INACTIVE,
+    None: B.INACTIVE,
+}
+ARCHIVE_REASON_LABELS: dict[str | None, str] = {"RejectedByCandidate": "Withdrawn"}
+# The order the portal lists buckets in, and picks the application it opens on.
+BUCKET_ORDER = (B.ACTIVE, B.NO_LONGER_CONSIDERED, B.INACTIVE)
+
+
+@dataclass(frozen=True)
+class PortalStatus:
+    bucket: ApplicationBucket
+    label: str  # safe to show the candidate: a stage, "Hired", "Withdrawn", "Role closed"...
 
 VISIBLE_SENDERS = frozenset({SenderType.CANDIDATE, SenderType.RECRUITER, SenderType.SYSTEM})
 # Messages the candidate receives, and so can have unread.
@@ -65,13 +98,27 @@ def present_job(job: Job, company: str) -> PortalJob:
     )
 
 
-def application_status(stage: ApplicationStage) -> ApplicationStatus:
+def portal_status(application: Application, job_status: JobStatus) -> PortalStatus:
+    """Where the application sits for the candidate. Derived; the real stage is never changed."""
+    stage = application.stage
     if stage == S.REJECTED:
-        return "closed"
-    return "hired" if stage == S.HIRED else "active"
+        return PortalStatus(B.NO_LONGER_CONSIDERED, NO_LONGER_CONSIDERED)
+    if stage == S.HIRED:
+        return PortalStatus(B.INACTIVE, "Hired")
+    if application.archived_at is not None:
+        reason = application.external_archive_reason_type
+        bucket = ARCHIVE_REASON_BUCKETS.get(reason, B.INACTIVE)
+        if bucket == B.NO_LONGER_CONSIDERED:
+            return PortalStatus(bucket, NO_LONGER_CONSIDERED)
+        return PortalStatus(bucket, ARCHIVE_REASON_LABELS.get(reason, "Closed"))
+    if job_status == JobStatus.CLOSED:
+        return PortalStatus(B.INACTIVE, "Role closed")
+    return PortalStatus(B.ACTIVE, STAGE_LABELS[stage])
 
 
-def build_steps(application: Application, history: Sequence[CandidateStageHistory]) -> list[PortalStep]:
+def build_steps(
+    application: Application, history: Sequence[CandidateStageHistory], bucket: ApplicationBucket
+) -> list[PortalStep]:
     """The five pipeline steps with their state and when each was last entered."""
     ordered = sorted(history, key=lambda row: row.changed_at)
     entered = {row.new_stage: row.changed_at for row in ordered}
@@ -82,7 +129,8 @@ def build_steps(application: Application, history: Sequence[CandidateStageHistor
         reached = closing.previous_stage if closing and closing.previous_stage in PROGRESS else S.SOURCED
         position, finished = PROGRESS.index(reached), True
     else:
-        position, finished = PROGRESS.index(stage), stage == S.HIRED
+        # A hired, withdrawn or closed application is finished where it stopped.
+        position, finished = PROGRESS.index(stage), stage == S.HIRED or bucket != B.ACTIVE
 
     steps = []
     for index, step in enumerate(PROGRESS):
@@ -146,6 +194,7 @@ def present_message(
         sender_type=message.sender_type,
         sender_name=names[message.sender_type],
         content=message.content,
+        kind=message.kind,
         created_at=message.created_at,
         read_at=message.read_at,
     )
@@ -170,13 +219,15 @@ def _describe(activity: CandidateActivity, interview_titles: Mapping[str, str]) 
 
     match activity_type:
         case A.APPLICATION_CREATED:
-            return "application", "Application submitted"
+            return "application", "Application received" if meta.get("origin") == "ashby" else "Application submitted"
+        case A.APPLICATION_CLOSED:
+            return "application", CLOSED_TITLES.get(meta.get("outcome"), "Application closed")
         case A.STAGE_CHANGED:
             target = meta.get("to")
             if target not in STAGE_LABELS:
                 return "stage", "Application updated"
             stage = ApplicationStage(target)
-            return "stage", "Application closed" if stage == S.REJECTED else f"Moved to {STAGE_LABELS[stage]}"
+            return "stage", NO_LONGER_CONSIDERED if stage == S.REJECTED else f"Moved to {STAGE_LABELS[stage]}"
         case A.ONBOARDING_STARTED:
             return "stage", "Onboarding started"
         case A.INTERVIEW_SCHEDULED | A.INTERVIEW_COMPLETED | A.INTERVIEW_CANCELLED:
@@ -198,7 +249,7 @@ def _describe(activity: CandidateActivity, interview_titles: Mapping[str, str]) 
             first = sender.split()[0] if isinstance(sender, str) and sender.strip() else None
             return "message", f"New message from {first}" if first else "New message from the hiring team"
         case A.MESSAGE_RECEIVED:
-            return "message", "You sent a message"
+            return "message", MESSAGE_TITLES.get(meta.get("kind"), "You sent a message")
         case A.DOCUMENT_SHARED:
             return "document", "Document shared"
         case A.PREP_VIEWED:
@@ -219,5 +270,15 @@ def _describe(activity: CandidateActivity, interview_titles: Mapping[str, str]) 
         case A.PROFILE_UPDATED:
             return "profile", "You updated your profile"
         case _:
-            # Internal: application_archived, application_restored, resume_viewed, ai_analysis_generated.
+            # Internal: application_archived, application_restored, resume_viewed, ai_analysis_generated,
+            # portal_invited.
             return None
+
+
+CLOSED_TITLES = {"withdrawn": "Application withdrawn", "no_longer_considered": NO_LONGER_CONSIDERED}
+
+MESSAGE_TITLES = {
+    MessageKind.THANK_YOU: "You sent a thank-you note",
+    MessageKind.FOLLOW_UP: "You sent a follow-up",
+    MessageKind.QUESTION: "You asked a question",
+}

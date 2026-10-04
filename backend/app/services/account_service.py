@@ -18,7 +18,7 @@ from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.enums import UserRole
+from app.core.enums import PortalAccountStatus, UserRole
 from app.models import Candidate, User
 
 logger = logging.getLogger(__name__)
@@ -113,5 +113,9 @@ async def link_account(session: AsyncSession, email: str, auth_user_id: uuid.UUI
         if candidate.user_id not in (None, user.id):
             raise AccountLinkError(f"The candidate {email} is already linked to another user.")
         candidate.user_id = user.id
+        # They can sign in now; their first portal visit makes them active.
+        if candidate.portal_status != PortalAccountStatus.ACTIVE:
+            candidate.portal_status = PortalAccountStatus.INVITED
+            candidate.portal_invite_error = None
     await session.commit()
     return user

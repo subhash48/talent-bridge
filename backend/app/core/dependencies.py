@@ -15,16 +15,19 @@ import logging
 from collections.abc import Awaitable, Callable
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.core.database import get_session
+from app.core.database import get_session, get_session_factory
 from app.core.enums import STAFF_ROLES, UserRole
 from app.core.errors import ForbiddenError, NotFoundError, ServiceUnavailableError, UnauthorizedError
 from app.core.security import InvalidTokenError, TokenVerifier, get_token_verifier
+from app.integrations.ashby.client import AshbyClient, get_ashby_client
+from app.integrations.supabase_admin import SupabaseAdmin, get_supabase_admin
 from app.models import Candidate, User
+from app.services.account_provisioning import mark_portal_active
 from app.services.account_service import user_for_auth_account
 from app.services.ai.client import AIProvider, get_ai_provider
 
@@ -34,11 +37,14 @@ AUTHENTICATION_REQUIRED = "Authentication required."
 NO_PERMISSION = "You do not have permission to access this resource."
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
+SessionFactoryDep = Annotated[async_sessionmaker[AsyncSession], Depends(get_session_factory)]
 BearerDep = Annotated[HTTPAuthorizationCredentials | None, Depends(HTTPBearer(auto_error=False))]
 VerifierDep = Annotated[TokenVerifier | None, Depends(get_token_verifier)]
 
 
-async def get_current_user(session: SessionDep, credentials: BearerDep, verifier: VerifierDep) -> User:
+async def get_current_user(
+    request: Request, session: SessionDep, credentials: BearerDep, verifier: VerifierDep
+) -> User:
     """The signed-in person, from their verified access token and their users row."""
     if credentials is None:
         raise UnauthorizedError(AUTHENTICATION_REQUIRED)
@@ -58,6 +64,8 @@ async def get_current_user(session: SessionDep, credentials: BearerDep, verifier
         )
     if user.disabled_at is not None:
         raise ForbiddenError("This account has been disabled.", code="account_disabled")
+    # The Supabase Auth session the token belongs to, so a portal login is counted once per sign-in.
+    request.state.auth_session_id = claims.session_id
     return user
 
 
@@ -85,8 +93,11 @@ async def get_current_candidate(session: SessionDep, user: Annotated[User, Depen
     candidate = await session.scalar(select(Candidate).where(Candidate.user_id == user.id))
     if candidate is None:
         raise NotFoundError("We couldn't find your candidate profile.", code="candidate_not_found")
+    await mark_portal_active(session, candidate)  # their first visit activates the invitation
     return candidate
 
 
 CurrentCandidateDep = Annotated[Candidate, Depends(get_current_candidate)]
 AIProviderDep = Annotated[AIProvider, Depends(get_ai_provider)]
+AshbyClientDep = Annotated[AshbyClient | None, Depends(get_ashby_client)]
+SupabaseAdminDep = Annotated[SupabaseAdmin | None, Depends(get_supabase_admin)]

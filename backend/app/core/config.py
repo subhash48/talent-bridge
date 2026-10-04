@@ -10,9 +10,11 @@ to the frontend.
 from functools import lru_cache
 from typing import Annotated, Literal
 
-from pydantic import SecretStr, field_validator
+from pydantic import AliasChoices, Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 from sqlalchemy.engine import make_url
+
+from app.core.enums import ApplicationStage
 
 API_PREFIX = "/api/v1"
 SQLITE_DEV_URL = "sqlite+aiosqlite:///./talent_bridge.db"
@@ -67,8 +69,26 @@ class Settings(BaseSettings):
     groq_model: str = "llama-3.3-70b-versatile"
     ai_timeout_seconds: float = 30.0
 
+    # Supabase Auth admin access, for candidate portal invitations only. Server-side; never sent to
+    # the browser. Either name works (the dashboard calls it the secret or the service role key).
+    supabase_secret_key: SecretStr | None = Field(
+        default=None, validation_alias=AliasChoices("SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY")
+    )
+    # Invite Ashby applicants to the candidate portal at the email they applied with.
+    portal_invites_enabled: bool = True
+
     ashby_api_key: SecretStr | None = None
     ashby_webhook_secret: SecretStr | None = None
+    ashby_api_url: str = "https://api.ashbyhq.com"
+    ashby_timeout_seconds: float = 20.0
+    # Ask the AI for an analysis of each application Ashby submits. It never blocks the import.
+    ashby_auto_analyze: bool = True
+    # The reconciliation sync invites applicants it finds only if they applied this recently, so a
+    # first sync never emails a backlog of past candidates.
+    ashby_sync_invite_max_age_days: int = 14
+    # Custom Ashby stage titles to Talent Bridge stages, as JSON: {"Take-home": "screening"}.
+    # Stages not listed map by their Ashby type (integrations/ashby/mapping.py).
+    ashby_stage_title_map: dict[str, ApplicationStage] = {}
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -76,6 +96,11 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
+
+    @field_validator("ashby_stage_title_map")
+    @classmethod
+    def _normalize_titles(cls, value: dict[str, ApplicationStage]) -> dict[str, ApplicationStage]:
+        return {title.strip().lower(): stage for title, stage in value.items() if title.strip()}
 
     @field_validator("database_url")
     @classmethod
@@ -101,6 +126,11 @@ class Settings(BaseSettings):
         if self.supabase_jwks_url:
             return self.supabase_jwks_url
         return f"{self.jwt_issuer}/.well-known/jwks.json" if self.jwt_issuer else None
+
+    @property
+    def portal_invite_redirect_url(self) -> str:
+        """Where the invitation email's link lands: /auth/confirm, then the page to choose a password."""
+        return f"{self.frontend_url.rstrip('/')}/auth/confirm?next=/welcome"
 
     @property
     def allowed_origins(self) -> list[str]:

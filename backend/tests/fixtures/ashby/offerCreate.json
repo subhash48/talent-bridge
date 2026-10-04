@@ -1,0 +1,12 @@
+{
+  "webhookActionId": "6b7c8d9e-0f1a-4b2c-8d3e-4f5a6b7c8d9f",
+  "action": "offerCreate",
+  "data": {
+    "offer": {
+      "id": "6f5e4d3c-2b1a-4f9e-8d7c-6b5a4f3e2d1c",
+      "applicationId": "c2a6e1d4-0b1f-4e8a-9d3c-7f5e2a1b4c01",
+      "acceptanceStatus": "Created",
+      "offerStatus": "WaitingOnApprovalStart"
+    }
+  }
+}

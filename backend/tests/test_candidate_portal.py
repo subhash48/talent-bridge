@@ -222,12 +222,12 @@ async def test_closed_application_hides_the_reason(client: AsyncClient) -> None:
     assert closed.status_code == 200
 
     me = (await client.get(f"{API}/candidate/me")).json()
-    assert me["application"]["status"] == "closed"
-    assert me["application"]["stage_label"] == "Closed"
+    assert me["application"]["status"] == "no_longer_considered"
+    assert me["application"]["stage_label"] == "No longer under consideration"
     # Progress shows how far it got: everything up to Interview.
     states = [step["state"] for step in me["application"]["steps"]]
     assert states == ["complete", "complete", "complete", "upcoming", "upcoming"]
-    assert me["recent_activity"][0]["title"] == "Application closed"
+    assert me["recent_activity"][0]["title"] == "No longer under consideration"
 
     snapshot = await portal_snapshot(client)
     assert reason not in snapshot and "compensation" not in snapshot
@@ -320,8 +320,7 @@ async def test_llm_prompt_holds_only_candidate_safe_context(sessions: async_sess
     async with sessions() as session:
         sophia = await session.get(Candidate, uuid.UUID(SOPHIA))
         assert sophia is not None
-        record = await candidate_portal_service.load_record(session, sophia)
-    assert record is not None
+        record = await candidate_portal_service.require_record(session, sophia)
     context = build_portal_context(record)
 
     seen: list[str] = []

@@ -46,5 +46,7 @@ export const LOGIN_NOTICES: Record<string, string> = {
   account_not_linked:
     "This account isn't linked to Talent Bridge yet. Sign in with the email you applied with, or contact the hiring team.",
   account_disabled: "This account has been disabled. Contact the hiring team if you think this is a mistake.",
+  account_mismatch:
+    "This sign-in doesn't match the email on your candidate record. Sign in with the email you applied with, or contact the hiring team.",
   link_invalid: "That link is invalid or has expired. Sign in, or request a new link.",
 };

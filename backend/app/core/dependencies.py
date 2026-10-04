@@ -64,6 +64,14 @@ async def get_current_user(
         )
     if user.disabled_at is not None:
         raise ForbiddenError("This account has been disabled.", code="account_disabled")
+    # A candidate is linked by the email they applied with, and only ever signs in as that address.
+    # A sign-in whose email has since changed in Supabase no longer proves it's them.
+    if user.role == UserRole.CANDIDATE and claims.email and claims.email.strip().lower() != user.email:
+        logger.warning("Refused a candidate sign-in whose email doesn't match its record: user=%s", user.id)
+        raise ForbiddenError(
+            "This sign-in doesn't match the email on your candidate record. Contact the hiring team.",
+            code="account_mismatch",
+        )
     # The Supabase Auth session the token belongs to, so a portal login is counted once per sign-in.
     request.state.auth_session_id = claims.session_id
     return user

@@ -250,6 +250,18 @@ async def test_candidate_sees_only_their_own_data(anonymous: AsyncClient) -> Non
     assert me.json()["candidate"]["full_name"] == "Sophia Martinez"
 
 
+async def test_candidate_sign_in_must_carry_their_email(anonymous: AsyncClient) -> None:
+    """A candidate's account is linked by the email they were invited at; a token for another address is refused."""
+    same = await anonymous.get(f"{API}/candidate/me", headers=bearer(SOPHIA_AUTH, email="Sophia.Martinez@Example.com"))
+    assert same.status_code == 200
+    other = await anonymous.get(f"{API}/candidate/me", headers=bearer(SOPHIA_AUTH, email="someone.else@example.com"))
+    assert other.status_code == 403
+    assert other.json()["error"]["code"] == "account_mismatch"
+    # Staff accounts are linked by an operator, not by an invitation, so they aren't held to it.
+    staff = await anonymous.get(f"{API}/candidates", headers=bearer(ALEX_AUTH, email="alex@elsewhere.example"))
+    assert staff.status_code == 200
+
+
 @pytest.mark.parametrize(("method", "path"), RECRUITER_ROUTES)
 async def test_candidate_token_is_403_on_recruiter_routes(anonymous: AsyncClient, method: str, path: str) -> None:
     response = await call(anonymous, method, path, SOPHIA_TOKEN)

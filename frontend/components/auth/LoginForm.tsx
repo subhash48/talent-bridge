@@ -14,7 +14,7 @@ import { ApiError, errorMessage } from "@/services/api";
 import { getCurrentUser } from "@/services/me";
 
 // Reasons that mean the current session can't be used, so it's ended before anyone signs in again.
-const UNUSABLE_SESSION = new Set(["account_not_linked", "account_disabled"]);
+const UNUSABLE_SESSION = new Set(["account_not_linked", "account_disabled", "account_mismatch"]);
 
 export function LoginForm({ next, reason }: { next: string | null; reason: string | null }) {
   const [email, setEmail] = useState("");

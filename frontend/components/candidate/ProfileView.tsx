@@ -95,6 +95,10 @@ function ProfileForm({ profile, onSaved }: { profile: CandidateProfile; onSaved:
     setSkillDraft("");
   }
 
+  // Only a web link opens here. Any other résumé (an API path, for one sent with a demo careers application)
+  // is a file only the hiring team can download.
+  const resumeLink = profile.resumeUrl && /^https?:\/\//i.test(profile.resumeUrl) ? profile.resumeUrl : null;
+
   return (
     <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
       <form onSubmit={(event) => void save(event)}>
@@ -200,15 +204,17 @@ function ProfileForm({ profile, onSaved }: { profile: CandidateProfile; onSaved:
 
         <Card className="p-5 sm:p-6">
           <h2 className="font-semibold tracking-tight text-ink">Resume</h2>
-          {profile.resumeUrl ? (
+          {resumeLink ? (
             <a
-              href={profile.resumeUrl}
+              href={resumeLink}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-4 flex items-center gap-3 rounded-[12px] bg-white/[0.04] px-3.5 py-3 text-sm text-charcoal ring-1 ring-white/[0.08] transition-colors hover:text-ink"
             >
               <FileText aria-hidden className="size-4 text-stone" /> View your resume
             </a>
+          ) : profile.resumeUrl ? (
+            <p className="mt-3 text-sm text-stone">Your resume is on file with the hiring team.</p>
           ) : (
             <p className="mt-3 text-sm text-stone">No resume on file. Your recruiter can add one for you.</p>
           )}

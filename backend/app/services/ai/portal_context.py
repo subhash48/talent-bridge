@@ -42,6 +42,7 @@ class PortalContext:
     skills: tuple[str, ...]
     company: str
     company_overview: str
+    company_profile: tuple[str, ...]  # services/company_profile.py: mission, products, culture, benefits...
     job_title: str
     job_department: str | None
     job_location: str | None
@@ -117,7 +118,7 @@ class PortalContext:
             f"Skills listed in the job posting: {', '.join(self.job_requirements) or 'none listed'}",
             "",
             "[company] approved facts you may share",
-            *(f"- {fact}" for fact in self.company_facts),
+            *(f"- {fact}" for fact in [*self.company_facts, *self.company_profile]),
             "",
             "[application]",
             "Hiring process: Applied, Screening, Interview, Offer, Hired.",

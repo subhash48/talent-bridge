@@ -163,9 +163,12 @@ CLIENT_ENGAGEMENT_EVENTS: frozenset[EngagementEventType] = frozenset(
 
 class PortalPage(StrEnum):
     DASHBOARD = "dashboard"
-    APPLICATION = "application"
+    APPLICATIONS = "applications"  # the list of every application
+    APPLICATION = "application"  # one application
     INTERVIEWS = "interviews"
     MESSAGES = "messages"
+    COMPANY = "company"
+    AI = "ai"
     PREP = "prep"
     PROFILE = "profile"
 

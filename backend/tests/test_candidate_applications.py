@@ -77,6 +77,8 @@ async def test_applications_are_grouped_by_status(client: AsyncClient) -> None:
     assert ("Brand Designer", "inactive", "Role closed") in summary
     buckets = [item["status"] for item in applications]
     assert buckets == sorted(buckets, key=["active", "no_longer_considered", "inactive"].index)
+    # Only the one the candidate withdrew is flagged; the Applications page lists it on its own.
+    assert [item["job_title"] for item in applications if item["withdrawn"]] == ["Design Systems Engineer"]
     product = applications[0]
     assert product["next_interview_at"] is not None and product["company"] == "Encord"
 

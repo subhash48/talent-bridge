@@ -26,6 +26,7 @@ from app.schemas.portal import (
     PortalActivity,
     PortalApplicationSummary,
     PortalCandidate,
+    PortalCompany,
     PortalInterview,
     PortalMessage,
     PortalMessageCreate,
@@ -39,6 +40,7 @@ from app.services import (
     candidate_portal_service,
 )
 from app.services.candidate_visibility import present_candidate
+from app.services.company_profile import company_profile
 
 router = APIRouter(prefix="/candidate", tags=["candidate portal"])
 
@@ -46,7 +48,9 @@ ApplicationParam = Annotated[UUID | None, Query(description="One of your applica
 
 
 @router.get("/me", response_model=CandidateMe, summary="Portal home")
-async def me(session: SessionDep, candidate: CurrentCandidateDep, application_id: ApplicationParam = None) -> CandidateMe:
+async def me(
+    session: SessionDep, candidate: CurrentCandidateDep, application_id: ApplicationParam = None
+) -> CandidateMe:
     """The candidate, all their applications, and the selected one's job, next interview, unread
     messages and recent activity."""
     return await candidate_portal_service.get_me(session, candidate, application_id)
@@ -139,6 +143,13 @@ async def profile(candidate: CurrentCandidateDep) -> PortalCandidate:
 async def update_profile(body: ProfileUpdate, session: SessionDep, candidate: CurrentCandidateDep) -> PortalCandidate:
     """Phone, location, headline and skills only; any other field is a 422."""
     return await candidate_portal_service.update_profile(session, candidate, body)
+
+
+@router.get("/company", response_model=PortalCompany, summary="About the company")
+async def company(_candidate: CurrentCandidateDep) -> PortalCompany:
+    """What the company shares with candidates: what it does, its mission, products, culture, benefits,
+    offices, how hiring works and useful links. The same profile the candidate assistant answers from."""
+    return PortalCompany.model_validate(company_profile())
 
 
 @router.get("/prep", response_model=CandidatePrep, summary="Interview prep")

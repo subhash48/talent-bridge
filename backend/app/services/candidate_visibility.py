@@ -65,6 +65,8 @@ ARCHIVE_REASON_BUCKETS: dict[str | None, ApplicationBucket] = {
     None: B.INACTIVE,
 }
 ARCHIVE_REASON_LABELS: dict[str | None, str] = {"RejectedByCandidate": "Withdrawn"}
+# Archive reasons that mean the candidate withdrew. The Applications page lists these on their own.
+WITHDRAWN_REASON_TYPES = frozenset({"RejectedByCandidate"})
 # The order the portal lists buckets in, and picks the application it opens on.
 BUCKET_ORDER = (B.ACTIVE, B.NO_LONGER_CONSIDERED, B.INACTIVE)
 
@@ -73,6 +75,8 @@ BUCKET_ORDER = (B.ACTIVE, B.NO_LONGER_CONSIDERED, B.INACTIVE)
 class PortalStatus:
     bucket: ApplicationBucket
     label: str  # safe to show the candidate: a stage, "Hired", "Withdrawn", "Role closed"...
+    withdrawn: bool = False  # the candidate withdrew it (an inactive application)
+
 
 VISIBLE_SENDERS = frozenset({SenderType.CANDIDATE, SenderType.RECRUITER, SenderType.SYSTEM})
 # Messages the candidate receives, and so can have unread.
@@ -110,7 +114,9 @@ def portal_status(application: Application, job_status: JobStatus) -> PortalStat
         bucket = ARCHIVE_REASON_BUCKETS.get(reason, B.INACTIVE)
         if bucket == B.NO_LONGER_CONSIDERED:
             return PortalStatus(bucket, NO_LONGER_CONSIDERED)
-        return PortalStatus(bucket, ARCHIVE_REASON_LABELS.get(reason, "Closed"))
+        return PortalStatus(
+            bucket, ARCHIVE_REASON_LABELS.get(reason, "Closed"), withdrawn=reason in WITHDRAWN_REASON_TYPES
+        )
     if job_status == JobStatus.CLOSED:
         return PortalStatus(B.INACTIVE, "Role closed")
     return PortalStatus(B.ACTIVE, STAGE_LABELS[stage])

@@ -8,9 +8,14 @@ hiring decisions get the same boundary answer: the assistant can't see them, the
 import re
 from collections.abc import Callable
 
+from app.core.config import settings
 from app.schemas.portal import AssistContent, PrepContent
 from app.services.ai.context import people
 from app.services.ai.portal_context import PortalContext, PortalInterviewFact
+from app.services.company_profile import company_profile
+
+# The company as candidates name it in questions: "the company", or its name.
+_COMPANY = rf"(the company|{re.escape(settings.organization_name)})"
 
 # Checked in order, so the privacy boundary always wins.
 TOPICS: list[tuple[str, re.Pattern[str]]] = [
@@ -34,6 +39,14 @@ TOPICS: list[tuple[str, re.Pattern[str]]] = [
         ),
     ),
     (
+        "general",
+        re.compile(
+            r"\b(where (does|is) my application|status of my application|my application'?s? status|application status"
+            r"|how far along|where (do|does) (i|it|things) stand)\b",
+            re.IGNORECASE,
+        ),
+    ),
+    (
         "process",
         re.compile(
             r"\b(process|expect\w*|be like|look like|format|how long|stages?|timeline|what happens|next steps?|rounds?)\b",
@@ -43,9 +56,20 @@ TOPICS: list[tuple[str, re.Pattern[str]]] = [
     ("review", re.compile(r"\b(review|skills?|brush up|study|topics?|read up|learn|revise)\b", re.IGNORECASE)),
     ("prepare", re.compile(r"\b(prepar\w*|prep|get ready|ready|tips?|advice|tomorrow|practi[cs]e)\b", re.IGNORECASE)),
     (
+        "company",
+        re.compile(
+            r"\b(culture|values|benefits?|perks?|paid time off|pto|holidays?|vacation|annual leave|equity|stock options?"
+            r"|insurance|visas?|sponsor\w*|offices?|headquarter\w*|mission|funding|funded|investors?"
+            rf"|what does {_COMPANY} do|about {_COMPANY}|{_COMPANY}'?s? (products?|platform|customers?|clients?)"
+            rf"|(products?|platform|customers?|clients?) (does|do) {_COMPANY})\b",
+            re.IGNORECASE,
+        ),
+    ),
+    (
         "role",
         re.compile(
-            r"\b(role|team|job|responsib\w*|focus\w*|day[- ]to[- ]day|company|culture|product|work on)\b", re.IGNORECASE
+            r"\b(role|team|job|responsib\w*|focus\w*|day[- ]to[- ]day|work on|remote\w*|hybrid|work from home)\b",
+            re.IGNORECASE,
         ),
     ),
     (
@@ -62,6 +86,7 @@ TOPIC_LABELS = {
     "process": "the interview process",
     "review": "what to review",
     "prepare": "interview preparation",
+    "company": "the company",
     "role": "the role and team",
     "logistics": "interview logistics",
     "general": "the application",
@@ -76,8 +101,10 @@ def topic_of(question: str) -> str:
 
 def answer(context: PortalContext, question: str) -> AssistContent:
     topic = topic_of(question)
-    if context.status == "closed" and topic not in ("private", "role"):
+    if context.status == "closed" and topic not in ("private", "role", "company"):
         return AssistContent(answer=_closed_answer(context))
+    if topic == "company":
+        return AssistContent(answer=_company_answer(context, question))
     return AssistContent(answer=COMPOSERS[topic](context))
 
 
@@ -319,7 +346,14 @@ def _process_answer(context: PortalContext) -> str:
             f"Your next interview is the **{interview.title}** {context.when(interview.scheduled_at)}.",
             *_bullets(EXPECT[kind][:2]),
         ]
-    lines += ["", f"After each interview, {context.recruiter} will be in touch about next steps."]
+    profile = company_profile()
+    stages = ", then ".join(step.lower() for step in profile.hiring_process)
+    lines += [
+        "",
+        f"At {context.company} the interviews are usually: {stages}. {profile.hiring_note}",
+        "",
+        f"After each interview, {context.recruiter} will be in touch about next steps.",
+    ]
     return "\n".join(lines)
 
 
@@ -375,6 +409,60 @@ def _role_answer(context: PortalContext) -> str:
     if context.company_overview:
         lines += ["", context.company_overview]
     return "\n".join(lines)
+
+
+# Which part of the company profile a company question is about. Anything else gets the overview.
+COMPANY_SUBTOPICS: list[tuple[str, re.Pattern[str]]] = [
+    (
+        "benefits",
+        re.compile(
+            r"benefit|perk|paid time off|\bpto\b|holiday|vacation|leave|equity|stock|insurance|health|visa|sponsor"
+            r"|lunch|stipend|learning",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "offices",
+        re.compile(r"office|headquarter|\bhq\b|based|remote|hybrid|on-?site|in[- ]person|located", re.IGNORECASE),
+    ),
+    ("culture", re.compile(r"culture|values?|people|environment|work(ing)? (at|for|with)", re.IGNORECASE)),
+    ("traction", re.compile(r"funding|funded|investor|backed|customer|client|how (big|large)", re.IGNORECASE)),
+]
+
+
+def _company_answer(context: PortalContext, question: str) -> str:
+    """From the company-approved profile (services/company_profile.py) only."""
+    profile = company_profile()
+    subtopic = next((name for name, pattern in COMPANY_SUBTOPICS if pattern.search(question)), "about")
+    if subtopic == "benefits":
+        lines = [f"**Benefits at {context.company}**", "", *_bullets(list(profile.benefits)), "", profile.benefits_note]
+    elif subtopic == "offices":
+        lines = (
+            [f"Your **{context.job_title}** role is listed as **{context.job_location}**.", ""]
+            if context.job_location
+            else []
+        )
+        lines += [f"**Offices:** {', '.join(profile.locations)}.", "", profile.locations_note]
+    elif subtopic == "culture":
+        lines = [
+            f"What {context.company} looks for, in its own words:",
+            "",
+            *_bullets([f"**{value.title}:** {value.description}" for value in profile.values]),
+            "",
+            f"**Offices:** {', '.join(profile.locations)}. {profile.locations_note}",
+        ]
+    elif subtopic == "traction":
+        lines = _bullets([f"**{item.title}** {item.description}." for item in profile.highlights])
+    else:
+        lines = [
+            profile.overview,
+            "",
+            profile.mission,
+            "",
+            "**What it offers**",
+            *_bullets([f"**{item.title}:** {item.description}" for item in profile.products]),
+        ]
+    return "\n".join([*lines, "", "There's more on the **Company** page of this portal."])
 
 
 def _logistics_answer(context: PortalContext) -> str:

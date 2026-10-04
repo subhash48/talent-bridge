@@ -122,6 +122,37 @@ class PortalApplicationSummary(APIModel):
     updated_at: Timestamp
     next_interview_at: Timestamp | None = None
     unread_messages: int = 0
+    withdrawn: bool = False  # the candidate withdrew it; status is then inactive
+
+
+class PortalCompanyItem(APIModel):
+    title: str
+    description: str
+
+
+class PortalCompanyLink(APIModel):
+    label: str
+    url: str
+
+
+class PortalCompany(APIModel):
+    """GET /candidate/company: the company-approved profile (services/company_profile.py). The candidate
+    assistant answers company questions from the same profile."""
+
+    name: str
+    overview: str
+    mission: str
+    highlights: list[PortalCompanyItem]
+    products: list[PortalCompanyItem]
+    values: list[PortalCompanyItem]
+    benefits: list[str]
+    benefits_note: str
+    locations: list[str]
+    locations_note: str
+    hiring_process: list[str]
+    hiring_note: str
+    links: list[PortalCompanyLink]
+    source: str
 
 
 class CandidateMe(APIModel):

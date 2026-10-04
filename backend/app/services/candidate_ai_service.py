@@ -24,6 +24,7 @@ from app.services.ai.portal_context import PortalContext, PortalInterviewFact
 from app.services.ai.portal_fallback import TOPIC_LABELS, topic_of
 from app.services.ai_service import with_fallback
 from app.services.candidate_portal_service import PortalRecord, owned_application, require_record
+from app.services.company_profile import company_profile
 from app.services.engagement.events import record_unless_recent
 
 # Repeat views and questions within this window are one timeline entry, not many.
@@ -40,6 +41,7 @@ def build_portal_context(record: PortalRecord, *, utc_offset_minutes: int | None
         skills=tuple(candidate.skills),
         company=record.company,
         company_overview=settings.organization_overview,
+        company_profile=tuple(company_profile().facts()),
         job_title=job.title,
         job_department=job.department,
         job_location=job.location,

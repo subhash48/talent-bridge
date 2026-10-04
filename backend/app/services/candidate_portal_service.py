@@ -270,6 +270,7 @@ def summarize(snapshot: ApplicationSnapshot, company: str, now: datetime) -> Por
         updated_at=application.updated_at,
         next_interview_at=upcoming.scheduled_at if upcoming and status.bucket == B.ACTIVE else None,
         unread_messages=sum(1 for message in snapshot.messages if is_unread_for_candidate(message)),
+        withdrawn=status.withdrawn,
     )
 
 

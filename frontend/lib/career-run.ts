@@ -203,14 +203,14 @@ export class CareerRun {
 
     // From here on, in playfield units.
     ctx.setTransform(ratio * scale, 0, 0, ratio * scale, 0, ratio * (ground - GROUND * scale));
-    const inset = 10 / scale;
+    // The ground runs edge to edge, so the track is exactly as wide as the cards under it.
     ctx.fillStyle = this.colors.charcoal;
-    ctx.fillRect(inset, GROUND, this.width - inset * 2, 1.5 / scale);
+    ctx.fillRect(0, GROUND, this.width, 1.5 / scale);
     ctx.globalAlpha = 0.45;
     for (let i = 0; i * 61 < this.width + 50; i++) {
       let x = (i * 61 - this.elapsed * 100) % (this.width + 50);
       if (x < 0) x += this.width + 50;
-      if (x > inset && x < this.width - inset - 8) ctx.fillRect(x, GROUND + 5 + (i % 3) * 2.5, 3 + (i % 3) * 2, 1.5);
+      if (x < this.width - 8) ctx.fillRect(x, GROUND + 5 + (i % 3) * 2.5, 3 + (i % 3) * 2, 1.5);
     }
     ctx.globalAlpha = 1;
 

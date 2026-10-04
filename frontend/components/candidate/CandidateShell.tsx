@@ -2,21 +2,25 @@
 
 import { CloudOff, Menu } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
-import { CandidateNotifications } from "@/components/candidate/CandidateNotifications";
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
 import { CandidateSidebarContent } from "@/components/candidate/CandidateSidebar";
-import { Avatar } from "@/components/shared/Avatar";
+import { CandidateTopActions } from "@/components/candidate/CandidateTopActions";
 import { EncordLogo } from "@/components/shared/EncordLogo";
 import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { ToastProvider } from "@/components/ui/Toaster";
+import { cn } from "@/lib/utils";
 
 // Same frame as the recruiter workspace, calmer inside: sidebar on desktop, a sheet below lg.
 export function CandidateShell({ children }: { children: ReactNode }) {
   const [navOpen, setNavOpen] = useState(false);
-  const { me, offline } = useCandidatePortal();
+  const { offline } = useCandidatePortal();
+  // The dashboard shows the bell and avatar itself, beside its game's score. Its top bar is then
+  // only the menu button and logo, which a wide screen has in the sidebar.
+  const dashboard = usePathname() === "/candidate";
 
   return (
     <ToastProvider>
@@ -36,7 +40,12 @@ export function CandidateShell({ children }: { children: ReactNode }) {
 
         <div className="relative flex min-w-0 flex-1 flex-col">
           <div aria-hidden className="app-backdrop pointer-events-none absolute inset-x-0 top-0 h-[520px]" />
-          <header className="relative flex h-[72px] shrink-0 items-center justify-between gap-3 px-4 sm:px-6 lg:justify-end lg:px-10">
+          <header
+            className={cn(
+              "relative flex h-[72px] shrink-0 items-center justify-between gap-3 px-4 sm:px-6 lg:justify-end lg:px-10",
+              dashboard && "lg:hidden",
+            )}
+          >
             <div className="flex items-center gap-1 lg:hidden">
               <Button variant="ghost" size="icon" onClick={() => setNavOpen(true)} aria-label="Open navigation">
                 <Menu />
@@ -45,16 +54,16 @@ export function CandidateShell({ children }: { children: ReactNode }) {
                 <EncordLogo />
               </Link>
             </div>
-            {/* Above the page: the dashboard's greeting card runs up under the bell and avatar. */}
-            <div className="relative z-10 flex items-center gap-2">
-              <CandidateNotifications />
-              <Link href="/candidate/profile" aria-label="Your profile" className="rounded-full">
-                <Avatar name={me.candidate.fullName} src={me.candidate.avatarUrl} size={40} className="rounded-full ring-2 ring-white/10" />
-              </Link>
-            </div>
+            {!dashboard && <CandidateTopActions />}
           </header>
           {offline && (
-            <p role="status" className="relative mx-4 mb-2 flex items-center gap-2 rounded-[12px] border border-amber-300/20 bg-amber-400/10 px-3.5 py-2.5 text-sm text-amber-100 sm:mx-6 lg:mx-10">
+            <p
+              role="status"
+              className={cn(
+                "relative mx-4 mb-2 flex items-center gap-2 rounded-[12px] border border-amber-300/20 bg-amber-400/10 px-3.5 py-2.5 text-sm text-amber-100 sm:mx-6 lg:mx-10",
+                dashboard && "lg:mt-4",
+              )}
+            >
               <CloudOff aria-hidden className="size-4 shrink-0" />
               We can’t reach the server right now. You’re seeing the latest information we have.
             </p>

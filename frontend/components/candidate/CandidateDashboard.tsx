@@ -5,6 +5,7 @@ import { useSyncExternalStore } from "react";
 
 import { AskAIEntry } from "@/components/candidate/AskAIEntry";
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
+import { CandidateTopActions } from "@/components/candidate/CandidateTopActions";
 import { CareerRunGreeting } from "@/components/candidate/CareerRunGreeting";
 import { CurrentApplicationCard } from "@/components/candidate/CurrentApplicationCard";
 import { LatestUpdateCard } from "@/components/candidate/LatestUpdateCard";
@@ -21,7 +22,7 @@ import type { CandidateApplication, PortalJob } from "@/types/portal";
  * its own page.
  */
 export function CandidateDashboard({ greeting }: { greeting: string }) {
-  const { me, offline } = useCandidatePortal();
+  const { me } = useCandidatePortal();
   // The server greets by its own clock. In the browser the candidate's local time decides, checked each minute.
   const localGreeting = useSyncExternalStore(everyMinute, greetingFor, () => greeting);
   const { application, job } = me;
@@ -32,8 +33,7 @@ export function CandidateDashboard({ greeting }: { greeting: string }) {
         greeting={localGreeting}
         name={me.candidate.firstName}
         status={statusSentence(application, job, me.company)}
-        // On a wide screen the card runs up under the top bar's bell and avatar, unless the offline notice sits between them.
-        className={offline ? undefined : "lg:-mt-[34px]"}
+        actions={<CandidateTopActions />}
       />
 
       {application && job ? (

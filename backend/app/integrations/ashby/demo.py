@@ -14,11 +14,15 @@ signed with a key made for that one delivery, so the signature check runs too; A
 never read, and there is no HTTP endpoint. The follow-ups the endpoint runs after responding (the
 portal invitation, the AI analysis) run here once the processor returns.
 
+The development-only demo careers site (services/demo_careers.py) delivers its applications with
+submit(), the part of apply that sends the webhooks, once the applicant has signed in.
+
 Safety:
 - It refuses to run when ENVIRONMENT=production.
 - Every Ashby id it makes starts with tb-demo-. reset deletes only records carrying one: the demo
-  jobs, candidates and applications (with their activity, interviews, messages and analyses), the
-  demo candidates' portal users rows and the demo webhook events. A demo candidate who also has an
+  jobs (with a recruiter's demo job posting), candidates and applications (with their activity,
+  interviews, messages and analyses), the demo candidates' portal users rows and the demo webhook
+  events, and every application made on the demo careers site. A demo candidate who also has an
   application from outside the simulator is kept, with that application. Supabase Auth is never touched.
 - An email that belongs to a candidate or a sign-in that isn't simulator data is refused, so it
   never takes over a real person.
@@ -47,19 +51,29 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import delete, exists, func, or_, select, update
+from sqlalchemy import delete, exists, func, inspect, or_, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import settings
 from app.core.enums import UserRole
 from app.core.errors import AppError
+from app.integrations.ashby.demo_ids import DEMO_PREFIX, can_receive_mail, demo_id, is_demo
 from app.integrations.ashby.webhook import FollowUps, WebhookProcessor
 from app.integrations.supabase_admin import SupabaseAdmin, get_supabase_admin
-from app.models import Application, AshbyWebhookEvent, Candidate, CandidateActivity, Interview, Job, User
+from app.models import (
+    Application,
+    AshbyWebhookEvent,
+    Candidate,
+    CandidateActivity,
+    DemoApplication,
+    Interview,
+    Job,
+    User,
+)
 from app.models.base import utcnow
 from app.schemas.integration import WebhookAck
-from app.services import account_provisioning, ai_service
+from app.services import account_provisioning, ai_service, demo_resumes
 from app.services.ai.client import AIProvider, get_ai_provider
 from app.services.candidate_visibility import portal_status, present_activity
 
@@ -72,8 +86,8 @@ except ImportError as exc:  # pragma: no cover
 
 logger = logging.getLogger(__name__)
 
-DEMO_PREFIX = "tb-demo-"
-_NAMESPACE = uuid.UUID("6d1f3c2a-8b4e-4f7a-9c0d-2e5b7a9c1d3f")
+__all__ = ["DEMO_PREFIX", "can_receive_mail", "demo_id", "is_demo"]  # re-exported from demo_ids
+
 DEFAULT_JOB = "TEST - ML Engineer"
 INTERVIEW_HOUR_UTC = 16
 NO_EMAIL_NOTE = "Simulator: no invitation email was sent. Run apply again with --send-invite to send one."
@@ -90,9 +104,6 @@ STAGE_EVENTS: dict[str, tuple[str, str, str, str | None]] = {
     "withdrawn": ("candidateStageChange", "Archived", "Archived", "RejectedByCandidate"),
 }
 
-# RFC 2606 and 6761 names: no mailbox there, so an invitation would bounce.
-_NO_MAIL_DOMAINS = ("example.com", "example.net", "example.org", "example", "test", "invalid", "localhost")
-
 
 class DemoError(Exception):
     """Why the command didn't run. The message is for the person running it."""
@@ -106,26 +117,21 @@ class Outcome:
     email: str | None = None
 
 
+@dataclass
+class Submitted:
+    """What submit() delivered, and the application it made or found. None of the follow-ups have run."""
+
+    outcome: Outcome
+    follow_ups: FollowUps
+    application_id: uuid.UUID | None = None  # None if no application in Talent Bridge came of it
+    candidate_id: uuid.UUID | None = None
+
+
 def require_development() -> None:
     if settings.environment == "production":
         raise DemoError(
             "The Ashby simulator is for development only and ENVIRONMENT is production. Nothing was changed."
         )
-
-
-def demo_id(kind: str, *parts: str) -> str:
-    """A stable Ashby id for a simulator record: the same inputs always give the same id."""
-    key = "|".join(part.strip().lower() for part in parts)
-    return f"{DEMO_PREFIX}{kind}-{uuid.uuid5(_NAMESPACE, key)}"
-
-
-def is_demo(external_id: str | None) -> bool:
-    return bool(external_id and external_id.startswith(DEMO_PREFIX))
-
-
-def can_receive_mail(email: str) -> bool:
-    domain = email.rpartition("@")[2]
-    return not any(domain == name or domain.endswith(f".{name}") for name in _NO_MAIL_DOMAINS)
 
 
 # Commands
@@ -148,32 +154,54 @@ async def apply(
     """
     require_development()
     email = _email(email)
-    job_title = job_title.strip()
-    if not job_title:
-        raise DemoError("The job title can't be blank.")
+    job_title = _job_title(job_title)
     async with factory() as session:
         await _check_unclaimed(session, email)
 
+    submitted = await submit(factory, email=email, first_name=first_name, last_name=last_name, job_title=job_title)
+    outcome, follow_ups = submitted.outcome, submitted.follow_ups
+    if submitted.candidate_id is not None:
+        # A rerun is a duplicate delivery with no follow-ups; a pending invitation is retried, as the
+        # reconciliation sync would.
+        follow_ups.invite_candidate_ids.add(submitted.candidate_id)
+    outcome.lines += await _follow_up(factory, follow_ups, admin, provider)
+    return outcome
+
+
+async def submit(
+    factory: async_sessionmaker[AsyncSession],
+    *,
+    email: str,
+    first_name: str,
+    last_name: str,
+    job_title: str,
+    job_external_id: str | None = None,
+    phone: str | None = None,
+    source: str | None = None,
+    profile: bool = True,
+) -> Submitted:
+    """Deliver the application as Ashby would: jobCreate for the job, then applicationSubmit.
+
+    job_external_id is the Ashby id of a job that already exists, such as a recruiter's demo job: then
+    no jobCreate is sent. phone and source replace the fixture's. profile=False sends no name and no
+    phone at all, so the importer leaves an existing candidate's as they are. The same email and job
+    always give the same Ashby ids and webhook ids, so delivering again is a duplicate. Nothing else
+    runs: no follow-ups, and no check of whose email it is. apply() adds both for the command line; the
+    demo careers site submits only for someone signed in as that email, and refuses staff emails.
+    """
+    require_development()
+    email = _email(email)
+    job_title = _job_title(job_title)
     now = utcnow()
-    job_id, application_id = demo_id("job", job_title), demo_id("application", email, job_title)
-    job = fixture("jobUpdate")
-    job["action"] = "jobCreate"
-    job["webhookActionId"] = demo_id("event", "jobCreate", job_id)
-    job["data"]["job"].update(
-        id=job_id,
-        title=job_title,
-        status="Open",
-        createdAt=iso(now),
-        updatedAt=iso(now),
-        openedAt=iso(now),
-        closedAt=None,
-    )
-    submit = application_event(
+    job_id = job_external_id or demo_id("job", job_title)
+    application_id = demo_id("application", email, job_external_id or job_title)
+    name = " ".join(part.strip() for part in (first_name, last_name) if part.strip())
+    payload = application_event(
         "applicationSubmit",
         application_id=application_id,
         candidate_id=demo_id("candidate", email),
         email=email,
-        name=" ".join(part.strip() for part in (first_name, last_name) if part.strip()),
+        name=name if profile else "",
         job_id=job_id,
         job_title=job_title,
         stage="Application Review",
@@ -181,20 +209,41 @@ async def apply(
         created_at=now,
         webhook_action_id=demo_id("event", "applicationSubmit", application_id),
     )
+    application = payload["data"]["application"]
+    if not profile:
+        application["candidate"].pop("primaryPhoneNumber", None)  # the fixture's, which would replace theirs
+    elif phone:
+        application["candidate"]["primaryPhoneNumber"] = {"value": phone, "type": "Mobile", "isPrimary": True}
+    if source:
+        application["source"]["title"] = source
 
     outcome = Outcome(email=email)
-    ack, _ = await _deliver(factory, job)
-    outcome.lines.append(_ack_line(ack))
-    ack, follow_ups = await _deliver(factory, submit)
+    if job_external_id is None:
+        job = fixture("jobUpdate")
+        job["action"] = "jobCreate"
+        job["webhookActionId"] = demo_id("event", "jobCreate", job_id)
+        job["data"]["job"].update(
+            id=job_id,
+            title=job_title,
+            status="Open",
+            createdAt=iso(now),
+            updatedAt=iso(now),
+            openedAt=iso(now),
+            closedAt=None,
+        )
+        ack, _ = await _deliver(factory, job)
+        outcome.lines.append(_ack_line(ack))
+    ack, follow_ups = await _deliver(factory, payload)
     outcome.lines.append(_ack_line(ack))
     async with factory() as session:
-        candidate_id = await session.scalar(select(Candidate.id).where(Candidate.email == email))
-    if candidate_id is not None:
-        # A rerun is a duplicate delivery with no follow-ups; a pending invitation is retried, as the
-        # reconciliation sync would.
-        follow_ups.invite_candidate_ids.add(candidate_id)
-    outcome.lines += await _follow_up(factory, follow_ups, admin, provider)
-    return outcome
+        row = (
+            await session.execute(
+                select(Application.id, Application.candidate_id).where(Application.external_id == application_id)
+            )
+        ).first()
+    if row is None:
+        return Submitted(outcome, follow_ups)
+    return Submitted(outcome, follow_ups, application_id=row.id, candidate_id=row.candidate_id)
 
 
 async def stage(
@@ -208,12 +257,15 @@ async def stage(
     action, ashby_stage, status, reason_type = STAGE_EVENTS[stage]
     async with factory() as session:
         application, candidate, job = await _demo_application(session, _email(email), job_title)
+    # Someone Talent Bridge had before they applied on the demo careers site has no Ashby id. The import
+    # links them by email to the simulator's id, which is put back to none below.
+    candidate_id = candidate.external_id or demo_id("candidate", candidate.email)
     payload = application_event(
         action,
         application_id=application.external_id or "",
-        candidate_id=candidate.external_id or "",
+        candidate_id=candidate_id,
         email=candidate.email,
-        name=candidate.full_name,
+        name="",  # a stage change leaves the person's name and phone as they are
         job_id=job.external_id or "",
         job_title=job.title,
         stage=ashby_stage,
@@ -223,8 +275,13 @@ async def stage(
         archive_reason_type=reason_type,
         webhook_action_id=f"{DEMO_PREFIX}event-{uuid.uuid4()}",
     )
+    payload["data"]["application"]["candidate"].pop("primaryPhoneNumber", None)  # the fixture's
     outcome = Outcome(email=candidate.email)
     ack, follow_ups = await _deliver(factory, payload)
+    if candidate.external_id is None:
+        async with factory() as session:
+            await session.execute(update(Candidate).where(Candidate.id == candidate.id).values(external_id=None))
+            await session.commit()
     outcome.lines.append(_ack_line(ack))
     outcome.lines += await _follow_up(factory, follow_ups, None, None)
     return outcome
@@ -278,7 +335,7 @@ async def status(factory: async_sessionmaker[AsyncSession]) -> Outcome:
 
 
 async def reset(factory: async_sessionmaker[AsyncSession]) -> Outcome:
-    """Delete what the simulator made, and nothing else."""
+    """Delete what the simulator and the demo careers site made, and nothing else."""
     require_development()
     async with factory() as session:
         demo_candidates = (
@@ -301,10 +358,23 @@ async def reset(factory: async_sessionmaker[AsyncSession]) -> Outcome:
             result = await session.execute(statement.execution_options(synchronize_session=False))
             return result.rowcount or 0
 
+        # Every application made on the demo careers site, pending or submitted; résumés go with them. Only
+        # where migration 013 made its tables: the simulator itself needs no more than 011 and 012.
+        careers = 0
+        if await session.run_sync(lambda sync: inspect(sync.connection()).has_table("demo_applications")):
+            # Anyone kept below would still link to a résumé about to go.
+            await session.execute(
+                update(Candidate)
+                .where(Candidate.resume_url.startswith(demo_resumes.URL_PREFIX))
+                .values(resume_url=None)
+                .execution_options(synchronize_session=False)
+            )
+            careers = await remove(delete(DemoApplication))
         # Activity, stage history, interviews, messages, analyses and engagement go with their application.
         applications = await remove(delete(Application).where(Application.external_id.startswith(DEMO_PREFIX)))
         candidates = await remove(delete(Candidate).where(Candidate.id.in_([candidate.id for candidate in removable])))
         users = await remove(delete(User).where(User.id.in_(user_ids), User.role == UserRole.CANDIDATE))
+        # A recruiter's demo job takes its careers posting with it.
         jobs = await remove(
             delete(Job).where(Job.external_id.startswith(DEMO_PREFIX), ~exists().where(Application.job_id == Job.id))
         )
@@ -314,7 +384,7 @@ async def reset(factory: async_sessionmaker[AsyncSession]) -> Outcome:
     lines = [
         (
             f"Deleted {applications} application(s), {candidates} candidate(s), {users} portal sign-in link(s), "
-            f"{jobs} job(s) and {events} webhook event(s) made by the simulator."
+            f"{jobs} job(s), {careers} demo careers application(s) and {events} webhook event(s) made by the simulator."
         ),
         "Supabase Auth accounts were not touched.",
     ]
@@ -500,6 +570,13 @@ def _email(value: str) -> str:
     return email
 
 
+def _job_title(value: str) -> str:
+    title = value.strip()
+    if not title:
+        raise DemoError("The job title can't be blank.")
+    return title
+
+
 def _ack_line(ack: WebhookAck) -> str:
     line = f"{ack.action}: {ack.status}"
     if ack.status == "duplicate":
@@ -557,7 +634,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     command.add_argument("--in-days", type=int, default=3, help="days from today, at 16:00 UTC (default: 3)")
 
     commands.add_parser("status", help="show the simulator's candidates as recruiters and candidates see them")
-    commands.add_parser("reset", help="delete everything the simulator made, and nothing else")
+    commands.add_parser("reset", help="delete what the simulator and the demo careers site made, and nothing else")
 
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO if args.verbose else logging.ERROR, format="%(levelname)s: %(message)s")
@@ -613,7 +690,8 @@ async def _run(args: argparse.Namespace) -> int:
     except SQLAlchemyError as exc:
         print(f"Database error: {str(exc).splitlines()[0]}", file=sys.stderr)
         print(
-            "On Supabase, apply every file in supabase/migrations first (011 and 012 add the Ashby tables).",
+            "On Supabase, apply every file in supabase/migrations first (011 and 012 add the Ashby tables, "
+            "013 the demo careers site's).",
             file=sys.stderr,
         )
         return 1

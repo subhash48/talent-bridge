@@ -27,6 +27,7 @@ from app.schemas.demo import DemoJobCreate, DemoJobRead, DemoJobUpdate, Generate
 from app.services.ai.client import AIProvider
 from app.services.ai.job_posting_policy import apply_policy
 from app.services.ai_service import with_fallback
+from app.services.demo_careers import PENDING_TTL
 
 # The fields of DemoJobCreate and DemoJobUpdate that live on the job; the rest belong to the posting.
 JOB_FIELDS = frozenset({"title", "department", "location", "employment_type"})
@@ -207,11 +208,16 @@ async def _reads(session: AsyncSession, postings: Sequence[DemoJobPosting]) -> l
             )
         ).all()
     )
+    # Only those signing in can still submit: one left longer than PENDING_TTL needs applying again.
     pending = dict(
         (
             await session.execute(
                 select(DemoApplication.job_id, func.count())
-                .where(DemoApplication.job_id.in_(ids), DemoApplication.status.in_(PENDING))
+                .where(
+                    DemoApplication.job_id.in_(ids),
+                    DemoApplication.status.in_(PENDING),
+                    DemoApplication.updated_at > utcnow() - PENDING_TTL,
+                )
                 .group_by(DemoApplication.job_id)
             )
         ).all()

@@ -3,6 +3,7 @@ careers site beside the job's own ATS status, the counts recruiters see, and wha
 
 import json
 import uuid
+from datetime import timedelta
 from typing import Any, get_args
 
 import httpx
@@ -295,6 +296,19 @@ async def test_applicant_and_pending_counts(client: AsyncClient, sessions: async
                         resume_sha256="0" * 64,
                     )
                     for index, status in enumerate(DemoApplicationStatus)
+                ),
+                DemoApplication(  # left two days: signing in no longer submits it, so it isn't waiting
+                    job_id=job,
+                    email="applicant.stale@mail.test",
+                    first_name="Sam",
+                    last_name="Lee",
+                    phone="+1 415 555 0100",
+                    status=DemoApplicationStatus.AWAITING_SIGN_IN,
+                    resume_file_name="resume.pdf",
+                    resume_content_type="application/pdf",
+                    resume_size_bytes=4,
+                    resume_sha256="0" * 64,
+                    updated_at=utcnow() - timedelta(days=2),
                 ),
             ]
         )

@@ -14,7 +14,9 @@ from app.api import (
     candidate_engagement,
     candidates,
     dashboard,
+    demo_careers,
     demo_jobs,
+    demo_resumes,
     engagement,
     integrations,
     interviews,
@@ -34,6 +36,9 @@ for module in (candidate, candidate_engagement):
 # and the other Ashby routes require a recruiter.
 api_router.include_router(auth.router)
 api_router.include_router(integrations.router)
-# Development only (ENABLE_ASHBY_DEMO=true, never in production): demo jobs for recruiters. The flag is
-# checked first, so elsewhere these routes answer 404 to everyone.
-api_router.include_router(demo_jobs.router, dependencies=[Depends(require_demo_enabled), Depends(require_recruiter)])
+# Development only (ENABLE_ASHBY_DEMO=true, never in production). The flag is checked first, so
+# elsewhere these answer 404 to everyone: demo jobs and résumés for recruiters, and the public demo
+# careers site.
+for module in (demo_jobs, demo_resumes):
+    api_router.include_router(module.router, dependencies=[Depends(require_demo_enabled), Depends(require_recruiter)])
+api_router.include_router(demo_careers.router, dependencies=[Depends(require_demo_enabled)])

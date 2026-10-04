@@ -45,7 +45,8 @@ export function CandidateShell({ children }: { children: ReactNode }) {
                 <EncordLogo />
               </Link>
             </div>
-            <div className="flex items-center gap-2">
+            {/* Above the page: the dashboard's greeting card runs up under the bell and avatar. */}
+            <div className="relative z-10 flex items-center gap-2">
               <CandidateNotifications />
               <Link href="/candidate/profile" aria-label="Your profile" className="rounded-full">
                 <Avatar name={me.candidate.fullName} src={me.candidate.avatarUrl} size={40} className="rounded-full ring-2 ring-white/10" />

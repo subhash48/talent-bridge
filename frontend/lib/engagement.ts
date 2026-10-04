@@ -9,7 +9,9 @@ import { apiFetch } from "@/services/api";
 // - which portal pages and items were opened (a page, an application, an interview), in batches.
 //
 // Never sent or kept: keystrokes, text, pointer positions, scrolling, browser or device details, or
-// anything outside this portal. Input events only refresh an in-memory "used recently" time.
+// anything outside this portal. Input events only refresh an in-memory "used recently" time, and
+// input inside an element marked data-not-portal-activity (the dashboard's game) doesn't even do that:
+// playing is a break, not time spent on an application.
 //
 // The candidate never sees what the hiring team makes of it, and it is never used to rank or reject.
 
@@ -125,7 +127,8 @@ class PortalEngagement {
     void apiFetch<void>(path, { method: "POST", body: JSON.stringify(body), keepalive }).catch(() => undefined);
   }
 
-  private markUsed = () => {
+  private markUsed = (event: Event) => {
+    if (event.target instanceof Element && event.target.closest("[data-not-portal-activity]")) return;
     this.lastUsed = Date.now();
   };
 

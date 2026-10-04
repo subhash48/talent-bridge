@@ -1,36 +1,40 @@
 "use client";
 
 import { BriefcaseBusiness } from "lucide-react";
+import { useSyncExternalStore } from "react";
 
 import { AskAIEntry } from "@/components/candidate/AskAIEntry";
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
+import { CareerRunGreeting } from "@/components/candidate/CareerRunGreeting";
 import { CurrentApplicationCard } from "@/components/candidate/CurrentApplicationCard";
 import { LatestUpdateCard } from "@/components/candidate/LatestUpdateCard";
 import { NextStepCard } from "@/components/candidate/NextStepCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ASK_AI_PROMPTS } from "@/lib/ask-ai";
+import { greetingFor } from "@/lib/format";
 import type { CandidateApplication, PortalJob } from "@/types/portal";
 
 /**
- * The portal home, in order of what matters: where the current application stands, the one next
- * step, the latest update, and a way into Ask AI. Everything else (every application, interviews,
- * messages, the company, the full assistant) has its own page.
+ * The portal home, in order of what matters: the greeting (set in a small game, Career Run), where
+ * the current application stands, the one next step, the latest update, and a way into Ask AI.
+ * Everything else (every application, interviews, messages, the company, the full assistant) has
+ * its own page.
  */
 export function CandidateDashboard({ greeting }: { greeting: string }) {
-  const { me } = useCandidatePortal();
+  const { me, offline } = useCandidatePortal();
+  // The server greets by its own clock. In the browser the candidate's local time decides, checked each minute.
+  const localGreeting = useSyncExternalStore(everyMinute, greetingFor, () => greeting);
   const { application, job } = me;
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="pt-2 pb-2">
-        <h1 className="text-ink">
-          <span className="block text-xl text-charcoal sm:text-[22px]">{greeting},</span>
-          <span className="mt-1 block text-[48px] leading-[0.95] font-semibold tracking-[-0.045em] sm:text-[64px]">
-            {me.candidate.firstName}
-          </span>
-        </h1>
-        <p className="mt-4 text-base text-stone sm:text-[17px]">{statusSentence(application, job, me.company)}</p>
-      </header>
+      <CareerRunGreeting
+        greeting={localGreeting}
+        name={me.candidate.firstName}
+        status={statusSentence(application, job, me.company)}
+        // On a wide screen the card runs up under the top bar's bell and avatar, unless the offline notice sits between them.
+        className={offline ? undefined : "lg:-mt-[34px]"}
+      />
 
       {application && job ? (
         <>
@@ -53,6 +57,11 @@ export function CandidateDashboard({ greeting }: { greeting: string }) {
       )}
     </div>
   );
+}
+
+function everyMinute(onChange: () => void) {
+  const timer = window.setInterval(onChange, 60_000);
+  return () => window.clearInterval(timer);
 }
 
 /** One short sentence on where the current application stands. */

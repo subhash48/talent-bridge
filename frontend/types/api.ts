@@ -260,6 +260,27 @@ export type ApiPortalApplicationSummary = {
   updated_at: string;
   next_interview_at: string | null;
   unread_messages: number;
+  withdrawn: boolean;
+};
+
+export type ApiPortalCompanyItem = { title: string; description: string };
+
+/** GET /candidate/company (backend services/company_profile.py). */
+export type ApiPortalCompany = {
+  name: string;
+  overview: string;
+  mission: string;
+  highlights: ApiPortalCompanyItem[];
+  products: ApiPortalCompanyItem[];
+  values: ApiPortalCompanyItem[];
+  benefits: string[];
+  benefits_note: string;
+  locations: string[];
+  locations_note: string;
+  hiring_process: string[];
+  hiring_note: string;
+  links: { label: string; url: string }[];
+  source: string;
 };
 
 export type ApiCandidateMe = {

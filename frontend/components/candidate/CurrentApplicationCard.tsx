@@ -9,18 +9,26 @@ import { Card } from "@/components/ui/Card";
 import { formatDate } from "@/lib/format";
 import type { CandidateApplication, PortalJob } from "@/types/portal";
 
-export function ApplicationStatusCard({ application, job }: { application: CandidateApplication; job: PortalJob }) {
-  const meta = [job.company, job.department, job.location].filter(Boolean).join(" · ");
+type CurrentApplicationCardProps = {
+  application: CandidateApplication;
+  job: PortalJob;
+  /** How many other applications the candidate has; they're on the Applications page. */
+  otherApplications: number;
+};
+
+/** The application the portal is showing: the role, where and how it's worked, its stage and progress. */
+export function CurrentApplicationCard({ application, job, otherApplications }: CurrentApplicationCardProps) {
+  const meta = [job.location, job.employmentType].filter(Boolean).join(" · ");
 
   return (
     <Card className="p-5 sm:p-7">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="flex items-center gap-2 text-[13px] font-medium text-stone">
-            <BriefcaseBusiness aria-hidden className="size-4" /> Application status
+            <BriefcaseBusiness aria-hidden className="size-4" /> Current application
           </p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-ink sm:text-[28px]">{job.title}</h2>
-          <p className="mt-1 text-sm text-stone">{meta}</p>
+          {meta && <p className="mt-1 text-sm text-stone">{meta}</p>}
         </div>
         <div className="flex items-center gap-2 sm:flex-col sm:items-end">
           <span className="text-xs text-faint sm:order-2">{application.status === "active" ? "Current stage" : "Status"}</span>
@@ -33,16 +41,20 @@ export function ApplicationStatusCard({ application, job }: { application: Candi
       </div>
 
       <div className="mt-8 flex flex-col gap-4 border-t border-border pt-5 md:flex-row md:items-center md:justify-between">
-        <div className="min-w-0">
-          <p className="text-sm text-charcoal">{application.nextStep}</p>
-          <p className="mt-1 text-xs text-faint">
-            <span suppressHydrationWarning>Applied {formatDate(application.appliedAt)}</span> · Last updated{" "}
-            <RelativeTime iso={application.updatedAt} />
-          </p>
+        <p className="text-xs text-faint">
+          <span suppressHydrationWarning>Applied {formatDate(application.appliedAt)}</span> · Last updated{" "}
+          <RelativeTime iso={application.updatedAt} />
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {otherApplications > 0 && (
+            <Link href="/candidate/applications" className={buttonStyles({ variant: "ghost", size: "sm" })}>
+              All applications
+            </Link>
+          )}
+          <Link href={`/candidate/application/${application.id}`} className={buttonStyles({ variant: "secondary", size: "sm" })}>
+            View application <ArrowRight />
+          </Link>
         </div>
-        <Link href={`/candidate/application/${application.id}`} className={buttonStyles({ variant: "secondary", size: "sm", className: "self-start md:self-auto" })}>
-          View application <ArrowRight />
-        </Link>
       </div>
     </Card>
   );

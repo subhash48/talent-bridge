@@ -21,7 +21,16 @@ const VISIT_EXPIRES_MS = 30 * 60_000;
 const VISIT_KEY = "tb.portal-visit";
 const ACTIVITY_EVENTS = ["pointerdown", "keydown", "scroll", "touchstart"] as const;
 
-export type PortalPage = "dashboard" | "application" | "interviews" | "messages" | "prep" | "profile";
+export type PortalPage =
+  | "dashboard"
+  | "applications"
+  | "application"
+  | "interviews"
+  | "messages"
+  | "company"
+  | "ai"
+  | "prep"
+  | "profile";
 
 export type PortalAction =
   | { type: "page_view"; page: PortalPage }
@@ -165,9 +174,12 @@ export const engagement = new PortalEngagement();
 export function portalPage(pathname: string): PortalPage {
   const section = pathname.split("/")[2];
   switch (section) {
+    case "applications":
     case "application":
     case "interviews":
     case "messages":
+    case "company":
+    case "ai":
     case "prep":
     case "profile":
       return section;

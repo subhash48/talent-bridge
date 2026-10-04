@@ -8,6 +8,7 @@ import type {
   ApiPortalApplication,
   ApiPortalApplicationSummary,
   ApiPortalCandidate,
+  ApiPortalCompany,
   ApiPortalInterview,
   ApiPortalJob,
   ApiPortalMessage,
@@ -18,6 +19,7 @@ import type {
   CandidateApplication,
   CandidateApplicationDetail,
   CandidateApplicationSummary,
+  CandidateCompany,
   CandidateInterview,
   CandidateMeResponse,
   CandidateMessage,
@@ -117,6 +119,27 @@ export async function updateCandidateProfile(input: ProfileUpdateInput): Promise
   return fromCandidate(profile);
 }
 
+/** GET /candidate/company: the company-approved profile the Company page shows and the assistant answers from. */
+export async function getCandidateCompany(): Promise<CandidateCompany> {
+  const company = await apiFetch<ApiPortalCompany>("/candidate/company");
+  return {
+    name: company.name,
+    overview: company.overview,
+    mission: company.mission,
+    highlights: company.highlights,
+    products: company.products,
+    values: company.values,
+    benefits: company.benefits,
+    benefitsNote: company.benefits_note,
+    locations: company.locations,
+    locationsNote: company.locations_note,
+    hiringProcess: company.hiring_process,
+    hiringNote: company.hiring_note,
+    links: company.links,
+    source: company.source,
+  };
+}
+
 /** GET /candidate/prep: AI interview prep built from candidate-safe context only. */
 export async function getCandidatePrep(applicationId?: string | null, signal?: AbortSignal): Promise<CandidatePrep> {
   const query = forApplication(applicationId, { utc_offset_minutes: String(utcOffsetMinutes()) });
@@ -194,6 +217,7 @@ function fromSummary(summary: ApiPortalApplicationSummary): CandidateApplication
     updatedAt: summary.updated_at,
     nextInterviewAt: summary.next_interview_at,
     unreadMessages: summary.unread_messages,
+    withdrawn: summary.withdrawn,
   };
 }
 

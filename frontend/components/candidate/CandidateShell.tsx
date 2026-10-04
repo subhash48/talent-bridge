@@ -27,7 +27,7 @@ export function CandidateShell({ children }: { children: ReactNode }) {
         Skip to content
       </a>
       <div className="flex min-h-dvh">
-        <aside className="sticky top-0 hidden h-dvh w-[244px] shrink-0 border-r border-border bg-surface/80 lg:block">
+        <aside className="sticky top-0 hidden h-dvh w-[244px] shrink-0 overflow-y-auto border-r border-border bg-surface/80 lg:block">
           <CandidateSidebarContent />
         </aside>
         <Sheet open={navOpen} onOpenChange={setNavOpen} side="left" title="Navigation">

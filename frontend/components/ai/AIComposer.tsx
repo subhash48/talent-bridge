@@ -18,6 +18,10 @@ type AIComposerProps = {
   className?: string;
 };
 
+/** A suggested prompt. Also used for shortcuts into Ask AI, so they look the same everywhere. */
+export const suggestionChipStyles =
+  "inline-flex h-8 items-center rounded-full border border-border bg-white/[0.05] px-3 text-xs text-charcoal transition-[background-color,border-color,color] duration-200 hover:border-ai/35 hover:bg-ai/10 hover:text-ink disabled:pointer-events-none disabled:opacity-50";
+
 /** Prompt box with quick actions. Enter sends, Shift+Enter adds a line, quick actions send at once. */
 export function AIComposer({ id, label, placeholder, suggestions, pending, onSend, onStop, textareaRef, className }: AIComposerProps) {
   const [value, setValue] = useState("");
@@ -67,7 +71,7 @@ export function AIComposer({ id, label, placeholder, suggestions, pending, onSen
               type="button"
               disabled={pending}
               onClick={() => onSend(suggestion)}
-              className="h-8 rounded-full border border-border bg-white/[0.05] px-3 text-xs text-charcoal transition-[background-color,border-color,color] duration-200 hover:border-ai/35 hover:bg-ai/10 hover:text-ink disabled:pointer-events-none disabled:opacity-50"
+              className={suggestionChipStyles}
             >
               {suggestion}
             </button>

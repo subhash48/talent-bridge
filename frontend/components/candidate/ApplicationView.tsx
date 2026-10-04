@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, BriefcaseBusiness, Mail } from "lucide-react";
+import { ArrowLeft, ArrowRight, BriefcaseBusiness, Mail } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect } from "react";
 
@@ -57,7 +57,15 @@ export function ApplicationView({ applicationId, initialDetail }: ApplicationVie
 
   return (
     <>
-      <CandidateHeader title="My Application" subtitle={`${job.title} at ${job.company}`} />
+      <CandidateHeader
+        title="My Application"
+        subtitle={`${job.title} at ${job.company}`}
+        actions={
+          <Link href="/candidate/applications" className={buttonStyles({ variant: "ghost", size: "sm" })}>
+            <ArrowLeft /> All applications
+          </Link>
+        }
+      />
       <div className="flex flex-col gap-5">
         <Card className="p-5 sm:p-7">
           <div className="flex flex-wrap items-center justify-between gap-3">

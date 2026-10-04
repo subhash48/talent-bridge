@@ -1,14 +1,15 @@
 "use client";
 
 import {
-  BookOpenCheck,
   BriefcaseBusiness,
+  Building2,
   CalendarDays,
   ChevronsUpDown,
   LayoutDashboard,
   LifeBuoy,
   LogOut,
   MessageSquareText,
+  Sparkles,
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -32,14 +33,22 @@ import {
 } from "@/components/ui/DropdownMenu";
 import { useSignOut } from "@/hooks/useSignOut";
 
+// Each page and the addresses that belong to it: one application lives under Applications, and
+// interview prep (opened from Interviews and the dashboard's next step) under Interviews.
 const NAV = [
-  { href: "/candidate", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/candidate/application", label: "My Application", icon: BriefcaseBusiness },
-  { href: "/candidate/interviews", label: "Interviews", icon: CalendarDays },
-  { href: "/candidate/messages", label: "Messages", icon: MessageSquareText },
-  { href: "/candidate/prep", label: "Interview Prep", icon: BookOpenCheck },
-  { href: "/candidate/profile", label: "Profile", icon: UserRound },
+  { href: "/candidate", label: "Dashboard", icon: LayoutDashboard, matches: [] },
+  { href: "/candidate/applications", label: "Applications", icon: BriefcaseBusiness, matches: ["/candidate/application"] },
+  { href: "/candidate/interviews", label: "Interviews", icon: CalendarDays, matches: ["/candidate/prep"] },
+  { href: "/candidate/messages", label: "Messages", icon: MessageSquareText, matches: [] },
+  { href: "/candidate/company", label: "Company", icon: Building2, matches: [] },
+  { href: "/candidate/ai", label: "Ask AI", icon: Sparkles, matches: [] },
+  { href: "/candidate/profile", label: "Profile", icon: UserRound, matches: [] },
 ] as const;
+
+function isActive(pathname: string, { href, matches }: (typeof NAV)[number]): boolean {
+  if (href === "/candidate") return pathname === href;
+  return [href, ...matches].some((path) => pathname === path || pathname.startsWith(`${path}/`));
+}
 
 export function CandidateSidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -60,8 +69,10 @@ export function CandidateSidebarContent({ onNavigate }: { onNavigate?: () => voi
         {NAV.map((item) => (
           <SidebarNavItem
             key={item.href}
-            {...item}
-            active={item.href === "/candidate" ? pathname === item.href : pathname.startsWith(item.href)}
+            href={item.href}
+            label={item.label}
+            icon={item.icon}
+            active={isActive(pathname, item)}
             badge={item.href === "/candidate/messages" ? { count: unread, label: `${unread} unread message${unread === 1 ? "" : "s"}` } : undefined}
             onNavigate={onNavigate}
           />

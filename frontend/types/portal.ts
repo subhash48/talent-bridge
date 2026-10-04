@@ -110,6 +110,30 @@ export type CandidateApplicationSummary = {
   updatedAt: string;
   nextInterviewAt: string | null;
   unreadMessages: number;
+  /** The candidate withdrew it (its status is then inactive). */
+  withdrawn: boolean;
+};
+
+export type CompanyItem = { title: string; description: string };
+
+/** What the company shares with candidates. The candidate assistant answers from the same profile. */
+export type CandidateCompany = {
+  name: string;
+  overview: string;
+  mission: string;
+  /** title is the figure ("300+"), description what it counts. */
+  highlights: CompanyItem[];
+  products: CompanyItem[];
+  values: CompanyItem[];
+  benefits: string[];
+  benefitsNote: string;
+  locations: string[];
+  locationsNote: string;
+  hiringProcess: string[];
+  hiringNote: string;
+  links: { label: string; url: string }[];
+  /** Where the profile comes from, and when. */
+  source: string;
 };
 
 export type CandidateMeResponse = {

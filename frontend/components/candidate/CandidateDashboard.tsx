@@ -1,30 +1,24 @@
 "use client";
 
-import { ArrowRight, BriefcaseBusiness } from "lucide-react";
-import Link from "next/link";
-import { useCallback } from "react";
+import { BriefcaseBusiness } from "lucide-react";
 
-import { ActivityList } from "@/components/candidate/ActivityList";
-import { ApplicationStatusCard } from "@/components/candidate/ApplicationStatusCard";
-import { AskAssistant } from "@/components/candidate/AskAssistant";
+import { AskAIEntry } from "@/components/candidate/AskAIEntry";
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
-import { MessagesCard } from "@/components/candidate/MessagesCard";
-import { MyApplications } from "@/components/candidate/MyApplications";
-import { NextInterviewCard } from "@/components/candidate/NextInterviewCard";
-import { PrepCard } from "@/components/candidate/PrepCard";
+import { CurrentApplicationCard } from "@/components/candidate/CurrentApplicationCard";
+import { LatestUpdateCard } from "@/components/candidate/LatestUpdateCard";
+import { NextStepCard } from "@/components/candidate/NextStepCard";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { buttonStyles } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { useLiveQuery } from "@/hooks/useLiveQuery";
-import { cn } from "@/lib/utils";
-import { getCandidatePrep } from "@/services/portal";
-import type { CandidateApplication, CandidateMeResponse, PortalJob } from "@/types/portal";
+import { ASK_AI_PROMPTS } from "@/lib/ask-ai";
+import type { CandidateApplication, PortalJob } from "@/types/portal";
 
-// Prep changes slowly, so it refreshes every few minutes.
-const PREP_REFRESH_MS = 5 * 60_000;
-
+/**
+ * The portal home, in order of what matters: where the current application stands, the one next
+ * step, the latest update, and a way into Ask AI. Everything else (every application, interviews,
+ * messages, the company, the full assistant) has its own page.
+ */
 export function CandidateDashboard({ greeting }: { greeting: string }) {
   const { me } = useCandidatePortal();
+  const { application, job } = me;
 
   return (
     <div className="flex flex-col gap-6">
@@ -35,15 +29,21 @@ export function CandidateDashboard({ greeting }: { greeting: string }) {
             {me.candidate.firstName}
           </span>
         </h1>
-        <p className="mt-4 text-base text-stone sm:text-[17px]">
-          Here’s what’s happening with your {me.applications.length > 1 ? "applications" : "application"}.
-        </p>
+        <p className="mt-4 text-base text-stone sm:text-[17px]">{statusSentence(application, job, me.company)}</p>
       </header>
 
-      <MyApplications />
-
-      {me.application && me.job ? (
-        <ApplicationDashboard key={me.application.id} me={me} application={me.application} job={me.job} />
+      {application && job ? (
+        <>
+          <CurrentApplicationCard application={application} job={job} otherApplications={me.applications.length - 1} />
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+            <NextStepCard me={me} application={application} />
+            <LatestUpdateCard latest={me.recentActivity[0] ?? null} applicationId={application.id} />
+          </div>
+          <AskAIEntry
+            description={`Questions about ${me.company}, the role, benefits or your application?`}
+            prompts={ASK_AI_PROMPTS.slice(0, 2)}
+          />
+        </>
       ) : (
         <EmptyState
           icon={BriefcaseBusiness}
@@ -55,39 +55,23 @@ export function CandidateDashboard({ greeting }: { greeting: string }) {
   );
 }
 
-type ApplicationDashboardProps = { me: CandidateMeResponse; application: CandidateApplication; job: PortalJob };
-
-function ApplicationDashboard({ me, application, job }: ApplicationDashboardProps) {
-  const loadPrep = useCallback(() => getCandidatePrep(application.id), [application.id]);
-  const prep = useLiveQuery(loadPrep, { intervalMs: PREP_REFRESH_MS });
-  const active = application.status === "active";
-
-  return (
-    <>
-      <ApplicationStatusCard application={application} job={job} />
-
-      <div className={cn("grid grid-cols-1 gap-5 md:grid-cols-2", active && "xl:grid-cols-3")}>
-        <NextInterviewCard interview={me.nextInterview} />
-        <MessagesCard unread={me.unreadMessages} latest={me.latestMessage} />
-        {active && <PrepCard prep={prep} interviewTitle={me.nextInterview?.title ?? null} className="md:col-span-2 xl:col-span-1" />}
-      </div>
-
-      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-2">
-        <Card className="p-5 sm:p-6">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <h2 className="font-semibold tracking-tight text-ink">Recent activity</h2>
-            <Link href={`/candidate/application/${application.id}`} className={buttonStyles({ variant: "ghost", size: "sm" })}>
-              Full timeline <ArrowRight />
-            </Link>
-          </div>
-          {me.recentActivity.length > 0 ? (
-            <ActivityList items={me.recentActivity.slice(0, 6)} />
-          ) : (
-            <p className="text-sm text-stone">Nothing yet. Updates to your application will appear here.</p>
-          )}
-        </Card>
-        <AskAssistant />
-      </div>
-    </>
-  );
+/** One short sentence on where the current application stands. */
+function statusSentence(application: CandidateApplication | null, job: PortalJob | null, company: string): string {
+  if (!application || !job) return `When you apply for a role at ${company}, you can follow it here.`;
+  const role = job.title;
+  if (application.status === "no_longer_considered") return `Your application for ${role} is no longer under consideration.`;
+  if (application.stage === "hired") return `Congratulations, you’ve been hired as ${role}.`;
+  if (application.status === "inactive") return `Your application for ${role} is no longer active.`;
+  switch (application.stage) {
+    case "sourced":
+      return `We’ve received your application for ${role}.`;
+    case "screening":
+      return `Your application for ${role} is being reviewed.`;
+    case "interview":
+      return `Your application for ${role} is at the interview stage.`;
+    case "offer":
+      return `Your application for ${role} has reached the offer stage.`;
+    default:
+      return `Here’s where your application for ${role} stands.`;
+  }
 }

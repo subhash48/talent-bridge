@@ -106,6 +106,18 @@ or the recruiter Settings page's **Sync now** (`POST /api/v1/integrations/ashby/
 
 A failed invitation never affects the import: the candidate shows "Invitation failed" to recruiters with a retry button, and the sync retries automatically. The reconciliation sync only invites people who applied in the last 14 days (`ASHBY_SYNC_INVITE_MAX_AGE_DAYS`), so a first sync never emails a backlog. Recruiters can also invite anyone from their engagement card. New applications also get an AI analysis in the background (`ASHBY_AUTO_ANALYZE=false` to turn it off); a failed analysis never fails the import.
 
+**Trying it without an Ashby account (development only).** A simulator builds the webhooks Ashby would send from the test fixtures and runs them through the same webhook processor, importer, stage mapping, portal provisioning and AI analysis as real ones. It has no HTTP endpoint and refuses to run when `ENVIRONMENT=production`. From `backend/`:
+
+```bash
+python -m app.integrations.ashby.demo apply --email testcandidate1@example.com --first-name Maya --last-name Patel --job "TEST - ML Engineer"
+python -m app.integrations.ashby.demo stage --email testcandidate1@example.com --stage interview   # screening, offer, hired, rejected, withdrawn
+python -m app.integrations.ashby.demo interview --email testcandidate1@example.com                 # --in-days N, at 16:00 UTC
+python -m app.integrations.ashby.demo status
+python -m app.integrations.ashby.demo reset                                                         # deletes only what the simulator made
+```
+
+It writes to the database in `DATABASE_URL` and prints which one first. Its records carry `tb-demo-` Ashby ids, and `reset` deletes only those (Supabase Auth accounts are never touched). Rerunning `apply` counts as a redelivery, so nothing is created twice. It won't use an email that belongs to anyone outside the simulator. No invitation email is sent unless you add `--send-invite`, which only works for addresses that can receive mail. To open the candidate portal as the demo candidate, either use `--send-invite` with an address you own and accept the email, or add the user in Supabase (Authentication > Users > Add user, auto-confirmed) and run `python -m app.db.accounts link <email>`. Then sign in at `/login`.
+
 ## Candidate engagement
 
 Recruiters see, per application, a transparent 0-100 with its reasons (`GET /api/v1/candidates/{id}/engagement`, the **Candidate engagement** card):

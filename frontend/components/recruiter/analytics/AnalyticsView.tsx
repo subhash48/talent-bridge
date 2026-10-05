@@ -5,7 +5,9 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import { ActivityHeatmap } from "@/components/recruiter/analytics/ActivityHeatmap";
 import { DateRangeFilter, Segmented } from "@/components/recruiter/analytics/AnalyticsFilters";
+import { DemographicsSection, TopRegions } from "@/components/recruiter/analytics/AudienceSections";
 import { EngagementChart, EngagementLegend, EngagementTable } from "@/components/recruiter/analytics/EngagementChart";
+import { InsightsPanel } from "@/components/recruiter/analytics/InsightsPanel";
 import { KpiCards } from "@/components/recruiter/analytics/KpiCards";
 import { TopicBreakdown } from "@/components/recruiter/analytics/TopicBreakdown";
 import { DetailError } from "@/components/recruiter/DetailError";
@@ -15,9 +17,11 @@ import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
 import { errorMessage } from "@/services/api";
-import { getPortalAnalytics } from "@/services/analytics";
+import { getAnalyticsInsights, getDemographicsSummary, getPortalAnalytics } from "@/services/analytics";
 import type {
+  AnalyticsInsights,
   AnalyticsRange,
+  DemographicsSummary,
   Granularity,
   PortalAnalytics,
   RangePreset,
@@ -69,6 +73,8 @@ export function AnalyticsView({ initialRange }: { initialRange: AnalyticsRange }
   const portal = useKeyedRequest<PortalAnalytics>(`${rangeKey}|${granularity}`, (signal) =>
     getPortalAnalytics(range, granularity, signal),
   );
+  const insights = useKeyedRequest<AnalyticsInsights>(rangeKey, (signal) => getAnalyticsInsights(range, signal));
+  const demographics = useKeyedRequest<DemographicsSummary>(String(attempt), (signal) => getDemographicsSummary(signal));
 
   function changeRange(next: AnalyticsRange) {
     setRange(next);
@@ -165,6 +171,22 @@ export function AnalyticsView({ initialRange }: { initialRange: AnalyticsRange }
         </div>
       )}
 
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
+        <Section title="Top Regions" subtitle="Where candidates are, as they told us">
+          {demographics.data ? (
+            <TopRegions summary={demographics.data} />
+          ) : demographics.error ? (
+            <p className="py-4 text-sm text-stone">Regions couldn&apos;t load: {demographics.error}</p>
+          ) : (
+            <Skeleton className="h-40 rounded-[10px]" />
+          )}
+        </Section>
+        <Section title="AI Insights" subtitle="Ways to improve the candidate experience">
+          <InsightsPanel insights={insights.loading ? undefined : insights.data} error={insights.loading ? undefined : insights.error} />
+        </Section>
+      </div>
+
+      {demographics.data && <DemographicsSection summary={demographics.data} />}
       {data && <p className="text-[11px] leading-relaxed text-faint">{data.note}</p>}
     </div>
   );

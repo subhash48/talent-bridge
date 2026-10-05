@@ -8,6 +8,7 @@ demo always work.
 import logging
 from abc import ABC, abstractmethod
 from functools import cache
+from typing import TYPE_CHECKING
 
 from app.core.config import settings
 from app.schemas.ai import AnalysisContent, AskContent, DraftContent, DraftPurpose
@@ -15,6 +16,10 @@ from app.schemas.demo import JobPostingBrief, JobPostingContent
 from app.schemas.portal import AssistContent, PrepContent
 from app.services.ai.context import CandidateContext
 from app.services.ai.portal_context import PortalContext
+
+if TYPE_CHECKING:
+    from app.schemas.analytics import AnalyticsInsight
+    from app.services.analytics.insights import InsightFacts
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +63,13 @@ class AIProvider(ABC):
     async def write_job_posting(self, brief: JobPostingBrief, organization: str, overview: str) -> JobPostingContent:
         """A job posting drafted from the recruiter's brief and the company overview, and nothing else."""
         raise AIProviderError(f"{self.name} has no job writer")
+
+    # Portal analytics insights. Only aggregate facts go in; the rules in services/analytics/insights.py
+    # answer when a provider has none (the mock) or its answer fails the checks there.
+
+    async def portal_insights(self, facts: "InsightFacts") -> list["AnalyticsInsight"]:
+        """At most four insights about the candidate experience, phrased from the facts alone."""
+        raise AIProviderError(f"{self.name} has no analytics insights")
 
 
 @cache

@@ -12,7 +12,9 @@ from typing import Annotated, Any, TypeVar
 import httpx
 from pydantic import BaseModel, BeforeValidator, ValidationError
 
+from app.core.config import settings
 from app.schemas.ai import AnalysisContent, AskContent, DraftContent, DraftPurpose, SkillEvidence
+from app.schemas.analytics import AnalyticsInsight
 from app.schemas.demo import (
     MAX_ABOUT_ROLE,
     MAX_ABOUT_TEAM,
@@ -29,6 +31,7 @@ from app.schemas.portal import AssistContent, PrepContent
 from app.services.ai.client import AIProvider, AIProviderError
 from app.services.ai.context import SECTIONS, CandidateContext
 from app.services.ai.portal_context import PortalContext
+from app.services.analytics.insights import InsightFacts
 
 Model = TypeVar("Model", bound=BaseModel)
 
@@ -132,6 +135,20 @@ Write the job posting for this role. Return a JSON object with exactly these key
 - "skills": array of 3 to 8 short skill names, including the recruiter's.
 - "about_team": 1 to 3 sentences about the team and the company, using only the company overview, or "" if it says nothing relevant."""
 
+INSIGHTS_SYSTEM_PROMPT = """You write short insights for {organization}'s recruiters about how candidates use the candidate portal, to improve the candidate experience.
+
+Rules:
+- Use only the facts provided, and only their numbers. Don't calculate new numbers.
+- Write about the experience: communication, portal usability, interview preparation and the recruiting workflow.
+- Never judge, rank, score or prioritise candidates, never suggest hiring, rejecting or advancing anyone, and never treat engagement as a sign of quality.
+- Never mention race, ethnicity, disability, sexual orientation, gender or any other personal characteristic.
+- Respond with a single JSON object only."""
+
+INSIGHTS_PROMPT = """[facts]
+{facts}
+
+Write 2 to 4 insights. Return a JSON object: {{"insights": [{{"title": string of at most 60 characters, "detail": one or two sentences of at most 200 characters}}]}}."""
+
 NOT_GIVEN = "not given"
 
 PURPOSES = {
@@ -151,6 +168,10 @@ _HYPHENS = str.maketrans({"\u2010": "-", "\u2011": "-"})
 class _AskJSON(BaseModel):
     answer: str
     sources: list[str] = []
+
+
+class _InsightsJSON(BaseModel):
+    insights: list[AnalyticsInsight] = []
 
 
 def _or_empty(value: Any) -> Any:
@@ -279,6 +300,13 @@ class LLMProvider(AIProvider):
         if not (content.summary and content.about_role and content.responsibilities and content.requirements):
             raise AIProviderError(f"{self.name} returned an incomplete job posting")
         return content
+
+    async def portal_insights(self, facts: InsightFacts) -> list[AnalyticsInsight]:
+        system = INSIGHTS_SYSTEM_PROMPT.format(organization=settings.organization_name)
+        result = self._parse(
+            await self._generate(system, INSIGHTS_PROMPT.format(facts=facts.to_prompt())), _InsightsJSON
+        )
+        return result.insights
 
     async def _post(self, url: str, *, headers: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
         try:

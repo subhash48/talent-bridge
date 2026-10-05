@@ -12,6 +12,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.enums import PortalTopic
 from app.models import CandidateEngagementEvent, PortalSession
+from app.schemas.analytics import AnalyticsInsight
+from app.services.ai.client import AIProviderError
+from app.services.ai.fallback import MockProvider
+from app.services.analytics import insights
 from app.services.analytics.periods import resolve_period
 from app.services.analytics.portal import PortalStats, bucket_label, buckets, hour_window, portal_stats, present
 from app.services.analytics.topics import topic_for_event, topic_for_question
@@ -284,3 +288,56 @@ async def test_custom_ranges_are_whole_local_days(sessions: async_sessionmaker[A
         stats = await portal_stats(session, period)
     assert len(stats.visits) == 1
     assert period.label == "Mar 1, 2031"
+
+
+# Insights
+
+
+async def test_insights_come_from_the_numbers_and_stay_about_the_experience(
+    sessions: async_sessionmaker[AsyncSession],
+) -> None:
+    for days_ago in (1, 2, 3):
+        for person in PEOPLE[:3]:
+            await visit(sessions, person, NOW - timedelta(days=days_ago, hours=2), 240)
+            await event(sessions, person, "application_viewed", NOW - timedelta(days=days_ago, hours=2))
+    await visit(sessions, "daniel-lee", NOW - timedelta(days=9), 100)
+    for _ in range(4):
+        await event(sessions, "sophia-martinez", "page_view", NOW - timedelta(days=1), target="prep")
+
+    stats = await stats_for(sessions)
+    result = await insights.generate(stats, MockProvider())
+    assert result.model_name == insights.RULES
+    titles = [item.title for item in result.insights]
+    assert 1 <= len(titles) <= insights.MAX_INSIGHTS
+    assert titles[0] == "Engagement is up 200%"  # 3 active candidates against 1
+    assert "Application status receives repeated visits" in titles
+    assert insights.acceptable(result.insights, insights.facts_from(stats))
+
+
+async def test_a_models_insights_are_used_only_when_they_pass_the_checks(
+    sessions: async_sessionmaker[AsyncSession],
+) -> None:
+    await visit(sessions, "sophia-martinez", NOW - timedelta(days=1), 240)
+    await event(sessions, "sophia-martinez", "page_view", NOW - timedelta(days=1), target="prep")
+    stats = await stats_for(sessions)
+
+    class Model(MockProvider):
+        name, model = "fake", "fake-model"
+
+        def __init__(self, answer: list[AnalyticsInsight] | None) -> None:
+            self.answer = answer
+
+        async def portal_insights(self, facts: Any) -> list[AnalyticsInsight]:
+            if self.answer is None:
+                raise AIProviderError("down")
+            return self.answer
+
+    good = [
+        AnalyticsInsight(title="Interview preparation leads", detail="100% of categorized interactions were about it.")
+    ]
+    assert (await insights.generate(stats, Model(good))).model_name == "fake-model"
+    invented = [AnalyticsInsight(title="Engagement is up 42%", detail="A big jump.")]
+    hiring = [AnalyticsInsight(title="Prioritize engaged candidates", detail="Advance them first.")]
+    sensitive = [AnalyticsInsight(title="Demographics", detail="Most visitors are of one ethnicity.")]
+    for answer in (invented, hiring, sensitive, None, []):
+        assert (await insights.generate(stats, Model(answer))).model_name == insights.RULES

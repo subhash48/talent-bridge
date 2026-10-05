@@ -1,3 +1,5 @@
+import type { DemographicAnswers } from "@/lib/demographics";
+
 // The public demo careers site (/demo/careers, development only). The wire format mirrors
 // backend/app/schemas/demo.py; services/careers.ts maps it into the view models below, so components
 // never depend on it directly.
@@ -38,6 +40,8 @@ export type ApiCareerApplicationCreate = {
   phone: string;
   linkedin_url: string | null;
   resume: ApiResumeUpload;
+  /** Optional, every question; only the answered ones are sent. */
+  demographics?: Partial<DemographicAnswers>;
 };
 
 /**
@@ -90,6 +94,7 @@ export type ApplyInput = {
   phone: string;
   linkedinUrl: string | null;
   resume: ResumeUpload;
+  demographics: DemographicAnswers;
 };
 
 export type ApplyResult = { status: ApplyOutcome; email: string; jobTitle: string };

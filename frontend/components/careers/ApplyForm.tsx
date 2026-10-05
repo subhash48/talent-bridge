@@ -6,10 +6,12 @@ import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "r
 import { ApplyProblemAlert, type ApplyProblem } from "@/components/careers/ApplyProblemAlert";
 import { ApplyResultCard } from "@/components/careers/ApplyResultCard";
 import { ResumeInput, readResume, resumeProblem } from "@/components/careers/ResumeInput";
+import { DemographicFields } from "@/components/shared/DemographicFields";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, fieldErrorId } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
+import { EMPTY_DEMOGRAPHICS } from "@/lib/demographics";
 import { ApiError, errorMessage } from "@/services/api";
 import { applyToJob } from "@/services/careers";
 import type { ApplyInput, ApplyResult } from "@/types/careers";
@@ -88,6 +90,8 @@ export function ApplyForm({ jobId }: { jobId: string }) {
   const sent = useRef<ApplyInput | null>(null);
   const [values, setValues] = useState<Values>(EMPTY);
   const [resume, setResume] = useState<File | null>(null);
+  // Optional, every one: nothing here is required to apply.
+  const [demographics, setDemographics] = useState(EMPTY_DEMOGRAPHICS);
   // Problems show from the first submit on, updating as they type; a chosen file is checked at once.
   const [checkAll, setCheckAll] = useState(false);
   const [resumeChosen, setResumeChosen] = useState(false);
@@ -161,6 +165,7 @@ export function ApplyForm({ jobId }: { jobId: string }) {
       phone: values.phone.trim(),
       linkedinUrl: linkedInUrl(values.linkedinUrl),
       resume: upload,
+      demographics,
     });
   }
 
@@ -255,6 +260,18 @@ export function ApplyForm({ jobId }: { jobId: string }) {
             <Lock aria-hidden className="mt-px size-3.5 shrink-0" />
             Your résumé is stored privately and shared only with the hiring team.
           </p>
+        </div>
+
+        <div className="mt-6 border-t border-border pt-6">
+          <h2 className="font-semibold tracking-tight text-ink">Voluntary demographic information</h2>
+          <div className="mt-3">
+            <DemographicFields
+              value={demographics}
+              disabled={pending}
+              fieldClassName={NO_ZOOM}
+              onChange={(field, value) => setDemographics((current) => ({ ...current, [field]: value }))}
+            />
+          </div>
         </div>
 
         {problem && (

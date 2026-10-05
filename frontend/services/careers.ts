@@ -1,3 +1,4 @@
+import { answered } from "@/lib/demographics";
 import { formatSalary } from "@/lib/format";
 import { ApiError, USE_MOCK_API, apiFetch } from "@/services/api";
 import type {
@@ -50,6 +51,7 @@ export async function applyToJob(id: string, input: ApplyInput): Promise<ApplyRe
     phone: input.phone,
     linkedin_url: input.linkedinUrl,
     resume: { file_name: input.resume.fileName, content_type: input.resume.contentType, data: input.resume.data },
+    demographics: answered(input.demographics),
   };
   const result = await apiFetch<ApiCareerApplicationResult>(`/demo/careers/jobs/${encodeURIComponent(id)}/apply`, {
     method: "POST",

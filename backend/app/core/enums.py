@@ -192,6 +192,67 @@ class DemoApplicationStatus(StrEnum):
     SUBMITTED = "submitted"  # delivered through the Ashby simulator: the candidate and application exist
 
 
+# Voluntary demographic information (migration 014). Every question is optional: unanswered is null,
+# and each has its own "prefer not to say". Stored apart from the candidate record and only ever
+# reported in aggregate (services/demographics.py); never used in any hiring decision.
+
+
+class Region(StrEnum):
+    UNITED_STATES = "united_states"
+    INDIA = "india"
+    UNITED_KINGDOM = "united_kingdom"
+    CANADA = "canada"
+    GERMANY = "germany"
+    OTHER = "other"
+    PREFER_NOT_TO_SAY = "prefer_not_to_say"
+
+
+class RaceEthnicity(StrEnum):
+    ASIAN = "asian"
+    BLACK = "black"
+    HISPANIC_LATINO = "hispanic_latino"
+    MIDDLE_EASTERN_NORTH_AFRICAN = "middle_eastern_north_african"
+    WHITE = "white"
+    MULTIRACIAL = "multiracial"
+    ANOTHER_IDENTITY = "another_identity"
+    PREFER_NOT_TO_SAY = "prefer_not_to_say"
+
+
+class DisabilityStatus(StrEnum):
+    YES = "yes"
+    NO = "no"
+    PREFER_NOT_TO_SAY = "prefer_not_to_say"
+
+
+class SexualOrientation(StrEnum):
+    STRAIGHT = "straight"
+    GAY = "gay"
+    LESBIAN = "lesbian"
+    BISEXUAL = "bisexual"
+    ASEXUAL = "asexual"
+    QUEER = "queer"
+    ANOTHER_IDENTITY = "another_identity"
+    PREFER_NOT_TO_SAY = "prefer_not_to_say"
+
+
+class AssistantInputType(StrEnum):
+    TEXT = "text"
+    VOICE = "voice"  # transcribed speech; the recording itself is never kept
+
+
+class AssistantActionStatus(StrEnum):
+    """One request to the recruiter assistant (migration 014)."""
+
+    PROCESSING = "processing"  # being understood and planned
+    ANSWERED = "answered"  # a question or a draft: nothing changed anywhere
+    NEEDS_CLARIFICATION = "needs_clarification"  # e.g. two candidates matched the name
+    PROPOSED = "proposed"  # an external action waiting for the recruiter's confirmation
+    EXECUTING = "executing"  # confirmed, running
+    COMPLETED = "completed"  # done: a message sent, a job drafted, edited or published
+    FAILED = "failed"  # the action was attempted and failed; nothing pretends otherwise
+    CANCELLED = "cancelled"  # a proposal the recruiter dismissed
+
+
 class WebhookEventStatus(StrEnum):
     PROCESSING = "processing"
     PROCESSED = "processed"

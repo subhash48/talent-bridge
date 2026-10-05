@@ -38,6 +38,11 @@ class DemoJobPosting(Timestamps, Base):
     requirements: Mapped[list[str]] = mapped_column(JSONType, default=list)
     preferred_qualifications: Mapped[list[str]] = mapped_column(JSONType, default=list)
     about_team: Mapped[str | None] = mapped_column(Text)
+    # The pay range the recruiter set (migration 014), in whole units of salary_currency a year. The
+    # AI job writer never sets or invents it.
+    salary_min: Mapped[int | None]
+    salary_max: Mapped[int | None]
+    salary_currency: Mapped[str] = mapped_column(Text, default="USD", server_default="USD")
     # The model that drafted the text, when the AI job writer did; the recruiter may have edited it.
     generated_by_model: Mapped[str | None] = mapped_column(Text)
     created_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))

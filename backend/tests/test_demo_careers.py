@@ -44,6 +44,7 @@ from app.models import (
     AshbyWebhookEvent,
     Candidate,
     DemoApplication,
+    DemoApplicationDemographics,
     DemoJobPosting,
     DemoResume,
     Job,
@@ -1442,11 +1443,11 @@ async def test_submit_without_the_profile_leaves_the_candidate_as_they_are(
 
 
 async def test_reset_works_without_the_demo_careers_tables(sessions: async_sessionmaker[AsyncSession]) -> None:
-    """A database with migrations 001-012 only (013 is the demo careers site's): the simulator works
-    there, and so does its reset."""
+    """A database with migrations 001-012 only (013 is the demo careers site's, and 014 builds on it): the
+    simulator works there, and so does its reset."""
     await demo.submit(sessions, email=EMAIL, first_name="Maya", last_name="Patel", job_title=JOB)
     async with sessions.kw["bind"].begin() as connection:
-        for model in (DemoResume, DemoApplication, DemoJobPosting):
+        for model in (DemoApplicationDemographics, DemoResume, DemoApplication, DemoJobPosting):
             await connection.run_sync(model.__table__.drop)
     outcome = await demo.reset(sessions)
     assert outcome.lines[0] == (

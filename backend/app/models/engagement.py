@@ -22,6 +22,7 @@ class PortalSession(UUIDPrimaryKey, Base):
         UniqueConstraint("candidate_id", "client_session_id", "application_id", name="portal_sessions_visit_key"),
         Index("portal_sessions_candidate_idx", "candidate_id", "started_at"),
         Index("portal_sessions_application_idx", "application_id", "started_at"),
+        Index("portal_sessions_started_idx", "started_at"),  # portal analytics (migration 014)
     )
 
     candidate_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("candidates.id", ondelete="CASCADE"))
@@ -45,6 +46,7 @@ class CandidateEngagementEvent(UUIDPrimaryKey, Base):
     __table_args__ = (
         Index("candidate_engagement_events_candidate_idx", "candidate_id", "occurred_at"),
         Index("candidate_engagement_events_application_idx", "application_id", "occurred_at"),
+        Index("candidate_engagement_events_type_idx", "event_type", "occurred_at"),  # portal analytics (014)
     )
 
     candidate_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("candidates.id", ondelete="CASCADE"))

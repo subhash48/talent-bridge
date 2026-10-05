@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 // Short aliases for the recruiter workspace, which lives under /recruiter (ARCHITECTURE.md 11).
-const RECRUITER_ALIASES = ["candidates", "jobs", "interviews", "messages", "ai"];
+const RECRUITER_ALIASES = ["candidates", "jobs", "interviews", "messages", "analytics", "ai"];
 
 // A candidate portal page from the first prototype, now covered by Interview Prep.
 const CANDIDATE_MOVES = [{ source: "/candidate/resources", destination: "/candidate/prep" }];

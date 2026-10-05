@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu } from "lucide-react";
+import { Menu, Mic } from "lucide-react";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 
@@ -10,7 +10,7 @@ import { useWorkspace } from "@/components/recruiter/WorkspaceProvider";
 import { Avatar } from "@/components/shared/Avatar";
 import { EncordLogo } from "@/components/shared/EncordLogo";
 import { NightSky } from "@/components/shared/NightSky";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonStyles } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { ToastProvider } from "@/components/ui/Toaster";
 
@@ -49,6 +49,10 @@ export function RecruiterShell({ children }: { children: ReactNode }) {
               </Link>
             </div>
             <div className="flex items-center gap-1.5">
+              {/* The AI Assistant's voice, from anywhere in the workspace: the same assistant, listening. */}
+              <Link href="/recruiter/ai?voice=1" aria-label="Speak to the AI Assistant" title="Speak to the AI Assistant" className={buttonStyles({ variant: "ghost", size: "icon" })}>
+                <Mic />
+              </Link>
               <NotificationsMenu />
               <Link href="/recruiter/settings" aria-label="Your profile and settings" className="rounded-full">
                 <Avatar name={user.name} src={user.avatarUrl} size={32} className="rounded-full ring-1 ring-ink/15" />

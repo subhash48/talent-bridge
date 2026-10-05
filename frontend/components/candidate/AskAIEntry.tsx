@@ -20,13 +20,13 @@ type AskAIEntryProps = {
 /** A small way into Ask AI. The conversation itself has its own page. */
 export function AskAIEntry({ title = "Ask AI", description, prompts, className }: AskAIEntryProps) {
   return (
-    <Card className={cn("flex flex-col gap-4 p-5 sm:p-6 xl:flex-row xl:items-center xl:justify-between", className)}>
+    <Card className={cn("flex flex-col gap-3 p-5 sm:p-5 xl:flex-row xl:items-center xl:justify-between", className)}>
       <div className="flex items-center gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-ai/15 ring-1 ring-ai/30">
-          <Sparkles aria-hidden className="size-4 text-ai" />
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-ink/[0.05] ring-1 ring-ink/10">
+          <Sparkles aria-hidden className="size-4 text-ink" />
         </span>
         <div className="min-w-0">
-          <h2 className="font-semibold tracking-tight text-ink">{title}</h2>
+          <h2 className="text-base font-semibold tracking-tight text-ink">{title}</h2>
           <p className="text-[13px] text-stone">{description}</p>
         </div>
       </div>

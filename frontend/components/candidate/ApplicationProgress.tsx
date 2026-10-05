@@ -18,11 +18,11 @@ export function ApplicationProgress({ application, showDates = false }: { applic
   return (
     <div className="scrollbar-none -mx-1 overflow-x-auto px-1">
       <div className="relative min-w-[420px]">
-        <div aria-hidden className="absolute top-[11px] h-[2px] rounded-full bg-white/10" style={{ left: `${inset}%`, right: `${inset}%` }}>
+        <div aria-hidden className="absolute top-[11px] h-[2px] rounded-full bg-ink/15" style={{ left: `${inset}%`, right: `${inset}%` }}>
           <div
             className={cn(
               "h-full rounded-full transition-[width] duration-500 ease-out",
-              closed ? "bg-white/25" : "bg-linear-to-r from-white/30 to-ai/80",
+              closed ? "bg-ink/30" : "bg-ink/60",
             )}
             style={{ width: `${filled * 100}%` }}
           />
@@ -35,15 +35,15 @@ export function ApplicationProgress({ application, showDates = false }: { applic
               <li key={step.stage} aria-current={current ? "step" : undefined} className="flex flex-col items-center gap-2.5 text-center">
                 <span className="flex size-6 items-center justify-center">
                   {current ? (
-                    <span className="flex size-6 items-center justify-center rounded-full bg-canvas shadow-[0_0_16px_rgb(165_148_249/0.45)] ring-[3px] ring-ai">
-                      <span className="size-2 rounded-full bg-ai" />
+                    <span className="flex size-5 items-center justify-center rounded-full bg-canvas ring-2 ring-ink">
+                      <span className="size-2 rounded-full bg-ink" />
                     </span>
                   ) : complete ? (
-                    <span className="flex size-5 items-center justify-center rounded-full bg-zinc-300">
+                    <span className="flex size-5 items-center justify-center rounded-full bg-ink">
                       <Check aria-hidden className="size-3 text-canvas" strokeWidth={3.5} />
                     </span>
                   ) : (
-                    <span className="size-3.5 rounded-full border-2 border-white/25 bg-canvas" />
+                    <span className="size-3.5 rounded-full bg-canvas ring-1 ring-ink/25" />
                   )}
                 </span>
                 <span className={cn("text-[13px]", current ? "font-medium text-ink" : complete ? "text-charcoal" : "text-faint")}>

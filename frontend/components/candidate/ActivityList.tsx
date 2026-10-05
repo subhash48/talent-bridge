@@ -34,9 +34,9 @@ export function ActivityList({ items, className }: { items: CandidateActivity[];
       {items.map((item, index) => {
         const Icon = ICONS[item.kind];
         return (
-          <li key={item.id} className="relative flex gap-3.5 pb-5 last:pb-0">
-            {index < items.length - 1 && <span aria-hidden className="absolute top-8 bottom-0 left-[15px] w-px bg-white/[0.08]" />}
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/[0.05] ring-1 ring-white/[0.08]">
+          <li key={item.id} className="relative flex gap-3.5 pb-4 last:pb-0">
+            {index < items.length - 1 && <span aria-hidden className="absolute top-8 bottom-0 left-[15px] w-px bg-ink/10" />}
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-ink/[0.05] ring-1 ring-ink/10">
               <Icon aria-hidden className="size-3.5 text-charcoal" />
             </span>
             <span className="flex min-w-0 flex-1 flex-col pt-1.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">

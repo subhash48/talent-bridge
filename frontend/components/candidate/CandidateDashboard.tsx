@@ -28,7 +28,7 @@ export function CandidateDashboard({ greeting }: { greeting: string }) {
   const { application, job } = me;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <CareerRunGreeting
         greeting={localGreeting}
         name={me.candidate.firstName}
@@ -39,7 +39,7 @@ export function CandidateDashboard({ greeting }: { greeting: string }) {
       {application && job ? (
         <>
           <CurrentApplicationCard application={application} job={job} otherApplications={me.applications.length - 1} />
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
             <NextStepCard me={me} application={application} />
             <LatestUpdateCard latest={me.recentActivity[0] ?? null} applicationId={application.id} />
           </div>

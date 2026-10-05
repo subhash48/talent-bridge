@@ -93,7 +93,7 @@ export class CareerRun {
   private scale = 1;
   private width = 800;
   private font = "sans-serif";
-  private colors = { ink: "#f5f5f5", charcoal: "#d1d5db", stone: "#9ca3af" };
+  private colors = { ink: "#e8e4d3", charcoal: "rgb(232 228 211 / 0.85)", stone: "rgb(232 228 211 / 0.7)" };
 
   private frame = 0;
   private last = 0;
@@ -334,16 +334,11 @@ export class CareerRun {
     ctx.fillRect(x + w - 8, rightTop + rightHeight - 5, 8, 5);
   }
 
-  /** Stars, a moon and a few clouds, in CSS pixels, kept clear of the greeting's text. */
+  /**
+   * A moon and a few clouds, in CSS pixels, kept clear of the greeting's text. The stars are the page's
+   * own night sky, which shows through the canvas: the game has no sky of its own to stand apart.
+   */
   private drawSky(ctx: CanvasRenderingContext2D, width: number, top: number, ground: number): void {
-    ctx.fillStyle = "#fff";
-    const stars = Math.round((width * ground) / 9000);
-    for (let i = 1; i <= stars; i++) {
-      ctx.globalAlpha = 0.14 + (i % 4) * 0.09;
-      const size = i % 5 === 0 ? 1.6 : 1;
-      ctx.fillRect(((i * 0.618034) % 1) * width, ((i * 0.754878) % 1) * (ground - 20), size, size);
-    }
-
     // On a wide dashboard the moon and two clouds sit up beside the greeting, to the right of its text
     // column (62ch at most). Any narrower and that space can be text, so they stay in the track's band.
     const wide = width >= 920;
@@ -356,12 +351,12 @@ export class CareerRun {
     ctx.beginPath();
     ctx.arc(moon.x, moon.y, moon.r, 0, Math.PI * 2);
     ctx.fillStyle = this.colors.stone;
-    ctx.globalAlpha = 0.5;
+    ctx.globalAlpha = 0.4;
     ctx.fill();
     ctx.restore();
 
     ctx.fillStyle = this.colors.stone;
-    ctx.globalAlpha = 0.3;
+    ctx.globalAlpha = 0.22;
     const clouds = wide ? [[0.3, 70], [0.58, 4], [0.84, -2]] : [[0.3, 8], [0.62, 26]];
     const span = width + 120;
     for (const [at, down] of clouds) {

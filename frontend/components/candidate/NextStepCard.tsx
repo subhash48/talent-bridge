@@ -26,15 +26,15 @@ export function NextStepCard({ me, application }: { me: CandidateMeResponse; app
   const offer = active && application.stage === "offer";
 
   return (
-    <Card className="flex flex-col p-5 sm:p-6">
-      <p className="flex items-center gap-2 text-[13px] font-medium text-stone">
+    <Card className="flex flex-col p-5 sm:p-5">
+      <p className="flex items-center gap-2 text-xs font-medium text-stone">
         <Compass aria-hidden className="size-4" /> Next step
       </p>
 
       {interview ? (
         <>
-          <h2 className="mt-3 text-xl font-semibold tracking-tight text-ink">{interview.title}</h2>
-          <p className="mt-2 text-[15px] text-charcoal" suppressHydrationWarning>
+          <h2 className="mt-3 text-lg font-semibold tracking-tight text-ink">{interview.title}</h2>
+          <p className="mt-2 text-sm text-charcoal" suppressHydrationWarning>
             {formatDayLabel(interview.scheduledAt)} · {formatTime(interview.scheduledAt)}
           </p>
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-stone">
@@ -44,8 +44,8 @@ export function NextStepCard({ me, application }: { me: CandidateMeResponse; app
           <div className="mt-3">
             <InterviewStatus interview={interview} />
           </div>
-          <p className="mt-4 text-sm text-charcoal">{application.nextStep}</p>
-          <div className="mt-auto flex flex-wrap gap-2 pt-6">
+          <p className="mt-3 text-sm text-charcoal">{application.nextStep}</p>
+          <div className="mt-auto flex flex-wrap gap-2 pt-5">
             {interview.canConfirm ? (
               <Button size="sm" onClick={() => void confirm(interview)} disabled={pendingId === interview.id}>
                 {pendingId === interview.id ? <LoaderCircle className="animate-spin" /> : <CircleCheck />}
@@ -63,10 +63,10 @@ export function NextStepCard({ me, application }: { me: CandidateMeResponse; app
         </>
       ) : message ? (
         <>
-          <h2 className="mt-3 text-xl font-semibold tracking-tight text-ink">{pluralize(me.unreadMessages, "unread message")}</h2>
+          <h2 className="mt-3 text-lg font-semibold tracking-tight text-ink">{pluralize(me.unreadMessages, "unread message")}</h2>
           <p className="mt-2 text-sm text-charcoal">{application.nextStep}</p>
-          <div className="mt-4 flex gap-3">
-            <Avatar name={message.senderName} size={32} />
+          <div className="mt-3 flex gap-3">
+            <Avatar name={message.senderName} size={28} />
             <div className="min-w-0 flex-1">
               <p className="flex items-baseline justify-between gap-2 text-[13px]">
                 <span className="truncate font-medium text-charcoal">{message.senderName}</span>
@@ -75,7 +75,7 @@ export function NextStepCard({ me, application }: { me: CandidateMeResponse; app
               <p className="mt-0.5 line-clamp-2 text-sm text-charcoal">{message.body}</p>
             </div>
           </div>
-          <div className="mt-auto pt-6">
+          <div className="mt-auto pt-5">
             <Link href="/candidate/messages" className={buttonStyles({ variant: "secondary", size: "sm" })}>
               Open messages <ArrowRight />
             </Link>
@@ -83,12 +83,12 @@ export function NextStepCard({ me, application }: { me: CandidateMeResponse; app
         </>
       ) : (
         <>
-          <h2 className="mt-3 text-xl font-semibold tracking-tight text-ink">
+          <h2 className="mt-3 text-lg font-semibold tracking-tight text-ink">
             {!active ? application.stageLabel : offer ? "Review your offer" : "Nothing to do right now"}
           </h2>
           <p className="mt-2 text-sm text-charcoal">{application.nextStep}</p>
           {offer && (
-            <div className="mt-auto pt-6">
+            <div className="mt-auto pt-5">
               <Link href="/candidate/messages" className={buttonStyles({ variant: "secondary", size: "sm" })}>
                 Message the team <ArrowRight />
               </Link>

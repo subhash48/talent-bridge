@@ -21,13 +21,13 @@ export function CurrentApplicationCard({ application, job, otherApplications }: 
   const meta = [job.location, job.employmentType].filter(Boolean).join(" · ");
 
   return (
-    <Card className="p-5 sm:p-7">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <Card className="p-5 sm:p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <p className="flex items-center gap-2 text-[13px] font-medium text-stone">
+          <p className="flex items-center gap-2 text-xs font-medium text-stone">
             <BriefcaseBusiness aria-hidden className="size-4" /> Current application
           </p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-ink sm:text-[28px]">{job.title}</h2>
+          <h2 className="mt-2 text-xl font-semibold tracking-tight text-ink sm:text-2xl">{job.title}</h2>
           {meta && <p className="mt-1 text-sm text-stone">{meta}</p>}
         </div>
         <div className="flex items-center gap-2 sm:flex-col sm:items-end">
@@ -36,11 +36,11 @@ export function CurrentApplicationCard({ application, job, otherApplications }: 
         </div>
       </div>
 
-      <div className="mt-8">
+      <div className="mt-6">
         <ApplicationProgress application={application} />
       </div>
 
-      <div className="mt-8 flex flex-col gap-4 border-t border-border pt-5 md:flex-row md:items-center md:justify-between">
+      <div className="mt-6 flex flex-col gap-3 border-t border-border pt-4 md:flex-row md:items-center md:justify-between">
         <p className="text-xs text-faint">
           <span suppressHydrationWarning>Applied {formatDate(application.appliedAt)}</span> · Last updated{" "}
           <RelativeTime iso={application.updatedAt} />

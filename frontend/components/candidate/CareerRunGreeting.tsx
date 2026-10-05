@@ -104,20 +104,20 @@ export function CareerRunGreeting({ greeting, name, status, actions }: CareerRun
   };
 
   return (
-    <section ref={area} className="relative isolate lg:pt-4">
-      {/* The sky and the run are drawn behind everything here, straight onto the page. */}
+    <section ref={area} className="relative isolate lg:pt-3">
+      {/* The run is drawn behind everything here, straight onto the page and its night sky. */}
       <canvas ref={canvas} aria-hidden className="pointer-events-none absolute inset-0 -z-10 size-full" />
 
       <div className="flex items-start justify-between gap-3">
         {/* Set down a little, so the greeting's line is level with the score's. */}
-        <h1 className="min-w-0 pt-2">
-          <span className="block text-[17px] leading-6 text-charcoal/80 sm:text-lg sm:leading-6">{greeting},</span>
-          <span className="block truncate text-[32px] leading-[1.1] font-semibold tracking-[-0.03em] text-charcoal sm:text-[38px]">
+        <h1 className="min-w-0 pt-1.5">
+          <span className="block text-base leading-6 text-stone sm:text-lg sm:leading-6">{greeting},</span>
+          <span className="block truncate text-[30px] leading-[1.1] font-semibold tracking-[-0.03em] text-ink sm:text-[38px]">
             {name}
           </span>
         </h1>
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <p className="relative text-right text-[15px] text-charcoal tabular-nums sm:text-[17px]">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
+          <p className="relative text-right text-sm text-charcoal tabular-nums sm:text-[15px]">
             Score {score}
             {/* Hung under the score, so nothing moves when a best score first appears. */}
             {best > 0 && <span className="absolute top-full right-0 text-xs whitespace-nowrap text-faint">Best {best}</span>}
@@ -125,7 +125,7 @@ export function CareerRunGreeting({ greeting, name, status, actions }: CareerRun
           {actions}
         </div>
       </div>
-      <p className="mt-1 max-w-[62ch] text-[15px] text-stone">{status}</p>
+      <p className="mt-1 max-w-[62ch] text-sm text-stone">{status}</p>
 
       <div
         ref={play}
@@ -163,14 +163,14 @@ export function CareerRunGreeting({ greeting, name, status, actions }: CareerRun
           if (!event.currentTarget.contains(event.relatedTarget)) game.pause();
         }}
         className={cn(
-          "mt-1 touch-manipulation rounded-[12px] select-none",
-          tabbedTo ? "outline-2 outline-offset-2 outline-white/40" : "outline-none",
+          "mt-1 touch-manipulation rounded-[10px] select-none",
+          tabbedTo ? "outline-2 outline-offset-2 outline-ink/50" : "outline-none",
         )}
       >
         {/* The track's band: the canvas draws the run here, with the ground along its bottom edge. */}
-        <div ref={track} aria-hidden className="h-[150px] sm:h-[184px]" />
+        <div ref={track} aria-hidden className="h-[136px] sm:h-[160px]" />
 
-        <div className="flex min-h-9 items-center gap-1.5 pt-2">
+        <div className="flex min-h-8 items-center gap-1.5 pt-1.5">
           <Button
             variant="secondary"
             size="icon-sm"
@@ -180,7 +180,7 @@ export function CareerRunGreeting({ greeting, name, status, actions }: CareerRun
               else start();
               handBack(event);
             }}
-            className="rounded-full bg-white/[0.1]"
+            className="rounded-full bg-ink/[0.08]"
           >
             {state === "running" ? <Pause /> : <Play />}
           </Button>
@@ -196,7 +196,7 @@ export function CareerRunGreeting({ greeting, name, status, actions }: CareerRun
           >
             <RotateCcw />
           </Button>
-          <p role="status" className="ml-1.5 min-w-0 text-[13px] leading-4 text-stone">
+          <p role="status" className="ml-1 min-w-0 text-xs leading-4 text-stone">
             {HINTS[state]}
           </p>
         </div>

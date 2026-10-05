@@ -32,7 +32,7 @@ export function HelpDialog({ open, onClose, onNavigate }: { open: boolean; onClo
 
   return (
     <Modal open={open} onClose={onClose} title="Help" description="Answers to common questions about the candidate portal.">
-      <dl className="flex flex-col gap-4">
+      <dl className="flex flex-col gap-3.5">
         {FAQ.map((item) => (
           <div key={item.question}>
             <dt className="text-sm font-medium text-ink">{item.question}</dt>
@@ -40,7 +40,7 @@ export function HelpDialog({ open, onClose, onNavigate }: { open: boolean; onClo
           </div>
         ))}
       </dl>
-      <div className="mt-6 flex justify-end">
+      <div className="mt-5 flex justify-end">
         <Link
           href="/candidate/messages"
           onClick={() => {

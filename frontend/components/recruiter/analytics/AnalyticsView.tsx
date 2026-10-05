@@ -1,13 +1,15 @@
 "use client";
 
 import { BarChart3 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
-import { DateRangeFilter } from "@/components/recruiter/analytics/AnalyticsFilters";
+import { DateRangeFilter, Segmented } from "@/components/recruiter/analytics/AnalyticsFilters";
+import { EngagementChart, EngagementLegend, EngagementTable } from "@/components/recruiter/analytics/EngagementChart";
 import { KpiCards } from "@/components/recruiter/analytics/KpiCards";
 import { DetailError } from "@/components/recruiter/DetailError";
 import { RecruiterHeader } from "@/components/recruiter/RecruiterHeader";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
 import { errorMessage } from "@/services/api";
@@ -18,6 +20,13 @@ import type {
   PortalAnalytics,
   RangePreset,
 } from "@/types/analytics";
+
+const GRANULARITY_OPTIONS = [
+  { value: "day", label: "Day" },
+  { value: "week", label: "Week" },
+  { value: "month", label: "Month" },
+  { value: "year", label: "Year" },
+] as const;
 
 const DEFAULT_GRANULARITY: Record<RangePreset, Granularity> = {
   today: "day",
@@ -113,6 +122,26 @@ export function AnalyticsView({ initialRange }: { initialRange: AnalyticsRange }
             </span>
           </div>
           <KpiCards kpis={data.kpis} />
+
+          <Section
+            title="Portal Engagement"
+            subtitle={`${data.engagement.total_visits.toLocaleString()} visits in this period`}
+            aside={
+              <div className="flex flex-wrap items-center gap-3">
+                <EngagementLegend />
+                <Segmented label="Group by" options={GRANULARITY_OPTIONS} value={granularity} onChange={setGranularity} />
+              </div>
+            }
+          >
+            {data.engagement.total_visits === 0 ? (
+              <p className="py-10 text-center text-sm text-stone">No portal visits in this period yet.</p>
+            ) : (
+              <>
+                <EngagementChart points={data.engagement.points} />
+                <EngagementTable points={data.engagement.points} />
+              </>
+            )}
+          </Section>
         </div>
       ) : (
         <div aria-busy="true" aria-label="Loading analytics" className="flex flex-col gap-4">
@@ -121,10 +150,26 @@ export function AnalyticsView({ initialRange }: { initialRange: AnalyticsRange }
               <Skeleton key={index} className="h-[104px] rounded-[14px]" />
             ))}
           </div>
+          <Skeleton className="h-[300px] rounded-[14px]" />
         </div>
       )}
 
       {data && <p className="text-[11px] leading-relaxed text-faint">{data.note}</p>}
     </div>
+  );
+}
+
+function Section({ title, subtitle, aside, children }: { title: string; subtitle?: string; aside?: ReactNode; children: ReactNode }) {
+  return (
+    <Card className="p-4 sm:p-5">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h2 className="text-[15px] font-semibold tracking-tight text-ink">{title}</h2>
+          {subtitle && <p className="mt-0.5 text-xs text-stone">{subtitle}</p>}
+        </div>
+        {aside}
+      </div>
+      {children}
+    </Card>
   );
 }

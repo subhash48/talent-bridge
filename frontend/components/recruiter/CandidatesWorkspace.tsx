@@ -170,30 +170,30 @@ export function CandidatesWorkspace({ greeting, trends, initialCandidateId }: Ca
   const firstShown = (currentPage - 1) * PAGE_SIZE + 1;
 
   return (
-    <div className="flex flex-col gap-7">
-      <header className="flex animate-rise flex-col gap-6 pt-1 xl:flex-row xl:items-end xl:justify-between">
+    <div className="flex flex-col gap-5">
+      <header className="flex animate-rise flex-col gap-5 pt-1 xl:flex-row xl:items-end xl:justify-between">
         <div>
           <h1 className="text-ink">
-            <span className="block text-xl text-charcoal sm:text-[22px]">{greeting},</span>
-            <span className="mt-1 block text-[56px] leading-[0.95] font-semibold tracking-[-0.045em] sm:text-[76px]">
+            <span className="block text-base leading-6 text-stone sm:text-lg sm:leading-6">{greeting},</span>
+            <span className="mt-0.5 block text-[30px] leading-[1.05] font-semibold tracking-[-0.03em] sm:text-[38px]">
               {firstName(user.name)}
             </span>
           </h1>
-          <p className="mt-4 text-base text-stone sm:text-[18px]">Here’s what’s happening with your hiring pipeline.</p>
+          <p className="mt-1.5 text-sm text-stone sm:text-sm">Here’s what’s happening with your hiring pipeline.</p>
         </div>
         <div className="flex w-full flex-col gap-3 sm:flex-row xl:w-auto">
           <GlobalSearch value={query} onChange={(value) => changeView(() => setQuery(value))} />
-          <Button size="lg" onClick={() => setAddOpen(true)} className="h-12">
+          <Button size="lg" onClick={() => setAddOpen(true)} className="h-10">
             <Plus /> Add candidate
           </Button>
         </div>
       </header>
 
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px] 2xl:grid-cols-[minmax(0,1fr)_460px]">
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_420px]">
         <div className="flex min-w-0 flex-col gap-4">
           <DashboardMetrics candidates={candidates} trends={trends} active={activeMetric} onSelect={selectMetric} />
 
-          <section aria-labelledby="candidates-heading" className="glass rounded-[22px] border border-border">
+          <section aria-labelledby="candidates-heading" className="glass rounded-[16px] border border-border">
             <CandidateFilters
               stage={stage}
               counts={counts}
@@ -254,7 +254,7 @@ export function CandidatesWorkspace({ greeting, trends, initialCandidateId }: Ca
             </div>
 
             {visible.length > 0 && (
-              <footer className="flex items-center justify-between gap-3 border-t border-border px-4 py-3 text-[13px] text-stone sm:px-6">
+              <footer className="flex items-center justify-between gap-3 border-t border-border px-4 py-2.5 text-[13px] text-stone sm:px-5">
                 <p aria-live="polite">
                   Showing <span className="text-charcoal tabular-nums">{firstShown}–{firstShown + pageItems.length - 1}</span> of{" "}
                   <span className="text-charcoal tabular-nums">{visible.length}</span>
@@ -346,10 +346,10 @@ function GlobalSearch({ value, onChange }: { value: string; onChange: (value: st
       }}
       placeholder="Search candidates, jobs, skills..."
       aria-keyshortcuts="Meta+K Control+K"
-      containerClassName="w-full sm:flex-1 xl:w-[360px] xl:flex-none 2xl:w-[440px]"
-      className="bg-white/[0.04]"
+      containerClassName="w-full sm:flex-1 xl:w-[324px] xl:flex-none 2xl:w-[400px]"
+      className="bg-ink/[0.04]"
       trailing={
-        <kbd className="hidden h-7 sm:inline-flex items-center gap-1 rounded-[7px] border border-border bg-white/[0.05] px-2 font-sans text-xs text-stone">
+        <kbd className="hidden h-6 sm:inline-flex items-center gap-1 rounded-[6px] border border-border bg-ink/[0.05] px-1.5 font-sans text-[11px] text-stone">
           {isMac ? "⌘" : "Ctrl"} K
         </kbd>
       }
@@ -369,7 +369,7 @@ function BulkActionsBar({ count, busy, onMove, onClear }: BulkActionsBarProps) {
     <div
       role="region"
       aria-label="Bulk actions"
-      className="mx-4 mt-4 flex animate-rise flex-wrap items-center gap-2 rounded-[12px] border border-border bg-white/[0.04] py-1.5 pr-1.5 pl-3.5 sm:mx-6"
+      className="mx-4 mt-3 flex animate-rise flex-wrap items-center gap-2 rounded-[10px] border border-border bg-ink/[0.04] py-1.5 pr-1.5 pl-3.5 sm:mx-5"
     >
       <span className="text-sm font-medium text-ink">{count} selected</span>
       <span className="flex-1" />

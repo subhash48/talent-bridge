@@ -20,11 +20,11 @@ type CandidateOverviewProps = {
 
 export function CandidateOverview({ candidate, state, onViewAll, onDraftFollowUp, aiPending }: CandidateOverviewProps) {
   return (
-    <div className="@container flex flex-col gap-6">
+    <div className="@container flex flex-col gap-5">
       {candidate.followUp && (
-        <div className="flex flex-col gap-3 rounded-[14px] border border-amber-300/20 bg-amber-300/[0.06] p-3.5 sm:flex-row sm:items-center">
-          <p className="flex flex-1 items-start gap-2.5 text-sm text-amber-100">
-            <CircleAlert aria-hidden className="mt-0.5 size-4 shrink-0 text-amber-300" />
+        <div className="flex flex-col gap-3 rounded-[10px] border border-caution/20 bg-caution/[0.06] p-3.5 sm:flex-row sm:items-center">
+          <p className="flex flex-1 items-start gap-2.5 text-sm text-caution">
+            <CircleAlert aria-hidden className="mt-0.5 size-4 shrink-0 text-caution" />
             <span>
               <span className="font-medium">Needs follow-up.</span> {candidate.followUp.reason}.
             </span>
@@ -63,7 +63,7 @@ export function CandidateOverview({ candidate, state, onViewAll, onDraftFollowUp
 
       <section aria-label="Recent activity">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-[17px] font-medium tracking-tight text-ink">Recent activity</h3>
+          <h3 className="text-[15px] font-medium tracking-tight text-ink">Recent activity</h3>
           <button
             type="button"
             onClick={onViewAll}
@@ -88,13 +88,13 @@ export function CandidateOverview({ candidate, state, onViewAll, onDraftFollowUp
 
 function StatCard({ icon: Icon, label, value, hint }: { icon: LucideIcon; label: string; value: string; hint: ReactNode }) {
   return (
-    <div className="flex items-center gap-3 rounded-[14px] bg-white/[0.04] p-3 ring-1 ring-white/[0.07]">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] ring-1 ring-white/[0.08]">
-        <Icon aria-hidden strokeWidth={2} className="size-5 text-ink" />
+    <div className="flex items-center gap-3 rounded-[10px] border border-border bg-ink/[0.03] p-3.5">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-[8px] bg-ink/[0.05] ring-1 ring-ink/10">
+        <Icon aria-hidden strokeWidth={1.75} className="size-4 text-charcoal" />
       </span>
       <div className="min-w-0">
         <p className="text-xs text-stone">{label}</p>
-        <p className="line-clamp-2 text-[15px] leading-tight font-semibold tracking-tight text-ink">{value}</p>
+        <p className="line-clamp-2 text-sm leading-tight font-medium tracking-tight text-ink">{value}</p>
         <p className="mt-0.5 text-xs text-stone">{hint}</p>
       </div>
     </div>

@@ -37,7 +37,7 @@ type CandidateActivityProps = {
 
 export function CandidateActivity({ activities, timeline, className }: CandidateActivityProps) {
   if (activities.length === 0) {
-    return <p className="py-4 text-sm text-stone">No activity yet. Updates appear here as the candidate engages.</p>;
+    return <p className="py-3 text-sm text-stone">No activity yet. Updates appear here as the candidate engages.</p>;
   }
 
   return (
@@ -45,14 +45,14 @@ export function CandidateActivity({ activities, timeline, className }: Candidate
       {activities.map((activity, index) => {
         const Icon = ICONS[activity.kind];
         return (
-          <li key={activity.id} className={cn("relative flex items-center gap-4", timeline ? "py-2" : "py-3")}>
+          <li key={activity.id} className={cn("relative flex items-center gap-3", timeline ? "py-2" : "py-2.5")}>
             {timeline && index < activities.length - 1 && (
-              <span aria-hidden className="absolute top-[calc(50%+20px)] left-5 h-[calc(100%-32px)] w-px bg-border" />
+              <span aria-hidden className="absolute top-[calc(50%+18px)] left-[18px] h-[calc(100%-32px)] w-px bg-border" />
             )}
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.05] ring-1 ring-white/[0.08]">
-              <Icon aria-hidden strokeWidth={1.75} className="size-[18px] text-charcoal" />
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-[8px] bg-ink/[0.05] ring-1 ring-ink/10">
+              <Icon aria-hidden strokeWidth={1.75} className="size-4 text-charcoal" />
             </span>
-            <span className="min-w-0 flex-1 text-[15px] text-charcoal">{activity.label}</span>
+            <span className="min-w-0 flex-1 text-sm text-charcoal">{activity.label}</span>
             <RelativeTime iso={activity.occurredAt} className="shrink-0 text-[13px] text-stone" />
           </li>
         );
@@ -65,9 +65,9 @@ export function CandidateActivitySkeleton({ rows = 3 }: { rows?: number }) {
   return (
     <div className="flex flex-col divide-y divide-border" aria-hidden>
       {Array.from({ length: rows }, (_, index) => (
-        <div key={index} className="flex items-center gap-4 py-3">
-          <Skeleton className="size-10 rounded-[10px]" />
-          <Skeleton className="h-4 flex-1" />
+        <div key={index} className="flex items-center gap-3 py-2.5">
+          <Skeleton className="size-9 rounded-[8px]" />
+          <Skeleton className="h-3.5 flex-1" />
           <Skeleton className="h-3 w-16" />
         </div>
       ))}

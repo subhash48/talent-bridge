@@ -32,7 +32,7 @@ type TabValue = (typeof TABS)[number]["value"];
 
 // Email, phone and résumé in the full profile's header.
 const CONTACT_LINK =
-  "inline-flex h-7 items-center gap-1.5 rounded-[8px] px-2 text-sm text-charcoal transition-colors hover:bg-white/[0.06] hover:text-ink";
+  "inline-flex h-7 items-center gap-1.5 rounded-[6px] px-2 text-sm text-charcoal transition-colors hover:bg-ink/[0.06] hover:text-ink";
 
 /** panel: the dashboard's right column · sheet: the same, in a drawer below xl · page: the full profile. */
 type Variant = "panel" | "sheet" | "page";
@@ -79,18 +79,18 @@ function CandidateDetailBody({ candidate, variant, tab, onTabChange, state, aiFo
 
   const header = (
     <div className={cn("animate-rise", variant === "sheet" && "pr-10")}>
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-3.5">
         <Avatar
           name={candidate.name}
           src={candidate.avatarUrl}
-          size={isPage ? 88 : 76}
+          size={isPage ? 64 : 56}
           online={isWithin(candidate.lastActivityAt, 3 * DURATION.HOUR)}
         />
-        <div className="min-w-0 flex-1 pt-1.5">
-          <Heading className={cn("truncate font-semibold tracking-tight text-ink", isPage ? "text-[32px]" : "text-2xl")}>
+        <div className="min-w-0 flex-1 pt-1">
+          <Heading className={cn("truncate leading-tight font-semibold tracking-[-0.02em] text-ink", isPage ? "text-xl sm:text-2xl" : "text-xl")}>
             {candidate.name}
           </Heading>
-          <p className="mt-1 flex flex-wrap items-center gap-x-2 text-[15px] text-stone">
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-stone">
             <span>{candidate.role}</span>
             {candidate.location && (
               <>
@@ -100,7 +100,7 @@ function CandidateDetailBody({ candidate, variant, tab, onTabChange, state, aiFo
             )}
           </p>
           {isPage && (
-            <div className="mt-4 flex flex-wrap items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <StatusBadge stage={candidate.stage} />
               {candidate.email && (
                 <a href={`mailto:${candidate.email}`} className={CONTACT_LINK}>
@@ -122,19 +122,19 @@ function CandidateDetailBody({ candidate, variant, tab, onTabChange, state, aiFo
         <CandidateActionsMenu
           candidate={candidate}
           onAskAI={() => setFocusKey((key) => key + 1)}
-          className="size-10 rounded-[12px] bg-white/[0.05] ring-1 ring-white/[0.08]"
+          className="size-9 rounded-[8px] bg-ink/[0.05] ring-1 ring-ink/10 [&_svg]:size-4"
         />
       </div>
       {isPage && candidate.skills.length > 0 && (
-        <ul aria-label="Skills" className="mt-5 flex flex-wrap gap-2">
+        <ul aria-label="Skills" className="mt-4 flex flex-wrap gap-1.5">
           {candidate.skills.map((skill) => (
-            <li key={skill} className="rounded-full bg-white/[0.05] px-3 py-1 text-[13px] text-charcoal ring-1 ring-white/[0.07]">
+            <li key={skill} className="inline-flex h-6 items-center rounded-full bg-ink/[0.05] px-2.5 text-xs text-charcoal ring-1 ring-ink/10">
               {skill}
             </li>
           ))}
         </ul>
       )}
-      <div className="mt-7">
+      <div className="mt-5">
         <CandidatePipeline stage={candidate.stage} />
       </div>
     </div>
@@ -142,8 +142,8 @@ function CandidateDetailBody({ candidate, variant, tab, onTabChange, state, aiFo
 
   const tabs = (
     <Tabs value={tab} onValueChange={(value) => onTabChange(value as TabValue)} className="flex min-h-0 flex-1 flex-col">
-      <TabsList tabs={[...TABS]} value={tab} label="Candidate sections" className="mx-5 mt-6 sm:mx-6" />
-      <div className={cn("px-5 pt-5 pb-5 sm:px-6", variant === "panel" && "min-h-0 flex-1 overflow-y-auto")}>
+      <TabsList tabs={[...TABS]} value={tab} label="Candidate sections" className="mx-5 mt-5 sm:mx-5" />
+      <div className={cn("px-5 pt-4 pb-5 sm:px-5", variant === "panel" && "min-h-0 flex-1 overflow-y-auto")}>
         <TabsContent value="overview">
           <CandidateOverview
             candidate={candidate}
@@ -171,9 +171,9 @@ function CandidateDetailBody({ candidate, variant, tab, onTabChange, state, aiFo
 
   if (isPage) {
     return (
-      <div className={cn("grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_400px]", className)}>
-        <section aria-label="Candidate details" className="glass flex flex-col rounded-[22px] border border-border pt-6 sm:pt-7">
-          <div className="px-5 sm:px-7">{header}</div>
+      <div className={cn("grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]", className)}>
+        <section aria-label="Candidate details" className="glass flex flex-col rounded-[16px] border border-border pt-5 sm:pt-5">
+          <div className="px-5 sm:px-5">{header}</div>
           {tabs}
         </section>
         <div className="flex flex-col gap-4 lg:sticky lg:top-6">{aiPanel}</div>
@@ -186,13 +186,13 @@ function CandidateDetailBody({ candidate, variant, tab, onTabChange, state, aiFo
       aria-label={`${candidate.name}, candidate details`}
       className={cn(
         "flex flex-col",
-        variant === "panel" && "glass rounded-[22px] border border-border xl:max-h-[calc(100dvh-3rem)]",
+        variant === "panel" && "glass rounded-[16px] border border-border xl:max-h-[calc(100dvh-3rem)]",
         className,
       )}
     >
-      <div className="shrink-0 px-5 pt-6 sm:px-6">{header}</div>
+      <div className="shrink-0 px-5 pt-5 sm:px-5">{header}</div>
       {tabs}
-      <div className="shrink-0 px-3 pb-3 sm:px-4 sm:pb-4">{aiPanel}</div>
+      <div className="shrink-0 px-3 pb-3 sm:px-3.5 sm:pb-3.5">{aiPanel}</div>
     </section>
   );
 }

@@ -14,7 +14,7 @@ export function CandidateProfile({ candidateId }: { candidateId: string }) {
   const candidate = candidates.find((item) => item.id === candidateId);
 
   return (
-    <div className="flex flex-col gap-6 pt-1">
+    <div className="flex flex-col gap-5 pt-1">
       <Link
         href={`/recruiter/candidates${candidate ? `?candidate=${candidate.id}` : ""}`}
         className="inline-flex w-fit items-center gap-2 rounded-sm text-sm text-stone transition-colors hover:text-ink"

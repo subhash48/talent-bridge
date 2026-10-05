@@ -14,9 +14,9 @@ export function CandidatePipeline({ stage }: { stage: CandidateStage }) {
 
   return (
     <div className="relative">
-      <div aria-hidden className="absolute top-[11px] h-[2px] rounded-full bg-white/10" style={{ left: `${inset}%`, right: `${inset}%` }}>
+      <div aria-hidden className="absolute top-[11px] h-[2px] rounded-full bg-ink/15" style={{ left: `${inset}%`, right: `${inset}%` }}>
         <div
-          className="h-full rounded-full bg-linear-to-r from-white/30 to-ai/80 transition-[width] duration-500 ease-out"
+          className="h-full rounded-full bg-ink/60 transition-[width] duration-500 ease-out"
           style={{ width: `${filled * 100}%` }}
         />
       </div>
@@ -25,18 +25,18 @@ export function CandidatePipeline({ stage }: { stage: CandidateStage }) {
           const done = index < current;
           const active = index === current;
           return (
-            <li key={step} aria-current={active ? "step" : undefined} className="flex flex-col items-center gap-2.5">
+            <li key={step} aria-current={active ? "step" : undefined} className="flex flex-col items-center gap-2">
               <span className="flex size-6 items-center justify-center">
                 {active ? (
-                  <span className="flex size-6 items-center justify-center rounded-full bg-canvas ring-[3px] ring-ai shadow-[0_0_16px_rgb(165_148_249/0.45)] transition-shadow">
-                    <span className="size-2 rounded-full bg-ai" />
+                  <span className="flex size-5 items-center justify-center rounded-full bg-canvas ring-2 ring-ink transition-shadow">
+                    <span className="size-1.5 rounded-full bg-ink" />
                   </span>
                 ) : done ? (
-                  <span className="flex size-3.5 items-center justify-center rounded-full bg-zinc-400">
+                  <span className="flex size-3.5 items-center justify-center rounded-full bg-ink text-canvas">
                     {stage === "hired" && <Check aria-hidden className="size-2.5 text-canvas" strokeWidth={4} />}
                   </span>
                 ) : (
-                  <span className="size-3.5 rounded-full border-2 border-white/25 bg-canvas" />
+                  <span className="size-3.5 rounded-full bg-canvas ring-1 ring-ink/25 ring-inset" />
                 )}
               </span>
               <span className={cn("text-[13px]", active ? "font-medium text-ink" : "text-stone")}>

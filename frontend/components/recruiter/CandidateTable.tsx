@@ -18,7 +18,7 @@ type CandidateTableProps = {
   emptyState: ReactNode;
 };
 
-const headerCell = "border-b border-border pb-3 text-[13px] font-normal text-stone";
+const headerCell = "border-b border-border pb-2.5 text-[13px] font-normal text-stone";
 
 /** A table from md up, a card list below. Columns collapse with the panel's width, not the viewport. */
 export function CandidateTable({
@@ -31,7 +31,7 @@ export function CandidateTable({
   onAskAI,
   emptyState,
 }: CandidateTableProps) {
-  if (candidates.length === 0) return <div className="px-4 pb-6 sm:px-6">{emptyState}</div>;
+  if (candidates.length === 0) return <div className="px-4 pb-5 sm:px-5">{emptyState}</div>;
 
   const checkedOnPage = candidates.filter((candidate) => checkedIds.has(candidate.id)).length;
   const headerState = checkedOnPage === 0 ? false : checkedOnPage === candidates.length ? true : "indeterminate";
@@ -45,11 +45,11 @@ export function CandidateTable({
   });
 
   return (
-    <div className="@container px-1 pb-2 sm:px-3">
+    <div className="@container px-1 pb-2 sm:px-2">
       <table aria-labelledby="candidates-heading" className="hidden w-full border-separate border-spacing-0 text-left md:table">
         <thead>
           <tr>
-            <th scope="col" className={`${headerCell} w-12 pl-3`}>
+            <th scope="col" className={`${headerCell} w-10 pl-3`}>
               <Checkbox
                 checked={headerState}
                 onCheckedChange={(value) => onCheckAll(value === true)}
@@ -68,7 +68,7 @@ export function CandidateTable({
             <th scope="col" className={headerCell}>
               Last activity
             </th>
-            <th scope="col" className={`${headerCell} w-12`}>
+            <th scope="col" className={`${headerCell} w-10`}>
               <span className="sr-only">Actions</span>
             </th>
           </tr>

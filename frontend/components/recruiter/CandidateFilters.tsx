@@ -66,9 +66,9 @@ export function CandidateFilters({
   const keepOpen = (event: Event) => event.preventDefault();
 
   return (
-    <div className="flex flex-col gap-5 px-4 pt-5 sm:px-6 sm:pt-6">
+    <div className="flex flex-col gap-4 px-4 pt-4 sm:px-5 sm:pt-5">
       <div className="flex items-center justify-between gap-3">
-        <h2 id="candidates-heading" className="text-2xl font-semibold tracking-tight text-ink sm:text-[26px]">
+        <h2 id="candidates-heading" className="text-[15px] font-semibold tracking-tight text-ink sm:text-base">
           Candidates
         </h2>
         <div className="flex items-center gap-2">
@@ -97,12 +97,12 @@ export function CandidateFilters({
               <Button
                 variant="secondary"
                 size="icon"
-                className={cn("relative", filterCount > 0 && "border-white/25")}
+                className={cn("relative", filterCount > 0 && "border-ink/25")}
                 aria-label={filterCount ? `Filters, ${filterCount} active` : "Filters"}
               >
                 <ListFilter />
                 {filterCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-ink text-[11px] font-semibold text-canvas tabular-nums">
+                  <span className="absolute -top-1.5 -right-1.5 flex size-[18px] items-center justify-center rounded-full bg-ink text-[11px] font-semibold text-canvas tabular-nums">
                     {filterCount}
                   </span>
                 )}
@@ -168,7 +168,7 @@ export function CandidateFilters({
         </div>
       </div>
 
-      <div role="group" aria-label="Filter by stage" className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 sm:-mx-6 sm:px-6">
+      <div role="group" aria-label="Filter by stage" className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 sm:-mx-5 sm:px-5">
         {STAGE_CHIPS.map((chip) => (
           <FilterChip key={chip.value} active={stage === chip.value} onClick={() => onStageChange(chip.value)}>
             {chip.label} <span className="tabular-nums">({counts[chip.value]})</span>

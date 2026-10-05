@@ -13,7 +13,7 @@ export function CandidateMessagesPreview({ candidate, messages }: { candidate: P
 
   if (messages.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 py-8 text-center">
+      <div className="flex flex-col items-center gap-3 py-6 text-center">
         <p className="text-sm text-stone">No messages with {firstName(candidate.name)} yet.</p>
         <Link href={href} className={linkClass}>
           Start a conversation <ArrowRight aria-hidden className="size-4" />
@@ -23,7 +23,7 @@ export function CandidateMessagesPreview({ candidate, messages }: { candidate: P
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3.5">
       {messages.slice(-PREVIEW_COUNT).map((message) => (
         <MessageBubble key={message.id} message={message} authorName={candidate.name} />
       ))}

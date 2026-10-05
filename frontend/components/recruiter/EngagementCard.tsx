@@ -35,12 +35,12 @@ export function EngagementCard({ candidate }: { candidate: PipelineCandidate }) 
 
   if (data === null) return null; // mock mode: no candidate portal
   if (!data) {
-    return error ? <DetailError message={error} onRetry={retry} /> : <Skeleton className="h-[188px] rounded-[16px]" />;
+    return error ? <DetailError message={error} onRetry={retry} /> : <Skeleton className="h-[188px] rounded-[10px]" />;
   }
 
   const { portalActivity: portal, responsiveness } = data;
   return (
-    <section aria-label="Candidate engagement" className="rounded-[16px] bg-white/[0.035] p-4 ring-1 ring-white/[0.07]">
+    <section aria-label="Candidate engagement" className="rounded-[10px] border border-border bg-ink/[0.03] p-3.5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-[15px] font-medium tracking-tight text-ink">Candidate engagement</h3>
@@ -55,7 +55,7 @@ export function EngagementCard({ candidate }: { candidate: PipelineCandidate }) 
         </div>
       </div>
 
-      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm @[26rem]:grid-cols-3">
+      <dl className="mt-3.5 grid grid-cols-2 gap-x-4 gap-y-3 text-sm @[26rem]:grid-cols-3">
         <Metric label="Last active">
           {portal.lastActiveAt ? <RelativeTime iso={portal.lastActiveAt} /> : "Not yet"}
         </Metric>
@@ -74,7 +74,7 @@ export function EngagementCard({ candidate }: { candidate: PipelineCandidate }) 
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
-        className="mt-4 inline-flex items-center gap-1.5 rounded-sm text-sm text-charcoal transition-colors hover:text-ink"
+        className="mt-3.5 inline-flex items-center gap-1.5 rounded-sm text-sm text-charcoal transition-colors hover:text-ink"
       >
         {open ? "Hide engagement details" : "View engagement details"}
         <ChevronDown aria-hidden className={cn("size-4 transition-transform", open && "rotate-180")} />
@@ -90,7 +90,7 @@ function EngagementDetails({ data }: { data: EngagementBreakdown }) {
     ? `${communication.confirmations} of ${pluralize(communication.confirmationOpportunities, "interview")} confirmed`
     : "no interview to confirm yet";
   return (
-    <div className="mt-4 flex flex-col gap-4 border-t border-border pt-4">
+    <div className="mt-3.5 flex flex-col gap-3.5 border-t border-border pt-3.5">
       {!data.sufficientData && (
         <p className="text-xs text-stone">Too little activity so far to give a score. The parts below show what there is.</p>
       )}
@@ -156,14 +156,14 @@ function Component({ title, score, max, explanation }: { title: string; score: n
         </span>
       </div>
       <div
-        className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/[0.07]"
+        className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-ink/[0.07]"
         role="meter"
         aria-label={title}
         aria-valuemin={0}
         aria-valuemax={max}
         aria-valuenow={score}
       >
-        <div className="h-full rounded-full bg-white/50" style={{ width: `${(score / max) * 100}%` }} />
+        <div className="h-full rounded-full bg-ink/50" style={{ width: `${(score / max) * 100}%` }} />
       </div>
       <p className="mt-1.5 text-xs leading-relaxed text-stone">{explanation}</p>
     </div>
@@ -211,7 +211,7 @@ function PortalAccessValue({
 
   return (
     <span className="flex items-center gap-1.5" title={access.problem ?? undefined}>
-      <span className={cn(access.status === "invite_failed" && "text-amber-200")}>{ACCESS_LABELS[access.status]}</span>
+      <span className={cn(access.status === "invite_failed" && "text-caution")}>{ACCESS_LABELS[access.status]}</span>
       {canInvite && (
         <Button variant="ghost" size="icon-sm" onClick={() => void invite()} disabled={sending} aria-label={access.status === "invite_failed" ? "Retry the portal invitation" : "Send a portal invitation"}>
           {sending ? <LoaderCircle className="animate-spin" /> : <Send />}

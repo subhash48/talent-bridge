@@ -42,10 +42,10 @@ export function CandidateAnalysis({ candidate, analysis: saved }: CandidateAnaly
   }
 
   return (
-    <section aria-labelledby={headingId} className="rounded-[14px] bg-white/[0.03] p-4 ring-1 ring-white/[0.07]">
+    <section aria-labelledby={headingId} className="rounded-[10px] border border-border bg-ink/[0.03] p-3.5">
       <div className="flex items-center justify-between gap-3">
         <h3 id={headingId} className="flex items-center gap-2 text-[15px] font-medium tracking-tight text-ink">
-          <Sparkles aria-hidden className="size-4 text-ai" />
+          <Sparkles aria-hidden className="size-4 text-ink" />
           AI analysis
         </h3>
         <Button variant={analysis ? "ghost" : "ai"} size="sm" onClick={() => void generate()} disabled={pending || saved === undefined}>
@@ -73,7 +73,7 @@ export function CandidateAnalysis({ candidate, analysis: saved }: CandidateAnaly
 function AnalysisBody({ analysis }: { analysis: Analysis }) {
   const { skillsMatched, missingSkills } = analysis;
   return (
-    <div className="mt-3 flex flex-col gap-4 text-sm">
+    <div className="mt-3 flex flex-col gap-3.5 text-sm">
       <p className="leading-relaxed text-charcoal">{analysis.summary}</p>
 
       {(skillsMatched.length > 0 || missingSkills.length > 0) && (
@@ -82,7 +82,7 @@ function AnalysisBody({ analysis }: { analysis: Analysis }) {
             <li
               key={skill}
               title={evidence}
-              className="inline-flex items-center gap-1 rounded-full bg-emerald-400/10 px-2.5 py-0.5 text-xs text-emerald-200 ring-1 ring-emerald-300/20"
+              className="inline-flex h-6 items-center gap-1 rounded-full bg-sage/10 px-2.5 text-xs text-sage ring-1 ring-sage/20"
             >
               <Check aria-hidden className="size-3" />
               {skill}
@@ -92,7 +92,7 @@ function AnalysisBody({ analysis }: { analysis: Analysis }) {
           {missingSkills.map((skill) => (
             <li
               key={skill}
-              className="inline-flex items-center gap-1 rounded-full border border-dashed border-amber-300/30 px-2.5 py-0.5 text-xs text-amber-200"
+              className="inline-flex h-6 items-center gap-1 rounded-full border border-dashed border-caution/30 px-2.5 text-xs text-caution"
             >
               <CircleHelp aria-hidden className="size-3" />
               {skill}
@@ -105,7 +105,7 @@ function AnalysisBody({ analysis }: { analysis: Analysis }) {
       <AnalysisList title="Strengths" items={analysis.strengths} />
       <AnalysisList title="To look into" items={analysis.concerns} />
 
-      <div className="rounded-[10px] bg-ai/[0.07] px-3 py-2.5 ring-1 ring-ai/15">
+      <div className="rounded-[8px] bg-ink/[0.05] px-3 py-2.5 ring-1 ring-ink/10">
         <p className="text-xs text-stone">Suggested next step</p>
         <p className="mt-0.5 text-charcoal">{analysis.recommendedNextStep}</p>
       </div>

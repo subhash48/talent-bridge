@@ -86,14 +86,14 @@ export function CandidateActionsMenu({ candidate, onAskAI, className }: Candidat
           variant="ghost"
           size="icon-sm"
           aria-label={`Actions for ${candidate.name}`}
-          className={cn("text-stone data-[state=open]:bg-white/[0.08] data-[state=open]:text-ink", className)}
+          className={cn("text-stone data-[state=open]:bg-ink/[0.08] data-[state=open]:text-ink", className)}
           onClick={(event) => event.stopPropagation()}
         >
           <EllipsisVertical />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="w-[230px]"
+        className="w-52"
         onClick={(event) => event.stopPropagation()}
         onCloseAutoFocus={(event) => {
           if (keepFocusAway.current) event.preventDefault();
@@ -117,7 +117,7 @@ export function CandidateActionsMenu({ candidate, onAskAI, className }: Candidat
               onAskAI();
             }}
           >
-            <Sparkles className="text-ai!" /> Ask AI about {first}
+            <Sparkles className="text-ink!" /> Ask AI about {first}
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />

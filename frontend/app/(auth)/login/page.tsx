@@ -1,5 +1,5 @@
 import { ArrowRight } from "lucide-react";
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -10,9 +10,6 @@ import { getSignedInUser } from "@/lib/session";
 import { USE_MOCK_API } from "@/services/api";
 
 export const metadata: Metadata = { title: "Sign in" };
-
-// The browser's own bars take the page's ink black.
-export const viewport: Viewport = { themeColor: "#031211" };
 
 type LoginPageProps = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 

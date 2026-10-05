@@ -1,5 +1,9 @@
-// The sign-in page's backdrop: a still night sky of sparse dots, a few of them joined by faint lines.
-// It is one SVG in the page's ink colour, scaled to cover the page. Decoration only: it sits behind
+import { cn } from "@/lib/utils";
+
+// The product's backdrop: a still night sky of sparse dots, a few of them joined by faint lines. The
+// sign-in page shows it in full; the recruiter workspace and the candidate portal show the same sky,
+// fainter and fixed behind the page, so signing in doesn't change the scenery.
+// It is one SVG in the page's ink colour, scaled to cover its box. Decoration only: it sits behind
 // the page, takes no clicks and is hidden from screen readers.
 
 const WIDTH = 1600;
@@ -35,7 +39,8 @@ const LINES = CONSTELLATIONS.map((points) => `M${points.map(([x, y]) => `${x} ${
 /** Each dot is a stroke with no length and round ends, so it stays the same size however the sky is scaled. */
 const dots = (points: readonly Point[]) => points.map(([x, y]) => `M${x} ${y}h.01`).join("");
 
-export function NightSky() {
+/** className positions and dims it, e.g. "fixed opacity-50" behind a portal. By default it fills its parent. */
+export function NightSky({ className }: { className?: string }) {
   return (
     <svg
       aria-hidden="true"
@@ -45,7 +50,7 @@ export function NightSky() {
       fill="none"
       stroke="currentColor"
       strokeLinecap="round"
-      className="pointer-events-none absolute inset-0 -z-10 size-full text-ink"
+      className={cn("pointer-events-none absolute inset-0 -z-10 size-full text-ink", className)}
     >
       <path d={LINES} strokeWidth={1} opacity={0.16} vectorEffect="non-scaling-stroke" />
       <path d={dots(FAINT)} strokeWidth={1.5} opacity={0.34} vectorEffect="non-scaling-stroke" />

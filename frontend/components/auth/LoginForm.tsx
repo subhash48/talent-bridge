@@ -17,10 +17,10 @@ import { getCurrentUser } from "@/services/me";
 // Reasons that mean the current session can't be used, so it's ended before anyone signs in again.
 const UNUSABLE_SESSION = new Set(["account_not_linked", "account_disabled", "account_mismatch"]);
 
-// The sign-in card's own field styles (components/auth/LoginCard.tsx): larger than the app's, and in its ivory.
+// The sign-in card's own field styles (components/auth/LoginCard.tsx): larger than the app's, with a clearer edge.
 const labelStyles = "text-sm font-medium text-ink";
 const inputStyles =
-  "h-11 bg-black/25 px-3.5 text-[15px] focus-visible:border-ink/60 focus-visible:bg-black/25 focus-visible:ring-ink/15";
+  "h-11 rounded-[10px] border-ink/[0.14] bg-black/25 px-3.5 text-[15px] hover:border-ink/[0.28] focus-visible:border-ink/60 focus-visible:bg-black/25 focus-visible:ring-4 focus-visible:ring-ink/15";
 
 export function LoginForm({ next, reason }: { next: string | null; reason: string | null }) {
   const [email, setEmail] = useState("");
@@ -133,7 +133,7 @@ export function LoginForm({ next, reason }: { next: string | null; reason: strin
         type="submit"
         size="lg"
         disabled={pending}
-        className="h-11 w-full rounded-[10px] text-base font-semibold shadow-none hover:bg-[#f4f1e6]"
+        className="h-11 w-full rounded-[10px] text-base font-semibold"
       >
         {pending ? "Signing in…" : "Sign in"}
       </Button>

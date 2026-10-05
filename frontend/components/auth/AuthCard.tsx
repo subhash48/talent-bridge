@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { EncordLogo } from "@/components/shared/EncordLogo";
+import { NightSky } from "@/components/shared/NightSky";
 import { Card } from "@/components/ui/Card";
 
 type AuthCardProps = {
@@ -13,10 +14,11 @@ type AuthCardProps = {
 /** The frame every sign-in page shares: the brand, a title and one compact card. */
 export function AuthCard({ title, description, children, footer }: AuthCardProps) {
   return (
-    <main className="app-backdrop flex min-h-dvh flex-col items-center justify-center px-4 py-10">
+    <main className="relative isolate flex min-h-dvh flex-col items-center justify-center px-4 py-10">
+      <NightSky />
       <Card className="w-full max-w-sm p-8">
         <EncordLogo />
-        <p className="mt-8 text-xs font-medium tracking-wide text-ai">Talent Bridge</p>
+        <p className="mt-8 text-xs font-medium tracking-wide text-stone">Talent Bridge</p>
         <h1 className="mt-1.5 text-2xl font-semibold tracking-tight text-ink">{title}</h1>
         {description && <p className="mt-1.5 text-sm leading-relaxed text-stone">{description}</p>}
         <div className="mt-7">{children}</div>

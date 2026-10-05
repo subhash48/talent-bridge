@@ -66,6 +66,8 @@ class DraftPurpose(StrEnum):
     INTERVIEW_CONFIRMATION = "interview_confirmation"
     STATUS_UPDATE = "status_update"
     OFFER_CHECK_IN = "offer_check_in"
+    INTERVIEW_INVITATION = "interview_invitation"  # ask them to choose a time for an interview
+    CUSTOM = "custom"  # whatever the recruiter's instructions say
 
 
 class DraftMessageRequest(APIModel):

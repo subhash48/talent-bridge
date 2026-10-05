@@ -7,6 +7,7 @@ Job postings for demo jobs are composed from the recruiter's brief alone.
 """
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from app.core.enums import ActivityType, ApplicationStage, SenderType
@@ -69,6 +70,10 @@ class MockProvider(AIProvider):
     async def draft_message(
         self, context: CandidateContext, purpose: DraftPurpose, instructions: str | None = None
     ) -> DraftContent:
+        if purpose == DraftPurpose.INTERVIEW_INVITATION:
+            return _invitation(context, instructions or "")
+        if purpose == DraftPurpose.CUSTOM:
+            return _custom(context, instructions or "")
         return _draft(context, purpose)
 
     async def assist_candidate(self, context: PortalContext, question: str) -> AssistContent:
@@ -429,6 +434,52 @@ def _draft(context: CandidateContext, purpose: DraftPurpose) -> DraftContent:
         )
     body = f"Hi {first},\n\n{text}\n\nBest,\n{context.recruiter_first_name}"
     return DraftContent(subject=subject, body=body)
+
+
+def _invitation(context: CandidateContext, instructions: str) -> DraftContent:
+    """An interview invitation from the details in the recruiter's request: its type, length and timing.
+    It asks for times rather than inventing a date or a scheduling link."""
+    from app.services.assistant.rules import interview_details
+
+    details = interview_details(instructions)
+    kind = (details.interview_type or "interview").lower()
+    length = f"{details.duration_minutes}-minute " if details.duration_minutes else ""
+    timing = f" {details.timeframe}" if details.timeframe else ""
+    article = "an" if (length or kind)[0] in "aeiou8" else "a"
+    text = (
+        f"Thanks again for your interest in the {context.job_title} role. We'd love to continue the conversation "
+        f"with {article} {length}{kind}{timing}.\n\n"
+        "Please reply here with a few times that work best for you, and I'll send over a calendar invitation."
+    )
+    body = f"Hi {context.first_name},\n\n{text}\n\nBest,\n{context.recruiter_first_name}"
+    return DraftContent(subject=f"Scheduling your {kind} for the {context.job_title} role", body=body)
+
+
+_TELL = re.compile(
+    r"^.*?\b(?:telling|tell|letting|let|informing|inform)\s+[A-Z][\w'-]*(?:\s+know)?(?:\s+that)?\s+", re.DOTALL
+)
+_BE = {"is": "are", "was": "were", "has": "have"}
+_SWAPS: tuple[tuple[re.Pattern[str], str | Callable[[re.Match[str]], str]], ...] = (
+    (re.compile(r"\b(he|she|they) (is|was|has)\b", re.IGNORECASE), lambda match: f"you {_BE[match.group(2).lower()]}"),
+    (re.compile(r"\b(his|her|their)\b", re.IGNORECASE), "your"),
+    (re.compile(r"\b(he|she|they|him|them)\b", re.IGNORECASE), "you"),
+)
+
+
+def _custom(context: CandidateContext, instructions: str) -> DraftContent:
+    """A short message saying what the recruiter asked for ("telling Daniel his interview moved to
+    Thursday"), in the second person."""
+    match = _TELL.match(instructions.strip())
+    point = instructions.strip()[match.end() :].rstrip(" .!") if match else ""
+    for pattern, swap in _SWAPS:
+        point = pattern.sub(swap, point)
+    if point:
+        text = f"I wanted to let you know {point[0].lower() + point[1:]}."
+    else:
+        text = f"I wanted to follow up about your application for the {context.job_title} role."
+    text += "\n\nIf you have any questions, just reply here."
+    body = f"Hi {context.first_name},\n\n{text}\n\nBest,\n{context.recruiter_first_name}"
+    return DraftContent(subject=f"An update on your {context.job_title} application", body=body)
 
 
 # Job postings

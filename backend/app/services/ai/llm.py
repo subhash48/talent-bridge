@@ -157,6 +157,12 @@ PURPOSES = {
     DraftPurpose.INTERVIEW_CONFIRMATION: "interview confirmation",
     DraftPurpose.STATUS_UPDATE: "status update",
     DraftPurpose.OFFER_CHECK_IN: "offer check-in",
+    DraftPurpose.INTERVIEW_INVITATION: (
+        "interview invitation that thanks them for their interest in the role, naming the role by its job title, "
+        "and asks them to reply with a few times that work (never invent a date, time, meeting link or scheduling "
+        "link the recruiter didn't give)"
+    ),
+    DraftPurpose.CUSTOM: "short",
 }
 
 _FENCE = re.compile(r"^```(?:json)?\s*|\s*```$")

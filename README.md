@@ -8,7 +8,7 @@ HireMesh is an AI-native recruiting platform: one system, two experiences. Recru
 
 - `frontend/` — Next.js app with the Recruiter Workspace (`/recruiter`) and the Candidate Portal (`/candidate`).
 - `backend/` — FastAPI service under `/api/v1`: candidates, applications, jobs, interviews, activity, messages, AI and an optional Ashby integration.
-- `supabase/` — Postgres migrations (`001`–`013`) and the demo seed (`seed.sql`, generated from `backend/app/db/seed_data.py`).
+- `supabase/` — Postgres migrations (`001`–`014`) and the demo seed (`seed.sql`, generated from `backend/app/db/seed_data.py`).
 
 ## Quickstart
 
@@ -30,7 +30,7 @@ With no `DATABASE_URL`, the API uses a local SQLite file (`backend/talent_bridge
 cd frontend && npm install && npm run dev
 ```
 
-`/` sends you to `/login`, then to your own workspace by role: recruiters and admins to the recruiter dashboard (`/recruiter/candidates`), candidates to the Candidate Portal (`/candidate`). Other recruiter routes: `/recruiter/jobs` (and `/jobs/[id]`), `/recruiter/interviews`, `/recruiter/messages`, `/recruiter/ai`, `/recruiter/settings` and `/recruiter/candidates/[id]`. Short aliases such as `/dashboard` and `/jobs` redirect there.
+`/` sends you to `/login`, then to your own workspace by role: recruiters and admins to the recruiter dashboard (`/recruiter/candidates`), candidates to the Candidate Portal (`/candidate`). Other recruiter routes: `/recruiter/jobs` (and `/jobs/[id]`), `/recruiter/interviews`, `/recruiter/messages`, `/recruiter/analytics`, `/recruiter/ai`, `/recruiter/settings` and `/recruiter/candidates/[id]`. Short aliases such as `/dashboard` and `/jobs` redirect there.
 
 `/candidate` is the Candidate Portal for the signed-in candidate (Sophia Martinez in the demo). The dashboard keeps to what matters now: a greeting with where the current application stands, the application with its progress, the one next step (an interview to confirm or prepare for, a message to read, or what happens next), the latest update, and a small way into Ask AI. Everything else has its own page: `/candidate/applications` (Active, Completed / Inactive and Withdrawn, each opening `/candidate/application/[id]`), `/candidate/interviews` (with `/candidate/prep` for interview preparation), `/candidate/messages`, `/candidate/company`, `/candidate/ai` and `/candidate/profile`. The Company page shows the company-approved profile in `backend/app/services/company_profile.py` (sourced from encord.com; the hiring team owns it), and Ask AI answers company, culture, benefits and interview-process questions from that same profile and nothing else. It reads and writes the same records as the recruiter workspace through `/api/v1/candidate/*`, so an interview scheduled, confirmed or messaged about on one side shows on the other. Candidate responses are built in `backend/app/services/candidate_visibility.py`, which never returns interview feedback, internal notes, engagement or AI analysis; the candidate AI only ever sees that same candidate-safe record.
 
@@ -38,7 +38,7 @@ Every data call goes through `frontend/services/*` to `NEXT_PUBLIC_API_URL` (def
 
 **Supabase**
 
-1. Apply `supabase/migrations/001`–`013` in order (`supabase db push --db-url "$DATABASE_URL"`, the SQL editor, or `supabase db reset` locally with the [Supabase CLI](https://supabase.com/docs/guides/local-development)). Never edit a migration that has been applied; add the next number instead.
+1. Apply `supabase/migrations/001`–`014` in order (`supabase db push --db-url "$DATABASE_URL"`, the SQL editor, or `supabase db reset` locally with the [Supabase CLI](https://supabase.com/docs/guides/local-development)). Never edit a migration that has been applied; add the next number instead.
 2. Set `DATABASE_URL` in `backend/.env` to the project's connection string (direct or pooler), replacing `[YOUR-PASSWORD]` including the brackets.
 3. Load the demo data: `python -m app.db.seed` (or `--reset` to replace existing data). The API also loads it into an empty database on startup while `SEED_DEMO_DATA=true`.
 
@@ -170,7 +170,33 @@ Every count has diminishing returns and a cap, so refreshing or sending ten mess
 
 It is operational information, not candidate quality. It never ranks, advances or rejects anyone, isn't a sort order, and never reaches the AI (its context has no field for it). Candidates never see it.
 
-What the portal reports, and only this (`frontend/lib/engagement.ts`): visits, a heartbeat every 30 seconds while the tab is visible and was used in the last two minutes (the server times the gaps, so background tabs and idle time add nothing), and which portal pages and items were opened. No keystrokes, text, pointer positions, browser details or anything outside the portal.
+What the portal reports, and only this (`frontend/lib/engagement.ts`): visits, a heartbeat every 30 seconds while the tab is visible and was used in the last two minutes (the server times the gaps, so background tabs and idle time add nothing), which portal pages and items were opened, and which Company page sections were read (on screen for a couple of seconds; only the section's name). The same report sent twice in a moment (a rerender, a double click) is sent once, and the server drops repeats within five minutes. A question to the candidate assistant is recorded as its topic only, never its words. No keystrokes, text, pointer positions, browser details or anything outside the portal.
+
+## Candidate portal analytics
+
+`/recruiter/analytics` shows recruiters how candidates use the Candidate Portal, in aggregate, so they can improve the experience. It measures the experience, not candidates: nothing on it is per candidate, and none of it feeds ranking, search order, AI evaluation or any decision. Every number is calculated on each request from the portal's own records (`portal_sessions` and `candidate_engagement_events`, never Ashby) in `backend/app/services/analytics/`:
+
+- **Active Candidates**: candidates with a portal visit or event in the period. **Weekly Engaged**: candidates with meaningful activity (a page, section or feature view, a question, or a visit with at least a minute of active time) in the period's last seven days. **Average Engagement Time**: the mean active time per visit, as the server timed it. **Repeat Visit Rate**: the share of visiting candidates who came back. Each is compared with the period before it.
+- **Portal Engagement**: visits and unique candidates by day, week, month or year. **What Candidates Are Looking For**: page and section views and the topics of assistant questions, in six categories (`services/analytics/topics.py`). **When Candidates Use the Portal**: visits by weekday and two-hour window, in the recruiter's local time, with the peak.
+- **AI Insights**: at most four, written by the configured AI from the same aggregates. An answer with a number that isn't in them, or anything that reads as judging, ranking or hiring, is replaced by insights written by rules.
+- The date filter (Today, Last 7/30/90 days, This year, Custom) applies to everything above. The API: `GET /api/v1/analytics/portal`, `/analytics/insights` and `/analytics/demographics`, recruiters only.
+
+**Demo activity (development only).** For charts with something to show, generate months of made-up portal activity: candidates with applications to the open jobs, their visits, page and section views, question topics and voluntary demographic answers. It writes raw records only, through the same models and event recorder as the portal, so every percentage comes out of the normal calculations. It refuses `ENVIRONMENT=production` and names the database before writing:
+
+```bash
+python -m app.services.analytics.demo_activity generate   # from backend/; replaces what it generated before
+python -m app.services.analytics.demo_activity reset      # the Ashby simulator's reset deletes it too
+```
+
+## Voluntary demographic information
+
+The demo careers application form and the candidate portal profile ask four optional questions: region, race / ethnicity, disability status and sexual orientation, each with "Prefer not to say". They're kept apart from every candidate record (`candidate_demographics`, migration 014), and only the candidate can read or change their own (`GET`/`PUT /api/v1/candidate/demographics`). Recruiters see aggregates only, on the Analytics page and through the AI Assistant, from `services/demographics.py`:
+
+- a question with fewer than 5 answers reports nothing; answers given by fewer than 5 people are combined into "Other / insufficient data", and if that group would itself be under 5, the next-smallest groups join it;
+- shares are whole percentages and respondent counts are rounded down to a multiple of 5;
+- never filtered by date, job or anything else, so no filter can isolate one person's answer.
+
+No recruiter API returns an individual's answers, and no candidate list, search, detail, message, interview, AI context, ranking or analysis can see them. Answers given with a careers application are held separately until the application is submitted, then become the candidate's own.
 
 ## Environment
 

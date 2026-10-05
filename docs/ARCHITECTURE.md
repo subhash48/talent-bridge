@@ -30,6 +30,7 @@
 19. [Security considerations](#19-security-considerations)
 20. [Implementation order](#20-implementation-order)
 21. [Demo careers site (development only)](#21-demo-careers-site-development-only)
+22. [Candidate portal analytics and voluntary demographics](#22-candidate-portal-analytics-and-voluntary-demographics)
 
 Appendices: [A. Seed data](#appendix-a-seed-data) · [B. Demo script](#appendix-b-demo-script) · [C. Decisions to confirm](#appendix-c-decisions-to-confirm)
 
@@ -1791,6 +1792,41 @@ It never raises. A failed delivery gives its lease back and is retried on the ne
 **Import rule.** `integrations/ashby/demo.py` builds its payloads from `backend/tests` (`tests/ashby_support.py` and the Ashby fixtures), which the production image doesn't ship. So nothing loaded at startup imports it at module level: that code takes ids and address checks from `integrations/ashby/demo_ids.py`, and `services/demo_careers.py` imports the simulator only when it needs it (`_simulator()`). Without `backend/tests` the API starts as usual; applying answers 503 `demo_unavailable` and stores nothing, and pending applications wait.
 
 **Reset.** `python -m app.integrations.ashby.demo reset` also deletes every demo careers application (their résumés cascade, and candidates' links to them are cleared) and the demo jobs with their postings, except demo jobs that still have applications from outside the simulator. On a database without migration 013 it skips the careers tables.
+
+---
+
+## 22. Candidate portal analytics and voluntary demographics
+
+Recruiters see how candidates use the Candidate Portal, in aggregate, to improve the experience (`/recruiter/analytics`). It measures the experience, never the candidate: the responses carry no candidate ids, names or emails, and nothing here feeds ranking, search order, AI evaluation or any stage change.
+
+```
+Portal (lib/engagement.ts)  visits + server-timed heartbeats ─▶ portal_sessions
+                            page / section / item views ─▶ POST /candidate/engagement/events ─▶ candidate_engagement_events
+POST /candidate/ai/ask      ─▶ answer + event ai_question_asked {topic} (the words are never stored)
+GET /analytics/portal       ─▶ services/analytics/portal.py: KPIs, series, topics, heatmap (calculated per request)
+GET /analytics/insights     ─▶ insights.py: aggregate facts ─▶ provider.portal_insights ─▶ checks ─▶ (rules on failure)
+GET /analytics/demographics ─▶ services/demographics.py: all-time aggregates with small-group suppression
+AI Assistant analytics      ─▶ the same services (services/assistant/answers.py)
+```
+
+**Sources.** Only first-party portal records, never Ashby. A visit is a browser tab's `client_session_id` (renewed after 30 minutes away); its length is the sum of its rows' `active_seconds`, which only grow from heartbeats the server times while the tab is visible and in use. Two new event types join migration 012's text column: `company_section_viewed` (sent by the portal once a Company section has been on screen for a moment; its name only) and `ai_question_asked` (recorded by the server with the question's topic only). The portal drops a report repeated within two seconds (`lib/dedupe.ts`: rerenders, Strict Mode, double clicks) and the server drops repeats within five minutes, so neither inflates anything. Messages sent, interviews confirmed and profile edits stay in their own tables, as in section 5.7.
+
+**Definitions** (`services/analytics/portal.py`): active candidates have a visit or an event in the period; weekly engaged have meaningful activity (anything but a sign-in or a bare visit start, or a visit of at least 60 active seconds) in the period's last seven days; average engagement time is the mean visit length; repeat visit rate is the share of visiting candidates with two or more visits. Each is compared with the previous period of the same length (rates in points). Periods are whole local days from the browser's UTC offset; the series buckets visits by day, week (Monday), month or year, and the heatmap by weekday and two-hour window. Topics (`topics.py`) map each event to one of six categories; questions are classified once, when asked, using the candidate assistant's own topic detection plus three analytics-only categories (pay, benefits, culture and team).
+
+**Insights** are written from an `InsightFacts` block of aggregates only. A model's answer is used only when it has at most four insights, uses no number that isn't in the facts, and says nothing that reads as a hiring decision, a judgement or ranking of candidates, or a personal characteristic (`insights.acceptable`); otherwise `rule_insights` writes them. The mock provider has none, so it always uses the rules.
+
+**Voluntary demographics** (migration 014). `candidate_demographics` holds a candidate's optional answers (region, race / ethnicity, disability status, sexual orientation; each nullable, each with `prefer_not_to_say`), keyed by `candidate_id` and referenced by nothing. Answers given on the demo careers form wait in `demo_application_demographics` until the application is submitted, then move to the candidate (a failure there never undoes a submission). Only the candidate reads or writes their own (`/candidate/demographics`). Recruiters get `services/demographics.aggregate` only:
+
+| Rule | Why |
+|---|---|
+| A question with fewer than 5 answers reports nothing | No tiny totals |
+| Answers given by fewer than 5 people are combined into "Other / insufficient data"; if that group is under 5, the next-smallest groups join it | A small group can't be read directly or subtracted out |
+| Whole-percent shares, respondent counts rounded down to a multiple of 5 | One new answer rarely shows |
+| Never filtered by date, job or anything else | No filter can narrow it to one person |
+
+No other model, schema, context builder (`services/ai/context.py`, `portal_context.py`), search, sort or filter reads these tables; the tests check the candidate list, search, detail, interviews, messages and the recruiter AI's context for any trace of them.
+
+**Demo data.** `python -m app.services.analytics.demo_activity generate` (development only) writes candidates with `tb-demo-analytics-` Ashby ids, their applications to the open jobs, voluntary answers, and months of visits and events drawn from weighted distributions, through the same models and `record_event` as the portal. It stores no results: every number comes from the calculations above. Both its `reset` and the Ashby simulator's delete it.
 
 ---
 

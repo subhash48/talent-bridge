@@ -64,8 +64,8 @@ function PrepView({ applicationId }: { applicationId: string | null }) {
   return (
     <>
       <CandidateHeader title="Interview Prep" subtitle={subtitle} />
-      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
-        <div className="flex flex-col gap-5">
+      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="flex flex-col gap-4">
           {loading && <PrepSkeleton />}
           {!prep && error && (
             <LoadError title="AI preparation is temporarily unavailable." message="Please try again in a moment." onRetry={() => void refresh()} />
@@ -76,7 +76,7 @@ function PrepView({ applicationId }: { applicationId: string | null }) {
                 prep={prep}
                 onConfirmed={(interview) => setData((current) => current && { ...current, interview })}
               />
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {SECTIONS.map((section) => (
                   <PrepSection key={section.field} title={section.title} icon={section.icon} hint={section.hint} items={prep[section.field]} />
                 ))}
@@ -101,22 +101,22 @@ function InterviewSummary({ prep, onConfirmed }: { prep: CandidatePrep; onConfir
 
   if (!interview) {
     return (
-      <Card className="p-5 sm:p-6">
-        <p className="text-[13px] font-medium text-stone">Upcoming interview</p>
-        <h2 className="mt-2 text-xl font-semibold tracking-tight text-ink">No interview scheduled yet</h2>
+      <Card className="p-5 sm:p-5">
+        <p className="text-xs font-medium text-stone">Upcoming interview</p>
+        <h2 className="mt-2 text-lg font-semibold tracking-tight text-ink">No interview scheduled yet</h2>
         <p className="mt-1 text-sm text-stone">{prep.interviewFormat} In the meantime, here’s how to stay ready for the {prep.role} role.</p>
       </Card>
     );
   }
 
   return (
-    <Card className="p-5 sm:p-6">
+    <Card className="p-5 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-[13px] font-medium text-stone">Upcoming interview</p>
+        <p className="text-xs font-medium text-stone">Upcoming interview</p>
         <InterviewStatus interview={interview} />
       </div>
-      <h2 className="mt-2 text-2xl font-semibold tracking-tight text-ink">{interview.title}</h2>
-      <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+      <h2 className="mt-2 text-xl font-semibold tracking-tight text-ink sm:text-2xl">{interview.title}</h2>
+      <dl className="mt-4 grid grid-cols-1 gap-x-5 gap-y-3 text-sm sm:grid-cols-2">
         <div>
           <dt className="text-xs text-faint">Role</dt>
           <dd className="mt-0.5 text-charcoal">
@@ -142,7 +142,7 @@ function InterviewSummary({ prep, onConfirmed }: { prep: CandidatePrep; onConfir
           </div>
         )}
       </dl>
-      <div className="mt-5 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         {interview.canConfirm && (
           <Button size="sm" onClick={() => void confirm(interview)} disabled={pendingId === interview.id}>
             {pendingId === interview.id ? <LoaderCircle className="animate-spin" /> : <CircleCheck />}
@@ -160,15 +160,15 @@ function InterviewSummary({ prep, onConfirmed }: { prep: CandidatePrep; onConfir
 function PrepSection({ title, icon: Icon, hint, items }: { title: string; icon: LucideIcon; hint?: string; items: string[] }) {
   if (items.length === 0) return null;
   return (
-    <Card className="p-5 sm:p-6">
-      <h2 className="flex items-center gap-2.5 font-semibold tracking-tight text-ink">
-        <span className="flex size-8 items-center justify-center rounded-full bg-white/[0.05] ring-1 ring-white/[0.08]">
+    <Card className="p-5 sm:p-5">
+      <h2 className="flex items-center gap-2.5 text-base font-semibold tracking-tight text-ink">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-ink/[0.05] ring-1 ring-ink/10">
           <Icon aria-hidden className="size-4 text-charcoal" />
         </span>
         {title}
       </h2>
       {hint && <p className="mt-2 text-xs text-faint">{hint}</p>}
-      <ul className="mt-4 flex flex-col gap-2.5 text-sm leading-relaxed text-charcoal">
+      <ul className="mt-3 flex flex-col gap-2.5 text-sm leading-relaxed text-charcoal">
         {items.map((item) => (
           <li key={item} className="flex gap-2.5">
             <span aria-hidden className="mt-2 size-1 shrink-0 rounded-full bg-ai" />
@@ -182,11 +182,11 @@ function PrepSection({ title, icon: Icon, hint, items }: { title: string; icon: 
 
 function PrepSkeleton() {
   return (
-    <div className="flex flex-col gap-5" aria-busy="true" aria-label="Preparing your interview prep">
-      <Skeleton className="h-[220px] rounded-[18px]" />
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+    <div className="flex flex-col gap-4" aria-busy="true" aria-label="Preparing your interview prep">
+      <Skeleton className="h-[200px] rounded-[14px]" />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {Array.from({ length: 4 }, (_, index) => (
-          <Skeleton key={index} className="h-[200px] rounded-[18px]" />
+          <Skeleton key={index} className="h-[180px] rounded-[14px]" />
         ))}
       </div>
     </div>

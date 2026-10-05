@@ -52,17 +52,17 @@ export function ApplicationsView() {
   return (
     <>
       <CandidateHeader title="Applications" subtitle={`Every role you’ve applied for at ${me.company}.`} />
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-4">
         {GROUPS.map(({ group, title, empty }) => {
           const items = me.applications.filter((application) => groupOf(application) === group);
           return (
-            <Card key={group} className="p-5 sm:p-6">
+            <Card key={group} className="p-5 sm:p-5">
               <section aria-label={title}>
-                <h2 className="font-semibold tracking-tight text-ink">
+                <h2 className="text-base font-semibold tracking-tight text-ink">
                   {title} <span className="font-normal text-stone">({items.length})</span>
                 </h2>
                 {items.length > 0 ? (
-                  <ul className="mt-4 flex flex-col gap-1.5">
+                  <ul className="mt-3 flex flex-col gap-1.5">
                     {items.map((application) => (
                       <ApplicationRow key={application.id} application={application} selected={application.id === applicationId} />
                     ))}
@@ -87,12 +87,12 @@ function ApplicationRow({ application, selected }: { application: CandidateAppli
         href={`/candidate/application/${application.id}`}
         aria-current={selected ? "true" : undefined}
         className={cn(
-          "flex items-center gap-3 rounded-[12px] px-3 py-2.5 ring-1 transition-colors",
-          selected ? "bg-white/[0.06] ring-white/[0.12]" : "ring-transparent hover:bg-white/[0.04]",
+          "flex items-center gap-3 rounded-[10px] px-3 py-2.5 ring-1 transition-colors",
+          selected ? "bg-ink/[0.06] ring-ink/10" : "ring-transparent hover:bg-ink/[0.04]",
         )}
       >
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[15px] font-medium text-ink">{application.jobTitle}</span>
+          <span className="block truncate text-sm font-medium text-ink">{application.jobTitle}</span>
           <span className="mt-0.5 block truncate text-[13px] text-stone">{meta}</span>
           <span className="mt-0.5 block text-xs text-charcoal sm:hidden">{application.stageLabel}</span>
           {application.nextInterviewAt && (
@@ -103,7 +103,7 @@ function ApplicationRow({ application, selected }: { application: CandidateAppli
           )}
         </span>
         {application.unreadMessages > 0 && (
-          <span className="rounded-full bg-ai/20 px-2 py-0.5 text-[11px] font-medium text-violet-100">
+          <span className="rounded-full bg-ink/[0.1] px-2 py-0.5 text-[11px] font-medium text-ink">
             {application.unreadMessages} new
           </span>
         )}

@@ -66,19 +66,19 @@ export function ApplicationView({ applicationId, initialDetail }: ApplicationVie
           </Link>
         }
       />
-      <div className="flex flex-col gap-5">
-        <Card className="p-5 sm:p-7">
+      <div className="flex flex-col gap-4">
+        <Card className="p-5 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-semibold tracking-tight text-ink">Hiring progress</h2>
+            <h2 className="text-base font-semibold tracking-tight text-ink">Hiring progress</h2>
             <PortalStatusBadge stage={application.stage} status={application.status} label={application.stageLabel} />
           </div>
-          <div className="mt-8">
+          <div className="mt-6">
             <ApplicationProgress application={application} showDates />
           </div>
           <div
             className={cn(
-              "mt-8 rounded-[14px] px-4 py-3.5 ring-1",
-              active ? "bg-ai/[0.08] ring-ai/20" : "bg-white/[0.03] ring-white/[0.08]",
+              "mt-6 rounded-[10px] border p-3.5",
+              active ? "border-border-strong bg-ink/[0.05]" : "border-border bg-ink/[0.03]",
             )}
           >
             <p className="text-xs font-medium text-stone">{active ? "Next step" : "Status"}</p>
@@ -86,18 +86,18 @@ export function ApplicationView({ applicationId, initialDetail }: ApplicationVie
           </div>
         </Card>
 
-        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="flex flex-col gap-5">
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_304px]">
+          <div className="flex flex-col gap-4">
             {(job.summary || job.requirements.length > 0) && (
-            <Card className="p-5 sm:p-6">
-              <h2 className="font-semibold tracking-tight text-ink">About the role</h2>
+            <Card className="p-5 sm:p-5">
+              <h2 className="text-base font-semibold tracking-tight text-ink">About the role</h2>
               {job.summary && <p className="mt-3 text-sm leading-relaxed text-charcoal">{job.summary}</p>}
               {job.requirements.length > 0 && (
                 <>
-                  <h3 className="mt-5 text-xs font-medium text-stone">What the team is looking for</h3>
+                  <h3 className="mt-4 text-xs font-medium text-stone">What the team is looking for</h3>
                   <ul className="mt-2 flex flex-wrap gap-2" aria-label="Skills in the job posting">
                     {job.requirements.map((skill) => (
-                      <li key={skill} className="rounded-full bg-white/[0.05] px-3 py-1 text-[13px] text-charcoal ring-1 ring-white/[0.08]">
+                      <li key={skill} className="rounded-full bg-ink/[0.05] px-2.5 py-1 text-xs text-charcoal ring-1 ring-ink/10">
                         {skill}
                       </li>
                     ))}
@@ -107,8 +107,8 @@ export function ApplicationView({ applicationId, initialDetail }: ApplicationVie
             </Card>
             )}
 
-            <Card className="p-5 sm:p-6">
-              <h2 className="mb-5 font-semibold tracking-tight text-ink">Timeline</h2>
+            <Card className="p-5 sm:p-5">
+              <h2 className="mb-4 text-base font-semibold tracking-tight text-ink">Timeline</h2>
               {timeline.length > 0 ? (
                 <ActivityList items={timeline} />
               ) : (
@@ -117,10 +117,10 @@ export function ApplicationView({ applicationId, initialDetail }: ApplicationVie
             </Card>
           </div>
 
-          <div className="flex flex-col gap-5">
-            <Card className="p-5 sm:p-6">
-              <h2 className="font-semibold tracking-tight text-ink">Details</h2>
-              <dl className="mt-4 flex flex-col gap-3 text-sm">
+          <div className="flex flex-col gap-4">
+            <Card className="p-5 sm:p-5">
+              <h2 className="text-base font-semibold tracking-tight text-ink">Details</h2>
+              <dl className="mt-3 flex flex-col gap-3 text-sm">
                 {details.map((item) => (
                   <div key={item.label} className="flex justify-between gap-4">
                     <dt className="text-stone">{item.label}</dt>
@@ -143,21 +143,21 @@ export function ApplicationView({ applicationId, initialDetail }: ApplicationVie
             </Card>
 
             {recruiter && (
-              <Card className="p-5 sm:p-6">
-                <h2 className="font-semibold tracking-tight text-ink">Your recruiter</h2>
-                <div className="mt-4 flex items-center gap-3">
-                  <Avatar name={recruiter.name} size={44} />
+              <Card className="p-5 sm:p-5">
+                <h2 className="text-base font-semibold tracking-tight text-ink">Your recruiter</h2>
+                <div className="mt-3 flex items-center gap-3">
+                  <Avatar name={recruiter.name} size={36} />
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-ink">{recruiter.name}</p>
+                    <p className="truncate text-sm font-medium text-ink">{recruiter.name}</p>
                     <p className="truncate text-[13px] text-stone">
                       {recruiter.title} · {job.company}
                     </p>
                   </div>
                 </div>
-                <a href={`mailto:${recruiter.email}`} className="mt-4 inline-flex items-center gap-2 text-sm text-charcoal hover:text-ink">
+                <a href={`mailto:${recruiter.email}`} className="mt-3 inline-flex items-center gap-2 text-sm text-charcoal hover:text-ink">
                   <Mail aria-hidden className="size-4 text-stone" /> {recruiter.email}
                 </a>
-                <Link href="/candidate/messages" className={buttonStyles({ variant: "secondary", size: "sm", className: "mt-4 w-full" })}>
+                <Link href="/candidate/messages" className={buttonStyles({ variant: "secondary", size: "sm", className: "mt-3 w-full" })}>
                   Message {firstName(recruiter.name)} <ArrowRight />
                 </Link>
               </Card>
@@ -184,11 +184,11 @@ export function NoApplication({ company }: { company: string }) {
 
 function ApplicationSkeleton() {
   return (
-    <div className="flex flex-col gap-5" aria-busy="true" aria-label="Loading your application">
-      <Skeleton className="h-[260px] rounded-[18px]" />
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <Skeleton className="h-[420px] rounded-[18px]" />
-        <Skeleton className="h-[320px] rounded-[18px]" />
+    <div className="flex flex-col gap-4" aria-busy="true" aria-label="Loading your application">
+      <Skeleton className="h-[240px] rounded-[14px]" />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_304px]">
+        <Skeleton className="h-[380px] rounded-[14px]" />
+        <Skeleton className="h-[288px] rounded-[14px]" />
       </div>
     </div>
   );

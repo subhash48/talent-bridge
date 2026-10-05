@@ -76,9 +76,9 @@ function InterviewsView({ applicationId, initialInterviews }: InterviewsViewProp
           <LoadError title="Your interviews couldn't load" message={error} onRetry={() => void refresh()} />
         ) : (
           <div className="flex flex-col gap-4" aria-busy="true" aria-label="Loading interviews">
-            <Skeleton className="h-11 w-80 max-w-full" />
-            <Skeleton className="h-[184px] rounded-[18px]" />
-            <Skeleton className="h-[184px] rounded-[18px]" />
+            <Skeleton className="h-9 w-80 max-w-full" />
+            <Skeleton className="h-[168px] rounded-[14px]" />
+            <Skeleton className="h-[168px] rounded-[14px]" />
           </div>
         )}
       </>
@@ -104,7 +104,7 @@ function InterviewsView({ applicationId, initialInterviews }: InterviewsViewProp
           ]}
         />
         {(Object.keys(groups) as Group[]).map((group) => (
-          <TabsContent key={group} value={group} className="mt-6 flex flex-col gap-4">
+          <TabsContent key={group} value={group} className="mt-5 flex flex-col gap-4">
             {groups[group].length > 0 ? (
               groups[group].map((interview) => (
                 <InterviewCard

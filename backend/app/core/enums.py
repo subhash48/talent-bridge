@@ -152,13 +152,30 @@ class EngagementEventType(StrEnum):
     INTERVIEW_VIEWED = "interview_viewed"
     PREP_VIEWED = "prep_viewed"
     MESSAGE_READ = "message_read"
+    # A section of the Company page read for a moment (metadata.target is a CompanySection).
+    COMPANY_SECTION_VIEWED = "company_section_viewed"
 
 
 # The only types the portal may send to POST /candidate/engagement/events. The rest are recorded by
 # the server as a side effect of the request that caused them.
 CLIENT_ENGAGEMENT_EVENTS: frozenset[EngagementEventType] = frozenset(
-    {EngagementEventType.PAGE_VIEW, EngagementEventType.APPLICATION_VIEWED, EngagementEventType.INTERVIEW_VIEWED}
+    {
+        EngagementEventType.PAGE_VIEW,
+        EngagementEventType.APPLICATION_VIEWED,
+        EngagementEventType.INTERVIEW_VIEWED,
+        EngagementEventType.COMPANY_SECTION_VIEWED,
+    }
 )
+
+
+class CompanySection(StrEnum):
+    """The sections of the candidate portal's Company page."""
+
+    PRODUCTS = "products"
+    CULTURE = "culture"
+    BENEFITS = "benefits"
+    LOCATIONS = "locations"
+    HIRING = "hiring"
 
 
 class PortalPage(StrEnum):

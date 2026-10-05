@@ -50,7 +50,7 @@ async def end(body: PortalVisitIn, session: SessionDep, candidate: CurrentCandid
 
 @router.post("/events", status_code=204, summary="Portal actions")
 async def events(body: EngagementEventBatch, session: SessionDep, candidate: CurrentCandidateDep) -> Response:
-    """A batch of page and feature views. Repeats within a few minutes are dropped."""
+    """A batch of page, section and feature views. Repeats within a few minutes are dropped."""
     for event in body.events:
         application = await owned_application(session, candidate, event.application_id)
         target: str | None = None
@@ -62,6 +62,10 @@ async def events(body: EngagementEventBatch, session: SessionDep, candidate: Cur
             target = str(event.interview_id)
         elif event.type == EngagementEventType.PAGE_VIEW:
             target = event.page.value if event.page else None
+        elif event.type == EngagementEventType.COMPANY_SECTION_VIEWED:
+            if event.section is None:
+                continue
+            target = event.section.value
         visit = (
             await sessions.visit_row_id(session, candidate.id, application.id, event.session_id)
             if event.session_id

@@ -10,6 +10,7 @@ from pydantic import ConfigDict, Field, field_validator
 
 from app.core.enums import (
     CLIENT_ENGAGEMENT_EVENTS,
+    CompanySection,
     EngagementEventType,
     EngagementLevel,
     PortalAccountStatus,
@@ -115,6 +116,7 @@ class ClientEngagementEvent(APIModel):
     session_id: UUID | None = None
     page: PortalPage | None = None
     interview_id: UUID | None = None
+    section: CompanySection | None = None  # company_section_viewed only
 
     @field_validator("type")
     @classmethod

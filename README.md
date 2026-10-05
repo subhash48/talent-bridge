@@ -198,6 +198,18 @@ The demo careers application form and the candidate portal profile ask four opti
 
 No recruiter API returns an individual's answers, and no candidate list, search, detail, message, interview, AI context, ranking or analysis can see them. Answers given with a careers application are held separately until the application is submitted, then become the candidate's own.
 
+## AI Assistant
+
+`/recruiter/ai` is one assistant for typed and spoken requests. Both go through the same action engine (`POST /api/v1/assistant/requests`, `backend/app/services/assistant/`). The configured AI reads the words as one structured action (`assistant/rules.py` does when there's no model or it fails). Names are matched against the active pipeline and never guessed: two matches means a question back. Then the action runs through the existing services:
+
+- **Messages**: "Send Sophia a personalized email asking her to schedule a 30-minute recruiter interview next Tuesday." The AI drafts it from the candidate's record. It waits as an editable proposal until the recruiter confirms, then `message_service.send_message` sends it, exactly once (a second confirmation is a 409). "Draft…" prepares it without the send step. Messages go to the candidate's portal messages: Talent Bridge has no outbound email provider.
+- **Jobs**: "Create an entry-level Recruiting Engineer job in San Francisco…" drafts it with the AI job writer and saves it with the demo jobs service, as an ordinary job like one made on the Jobs page. "Make it hybrid", "salary 100 to 130K" and "add Python" change the same draft. "Publish the job" asks for confirmation, then publishes it to the Jobs page and `/demo/careers`. Needs `ENABLE_ASHBY_DEMO`.
+- **Questions**: candidates by job and stage (in the pipeline's usual order), a candidate's application and next interview, open jobs, and Candidate Portal analytics from the analytics services. Demographics only ever come back as the Analytics page's aggregates. Asking about one person's, or to rank or filter people by anything, is refused.
+
+**Voice.** The microphone (in the assistant's input, and in the top bar on every recruiter page) records in the browser, and `POST /api/v1/assistant/transcribe` turns the recording into words with Groq Whisper (`AI_PROVIDER=groq`; `GROQ_TRANSCRIPTION_MODEL`, default `whisper-large-v3-turbo`). The recording is never stored. Only the transcript is kept, with the structured action and its result, in the recruiter's Recent actions (`assistant_actions`). Without Groq, the browser's own speech recognition is used where there is one (Chrome, Edge). A name heard by sound ("Sofia") is matched to the pipeline's spelling and the reply says so. A spoken "send it" shows the confirmation; it never sends by itself.
+
+All `/assistant/*` routes check the recruiter role on the server; a candidate's token gets 403.
+
 ## Environment
 
 - `backend/.env` (see `backend/.env.example`) — database URL, Supabase project URL and secret key (portal invitations), AI provider (`mock`, `gemini` or `groq`) and keys, Ashby keys and options, CORS. Server-side only.

@@ -31,6 +31,7 @@
 20. [Implementation order](#20-implementation-order)
 21. [Demo careers site (development only)](#21-demo-careers-site-development-only)
 22. [Candidate portal analytics and voluntary demographics](#22-candidate-portal-analytics-and-voluntary-demographics)
+23. [Recruiter AI Assistant: one action engine for text and voice](#23-recruiter-ai-assistant-one-action-engine-for-text-and-voice)
 
 Appendices: [A. Seed data](#appendix-a-seed-data) · [B. Demo script](#appendix-b-demo-script) · [C. Decisions to confirm](#appendix-c-decisions-to-confirm)
 
@@ -1827,6 +1828,36 @@ AI Assistant analytics      ─▶ the same services (services/assistant/answers
 No other model, schema, context builder (`services/ai/context.py`, `portal_context.py`), search, sort or filter reads these tables; the tests check the candidate list, search, detail, interviews, messages and the recruiter AI's context for any trace of them.
 
 **Demo data.** `python -m app.services.analytics.demo_activity generate` (development only) writes candidates with `tb-demo-analytics-` Ashby ids, their applications to the open jobs, voluntary answers, and months of visits and events drawn from weighted distributions, through the same models and `record_event` as the portal. It stores no results: every number comes from the calculations above. Both its `reset` and the Ashby simulator's delete it.
+
+## 23. Recruiter AI Assistant: one action engine for text and voice
+
+`/recruiter/ai` replaces the per-candidate Copilot page with an operating assistant. Typed text and transcribed speech take exactly the same path; the only difference is `input_type`.
+
+```
+Mic ─▶ MediaRecorder ─▶ POST /assistant/transcribe (Groq Whisper; audio never stored)  ┐
+     or the browser's SpeechRecognition (no Groq)                                         ├─▶ words
+Text box ──────────────────────────────────────────────────────────────────────────────┘
+words ─▶ POST /assistant/requests {text, input_type, client_request_id, context}
+      ─▶ understand.py: provider.understand_request ─▶ AssistantIntent (rules.py on failure)
+      ─▶ policy: no individual demographics, no ranking ─▶ resolve.py: names ─▶ pipeline (ask if several)
+      ─▶ plan: answer │ job draft created/updated (demo_jobs) │ proposal (message, publish)
+POST /assistant/actions/{id}/confirm ─▶ status proposed ─▶ executing (compare-and-swap)
+      ─▶ message_service.send_message │ demo_jobs.publish ─▶ completed │ failed (with the reason)
+```
+
+**Intent.** `schemas/assistant.AssistantIntent` is the contract: one action (`send_interview_email`, `draft_message`, `create_job`, `update_job`, `publish_job`, `list_jobs`, `search_candidates`, `candidate_info`, `next_interview`, `analytics`, `confirm`, `cancel`, `help`), a mode (`draft` or `execute`) and the details any action carries (candidate name and job title as said, interview type, length and timing, job changes, analytics metric and period). The configured model reads requests into it (`llm.ASSISTANT_PROMPT`); `rules.py` reads them without a model, from a few ordered checks plus generic extraction, so the mock provider and model failures still work.
+
+**Context.** Each response returns `context` (the application, demo job or proposal being discussed) and the workspace sends it back with the next request, so "make it hybrid" changes the draft just created and "send it" means the proposal just shown. The server checks every id again (the proposal must be the recruiter's own and still `proposed`).
+
+**Resolution never guesses.** Names match first and last names in the active pipeline; with no name, a pronoun refers to the candidate in context. Several matches return a clarification card; choosing one resends the request with that application in context. A name heard by sound ("Sofia") matches by Soundex only when nothing matches exactly, and the reply says how it was read.
+
+**External actions need a confirmation.** Sending a message and publishing a job come back as `proposed` (a draft is a proposal shown without the send step). Confirmation is one compare-and-swap `UPDATE … WHERE status = 'proposed'`: a second confirmation, from a double click or another tab, gets 409, so one confirmation is one send. A spoken "send it" only shows the confirmation. A failure is recorded and returned as `failed` with the service's reason; nothing reports success unless the service it ran succeeded. Messages are the existing per-application thread (`message_service.send_message`), which candidates read in the portal; there is no outbound email provider. Jobs are demo jobs (`demo_jobs.write_posting`, `create_demo_job`, `update_demo_job`, `publish`), so they are ordinary jobs with postings, the same as the editor makes, and appear on the Jobs page and `/demo/careers`; with `ENABLE_ASHBY_DEMO` off, job actions say so.
+
+**Record** (`assistant_actions`, migration 014): one row per request with the recruiter, `client_request_id` (unique per recruiter: a repeated request returns the first answer and runs nothing twice), input type, the words (a transcript for voice), the structured action, target, payload (the proposal, never demographics), result summary, error and timestamps. Recent actions lists the completed and failed ones.
+
+**Boundaries.** The router mounts `/assistant/*` and `/analytics/*` with `require_recruiter`. `understand.policy_refusal` refuses any request that ties race, ethnicity, disability or sexual orientation to a person, filters or ranks by them, or asks to rank, score or prioritise candidates; analytics questions about demographics get the Analytics page's suppressed aggregates. Candidate questions go through the existing recruiter AI (`ai_service.ask_candidate`), whose context has never had engagement or demographics. The assistant never changes a stage or decides anything about a candidate.
+
+**Voice UI.** `lib/voice.ts` is the state machine (Listening, Understanding, Preparing action, Ready, Executing, Complete), with a session number per recording so results from a cancelled one are dropped and presses during a step are ignored. `hooks/useVoiceInput.ts` records with MediaRecorder, draws the waveform from an `AnalyserNode` and stops after 1.8 s of silence (or 45 s). The panel floats on wide screens and is a bottom sheet on phones; the top bar's microphone opens `/recruiter/ai?voice=1`, the same panel.
 
 ---
 

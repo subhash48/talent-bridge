@@ -10,6 +10,7 @@ from app.api import (
     ai,
     analytics,
     applications,
+    assistant,
     auth,
     candidate,
     candidate_engagement,
@@ -39,6 +40,7 @@ for module in (
     ai,
     dashboard,
     analytics,
+    assistant,
 ):
     api_router.include_router(module.router, dependencies=[Depends(require_recruiter)])
 # The candidate portal: the signed-in candidate, scoped to their own record.

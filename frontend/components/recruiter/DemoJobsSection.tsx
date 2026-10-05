@@ -39,8 +39,8 @@ const ACTIONS: Record<Action, { request: (id: string) => Promise<DemoJob>; done:
   },
 };
 
-const headerCell = "border-b border-border px-3 pb-3 text-[13px] font-normal text-stone first:pl-0 last:pr-0";
-const cell = "border-b border-border px-3 py-3.5 align-middle first:pl-0 last:pr-0 group-last:border-b-0";
+const headerCell = "border-b border-border px-3 pb-2.5 text-[13px] font-normal text-stone first:pl-0 last:pr-0";
+const cell = "border-b border-border px-3 py-2.5 align-middle first:pl-0 last:pr-0 group-last:border-b-0";
 
 const editPath = (job: DemoJob) => `/recruiter/jobs/demo/${job.id}`;
 
@@ -92,11 +92,11 @@ export function DemoJobsSection({ jobs, error }: DemoJobsSectionProps) {
   });
 
   return (
-    <section aria-labelledby="demo-jobs-heading" className="glass mb-8 rounded-[20px] border border-border p-5 sm:p-6">
-      <h2 id="demo-jobs-heading" className="flex flex-wrap items-center gap-2.5 text-lg font-semibold tracking-tight text-ink">
-        <FlaskConical aria-hidden className="size-5 text-stone" />
+    <section aria-labelledby="demo-jobs-heading" className="glass mb-6 rounded-[14px] border border-border p-5 sm:p-5">
+      <h2 id="demo-jobs-heading" className="flex flex-wrap items-center gap-2 text-base font-semibold tracking-tight text-ink">
+        <FlaskConical aria-hidden className="size-4 text-stone" />
         Demo jobs
-        <span className="inline-flex h-6 items-center rounded-[7px] bg-amber-400/10 px-2 text-xs font-medium text-amber-200 ring-1 ring-amber-300/20 ring-inset">
+        <span className="inline-flex h-6 items-center rounded-[6px] bg-caution/10 px-2 text-xs font-medium text-caution ring-1 ring-caution/20 ring-inset">
           Development demo
         </span>
       </h2>
@@ -106,13 +106,13 @@ export function DemoJobsSection({ jobs, error }: DemoJobsSectionProps) {
       </p>
 
       {error ? (
-        <p className="mt-5 rounded-[12px] bg-amber-400/[0.06] px-3.5 py-2.5 text-sm text-amber-100 ring-1 ring-amber-300/20">
+        <p className="mt-4 rounded-[10px] bg-caution/[0.06] px-3.5 py-2.5 text-sm text-caution ring-1 ring-caution/20">
           Demo jobs couldn&apos;t load: {error}
         </p>
       ) : jobs.length === 0 ? (
-        <EmptyState title="No demo jobs yet" description="Create one to publish it on the demo careers site." className="mt-5 py-10" />
+        <EmptyState title="No demo jobs yet" description="Create one to publish it on the demo careers site." className="mt-4 py-8" />
       ) : (
-        <div className="-mx-5 mt-4 overflow-x-auto px-5 sm:-mx-6 sm:px-6">
+        <div className="-mx-5 mt-4 overflow-x-auto px-5 sm:-mx-5 sm:px-5">
           <table aria-labelledby="demo-jobs-heading" className="w-full min-w-[760px] border-separate border-spacing-0 text-left text-sm">
             <thead>
               <tr>

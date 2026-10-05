@@ -73,7 +73,7 @@ export function JobsBoard({ jobs, demoJobs = null, demoError }: JobsBoardProps) 
 
       {demoJobs && <DemoJobsSection jobs={demoJobs} error={demoError} />}
 
-      <div role="group" aria-label="Filter by status" className="scrollbar-none mb-6 flex gap-2 overflow-x-auto">
+      <div role="group" aria-label="Filter by status" className="scrollbar-none mb-5 flex gap-2 overflow-x-auto">
         {STATUS_FILTERS.map((filter) => {
           const count = filter.value === "all" ? jobs.length : jobs.filter((job) => job.status === filter.value).length;
           return (
@@ -105,17 +105,17 @@ function JobCard({ job, counts }: { job: JobOpening; counts: StageCounts }) {
   return (
     <Link
       href={`/recruiter/jobs/${job.id}`}
-      className="glass group flex h-full flex-col rounded-[20px] border border-border p-5 transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-border-strong sm:p-6"
+      className="glass group flex h-full flex-col rounded-[14px] border border-border p-5 transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-border-strong sm:p-5"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[13px] text-stone">{job.department}</p>
-          <h2 className="mt-1 text-lg font-semibold tracking-tight text-ink">{job.title}</h2>
+          <p className="text-xs font-medium text-stone">{job.department}</p>
+          <h2 className="mt-1 text-base font-semibold tracking-tight text-ink">{job.title}</h2>
         </div>
         <JobStatusBadge status={job.status} />
       </div>
       <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-stone">{job.summary}</p>
-      <p className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-stone">
+      <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-stone">
         <span className="inline-flex items-center gap-1.5">
           <MapPin aria-hidden className="size-3.5" /> {job.location}
         </span>
@@ -123,8 +123,8 @@ function JobCard({ job, counts }: { job: JobOpening; counts: StageCounts }) {
           <UserRound aria-hidden className="size-3.5" /> {job.hiringManager}
         </span>
       </p>
-      <StageBreakdown counts={counts} className="mt-5 mb-5" />
-      <div className="mt-auto flex items-center justify-between gap-3 border-t border-border pt-4 text-[13px] text-stone">
+      <StageBreakdown counts={counts} className="mt-4 mb-4" />
+      <div className="mt-auto flex items-center justify-between gap-3 border-t border-border pt-3 text-[13px] text-stone">
         <span>
           <span className="font-medium text-ink tabular-nums">{total}</span> {total === 1 ? "candidate" : "candidates"}
         </span>

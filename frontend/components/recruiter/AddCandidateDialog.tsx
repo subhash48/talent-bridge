@@ -101,8 +101,8 @@ function AddCandidateForm({ jobs, onCancel, onCreated }: Omit<AddCandidateDialog
   }
 
   return (
-    <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-5">
-      <div className="grid gap-4 sm:grid-cols-2">
+    <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div className="grid gap-3.5 sm:grid-cols-2">
         <Field label="First name" htmlFor="new-candidate-firstName" error={errors.firstName} required>
           <Input {...control("firstName")} autoComplete="off" />
         </Field>
@@ -139,12 +139,12 @@ function AddCandidateForm({ jobs, onCancel, onCreated }: Omit<AddCandidateDialog
       </div>
 
       {formError && (
-        <p role="alert" className="rounded-[10px] border border-red-400/20 bg-red-400/[0.06] px-3 py-2.5 text-sm text-red-100">
+        <p role="alert" className="rounded-[8px] border border-danger/20 bg-danger/[0.06] px-3 py-2.5 text-sm text-danger">
           {formError}
         </p>
       )}
 
-      <div className="flex flex-col-reverse gap-2 border-t border-border pt-5 sm:flex-row sm:justify-end">
+      <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
         <Button variant="secondary" onClick={onCancel} disabled={saving}>
           Cancel
         </Button>

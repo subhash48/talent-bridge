@@ -21,7 +21,7 @@ export function StageBreakdown({ counts, className }: { counts: StageCounts; cla
       <div
         role="img"
         aria-label={total ? `Pipeline: ${summary}` : "No candidates in the pipeline yet"}
-        className="flex h-2 gap-0.5 overflow-hidden rounded-full bg-white/[0.06]"
+        className="flex h-1.5 gap-0.5 overflow-hidden rounded-full bg-ink/[0.06]"
       >
         {PIPELINE_STAGES.map((stage) =>
           counts[stage] > 0 ? (
@@ -33,7 +33,7 @@ export function StageBreakdown({ counts, className }: { counts: StageCounts; cla
           ) : null,
         )}
       </div>
-      <ul aria-hidden className="mt-3 flex flex-wrap gap-x-3.5 gap-y-1.5 text-xs text-stone">
+      <ul aria-hidden className="mt-2.5 flex flex-wrap gap-x-3.5 gap-y-1.5 text-xs text-stone">
         {PIPELINE_STAGES.map((stage) => (
           <li key={stage} className={cn("flex items-center gap-1.5", counts[stage] === 0 && "opacity-50")}>
             <span className={cn("size-1.5 rounded-full", STAGE_FILL_STYLES[stage])} />

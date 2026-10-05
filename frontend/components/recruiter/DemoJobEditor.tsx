@@ -238,7 +238,7 @@ export function DemoJobEditor({ job: initialJob }: { job?: DemoJob }) {
         actions={
           job && (
             <>
-              <DemoJobStatusBadge status={job.status} className="h-7 rounded-[8px] px-2.5" />
+              <DemoJobStatusBadge status={job.status} className="h-7 rounded-[6px] px-2.5" />
               {published && (
                 <a href={job.public_path} target="_blank" rel="noopener noreferrer" className={buttonStyles({ variant: "secondary", size: "sm" })}>
                   <ExternalLink aria-hidden /> View public page
@@ -249,9 +249,9 @@ export function DemoJobEditor({ job: initialJob }: { job?: DemoJob }) {
         }
       />
 
-      <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-5">
-        <Card className="p-5 sm:p-6">
-          <h2 className="text-[17px] font-medium tracking-tight text-ink">Basics</h2>
+      <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <Card className="p-4 sm:p-5">
+          <h2 className="text-base font-medium tracking-tight text-ink">Basics</h2>
           <p className="mt-1 text-sm text-stone">What the AI writes from. Your notes stay private: they never appear on the careers site.</p>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <Field label="Job title" htmlFor={fieldId("title")} error={errors.title} required className="sm:col-span-2">
@@ -296,11 +296,11 @@ export function DemoJobEditor({ job: initialJob }: { job?: DemoJob }) {
             </div>
             <Field label="Skills" htmlFor={fieldId("skills")} error={errors.skills} className="sm:col-span-2">
               {skills.length > 0 && (
-                <ul aria-label="Skills for this job" className="flex flex-wrap gap-2">
+                <ul aria-label="Skills for this job" className="flex flex-wrap gap-1.5">
                   {skills.map((skill) => (
                     <li
                       key={skill}
-                      className="inline-flex items-center gap-1 rounded-full bg-white/[0.05] py-1 pr-1 pl-3 text-[13px] text-charcoal ring-1 ring-white/[0.08]"
+                      className="inline-flex h-6 items-center gap-1 rounded-full bg-ink/[0.05] pr-1 pl-2.5 text-xs text-charcoal ring-1 ring-ink/10"
                     >
                       {skill}
                       <button
@@ -311,7 +311,7 @@ export function DemoJobEditor({ job: initialJob }: { job?: DemoJob }) {
                         }}
                         disabled={generating}
                         aria-label={`Remove ${skill}`}
-                        className="rounded-full p-0.5 text-stone transition-colors hover:bg-white/[0.08] hover:text-ink disabled:opacity-50"
+                        className="rounded-full p-0.5 text-stone transition-colors hover:bg-ink/[0.08] hover:text-ink disabled:opacity-50"
                       >
                         <X aria-hidden className="size-3.5" />
                       </button>
@@ -355,7 +355,7 @@ export function DemoJobEditor({ job: initialJob }: { job?: DemoJob }) {
                 rows={3}
                 maxLength={MAX_NOTES}
                 placeholder="What the team works on, what makes the role distinct, anything the posting should mention."
-                className={cn(growing, "min-h-20")}
+                className={cn(growing, "min-h-18")}
               />
               <Hint field="notes">For the AI only. Never shown on the careers site.</Hint>
             </Field>
@@ -370,7 +370,7 @@ export function DemoJobEditor({ job: initialJob }: { job?: DemoJob }) {
               {generating ? (
                 <p>Writing a draft…</p>
               ) : aiError ? (
-                <p className="text-red-300">{aiError}</p>
+                <p className="text-danger">{aiError}</p>
               ) : generatedBy ? (
                 <p>
                   {draftSource(generatedBy)}
@@ -383,49 +383,49 @@ export function DemoJobEditor({ job: initialJob }: { job?: DemoJob }) {
           </div>
         </Card>
 
-        <Card aria-busy={generating || undefined} className={cn("p-5 transition-opacity sm:p-6", generating && "opacity-60")}>
-          <h2 className="text-[17px] font-medium tracking-tight text-ink">Posting</h2>
+        <Card aria-busy={generating || undefined} className={cn("p-4 transition-opacity sm:p-5", generating && "opacity-60")}>
+          <h2 className="text-base font-medium tracking-tight text-ink">Posting</h2>
           <p className="mt-1 text-sm text-stone">
             What candidates read on the demo careers site. To publish it, add a summary, what the role is about, and at least one
             responsibility and one requirement.
           </p>
-          <p className="mt-4 flex items-start gap-2.5 rounded-[12px] bg-ai/[0.08] px-3.5 py-2.5 text-sm text-violet-100 ring-1 ring-ai/20">
-            <Sparkles aria-hidden className="mt-0.5 size-4 shrink-0 text-ai" />
+          <p className="mt-4 flex items-start gap-2.5 rounded-[10px] border border-border bg-ink/[0.03] px-3.5 py-2.5 text-sm text-charcoal">
+            <Sparkles aria-hidden className="mt-0.5 size-4 shrink-0 text-ink" />
             AI drafts are a starting point: review and edit everything. Nothing is published until you click Publish Demo Job.
           </p>
           <div className="mt-5 grid gap-4">
             <Field label="Summary" htmlFor={fieldId("summary")} error={errors.summary}>
-              <Textarea {...control("summary", { hint: true })} rows={2} maxLength={MAX_SUMMARY} className={cn(growing, "min-h-16")} />
+              <Textarea {...control("summary", { hint: true })} rows={2} maxLength={MAX_SUMMARY} className={cn(growing, "min-h-14")} />
               <Hint field="summary">One or two sentences: the first thing candidates read.</Hint>
             </Field>
             <Field label="About the role" htmlFor={fieldId("about_role")} error={errors.about_role}>
-              <Textarea {...control("about_role")} rows={5} maxLength={MAX_ABOUT_ROLE} className={cn(growing, "min-h-32")} />
+              <Textarea {...control("about_role")} rows={5} maxLength={MAX_ABOUT_ROLE} className={cn(growing, "min-h-28")} />
             </Field>
             <Field label="Responsibilities" htmlFor={fieldId("responsibilities")} error={errors.responsibilities}>
-              <Textarea {...control("responsibilities", { hint: true })} rows={5} className={cn(growing, "min-h-32")} />
+              <Textarea {...control("responsibilities", { hint: true })} rows={5} className={cn(growing, "min-h-28")} />
               <Hint field="responsibilities">One per line.</Hint>
             </Field>
             <Field label="Requirements" htmlFor={fieldId("requirements")} error={errors.requirements}>
-              <Textarea {...control("requirements", { hint: true })} rows={5} className={cn(growing, "min-h-32")} />
+              <Textarea {...control("requirements", { hint: true })} rows={5} className={cn(growing, "min-h-28")} />
               <Hint field="requirements">One per line. Job-related skills, knowledge and experience only.</Hint>
             </Field>
             <Field label="Preferred qualifications" htmlFor={fieldId("preferred_qualifications")} error={errors.preferred_qualifications}>
-              <Textarea {...control("preferred_qualifications", { hint: true })} rows={3} className={cn(growing, "min-h-20")} />
+              <Textarea {...control("preferred_qualifications", { hint: true })} rows={3} className={cn(growing, "min-h-18")} />
               <Hint field="preferred_qualifications">One per line. Nice to have, never required.</Hint>
             </Field>
             <Field label="About the team" htmlFor={fieldId("about_team")} error={errors.about_team}>
-              <Textarea {...control("about_team")} rows={3} maxLength={MAX_ABOUT_TEAM} className={cn(growing, "min-h-20")} />
+              <Textarea {...control("about_team")} rows={3} maxLength={MAX_ABOUT_TEAM} className={cn(growing, "min-h-18")} />
             </Field>
           </div>
         </Card>
 
         {formError && (
-          <p role="alert" className="rounded-[10px] border border-red-400/20 bg-red-400/[0.06] px-3 py-2.5 text-sm text-red-100">
+          <p role="alert" className="rounded-[8px] border border-danger/20 bg-danger/[0.06] px-3 py-2.5 text-sm text-danger">
             {formError}
           </p>
         )}
 
-        <div className="flex flex-col-reverse gap-2 border-t border-border pt-5 sm:flex-row sm:justify-end">
+        <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
           <Button type="submit" variant={published ? "primary" : "secondary"} disabled={busy}>
             {pending === "save" && <LoaderCircle className="animate-spin" aria-hidden />}
             {pending === "save" ? "Saving…" : !job || job.status === "draft" ? "Save Draft" : "Save changes"}

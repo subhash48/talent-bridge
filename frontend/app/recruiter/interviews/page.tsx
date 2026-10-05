@@ -40,9 +40,9 @@ export default async function InterviewsPage() {
         subtitle={`${pluralize(upcoming.length, "upcoming interview")} · ${awaiting.length} awaiting confirmation · ${needsFeedback.length} need feedback`}
       />
 
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <section aria-labelledby="upcoming-heading" className="glass @container rounded-[22px] border border-border p-2 sm:p-3">
-          <h2 id="upcoming-heading" className="px-3 pt-3 text-lg font-semibold tracking-tight text-ink">
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <section aria-labelledby="upcoming-heading" className="glass @container rounded-[16px] border border-border p-2 sm:p-3">
+          <h2 id="upcoming-heading" className="px-3 pt-3 text-base font-semibold tracking-tight text-ink">
             Upcoming
           </h2>
           {upcoming.length === 0 ? (
@@ -50,7 +50,7 @@ export default async function InterviewsPage() {
           ) : (
             groupByDay(upcoming).map(([day, items]) => (
               <div key={day}>
-                <h3 className="px-3 pt-5 pb-1.5 text-[13px] font-medium text-stone">{day}</h3>
+                <h3 className="px-3 pt-4 pb-1.5 text-[13px] font-medium text-stone">{day}</h3>
                 <ul className="flex flex-col">
                   {items.map((interview) => (
                     <InterviewRow key={interview.id} interview={interview} />
@@ -61,12 +61,12 @@ export default async function InterviewsPage() {
           )}
         </section>
 
-        <div className="flex flex-col gap-6">
-          <section aria-labelledby="feedback-heading" className="glass @container rounded-[22px] border border-border p-2 sm:p-3">
-            <h2 id="feedback-heading" className="flex items-center justify-between px-3 pt-3 text-lg font-semibold tracking-tight text-ink">
+        <div className="flex flex-col gap-5">
+          <section aria-labelledby="feedback-heading" className="glass @container rounded-[16px] border border-border p-2 sm:p-3">
+            <h2 id="feedback-heading" className="flex items-center justify-between px-3 pt-3 text-base font-semibold tracking-tight text-ink">
               Needs feedback
               {needsFeedback.length > 0 && (
-                <span className="rounded-full bg-amber-400/10 px-2 py-0.5 text-xs font-medium text-amber-200 ring-1 ring-amber-300/20">
+                <span className="rounded-full bg-caution/10 px-2 py-0.5 text-xs font-medium text-caution ring-1 ring-caution/20">
                   {needsFeedback.length}
                 </span>
               )}
@@ -82,12 +82,12 @@ export default async function InterviewsPage() {
             )}
           </section>
 
-          <section aria-labelledby="completed-heading" className="glass @container rounded-[22px] border border-border p-2 sm:p-3">
-            <h2 id="completed-heading" className="px-3 pt-3 text-lg font-semibold tracking-tight text-ink">
+          <section aria-labelledby="completed-heading" className="glass @container rounded-[16px] border border-border p-2 sm:p-3">
+            <h2 id="completed-heading" className="px-3 pt-3 text-base font-semibold tracking-tight text-ink">
               Recently completed
             </h2>
             {completed.length === 0 ? (
-              <EmptyState icon={ClipboardCheck} title="No completed interviews" className="m-3 py-8" />
+              <EmptyState icon={ClipboardCheck} title="No completed interviews" className="m-3 py-6" />
             ) : (
               <ul className="mt-2 flex flex-col">
                 {completed.map((interview) => (

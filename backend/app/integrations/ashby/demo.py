@@ -7,9 +7,10 @@
     python -m app.integrations.ashby.demo status
     python -m app.integrations.ashby.demo reset
 
-Each command builds the webhook Ashby would send, from the fixtures in tests/fixtures/ashby (through
-tests/ashby_support.py), and hands its body to the WebhookProcessor the webhook endpoint uses, so the
-importer, the stage mapping and the event ledger all run as they do for a real delivery. The body is
+Each command builds the webhook Ashby would send (demo_payloads.py, from the values given: nothing is
+read from disk, so it runs wherever app/ does) and hands its body to the WebhookProcessor the webhook
+endpoint uses, so the importer, the stage mapping and the event ledger all run as they do for a real
+delivery. The body is
 signed with a key made for that one delivery, so the signature check runs too; ASHBY_WEBHOOK_SECRET is
 never read, and there is no HTTP endpoint. The follow-ups the endpoint runs after responding (the
 portal invitation, the AI analysis) run here once the processor returns.
@@ -59,6 +60,7 @@ from app.core.config import settings
 from app.core.enums import UserRole
 from app.core.errors import AppError
 from app.integrations.ashby.demo_ids import DEMO_PREFIX, can_receive_mail, demo_id, is_demo
+from app.integrations.ashby.demo_payloads import application_event, job_event, schedule_event
 from app.integrations.ashby.webhook import FollowUps, WebhookProcessor
 from app.integrations.supabase_admin import SupabaseAdmin, get_supabase_admin
 from app.models import (
@@ -77,13 +79,6 @@ from app.services import account_provisioning, ai_service, demo_resumes
 from app.services.ai.client import AIProvider, get_ai_provider
 from app.services.candidate_visibility import portal_status, present_activity
 
-try:
-    from tests.ashby_support import application_event, fixture, iso, schedule_event
-except ImportError as exc:  # pragma: no cover
-    raise ImportError(
-        "The Ashby simulator builds its payloads from backend/tests: run it from backend/ in a checkout."
-    ) from exc
-
 logger = logging.getLogger(__name__)
 
 __all__ = ["DEMO_PREFIX", "can_receive_mail", "demo_id", "is_demo"]  # re-exported from demo_ids
@@ -93,7 +88,7 @@ INTERVIEW_HOUR_UTC = 16
 NO_EMAIL_NOTE = "Simulator: no invitation email was sent. Run apply again with --send-invite to send one."
 
 # --stage NAME -> the Ashby webhook that puts an application there: action, the Ashby stage (a title in
-# tests/ashby_support.STAGES), the application status and the archive reason type. mapping.py decides
+# demo_payloads.STAGES), the application status and the archive reason type. mapping.py decides
 # what each becomes in Talent Bridge, exactly as for a real delivery.
 STAGE_EVENTS: dict[str, tuple[str, str, str, str | None]] = {
     "screening": ("candidateStageChange", "Application Review", "Active", None),
@@ -183,8 +178,9 @@ async def submit(
     """Deliver the application as Ashby would: jobCreate for the job, then applicationSubmit.
 
     job_external_id is the Ashby id of a job that already exists, such as a recruiter's demo job: then
-    no jobCreate is sent. phone and source replace the fixture's. profile=False sends no name and no
-    phone at all, so the importer leaves an existing candidate's as they are. The same email and job
+    no jobCreate is sent. phone is sent only when given, and source defaults to Ashby's "Applied".
+    profile=False sends no name and no phone at all, so the importer leaves an existing candidate's as
+    they are. The same email and job
     always give the same Ashby ids and webhook ids, so delivering again is a duplicate. Nothing else
     runs: no follow-ups, and no check of whose email it is. apply() adds both for the command line; the
     demo careers site submits only for someone signed in as that email, and refuses staff emails.
@@ -198,38 +194,24 @@ async def submit(
     name = " ".join(part.strip() for part in (first_name, last_name) if part.strip())
     payload = application_event(
         "applicationSubmit",
+        webhook_action_id=demo_id("event", "applicationSubmit", application_id),
         application_id=application_id,
         candidate_id=demo_id("candidate", email),
         email=email,
         name=name if profile else "",
+        phone=phone if profile else None,
+        source=source,
         job_id=job_id,
         job_title=job_title,
         stage="Application Review",
         updated_at=now,
         created_at=now,
-        webhook_action_id=demo_id("event", "applicationSubmit", application_id),
     )
-    application = payload["data"]["application"]
-    if not profile:
-        application["candidate"].pop("primaryPhoneNumber", None)  # the fixture's, which would replace theirs
-    elif phone:
-        application["candidate"]["primaryPhoneNumber"] = {"value": phone, "type": "Mobile", "isPrimary": True}
-    if source:
-        application["source"]["title"] = source
 
     outcome = Outcome(email=email)
     if job_external_id is None:
-        job = fixture("jobUpdate")
-        job["action"] = "jobCreate"
-        job["webhookActionId"] = demo_id("event", "jobCreate", job_id)
-        job["data"]["job"].update(
-            id=job_id,
-            title=job_title,
-            status="Open",
-            createdAt=iso(now),
-            updatedAt=iso(now),
-            openedAt=iso(now),
-            closedAt=None,
+        job = job_event(
+            "jobCreate", webhook_action_id=demo_id("event", "jobCreate", job_id), job_id=job_id, title=job_title, at=now
         )
         ack, _ = await _deliver(factory, job)
         outcome.lines.append(_ack_line(ack))
@@ -262,10 +244,11 @@ async def stage(
     candidate_id = candidate.external_id or demo_id("candidate", candidate.email)
     payload = application_event(
         action,
+        webhook_action_id=f"{DEMO_PREFIX}event-{uuid.uuid4()}",
         application_id=application.external_id or "",
         candidate_id=candidate_id,
         email=candidate.email,
-        name="",  # a stage change leaves the person's name and phone as they are
+        name="",  # no name and no phone: a stage change leaves the person's details as they are
         job_id=job.external_id or "",
         job_title=job.title,
         stage=ashby_stage,
@@ -273,9 +256,7 @@ async def stage(
         updated_at=utcnow(),
         created_at=application.applied_at,
         archive_reason_type=reason_type,
-        webhook_action_id=f"{DEMO_PREFIX}event-{uuid.uuid4()}",
     )
-    payload["data"]["application"]["candidate"].pop("primaryPhoneNumber", None)  # the fixture's
     outcome = Outcome(email=candidate.email)
     ack, follow_ups = await _deliver(factory, payload)
     if candidate.external_id is None:
@@ -306,15 +287,13 @@ async def interview(
         hour=INTERVIEW_HOUR_UTC, minute=0, second=0, microsecond=0
     )
     payload = schedule_event(
+        "interviewScheduleUpdate" if scheduled else "interviewScheduleCreate",
+        webhook_action_id=f"{DEMO_PREFIX}event-{uuid.uuid4()}",
         application_id=application_id,
         schedule_id=demo_id("schedule", application_id),
         event_id=event_id,
+        start=start,
         updated_at=utcnow(),
-    )
-    payload["action"] = "interviewScheduleUpdate" if scheduled else "interviewScheduleCreate"
-    payload["webhookActionId"] = f"{DEMO_PREFIX}event-{uuid.uuid4()}"
-    payload["data"]["interviewSchedule"]["interviewEvents"][0].update(
-        startTime=iso(start), endTime=iso(start + timedelta(minutes=60))
     )
     ack, _ = await _deliver(factory, payload)
     return Outcome(lines=[_ack_line(ack)], email=candidate.email)

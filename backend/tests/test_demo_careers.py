@@ -1,8 +1,8 @@
 """The development-only demo careers site (services/demo_careers.py): a published demo job takes
 applications without a sign-in; each waits, unseen by recruiters, until the applicant activates their
 portal account or signs in, and then reaches Talent Bridge through the Ashby simulator, exactly once.
-Also the résumé checks and download, the simulator's submit() and reset, and that nothing of this runs
-or is even imported in production."""
+Also the résumé checks and download, the simulator's submit() and reset. That it all runs from app/
+alone, with no backend/tests, is in test_production_boundary.py."""
 
 import asyncio
 import base64
@@ -1304,40 +1304,7 @@ async def test_a_role_that_closes_shows_as_closed_and_takes_no_more_applications
     assert (await anonymous.get(f"{API}/demo/careers/jobs/{closing}")).status_code == 404
 
 
-# Without backend/tests
-
-
-STARTUP_WITHOUT_TESTS = """
-import sys
-sys.modules["tests"] = None  # no backend/tests, as in the production image
-import app.main
-assert "app.integrations.ashby.demo" not in sys.modules
-from app.core.errors import ServiceUnavailableError
-from app.services import demo_careers
-try:
-    demo_careers._simulator()
-except ServiceUnavailableError as exc:
-    print(exc.code)
-"""
-
-
-def test_the_api_starts_without_backend_tests(tmp_path: Path) -> None:
-    """The production image ships app/ alone. Nothing loaded at startup may import the simulator,
-    which builds its payloads from backend/tests; the demo careers site says it's unavailable instead."""
-    backend = Path(__file__).resolve().parents[1]
-    # A fresh interpreter, run from an empty folder so backend/.env isn't read: the tests' settings
-    # are in the environment.
-    result = subprocess.run(
-        [sys.executable, "-c", STARTUP_WITHOUT_TESTS],
-        cwd=tmp_path,
-        env={**os.environ, "PYTHONPATH": str(backend), "ENABLE_ASHBY_DEMO": "true"},
-        capture_output=True,
-        text=True,
-        timeout=120,
-        check=False,
-    )
-    assert result.returncode == 0, result.stderr
-    assert result.stdout.strip() == "demo_unavailable"
+# Packaging
 
 
 def test_a_stray_ashby_module_cant_shadow_the_package(tmp_path: Path) -> None:
@@ -1357,31 +1324,6 @@ def test_a_stray_ashby_module_cant_shadow_the_package(tmp_path: Path) -> None:
         check=False,
     )
     assert result.returncode == 0, result.stderr
-
-
-async def test_without_the_simulator_nothing_is_stored_and_sign_in_still_works(
-    anonymous: AsyncClient,
-    sessions: async_sessionmaker[AsyncSession],
-    ashby: FakeSupabaseAdmin,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    job_id = await demo_job(sessions)
-    assert (await apply_to(anonymous, job_id)).json()["status"] == "invitation_sent"
-    token = bearer(ashby.users[EMAIL], email=EMAIL)
-    with monkeypatch.context() as blocked:
-        # As in the production image: backend/tests is missing, so the simulator can't be imported.
-        blocked.setitem(sys.modules, "tests.ashby_support", None)
-        blocked.delitem(sys.modules, "app.integrations.ashby.demo", raising=False)
-        response = await apply_to(anonymous, job_id, email="someone.new@inbox.dev")
-        assert response.status_code == 503
-        assert response.json()["error"]["code"] == "demo_unavailable"
-        assert await careers_applications(sessions, "someone.new@inbox.dev") == []
-        # Signing in still answers; the application waits for a working simulator.
-        assert (await anonymous.get(f"{API}/me", headers=token)).json()["error"]["code"] == "account_not_linked"
-        assert (await careers_applications(sessions))[0].status == "awaiting_activation"
-    assert (await anonymous.get(f"{API}/me", headers=token)).json()["role"] == "candidate"
-    assert (await careers_applications(sessions))[0].status == "submitted"
-    assert len(ashby.invites) == 1
 
 
 # The simulator

@@ -19,18 +19,17 @@ must first prove they own the email, so nobody can apply in someone else's name.
 Until then recruiters see nothing: no candidate or application exists before it is submitted. And what
 was typed here never rewrites someone Talent Bridge already has: their name, phone and résumé link stay.
 
-The simulator builds its payloads from backend/tests, which the production image doesn't ship, so it is
-imported only when used (_simulator()). The API refuses every demo route in production anyway.
+The simulator is ordinary application code: it builds its payloads from the values it is given
+(integrations/ashby/demo_payloads.py) and needs nothing outside app/. The API refuses every demo route
+unless ENABLE_ASHBY_DEMO is on outside production.
 """
 
 import asyncio
-import importlib
 import logging
 import time
 import uuid
 from collections.abc import Sequence
 from datetime import timedelta
-from types import ModuleType
 from typing import Any
 
 from fastapi import BackgroundTasks
@@ -40,8 +39,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import settings
 from app.core.enums import DemoApplicationStatus, DemoPostingStatus, UserRole
-from app.core.errors import AppError, ConflictError, NotFoundError, ServiceUnavailableError
+from app.core.errors import AppError, ConflictError, NotFoundError
 from app.core.security import TokenClaims
+from app.integrations.ashby import demo as simulator
 from app.integrations.ashby.demo_ids import can_receive_mail, is_demo
 from app.integrations.supabase_admin import AuthUserExists, SupabaseAdmin, SupabaseAdminError
 from app.models import AIAnalysis, Application, Candidate, DemoApplication, DemoJobPosting, Job, User
@@ -122,7 +122,6 @@ async def apply(
         raise NotFoundError(NOT_ON_SITE, code="job_not_found")
     if posting.status == DemoPostingStatus.CLOSED:
         raise ConflictError(NOT_TAKING_APPLICATIONS, code="job_closed")
-    _simulator()  # without it nothing could ever be submitted, so nothing is stored either
 
     email = data.email
     if not can_receive_mail(email):
@@ -206,10 +205,6 @@ async def _submit_pending(
         eligible = await _eligible(session, rows, user, claims.subject, email)
         if not eligible:
             return
-        try:
-            simulator = _simulator()
-        except ServiceUnavailableError:
-            return  # they stay pending; _simulator() logged why
         claimed = await _claim(session, [row.id for row in eligible])
         job_ids = {row.job_id for row in eligible}
         jobs = {job.id: job for job in await session.scalars(select(Job).where(Job.id.in_(job_ids)))}
@@ -443,17 +438,6 @@ async def _wait_for(factory: async_sessionmaker[AsyncSession], ids: list[uuid.UU
 
 
 # Internals
-
-
-def _simulator() -> ModuleType:
-    """The Ashby simulator, imported on first use: it needs backend/tests, which only a checkout has."""
-    try:
-        return importlib.import_module("app.integrations.ashby.demo")
-    except ImportError as exc:
-        logger.warning("demo_careers.simulator_unavailable error=%s", exc)
-        raise ServiceUnavailableError(
-            "The demo careers site needs the backend source checkout (backend/tests).", code="demo_unavailable"
-        ) from None
 
 
 def _public(posting: DemoJobPosting) -> dict[str, Any]:

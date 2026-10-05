@@ -4,6 +4,7 @@ both portals, and reset removes only what the simulator made."""
 
 import json
 import uuid
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import pytest
@@ -14,7 +15,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.core.config import settings
 from app.core.enums import ApplicationStage
 from app.db.seed import seed_id
-from app.integrations.ashby import demo
+from app.integrations.ashby import demo, demo_payloads
+from app.integrations.ashby.schemas import AshbyApplication, AshbyJob, InterviewSchedule
 from app.models import (
     AIAnalysis,
     Application,
@@ -30,6 +32,7 @@ from app.models import (
     User,
 )
 from app.services.ai.fallback import MockProvider
+from tests import ashby_support
 from tests.ashby_support import FakeSupabaseAdmin
 from tests.conftest import ALEX_EMAIL, API, SOPHIA_EMAIL, bearer
 
@@ -299,3 +302,91 @@ def test_cli_runs_against_the_configured_database(capsys: pytest.CaptureFixture[
         demo.main(["stage", "--email", email, "--stage", "Hired"])
     assert exited.value.code == 1  # a new in-memory database each run: nothing to move
     assert "Run apply first" in capsys.readouterr().err
+
+
+# The payloads
+
+
+NOW = datetime(2026, 10, 5, 9, 30, tzinfo=UTC)
+
+
+@pytest.mark.parametrize(
+    ("action", "stage", "status", "reason"),
+    [
+        ("applicationSubmit", "Application Review", "Active", None),
+        ("candidateStageChange", "Technical Interview", "Active", None),
+        ("candidateStageChange", "Offer", "Active", None),
+        ("candidateHire", "Hired", "Hired", None),
+        ("candidateStageChange", "Archived", "Archived", "RejectedByCandidate"),
+    ],
+)
+def test_application_payloads_read_as_ashby_documents_them(
+    action: str, stage: str, status: str, reason: str | None
+) -> None:
+    """The simulator builds its payloads in app/ (demo_payloads.py), from the values given. For every
+    field the integration reads they parse exactly as Ashby's documented webhooks do (the fixtures in
+    tests/fixtures/ashby, which production code never touches)."""
+    values: dict[str, Any] = {
+        "application_id": "tb-demo-application-1",
+        "candidate_id": "tb-demo-candidate-1",
+        "email": "maya.patel@inbox.dev",
+        "name": "Maya Patel",
+        "job_id": "tb-demo-job-1",
+        "job_title": "TEST - Data Scientist",
+        "stage": stage,
+        "status": status,
+        "updated_at": NOW,
+        "created_at": NOW - timedelta(days=1),
+        "archive_reason_type": reason,
+        "webhook_action_id": "tb-demo-event-1",
+    }
+    documented = ashby_support.application_event(action, **values)
+    phone = documented["data"]["application"]["candidate"].get("primaryPhoneNumber")
+    built = demo_payloads.application_event(action, phone=phone["value"] if phone else None, **values)
+    assert (built["action"], built["webhookActionId"]) == (documented["action"], documented["webhookActionId"])
+    assert AshbyApplication.model_validate(built["data"]["application"]) == AshbyApplication.model_validate(
+        documented["data"]["application"]
+    )
+
+
+def test_job_and_interview_payloads_read_as_ashby_documents_them() -> None:
+    documented_job = ashby_support.fixture("jobUpdate")
+    documented_job["data"]["job"].update(
+        id="tb-demo-job-1",
+        title="TEST - Data Scientist",
+        status="Open",
+        createdAt=ashby_support.iso(NOW),
+        updatedAt=ashby_support.iso(NOW),
+        openedAt=ashby_support.iso(NOW),
+        closedAt=None,
+    )
+    built_job = demo_payloads.job_event(
+        "jobCreate", webhook_action_id="tb-demo-event-2", job_id="tb-demo-job-1", title="TEST - Data Scientist", at=NOW
+    )
+    assert built_job["action"] == "jobCreate"
+    assert AshbyJob.model_validate(built_job["data"]["job"]) == AshbyJob.model_validate(documented_job["data"]["job"])
+
+    start = NOW + timedelta(days=3)
+    documented = ashby_support.schedule_event(
+        application_id="tb-demo-application-1",
+        schedule_id="tb-demo-schedule-1",
+        event_id="tb-demo-interview-1",
+        updated_at=NOW,
+    )
+    documented["data"]["interviewSchedule"]["interviewEvents"][0].update(
+        startTime=ashby_support.iso(start), endTime=ashby_support.iso(start + timedelta(minutes=60))
+    )
+    for action in ("interviewScheduleCreate", "interviewScheduleUpdate"):
+        built = demo_payloads.schedule_event(
+            action,
+            webhook_action_id="tb-demo-event-3",
+            application_id="tb-demo-application-1",
+            schedule_id="tb-demo-schedule-1",
+            event_id="tb-demo-interview-1",
+            start=start,
+            updated_at=NOW,
+        )
+        assert built["action"] == action
+        assert InterviewSchedule.model_validate(built["data"]["interviewSchedule"]) == InterviewSchedule.model_validate(
+            documented["data"]["interviewSchedule"]
+        )

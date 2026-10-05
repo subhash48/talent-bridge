@@ -1,7 +1,5 @@
-"""Ids and address checks for the development-only Ashby simulator (demo.py).
-
-Kept apart from demo.py, which builds its payloads from backend/tests and so can only be imported in a
-checkout, so that code loaded at startup (demo jobs, the demo careers site) can use them anywhere.
+"""Ids and address checks for the development-only Ashby simulator (demo.py), shared with the demo jobs
+and the demo careers site.
 """
 
 import uuid

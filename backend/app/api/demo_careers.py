@@ -32,7 +32,6 @@ async def apply(
     activating the portal account an invitation creates, or signing in to the one they have. Their
     next GET /me submits it. The result says which (see CareerApplicationResult).
 
-    404 job_not_found (not published), 409 job_closed, 422 invalid_resume or email_not_accepted, 503
-    demo_unavailable (the Ashby simulator needs backend/tests).
+    404 job_not_found (not published), 409 job_closed, 422 invalid_resume or email_not_accepted.
     """
     return await demo_careers.apply(session, job_id, body, admin)

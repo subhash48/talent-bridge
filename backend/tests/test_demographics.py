@@ -8,16 +8,18 @@ from collections import Counter
 from typing import Any
 
 from httpx import AsyncClient
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.enums import Region
 from app.main import app
-from app.models import Candidate, CandidateDemographics
+from app.models import Candidate, CandidateDemographics, DemoApplicationDemographics
 from app.models.base import utcnow
 from app.services.ai.context import build_candidate_context
 from app.services.demographics import OTHER_INSUFFICIENT, summarize
+from tests.ashby_support import FakeSupabaseAdmin
 from tests.conftest import ALEX_AUTH, API, application_id, bearer, candidate_id
+from tests.test_demo_careers import EMAIL, apply_to, demo_job, demo_on  # noqa: F401  (demo_on: autouse here too)
 
 SOPHIA = candidate_id("sophia-martinez")
 ANSWERS = {
@@ -141,3 +143,45 @@ def test_a_combined_group_too_small_to_stand_alone_takes_in_the_next_smallest() 
     assert [bucket.label for bucket in other.buckets] == ["United States", "Other"]
     # Too few answers in all: nothing at all.
     assert summarize("region", "Region", Counter({"india": 4})).suppressed
+
+
+# The demo careers application form
+
+
+async def test_answers_given_with_a_careers_application_move_to_the_candidate_on_submit(
+    anonymous: AsyncClient, sessions: async_sessionmaker[AsyncSession], ashby: FakeSupabaseAdmin
+) -> None:
+    job = await demo_job(sessions)
+    response = await apply_to(anonymous, job, demographics={"region": "canada", "race_ethnicity": "prefer_not_to_say"})
+    assert response.status_code == 200
+    async with sessions() as session:
+        assert await session.scalar(select(func.count()).select_from(DemoApplicationDemographics)) == 1
+        assert await session.scalar(select(func.count()).select_from(CandidateDemographics)) == 0
+
+    token = bearer(ashby.users[EMAIL], email=EMAIL)
+    assert (await anonymous.get(f"{API}/me", headers=token)).status_code == 200  # activating submits it
+
+    async with sessions() as session:
+        assert await session.scalar(select(func.count()).select_from(DemoApplicationDemographics)) == 0
+        candidate = await session.scalar(select(Candidate.id).where(Candidate.email == EMAIL))
+        row = await session.get(CandidateDemographics, candidate)
+        assert row is not None
+        assert (row.region, row.race_ethnicity, row.disability_status) == ("canada", "prefer_not_to_say", None)
+    own = (await anonymous.get(f"{API}/candidate/demographics", headers=token)).json()
+    assert own["region"] == "canada"
+
+
+async def test_a_careers_application_needs_no_demographic_answers(
+    anonymous: AsyncClient, sessions: async_sessionmaker[AsyncSession], ashby: FakeSupabaseAdmin
+) -> None:
+    job = await demo_job(sessions)
+    assert (await apply_to(anonymous, job)).status_code == 200
+    assert (await apply_to(anonymous, job, demographics={})).status_code == 200
+    assert (
+        await apply_to(anonymous, job, demographics={"region": None, "sexual_orientation": "prefer_not_to_say"})
+    ).status_code == 200
+    assert (await apply_to(anonymous, job, demographics={"region": "atlantis"})).status_code == 422
+    await anonymous.get(f"{API}/me", headers=bearer(ashby.users[EMAIL], email=EMAIL))
+    async with sessions() as session:
+        rows = (await session.scalars(select(CandidateDemographics))).all()
+    assert [(row.region, row.sexual_orientation) for row in rows] == [(None, "prefer_not_to_say")]

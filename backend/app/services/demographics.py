@@ -15,14 +15,15 @@ person's answer showing. The answers live in their own table, which nothing else
 record, search, sort, filter, ranking, AI context or analysis can see them.
 """
 
+import uuid
 from collections import Counter
 from enum import StrEnum
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import DisabilityStatus, RaceEthnicity, Region, SexualOrientation
-from app.models import Candidate, CandidateDemographics
+from app.models import Candidate, CandidateDemographics, DemoApplicationDemographics
 from app.models.base import utcnow
 from app.schemas.demographics import (
     DEMOGRAPHICS_NOTE,
@@ -107,6 +108,39 @@ async def save_own(
         await session.delete(row)  # nothing answered: keep nothing
     await session.commit()
     return await get_own(session, candidate)
+
+
+async def hold_for_application(
+    session: AsyncSession, demo_application_id: uuid.UUID, answers: DemographicAnswers | None
+) -> None:
+    """Keep the answers given with a demo careers application until it is submitted (the caller commits).
+    Applying again replaces them; applying again with none answered drops them."""
+    await session.execute(
+        delete(DemoApplicationDemographics).where(
+            DemoApplicationDemographics.demo_application_id == demo_application_id
+        )
+    )
+    answered = answers.answered() if answers else {}
+    if answered:
+        session.add(DemoApplicationDemographics(demo_application_id=demo_application_id, **answered))
+
+
+async def move_to_candidate(session: AsyncSession, demo_application_id: uuid.UUID, candidate_id: uuid.UUID) -> bool:
+    """The answers held for a submitted application become the candidate's own: each one answered
+    replaces theirs, and a question left blank keeps what they said before. The caller commits."""
+    held = await session.get(DemoApplicationDemographics, demo_application_id)
+    if held is None:
+        return False
+    answered = {field: value for field in FIELDS if (value := getattr(held, field)) is not None}
+    row = await session.get(CandidateDemographics, candidate_id)
+    if row is None:
+        session.add(CandidateDemographics(candidate_id=candidate_id, **answered))
+    else:
+        for field, value in answered.items():
+            setattr(row, field, value)
+        row.updated_at = utcnow()
+    await session.delete(held)
+    return True
 
 
 # Aggregates, for recruiters

@@ -11,6 +11,7 @@ from pydantic import BeforeValidator, EmailStr, Field, field_validator
 
 from app.core.enums import DemoPostingStatus, JobStatus
 from app.schemas.common import APIModel, OptionalText, OptionalURL, Timestamp
+from app.schemas.demographics import DemographicAnswers
 
 WorkArrangement = Literal["On-site", "Hybrid", "Remote"]
 EmploymentType = Literal["Full-time", "Part-time", "Contract", "Internship", "Temporary"]
@@ -217,6 +218,8 @@ class CareerApplicationCreate(APIModel):
     phone: Annotated[str, Field(min_length=7, max_length=40)]
     linkedin_url: OptionalURL = None
     resume: ResumeUpload
+    # Optional, every question: used only in aggregate and kept apart from the application.
+    demographics: DemographicAnswers | None = None
 
     @field_validator("email")
     @classmethod

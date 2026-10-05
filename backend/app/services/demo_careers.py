@@ -53,7 +53,7 @@ from app.schemas.demo import (
     CareerJobDetail,
     CareerJobSummary,
 )
-from app.services import ai_service, demo_resumes
+from app.services import ai_service, demo_resumes, demographics
 from app.services.account_provisioning import NOT_CONFIGURED
 from app.services.account_service import AccountLinkError, find_auth_account, link_account
 from app.services.ai.client import AIProvider
@@ -150,6 +150,8 @@ async def apply(
     # changed (then no UPDATE would refresh updated_at by itself).
     application.updated_at = utcnow()
     await demo_resumes.save(session, application, resume)
+    await session.flush()
+    await demographics.hold_for_application(session, application.id, data.demographics)
 
     status = await _arrange_sign_in(session, application, user, admin)
     await session.commit()
@@ -379,6 +381,21 @@ async def _mark_submitted(
             )
             logger.info("demo_careers.submitted demo_application=%s application=%s", row.id, application_id)
         await session.commit()
+    await _move_demographics(factory, submitted)
+
+
+async def _move_demographics(
+    factory: async_sessionmaker[AsyncSession], submitted: list[tuple[DemoApplication, uuid.UUID, uuid.UUID]]
+) -> None:
+    """The voluntary demographic answers given with each application become the candidate's own (only
+    ever reported in aggregate). Optional data: a failure here never undoes a submission."""
+    for row, _application_id, candidate_id in submitted:
+        try:
+            async with factory() as session:
+                if await demographics.move_to_candidate(session, row.id, candidate_id):
+                    await session.commit()
+        except Exception:
+            logger.exception("demo_careers.demographics_not_moved demo_application=%s", row.id)
 
 
 async def _queue_analyses(

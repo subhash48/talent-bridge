@@ -100,7 +100,7 @@ export async function apiDownload(path: string): Promise<Blob> {
 /** fetch with the user's token. Anything but a 2xx is an ApiError, and a session that's no longer valid leaves the page. */
 async function send(url: string, { headers, ...init }: RequestInit = {}): Promise<Response> {
   const merged = new Headers(headers);
-  if (init.body !== undefined) merged.set("Content-Type", "application/json");
+  if (init.body !== undefined && !merged.has("Content-Type")) merged.set("Content-Type", "application/json");
   const token = await accessToken();
   if (token) merged.set("Authorization", `Bearer ${token}`);
 

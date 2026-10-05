@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.enums import DemoApplicationStatus, DemoPostingStatus, JobStatus
-from app.core.errors import AppError, ConflictError, NotFoundError
+from app.core.errors import AppError, BadRequestError, ConflictError, NotFoundError
 from app.integrations.ashby.demo_ids import demo_id
 from app.models import Application, DemoApplication, DemoJobPosting, Job, User
 from app.models.base import utcnow
@@ -85,6 +85,8 @@ async def update_demo_job(session: AsyncSession, job_id: uuid.UUID, data: DemoJo
     changes = data.model_dump(exclude_unset=True)
     for field, value in changes.items():
         setattr(posting.job if field in JOB_FIELDS else posting, field, value)
+    if posting.salary_min is not None and posting.salary_max is not None and posting.salary_min > posting.salary_max:
+        raise BadRequestError("The minimum salary can't be more than the maximum.", code="invalid_salary_range")
     if posting.status == DemoPostingStatus.PUBLISHED:
         check_publishable(posting)
     if changes:
@@ -250,6 +252,9 @@ def _demo_job_read(posting: DemoJobPosting, applicant_count: int, pending_count:
         requirements=posting.requirements,
         preferred_qualifications=posting.preferred_qualifications,
         about_team=posting.about_team,
+        salary_min=posting.salary_min,
+        salary_max=posting.salary_max,
+        salary_currency=posting.salary_currency,
         generated_by_model=posting.generated_by_model,
         status=posting.status,
         job_status=job.status,

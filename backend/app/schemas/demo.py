@@ -7,7 +7,7 @@ from typing import Annotated, Any, Literal
 from urllib.parse import urlparse
 from uuid import UUID
 
-from pydantic import BeforeValidator, EmailStr, Field, field_validator
+from pydantic import BeforeValidator, EmailStr, Field, field_validator, model_validator
 
 from app.core.enums import DemoPostingStatus, JobStatus
 from app.schemas.common import APIModel, OptionalText, OptionalURL, Timestamp
@@ -47,6 +47,9 @@ def clean_list(value: Any) -> Any:
 
 
 Title = Annotated[str, Field(min_length=1, max_length=200)]
+# A yearly pay amount in whole units of the currency, set by the recruiter (never by the AI job writer).
+Salary = Annotated[int, Field(gt=0, le=10_000_000)]
+Currency = Annotated[str, Field(pattern=r"^[A-Z]{3}$")]
 Skill = Annotated[str, Field(min_length=1, max_length=MAX_SKILL)]
 Skills = Annotated[list[Skill], BeforeValidator(clean_list), Field(max_length=MAX_SKILLS)]
 Item = Annotated[str, Field(min_length=1, max_length=MAX_ITEM)]
@@ -95,6 +98,8 @@ class GeneratedJobPosting(APIModel):
 
 class _PostingFields(APIModel):
     department: OptionalText(100) = None
+    salary_min: Salary | None = None
+    salary_max: Salary | None = None
     location: OptionalText(200) = None
     work_arrangement: WorkArrangement | None = None
     seniority: Seniority | None = None
@@ -104,12 +109,19 @@ class _PostingFields(APIModel):
     about_team: OptionalText(MAX_ABOUT_TEAM) = None
     generated_by_model: OptionalText(100) = None
 
+    @model_validator(mode="after")
+    def _salary_range(self) -> "_PostingFields":
+        if self.salary_min is not None and self.salary_max is not None and self.salary_min > self.salary_max:
+            raise ValueError("the minimum salary can't be more than the maximum")
+        return self
+
 
 class DemoJobCreate(_PostingFields):
     """A new demo job. It starts as a draft; publishing it is a separate step."""
 
     title: Title
     employment_type: EmploymentType = "Full-time"
+    salary_currency: Currency = "USD"
     skills: Skills = []
     responsibilities: Items = []
     requirements: Items = []
@@ -121,6 +133,7 @@ class DemoJobUpdate(_PostingFields):
 
     title: Title | None = None
     employment_type: EmploymentType | None = None
+    salary_currency: Currency | None = None
     skills: Skills | None = None
     responsibilities: Items | None = None
     requirements: Items | None = None
@@ -129,6 +142,7 @@ class DemoJobUpdate(_PostingFields):
     @field_validator(
         "title",
         "employment_type",
+        "salary_currency",
         "skills",
         "responsibilities",
         "requirements",
@@ -160,6 +174,9 @@ class DemoJobRead(APIModel):
     requirements: list[str] = []
     preferred_qualifications: list[str] = []
     about_team: str | None = None
+    salary_min: int | None = None
+    salary_max: int | None = None
+    salary_currency: str = "USD"
     generated_by_model: str | None = None
     status: DemoPostingStatus  # the posting, on the careers site
     job_status: JobStatus  # the job itself, in the ATS
@@ -185,6 +202,9 @@ class CareerJobSummary(APIModel):
     work_arrangement: str | None = None
     employment_type: str
     seniority: str | None = None
+    salary_min: int | None = None
+    salary_max: int | None = None
+    salary_currency: str = "USD"
     summary: str | None = None
     published_at: Timestamp | None = None
 

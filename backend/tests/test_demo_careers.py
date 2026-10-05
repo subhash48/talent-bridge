@@ -380,6 +380,9 @@ async def test_the_careers_site_lists_published_roles_only(
         "work_arrangement": "Hybrid",
         "employment_type": "Full-time",
         "seniority": "Senior",
+        "salary_min": None,
+        "salary_max": None,
+        "salary_currency": "USD",
         "summary": "Build the models behind data curation.",
         "published_at": listed[1]["published_at"],
     }

@@ -14,10 +14,10 @@ export function CandidateTopActions() {
   const { me } = useCandidatePortal();
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1.5">
       <CandidateNotifications />
       <Link href="/candidate/profile" aria-label="Your profile" className="rounded-full">
-        <Avatar name={me.candidate.fullName} src={me.candidate.avatarUrl} size={40} className="rounded-full ring-2 ring-white/10" />
+        <Avatar name={me.candidate.fullName} src={me.candidate.avatarUrl} size={32} className="rounded-full ring-1 ring-ink/15" />
       </Link>
     </div>
   );

@@ -12,7 +12,7 @@ export default function CandidateError({ reset }: { error: Error & { digest?: st
       icon={CircleAlert}
       title="This page couldn't load"
       description="Something went wrong while loading your information. Please try again in a moment."
-      className="mt-6"
+      className="mt-5"
       action={<Button onClick={reset}>Try again</Button>}
     />
   );

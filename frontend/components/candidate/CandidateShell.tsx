@@ -9,6 +9,7 @@ import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvid
 import { CandidateSidebarContent } from "@/components/candidate/CandidateSidebar";
 import { CandidateTopActions } from "@/components/candidate/CandidateTopActions";
 import { EncordLogo } from "@/components/shared/EncordLogo";
+import { NightSky } from "@/components/shared/NightSky";
 import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { ToastProvider } from "@/components/ui/Toaster";
@@ -26,12 +27,14 @@ export function CandidateShell({ children }: { children: ReactNode }) {
     <ToastProvider>
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:rounded-[10px] focus:bg-ink focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-canvas"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:rounded-[8px] focus:bg-ink focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-canvas"
       >
         Skip to content
       </a>
-      <div className="flex min-h-dvh">
-        <aside className="sticky top-0 hidden h-dvh w-[244px] shrink-0 overflow-y-auto border-r border-border bg-surface/80 lg:block">
+      <div className="relative isolate flex min-h-dvh">
+        {/* The sign-in page's sky, fainter and fixed behind the portal. */}
+        <NightSky className="fixed opacity-50" />
+        <aside className="sticky top-0 hidden h-dvh w-[216px] shrink-0 overflow-y-auto border-r border-border bg-surface/85 lg:block">
           <CandidateSidebarContent />
         </aside>
         <Sheet open={navOpen} onOpenChange={setNavOpen} side="left" title="Navigation">
@@ -39,10 +42,10 @@ export function CandidateShell({ children }: { children: ReactNode }) {
         </Sheet>
 
         <div className="relative flex min-w-0 flex-1 flex-col">
-          <div aria-hidden className="app-backdrop pointer-events-none absolute inset-x-0 top-0 h-[520px]" />
+          <div aria-hidden className="app-backdrop pointer-events-none absolute inset-x-0 top-0 h-[420px]" />
           <header
             className={cn(
-              "relative flex h-[72px] shrink-0 items-center justify-between gap-3 px-4 sm:px-6 lg:justify-end lg:px-10",
+              "relative flex h-14 shrink-0 items-center justify-between gap-3 px-4 sm:px-6 lg:justify-end lg:px-8",
               dashboard && "lg:hidden",
             )}
           >
@@ -60,15 +63,15 @@ export function CandidateShell({ children }: { children: ReactNode }) {
             <p
               role="status"
               className={cn(
-                "relative mx-4 mb-2 flex items-center gap-2 rounded-[12px] border border-amber-300/20 bg-amber-400/10 px-3.5 py-2.5 text-sm text-amber-100 sm:mx-6 lg:mx-10",
-                dashboard && "lg:mt-4",
+                "relative mx-4 mb-2 flex items-center gap-2 rounded-[10px] border border-caution/20 bg-caution/10 px-3 py-2 text-[13px] text-caution sm:mx-6 lg:mx-8",
+                dashboard && "lg:mt-3",
               )}
             >
               <CloudOff aria-hidden className="size-4 shrink-0" />
               We can’t reach the server right now. You’re seeing the latest information we have.
             </p>
           )}
-          <main id="main" tabIndex={-1} className="relative mx-auto w-full max-w-[1180px] flex-1 px-4 pb-14 focus:outline-none sm:px-6 lg:px-10">
+          <main id="main" tabIndex={-1} className="relative mx-auto w-full max-w-[1120px] flex-1 px-4 pb-10 focus:outline-none sm:px-6 lg:px-8">
             {children}
           </main>
         </div>

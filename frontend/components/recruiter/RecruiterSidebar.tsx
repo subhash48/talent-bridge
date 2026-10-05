@@ -41,17 +41,17 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { signOut, signingOut } = useSignOut();
 
   return (
-    <div className="flex h-full flex-col px-4 pt-7 pb-5">
+    <div className="flex h-full flex-col px-3 pt-5 pb-4">
       <Link
         href="/recruiter/candidates"
         onClick={onNavigate}
         aria-label="Encord recruiting home"
-        className="mb-10 flex w-fit items-center rounded-md px-3"
+        className="mb-7 flex w-fit items-center rounded-md px-2.5"
       >
         <EncordLogo />
       </Link>
 
-      <nav aria-label="Primary" className="flex flex-col gap-1">
+      <nav aria-label="Primary" className="flex flex-col gap-0.5">
         {NAV.map((item) => (
           <SidebarNavItem
             key={item.href}
@@ -67,7 +67,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         ))}
       </nav>
 
-      <div className="mt-auto flex flex-col gap-4 pt-8">
+      <div className="mt-auto flex flex-col gap-3 pt-6">
         <SidebarNavItem
           href="/recruiter/settings"
           label="Settings"
@@ -76,15 +76,15 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           onNavigate={onNavigate}
         />
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-[12px] border-t border-border px-2 pt-4 pb-1 text-left transition-colors hover:text-ink">
-            <Avatar name={user.name} src={user.avatarUrl} size={40} />
+          <DropdownMenuTrigger className="flex w-full items-center gap-2.5 rounded-[8px] border-t border-border px-1.5 pt-3 pb-0.5 text-left transition-colors hover:text-ink">
+            <Avatar name={user.name} src={user.avatarUrl} size={30} />
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[15px] font-medium text-ink">{user.name}</span>
-              <span className="block truncate text-[13px] text-stone">{user.title}</span>
+              <span className="block truncate text-[13px] font-medium text-ink">{user.name}</span>
+              <span className="block truncate text-xs text-stone">{user.title}</span>
             </span>
             <ChevronsUpDown aria-hidden className="size-4 shrink-0 text-stone" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="start" className="w-[220px]">
+          <DropdownMenuContent side="top" align="start" className="w-[212px]">
             <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
             <DropdownMenuItem asChild>
               <Link href="/recruiter/settings" onClick={onNavigate}>

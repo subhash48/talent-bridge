@@ -32,18 +32,18 @@ export function NotificationsMenu() {
         <Button variant="ghost" size="icon" aria-label="Notifications" className="relative rounded-full text-charcoal">
           <Bell strokeWidth={1.75} />
           {!seen && recent.length > 0 && (
-            <span className="absolute top-2 right-2.5 size-2 rounded-full bg-ai ring-2 ring-canvas">
+            <span className="absolute top-2 right-2 size-[7px] rounded-full bg-ink ring-2 ring-canvas">
               <span className="sr-only">New activity</span>
             </span>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-[340px]">
+      <DropdownMenuContent className="w-[320px]">
         <DropdownMenuLabel>Recent activity</DropdownMenuLabel>
         {recent.map((candidate) => (
-          <DropdownMenuItem key={candidate.id} asChild className="h-auto items-start py-2.5">
+          <DropdownMenuItem key={candidate.id} asChild className="h-auto items-start py-2">
             <Link href={`/recruiter/candidates?candidate=${candidate.id}`}>
-              <Avatar name={candidate.name} src={candidate.avatarUrl} size={32} />
+              <Avatar name={candidate.name} src={candidate.avatarUrl} size={28} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-ink">
                   {candidate.name} <span className="text-stone">· {candidate.lastActivity.toLowerCase()}</span>
@@ -51,8 +51,8 @@ export function NotificationsMenu() {
                 <span className="mt-0.5 flex items-center gap-1.5 text-xs text-faint">
                   <RelativeTime iso={candidate.lastActivityAt} />
                   {candidate.followUp && (
-                    <span className="inline-flex items-center gap-1 text-amber-200">
-                      <CircleAlert className="size-3! text-amber-200!" aria-hidden /> Needs follow-up
+                    <span className="inline-flex items-center gap-1 text-caution">
+                      <CircleAlert className="size-3! text-caution!" aria-hidden /> Needs follow-up
                     </span>
                   )}
                 </span>

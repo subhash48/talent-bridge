@@ -35,13 +35,13 @@ export function CandidateNotifications() {
         <Button variant="ghost" size="icon" aria-label="Notifications" className="relative rounded-full text-charcoal">
           <Bell strokeWidth={1.75} />
           {unseen && (
-            <span className="absolute top-2 right-2.5 size-2 rounded-full bg-ai ring-2 ring-canvas">
+            <span className="absolute top-2 right-2 size-[7px] rounded-full bg-ink ring-2 ring-canvas">
               <span className="sr-only">New notifications</span>
             </span>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-[340px]">
+      <DropdownMenuContent className="w-[320px]">
         <DropdownMenuLabel>Notifications</DropdownMenuLabel>
         <NotificationItems />
       </DropdownMenuContent>
@@ -58,12 +58,12 @@ function NotificationItems() {
   return items.map((item) => {
     const Icon = ICONS[item.kind];
     return (
-      <DropdownMenuItem key={item.id} asChild className="h-auto items-start py-2.5">
+      <DropdownMenuItem key={item.id} asChild className="h-auto items-start py-2">
         <Link href={item.href}>
           <span
             className={cn(
               "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full ring-1",
-              item.attention ? "bg-ai/15 ring-ai/30 [&_svg]:text-violet-200!" : "bg-white/[0.05] ring-white/10",
+              item.attention ? "bg-ai/15 ring-ai/30 [&_svg]:text-ink!" : "bg-ink/[0.05] ring-ink/10",
             )}
           >
             <Icon aria-hidden className="size-3.5!" />

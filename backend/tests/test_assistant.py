@@ -2,9 +2,13 @@
 jobs through the same demo jobs as the Jobs page, analytics from the analytics services, and the
 boundaries it never crosses (candidates' access, demographics, ranking)."""
 
+import json
+
+import httpx
 from httpx import AsyncClient
 
 from app.schemas.assistant import AssistantIntent, InterviewDetails
+from app.services.ai.groq import GroqProvider
 
 INVITE = "Send Sophia a personalized email asking her to schedule a 30-minute recruiter interview next Tuesday."
 CREATE_JOB = (
@@ -46,3 +50,15 @@ async def test_a_request_is_understood_as_one_structured_action(client: AsyncCli
     edit = parse("Make the salary 100 to 130 and add talent research.", job_in_context=True)
     assert edit.action == "update_job" and edit.job is not None
     assert (edit.job.salary_min, edit.job.salary_max, edit.job.skills_add) == (100_000, 130_000, ["Talent research"])
+
+
+async def test_groq_reads_a_request_as_json() -> None:
+    def reply(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content)
+        assert "send_interview_email" in body["messages"][1]["content"]
+        content = {"action": "send_interview_email", "mode": "execute", "candidate_name": "Sophia"}
+        return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(content)}}]})
+
+    provider = GroqProvider(api_key="test", model="test-model", transport=httpx.MockTransport(reply))
+    intent = await provider.understand_request(INVITE, "")
+    assert (intent.action, intent.candidate_name, intent.mode) == ("send_interview_email", "Sophia", "execute")

@@ -15,6 +15,7 @@ from pydantic import BaseModel, BeforeValidator, ValidationError
 from app.core.config import settings
 from app.schemas.ai import AnalysisContent, AskContent, DraftContent, DraftPurpose, SkillEvidence
 from app.schemas.analytics import AnalyticsInsight
+from app.schemas.assistant import AssistantIntent
 from app.schemas.demo import (
     MAX_ABOUT_ROLE,
     MAX_ABOUT_TEAM,
@@ -134,6 +135,40 @@ Write the job posting for this role. Return a JSON object with exactly these key
 - "preferred_qualifications": array of 2 to 4 short strings.
 - "skills": array of 3 to 8 short skill names, including the recruiter's.
 - "about_team": 1 to 3 sentences about the team and the company, using only the company overview, or "" if it says nothing relevant."""
+
+# The recruiter assistant: a request (typed, or transcribed speech) as one structured action
+# (schemas/assistant.AssistantIntent). The model only reads the request; the engine resolves, checks,
+# asks for confirmation and carries it out.
+ASSISTANT_SYSTEM_PROMPT = """You turn a recruiter's request in {organization}'s recruiting workspace into one structured action. You never carry anything out and never answer the request yourself.
+
+Rules:
+- Pick exactly one action. Copy names, job titles and details as the recruiter said them; never invent a candidate, job, number or date.
+- "draft", "write", "prepare" or "preview" means mode "draft"; "send", "email", "ask", "invite" or "publish" means mode "execute".
+- Race, ethnicity, disability and sexual orientation may only appear in an aggregate analytics question (action "analytics" with metric "demographics"). Never put them in a search, a message or a question about a candidate.
+- Respond with a single JSON object only."""
+
+ASSISTANT_PROMPT = """[conversation context]
+{context}
+
+[request]
+{text}
+
+Actions and their fields:
+- send_interview_email: ask a candidate to schedule an interview. candidate_name, job_title (only if said), interview {{"interview_type", "duration_minutes", "timeframe"}}, mode.
+- draft_message: any other message to a candidate. candidate_name, instructions (what it should say), mode.
+- create_job: a new job. job {{"title", "department", "location", "work_arrangement" (On-site|Hybrid|Remote), "employment_type" (Full-time|Part-time|Contract|Internship|Temporary), "seniority" (Internship|Entry Level|Mid Level|Senior|Staff|Principal|Manager|Director), "salary_min", "salary_max" (yearly whole units: "90 to 120K" is 90000 and 120000), "skills_add" (array), "notes" (the recruiter's description of the role, in their words)}}.
+- update_job: change the job draft in the context. job {{only what changes; "skills_add", "skills_remove", "shorter": true to shorten the description}}, job_title only if they name another job.
+- publish_job: publish the job in the context, or job_title.
+- list_jobs: show the open jobs.
+- search_candidates: stage (sourced|screening|interview|offer|hired|rejected), job_title, candidate_name.
+- candidate_info: a question about one candidate's application. candidate_name.
+- next_interview: candidate_name.
+- analytics: how candidates use the candidate portal. metric (overview|active_candidates|weekly_engaged|avg_engagement_time|repeat_visit_rate|engagement_change|top_topics|peak_activity|regions|demographics), period (today|this_week|last_7_days|this_month|last_month|last_30_days|last_90_days|this_year), demographic (region|race_ethnicity|disability_status|sexual_orientation).
+- confirm: "yes", "send it", "publish it" about the pending action in the context.
+- cancel: dismiss the pending action in the context.
+- help: anything else.
+
+Return a JSON object with "action" and only the fields that apply, for example {{"action": "send_interview_email", "mode": "execute", "candidate_name": "Sophia", "interview": {{"interview_type": "Recruiter interview", "duration_minutes": 30, "timeframe": "next Tuesday"}}}}."""
 
 INSIGHTS_SYSTEM_PROMPT = """You write short insights for {organization}'s recruiters about how candidates use the candidate portal, to improve the candidate experience.
 
@@ -306,6 +341,11 @@ class LLMProvider(AIProvider):
         if not (content.summary and content.about_role and content.responsibilities and content.requirements):
             raise AIProviderError(f"{self.name} returned an incomplete job posting")
         return content
+
+    async def understand_request(self, text: str, context: str) -> AssistantIntent:
+        system = ASSISTANT_SYSTEM_PROMPT.format(organization=settings.organization_name)
+        prompt = ASSISTANT_PROMPT.format(context=context or "nothing yet", text=text)
+        return self._parse(await self._generate(system, prompt), AssistantIntent)
 
     async def portal_insights(self, facts: InsightFacts) -> list[AnalyticsInsight]:
         system = INSIGHTS_SYSTEM_PROMPT.format(organization=settings.organization_name)

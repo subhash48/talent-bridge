@@ -19,6 +19,7 @@ from app.services.ai.portal_context import PortalContext
 
 if TYPE_CHECKING:
     from app.schemas.analytics import AnalyticsInsight
+    from app.schemas.assistant import AssistantIntent
     from app.services.analytics.insights import InsightFacts
 
 logger = logging.getLogger(__name__)
@@ -70,6 +71,14 @@ class AIProvider(ABC):
     async def portal_insights(self, facts: "InsightFacts") -> list["AnalyticsInsight"]:
         """At most four insights about the candidate experience, phrased from the facts alone."""
         raise AIProviderError(f"{self.name} has no analytics insights")
+
+    # The recruiter assistant's intent understanding: a request, typed or transcribed, as one
+    # structured action (services/assistant). The rules in services/assistant/rules.py read requests
+    # when a provider has none (the mock) or it fails.
+
+    async def understand_request(self, text: str, context: str) -> "AssistantIntent":
+        """The recruiter's request as a structured action. Never executes anything."""
+        raise AIProviderError(f"{self.name} has no intent understanding")
 
 
 @cache

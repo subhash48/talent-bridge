@@ -11,6 +11,10 @@ export type ApiCareerJobSummary = {
   work_arrangement: string | null;
   employment_type: string;
   seniority: string | null;
+  /** The yearly pay range the recruiter set, in whole units of salary_currency. */
+  salary_min: number | null;
+  salary_max: number | null;
+  salary_currency: string;
   summary: string | null;
   published_at: string | null;
 };
@@ -56,6 +60,8 @@ export type CareerJob = {
   workArrangement: string | null;
   employmentType: string;
   seniority: string | null;
+  /** "$100K–$130K", when the recruiter set a range. */
+  salary: string | null;
   summary: string | null;
   publishedAt: string | null;
 };

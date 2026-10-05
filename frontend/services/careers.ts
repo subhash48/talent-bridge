@@ -1,3 +1,4 @@
+import { formatSalary } from "@/lib/format";
 import { ApiError, USE_MOCK_API, apiFetch } from "@/services/api";
 import type {
   ApiCareerApplicationCreate,
@@ -66,6 +67,7 @@ function fromSummary(job: ApiCareerJobSummary): CareerJob {
     workArrangement: job.work_arrangement,
     employmentType: job.employment_type,
     seniority: job.seniority,
+    salary: formatSalary(job.salary_min, job.salary_max, job.salary_currency),
     summary: job.summary,
     publishedAt: job.published_at,
   };

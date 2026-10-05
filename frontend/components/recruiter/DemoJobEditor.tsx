@@ -49,6 +49,8 @@ type FormValues = {
   work_arrangement: string;
   employment_type: string;
   seniority: string;
+  salary_min: string;
+  salary_max: string;
   notes: string;
   summary: string;
   about_role: string;
@@ -72,6 +74,8 @@ const FIELD_ORDER: readonly FieldKey[] = [
   "work_arrangement",
   "employment_type",
   "seniority",
+  "salary_min",
+  "salary_max",
   "skills",
   "notes",
   ...POSTING_KEYS,
@@ -294,6 +298,12 @@ export function DemoJobEditor({ job: initialJob }: { job?: DemoJob }) {
                 </Select>
               </Field>
             </div>
+            <Field label="Salary from (USD a year)" htmlFor={fieldId("salary_min")} error={errors.salary_min}>
+              <Input {...control("salary_min")} inputMode="numeric" maxLength={9} placeholder="90000" autoComplete="off" />
+            </Field>
+            <Field label="Salary to (USD a year)" htmlFor={fieldId("salary_max")} error={errors.salary_max}>
+              <Input {...control("salary_max")} inputMode="numeric" maxLength={9} placeholder="120000" autoComplete="off" />
+            </Field>
             <Field label="Skills" htmlFor={fieldId("skills")} error={errors.skills} className="sm:col-span-2">
               {skills.length > 0 && (
                 <ul aria-label="Skills for this job" className="flex flex-wrap gap-1.5">
@@ -483,6 +493,8 @@ function toValues(job?: DemoJob): FormValues {
     work_arrangement: job?.work_arrangement ?? "",
     employment_type: job?.employment_type ?? "Full-time",
     seniority: job?.seniority ?? "",
+    salary_min: job?.salary_min ? String(job.salary_min) : "",
+    salary_max: job?.salary_max ? String(job.salary_max) : "",
     notes: job?.notes ?? "",
     summary: job?.summary ?? "",
     about_role: job?.about_role ?? "",
@@ -505,6 +517,11 @@ function fromDraft(draft: JobPostingContent): Pick<FormValues, (typeof POSTING_K
 }
 
 const optional = (text: string) => text.trim() || null;
+/** A whole yearly amount as typed ("120,000", "$120000"), or null when blank or not a positive number. */
+const amount = (text: string) => {
+  const value = Number(text.replace(/[\s,$]/g, ""));
+  return text.trim() && Number.isInteger(value) && value > 0 ? value : null;
+};
 
 function toPosting(values: FormValues, skills: string[]): DemoJobCreate {
   return {
@@ -514,6 +531,8 @@ function toPosting(values: FormValues, skills: string[]): DemoJobCreate {
     work_arrangement: (values.work_arrangement || null) as WorkArrangement | null,
     employment_type: values.employment_type as EmploymentType,
     seniority: (values.seniority || null) as Seniority | null,
+    salary_min: amount(values.salary_min),
+    salary_max: amount(values.salary_max),
     skills,
     notes: optional(values.notes),
     summary: optional(values.summary),
@@ -559,6 +578,11 @@ function validate(values: FormValues, check: Check): Errors {
   const errors: Errors = {};
   if (!values.title.trim()) errors.title = check === "brief" ? "Add a job title first: the AI writes from it." : "Add a job title.";
   if (check === "brief") return errors;
+  for (const key of ["salary_min", "salary_max"] as const) {
+    if (values[key].trim() && amount(values[key]) === null) errors[key] = "Enter a whole yearly amount, like 120000.";
+  }
+  const [low, high] = [amount(values.salary_min), amount(values.salary_max)];
+  if (low && high && low > high) errors.salary_max = "The maximum can't be less than the minimum.";
   for (const key of LIST_KEYS) {
     const items = parseLines(values[key]);
     const long = items.findIndex((item) => item.length > MAX_ITEM);

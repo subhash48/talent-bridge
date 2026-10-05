@@ -65,6 +65,10 @@ export type DemoJobCreate = {
   work_arrangement?: WorkArrangement | null;
   employment_type?: EmploymentType;
   seniority?: Seniority | null;
+  /** The yearly pay range, in whole units of salary_currency. The AI job writer never sets it. */
+  salary_min?: number | null;
+  salary_max?: number | null;
+  salary_currency?: string;
   skills?: string[];
   notes?: string | null;
   summary?: string | null;
@@ -88,6 +92,9 @@ export type DemoJob = {
   work_arrangement: string | null;
   employment_type: string;
   seniority: string | null;
+  salary_min: number | null;
+  salary_max: number | null;
+  salary_currency: string;
   skills: string[];
   /** The recruiter's notes for the AI job writer; never on the careers site. */
   notes: string | null;

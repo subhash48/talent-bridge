@@ -122,3 +122,15 @@ export function possessivePronoun(pronouns?: string): string {
 export function pluralize(count: number, singular: string, plural = `${singular}s`): string {
   return `${count} ${count === 1 ? singular : plural}`;
 }
+
+const CURRENCY_SYMBOLS: Record<string, string> = { USD: "$", GBP: "£", EUR: "€", CAD: "CA$", INR: "₹" };
+
+/** A yearly pay range as a job shows it: "$100K–$130K", "From $90K", "Up to $120K". Null without one. */
+export function formatSalary(min: number | null, max: number | null, currency = "USD"): string | null {
+  const symbol = CURRENCY_SYMBOLS[currency] ?? `${currency} `;
+  const amount = (value: number) => (value >= 1000 ? `${symbol}${Number((value / 1000).toFixed(1))}K` : `${symbol}${value.toLocaleString()}`);
+  if (min && max) return `${amount(min)}–${amount(max)}`;
+  if (min) return `From ${amount(min)}`;
+  if (max) return `Up to ${amount(max)}`;
+  return null;
+}

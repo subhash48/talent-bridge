@@ -16,6 +16,7 @@ from uuid import UUID
 from fastapi import APIRouter, Query, Response
 
 from app.core.dependencies import AIProviderDep, CurrentCandidateDep, SessionDep
+from app.schemas.demographics import CandidateDemographicsRead, DemographicAnswers
 from app.schemas.portal import (
     CandidateApplicationDetail,
     CandidateAskRequest,
@@ -38,6 +39,7 @@ from app.services import (
     candidate_interview_service,
     candidate_message_service,
     candidate_portal_service,
+    demographics,
 )
 from app.services.candidate_visibility import present_candidate
 from app.services.company_profile import company_profile
@@ -143,6 +145,24 @@ async def profile(candidate: CurrentCandidateDep) -> PortalCandidate:
 async def update_profile(body: ProfileUpdate, session: SessionDep, candidate: CurrentCandidateDep) -> PortalCandidate:
     """Phone, location, headline and skills only; any other field is a 422."""
     return await candidate_portal_service.update_profile(session, candidate, body)
+
+
+@router.get("/demographics", response_model=CandidateDemographicsRead, summary="My voluntary demographic information")
+async def get_demographics(session: SessionDep, candidate: CurrentCandidateDep) -> CandidateDemographicsRead:
+    """Your own answers, null where you left a question blank. Only you can read them: the hiring team
+    sees aggregates of everyone's answers, never yours."""
+    return await demographics.get_own(session, candidate)
+
+
+@router.put(
+    "/demographics", response_model=CandidateDemographicsRead, summary="Update my voluntary demographic information"
+)
+async def put_demographics(
+    body: DemographicAnswers, session: SessionDep, candidate: CurrentCandidateDep
+) -> CandidateDemographicsRead:
+    """Replaces your answers. Every question is optional: send null to leave it blank, or
+    prefer_not_to_say. Used only in aggregate, never in hiring decisions."""
+    return await demographics.save_own(session, candidate, body)
 
 
 @router.get("/company", response_model=PortalCompany, summary="About the company")

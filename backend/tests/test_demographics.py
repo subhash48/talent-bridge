@@ -1,0 +1,143 @@
+"""Voluntary demographic information: optional for candidates, aggregate-only for recruiters, and never
+part of anything that ranks, filters, evaluates or describes a person."""
+
+import json
+import re
+import uuid
+from collections import Counter
+from typing import Any
+
+from httpx import AsyncClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+from app.core.enums import Region
+from app.main import app
+from app.models import Candidate, CandidateDemographics
+from app.models.base import utcnow
+from app.services.ai.context import build_candidate_context
+from app.services.demographics import OTHER_INSUFFICIENT, summarize
+from tests.conftest import ALEX_AUTH, API, application_id, bearer, candidate_id
+
+SOPHIA = candidate_id("sophia-martinez")
+ANSWERS = {
+    "region": "india",
+    "race_ethnicity": "asian",
+    "disability_status": "prefer_not_to_say",
+    "sexual_orientation": "bisexual",
+}
+SENSITIVE_VALUES = ("asian", "bisexual", "prefer_not_to_say", "india")
+
+
+async def answer_for_many(sessions: async_sessionmaker[AsyncSession], answers: list[dict[str, Any]]) -> None:
+    """Give demographic answers to as many seeded candidates as there are answers."""
+    async with sessions() as session:
+        ids = (await session.scalars(select(Candidate.id).order_by(Candidate.email))).all()
+        for candidate, values in zip(ids, answers, strict=False):
+            session.add(CandidateDemographics(candidate_id=candidate, **values))
+        await session.commit()
+
+
+# The candidate's own answers
+
+
+async def test_a_candidate_can_answer_change_and_clear_their_answers(client: AsyncClient) -> None:
+    empty = (await client.get(f"{API}/candidate/demographics")).json()
+    assert empty == {
+        "region": None,
+        "race_ethnicity": None,
+        "disability_status": None,
+        "sexual_orientation": None,
+        "updated_at": None,
+    }
+
+    saved = await client.put(f"{API}/candidate/demographics", json=ANSWERS)
+    assert saved.status_code == 200
+    assert {key: saved.json()[key] for key in ANSWERS} == ANSWERS
+
+    partial = await client.put(f"{API}/candidate/demographics", json={"region": "prefer_not_to_say"})
+    assert partial.json()["region"] == "prefer_not_to_say"
+    assert partial.json()["race_ethnicity"] is None  # a PUT replaces: left out is unanswered
+
+    cleared = await client.put(f"{API}/candidate/demographics", json={})
+    assert cleared.json()["region"] is None
+
+
+async def test_answers_are_validated_and_nothing_else_is_accepted(client: AsyncClient) -> None:
+    assert (await client.put(f"{API}/candidate/demographics", json={"region": "mars"})).status_code == 422
+    assert (await client.put(f"{API}/candidate/demographics", json={"name": "Sophia"})).status_code == 422
+
+
+async def test_only_the_candidate_can_reach_their_own_answers(
+    anonymous: AsyncClient, client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    await client.put(f"{API}/candidate/demographics", json=ANSWERS)
+    recruiter = bearer(ALEX_AUTH)
+    assert (await anonymous.get(f"{API}/candidate/demographics", headers=recruiter)).status_code == 403
+    assert (await anonymous.put(f"{API}/candidate/demographics", json={}, headers=recruiter)).status_code == 403
+    assert (await anonymous.get(f"{API}/candidate/demographics")).status_code == 401
+    # No recruiter route takes a candidate and returns their answers: there is none to ask.
+    paths = {path for path in app.openapi()["paths"] if "demographic" in path}
+    assert paths == {f"{API}/candidate/demographics"}
+
+
+async def test_no_recruiter_view_of_a_person_carries_their_answers(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    """Candidate list, search, detail, interviews, messages and the AI's context: none of them."""
+    await client.put(f"{API}/candidate/demographics", json=ANSWERS)
+    responses = [
+        await client.get(f"{API}/candidates"),
+        await client.get(f"{API}/candidates", params={"search": "Asian"}),
+        await client.get(f"{API}/candidates/{SOPHIA}"),
+        await client.get(f"{API}/interviews"),
+        await client.get(f"{API}/messages/conversations"),
+        await client.get(f"{API}/applications/{application_id('sophia-martinez')}/messages"),
+    ]
+    for response in responses:
+        assert response.status_code == 200
+        text = json.dumps(response.json()).lower()
+        assert not re.search(r"\b(race|ethnicity|disability|orientation|demographic\w*)\b", text), response.url
+    # Search doesn't match on answers: nobody seeded is "bisexual" by name, job, skill or location.
+    assert (await client.get(f"{API}/candidates", params={"search": "bisexual"})).json()["total"] == 0
+
+    async with sessions() as session:
+        context = await build_candidate_context(
+            session,
+            uuid.UUID(application_id("sophia-martinez")),
+            recruiter_name="Alex Chen",
+            organization="Encord",
+            now=utcnow(),
+        )
+    prompt = context.to_prompt().lower()
+    assert "bisexual" not in prompt and "asian" not in prompt and "disab" not in prompt
+
+
+async def test_answers_never_change_the_pipeline_order(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    before = [
+        item["application_id"]
+        for item in (await client.get(f"{API}/candidates", params={"limit": 200})).json()["items"]
+    ]
+    await answer_for_many(sessions, [ANSWERS] * 20 + [{"race_ethnicity": "white"}] * 12)
+    after = [
+        item["application_id"]
+        for item in (await client.get(f"{API}/candidates", params={"limit": 200})).json()["items"]
+    ]
+    assert after == before
+
+
+# Aggregates
+
+
+def test_a_combined_group_too_small_to_stand_alone_takes_in_the_next_smallest() -> None:
+    # Bisexual (3) alone would identify three people; combined with lesbian (5) it can't be subtracted out.
+    counts = Counter({"straight": 40, "lesbian": 5, "bisexual": 3})
+    dimension = summarize("sexual_orientation", "Sexual orientation", counts)
+    assert [(bucket.key, bucket.share) for bucket in dimension.buckets] == [("straight", 83), (OTHER_INSUFFICIENT, 17)]
+    # Region's own "Other" absorbs small groups and keeps its name when nothing was hidden.
+    other = summarize("region", "Region", Counter({"united_states": 10, "other": 6}), residual=Region.OTHER)
+    assert [bucket.label for bucket in other.buckets] == ["United States", "Other"]
+    # Too few answers in all: nothing at all.
+    assert summarize("region", "Region", Counter({"india": 4})).suppressed

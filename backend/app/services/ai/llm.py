@@ -184,6 +184,10 @@ INSIGHTS_PROMPT = """[facts]
 
 Write 2 to 4 insights. Return a JSON object: {{"insights": [{{"title": string of at most 60 characters, "detail": one or two sentences of at most 200 characters}}]}}."""
 
+TRANSCRIPTION_PROMPT = (
+    "A recruiter talking to a recruiting assistant about candidates, interviews and jobs. {vocabulary}"
+)
+
 NOT_GIVEN = "not given"
 
 PURPOSES = {

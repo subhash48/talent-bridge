@@ -80,6 +80,15 @@ class AIProvider(ABC):
         """The recruiter's request as a structured action. Never executes anything."""
         raise AIProviderError(f"{self.name} has no intent understanding")
 
+    @property
+    def can_transcribe(self) -> bool:
+        return False
+
+    async def transcribe(self, audio: bytes, content_type: str, vocabulary: str = "") -> str:
+        """Speech to text for the recruiter assistant's voice input. The audio is never stored.
+        vocabulary: names and titles the recruiter may say, so they're spelled as in the pipeline."""
+        raise AIProviderError(f"{self.name} has no speech transcription")
+
 
 @cache
 def _warn_once(message: str) -> None:

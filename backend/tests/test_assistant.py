@@ -84,6 +84,10 @@ async def test_only_recruiters_reach_the_assistant(anonymous: AsyncClient, clien
             kwargs["json"] = body
         assert (await getattr(anonymous, method)(f"{API}{path}", **kwargs)).status_code == 403, path
         assert (await getattr(anonymous, method)(f"{API}{path}")).status_code == 401, path
+    transcribe = await anonymous.post(
+        f"{API}/assistant/transcribe", content=b"audio", headers={**candidate, "content-type": "audio/webm"}
+    )
+    assert transcribe.status_code == 403
     assert (await client.get(f"{API}/assistant/status")).json() == {
         "voice_transcription": False,
         "jobs": False,
@@ -478,3 +482,47 @@ async def test_candidates_interviews_and_jobs(client: AsyncClient) -> None:
 
     unclear = await ask(client, "Hmm, sing me a song")
     assert unclear["intent"] == "help" and "Messages" in unclear["reply"]
+
+
+# Voice transcription
+
+
+async def test_transcription_needs_a_provider_and_keeps_nothing(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    unavailable = await client.post(
+        f"{API}/assistant/transcribe", content=b"\x1a\x45", headers={"content-type": "audio/webm"}
+    )
+    assert unavailable.status_code == 503 and unavailable.json()["error"]["code"] == "transcription_unavailable"
+
+    heard: list[tuple[int, str, str]] = []
+
+    class Listener(MockProvider):
+        @property
+        def can_transcribe(self) -> bool:
+            return True
+
+        async def transcribe(self, audio: bytes, content_type: str, vocabulary: str = "") -> str:
+            heard.append((len(audio), content_type, vocabulary))
+            return INVITE
+
+    use_provider(Listener())
+    response = await client.post(
+        f"{API}/assistant/transcribe", content=b"\x1a\x45" * 100, headers={"content-type": "audio/webm"}
+    )
+    assert response.status_code == 200 and response.json()["text"] == INVITE
+    assert heard[0][:2] == (200, "audio/webm") and "Sophia Martinez" in heard[0][2]
+    assert (await client.get(f"{API}/assistant/status")).json()["voice_transcription"] is True
+
+    not_audio = await client.post(
+        f"{API}/assistant/transcribe", content=b"{}", headers={"content-type": "application/json"}
+    )
+    assert not_audio.status_code == 400
+    empty = await client.post(f"{API}/assistant/transcribe", content=b"", headers={"content-type": "audio/webm"})
+    assert empty.status_code == 400
+    huge = await client.post(
+        f"{API}/assistant/transcribe", content=b"\x00" * (8 * 1024 * 1024 + 1), headers={"content-type": "audio/webm"}
+    )
+    assert huge.status_code == 413
+    async with sessions() as session:  # no request was recorded, let alone any audio
+        assert await session.scalar(select(func.count()).select_from(AssistantAction)) == 0

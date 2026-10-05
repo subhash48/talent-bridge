@@ -67,6 +67,9 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.5-flash"
     groq_api_key: SecretStr | None = None
     groq_model: str = "llama-3.3-70b-versatile"
+    # Speech to text for the recruiter assistant's voice input (Groq only). Without it, the workspace
+    # uses the browser's own speech recognition where there is one.
+    groq_transcription_model: str = "whisper-large-v3-turbo"
     ai_timeout_seconds: float = 30.0
 
     # Supabase Auth admin access, for candidate portal invitations only. Server-side; never sent to

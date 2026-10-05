@@ -1,3 +1,4 @@
+import { RecentKeys } from "@/lib/dedupe";
 import { apiFetch } from "@/services/api";
 
 // The candidate portal's activity reports: the only place in the frontend that sends them.
@@ -6,7 +7,10 @@ import { apiFetch } from "@/services/api";
 // - a visit starting and ending, and a heartbeat about every 30 seconds while this tab is visible
 //   and has been used in the last two minutes. The server times the gaps itself, so a hidden tab, an
 //   idle computer or a page left open overnight adds nothing;
-// - which portal pages and items were opened (a page, an application, an interview), in batches.
+// - which portal pages and items were opened (a page, an application, an interview), in batches;
+// - which sections of the Company page were read: a section counts once it has been on screen for a
+//   couple of seconds, so scrolling past it isn't a read. Only the section's name is sent, never how
+//   far or how fast anyone scrolled.
 //
 // Never sent or kept: keystrokes, text, pointer positions, scrolling, browser or device details, or
 // anything outside this portal. Input events only refresh an in-memory "used recently" time, and
@@ -22,6 +26,8 @@ const MAX_BATCH = 20;
 const VISIT_EXPIRES_MS = 30 * 60_000;
 const VISIT_KEY = "tb.portal-visit";
 const ACTIVITY_EVENTS = ["pointerdown", "keydown", "scroll", "touchstart"] as const;
+// The same action again within this long is a rerender or a double click, not a second view.
+const REPEAT_MS = 2_000;
 
 export type PortalPage =
   | "dashboard"
@@ -34,10 +40,13 @@ export type PortalPage =
   | "prep"
   | "profile";
 
+export type CompanySection = "products" | "culture" | "benefits" | "locations" | "hiring";
+
 export type PortalAction =
   | { type: "page_view"; page: PortalPage }
   | { type: "application_viewed" }
-  | { type: "interview_viewed"; interviewId: string };
+  | { type: "interview_viewed"; interviewId: string }
+  | { type: "company_section_viewed"; section: CompanySection };
 
 type WireEvent = {
   type: PortalAction["type"];
@@ -45,6 +54,7 @@ type WireEvent = {
   session_id: string;
   page?: PortalPage;
   interview_id?: string;
+  section?: CompanySection;
 };
 
 class PortalEngagement {
@@ -54,6 +64,7 @@ class PortalEngagement {
   private queue: WireEvent[] = [];
   private heartbeatTimer: number | undefined;
   private flushTimer: number | undefined;
+  private recent = new RecentKeys(REPEAT_MS);
 
   /** Begin reporting for the application the portal is showing. Safe to call again. */
   start(applicationId: string): void {
@@ -92,6 +103,8 @@ class PortalEngagement {
     const event: WireEvent = { type: action.type, application_id: this.applicationId, session_id: this.visitId };
     if (action.type === "page_view") event.page = action.page;
     if (action.type === "interview_viewed") event.interview_id = action.interviewId;
+    if (action.type === "company_section_viewed") event.section = action.section;
+    if (!this.recent.claim(JSON.stringify(event))) return;
     this.queue.push(event);
     if (this.queue.length >= MAX_BATCH) this.flush();
     else if (this.flushTimer === undefined) this.flushTimer = window.setTimeout(() => this.flush(), FLUSH_MS);

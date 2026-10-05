@@ -25,7 +25,7 @@ export function Field({ label, htmlFor, error, required, className, children }: 
       </label>
       {children}
       {error && (
-        <p id={fieldErrorId(htmlFor)} className="text-xs text-red-300">
+        <p id={fieldErrorId(htmlFor)} className="text-xs text-danger">
           {error}
         </p>
       )}

@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 export function Select({ className, children, ...props }: ComponentProps<"select">) {
   return (
     <div className="relative">
-      <select className={cn(fieldStyles, "h-10 appearance-none pr-9 [&>option]:bg-overlay [&>option]:text-ink", className)} {...props}>
+      <select className={cn(fieldStyles, "h-9 appearance-none pr-9 [&>option]:bg-overlay [&>option]:text-ink", className)} {...props}>
         {children}
       </select>
       <ChevronDown

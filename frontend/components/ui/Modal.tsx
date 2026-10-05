@@ -26,15 +26,15 @@ export function Modal({ open, onClose, title, description, children, className }
           // Without a description, opt out explicitly so Radix doesn't point at a missing element.
           {...(description ? {} : { "aria-describedby": undefined })}
           className={cn(
-            "fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[20px] border border-border bg-overlay p-6 shadow-[0_40px_80px_-20px_rgb(0_0_0/0.8)] focus:outline-none data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in",
+            "fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[14px] border border-border bg-overlay p-5 shadow-[0_40px_80px_-20px_rgb(0_0_0/0.8)] focus:outline-none data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in",
             className,
           )}
         >
-          <Dialog.Title className="pr-10 text-lg font-semibold tracking-tight text-ink">{title}</Dialog.Title>
-          {description && <Dialog.Description className="mt-1.5 text-sm text-stone">{description}</Dialog.Description>}
-          <div className="mt-6">{children}</div>
+          <Dialog.Title className="pr-10 text-base font-semibold tracking-tight text-ink">{title}</Dialog.Title>
+          {description && <Dialog.Description className="mt-1 text-[13px] text-stone">{description}</Dialog.Description>}
+          <div className="mt-5">{children}</div>
           <Dialog.Close asChild>
-            <Button variant="ghost" size="icon-sm" className="absolute top-5 right-5" aria-label="Close">
+            <Button variant="ghost" size="icon-sm" className="absolute top-4 right-4" aria-label="Close">
               <X />
             </Button>
           </Dialog.Close>

@@ -16,7 +16,7 @@ export function ApplyProblemAlert({ problem }: { problem: ApplyProblem }) {
       {problem.roleGone && (
         <>
           {" "}
-          <Link href="/demo/careers" className="font-medium text-red-100 underline underline-offset-4 transition-colors hover:text-white">
+          <Link href="/demo/careers" className="font-medium text-danger underline underline-offset-4 transition-colors hover:text-ink">
             See open roles
           </Link>
         </>

@@ -21,7 +21,7 @@ export function CareerJobList({ jobs }: { jobs: CareerJob[] }) {
           <li key={job.id}>
             <Link
               href={`/demo/careers/${job.id}`}
-              className="glass group flex flex-col gap-4 rounded-[18px] border border-border p-5 transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-border-strong sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:p-6"
+              className="glass group flex flex-col gap-4 rounded-[14px] border border-border p-5 transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-border-strong sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:p-6"
             >
               <div className="min-w-0">
                 {job.department && <p className="text-[13px] text-stone">{job.department}</p>}
@@ -33,7 +33,7 @@ export function CareerJobList({ jobs }: { jobs: CareerJob[] }) {
                 className={buttonStyles({
                   variant: "secondary",
                   size: "sm",
-                  className: "self-start group-hover:border-border-strong group-hover:bg-white/[0.07] sm:self-center",
+                  className: "self-start group-hover:border-border-strong group-hover:bg-ink/[0.07] sm:self-center",
                 })}
               >
                 View role <ArrowRight aria-hidden />

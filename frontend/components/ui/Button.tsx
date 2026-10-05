@@ -3,20 +3,19 @@ import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
 const VARIANTS = {
-  primary:
-    "bg-ink text-canvas shadow-[inset_0_1px_0_rgb(255_255_255/0.6),0_10px_30px_-14px_rgb(255_255_255/0.45)] hover:bg-white",
-  secondary: "border border-border bg-white/[0.04] text-ink hover:border-border-strong hover:bg-white/[0.07]",
+  primary: "bg-ink text-canvas hover:bg-ink-bright",
+  secondary: "border border-border bg-ink/[0.04] text-ink hover:border-border-strong hover:bg-ink/[0.07]",
   ghost: "text-stone hover:bg-muted hover:text-ink",
-  ai: "border border-ai/25 bg-ai/12 text-violet-100 hover:border-ai/40 hover:bg-ai/20",
-  danger: "border border-danger/25 bg-danger/12 text-red-100 hover:bg-danger/20",
+  ai: "border border-ink/20 bg-ink/[0.08] text-ink hover:border-ink/35 hover:bg-ink/[0.13]",
+  danger: "border border-danger/25 bg-danger/12 text-danger hover:bg-danger/20",
 } as const;
 
 const SIZES = {
-  sm: "h-8 gap-1.5 rounded-[9px] px-3 text-xs [&_svg]:size-3.5",
-  md: "h-10 gap-2 rounded-[10px] px-4 text-sm [&_svg]:size-4",
-  lg: "h-12 gap-2.5 rounded-[12px] px-5 text-[15px] [&_svg]:size-[18px]",
-  icon: "size-10 rounded-[10px] [&_svg]:size-[18px]",
-  "icon-sm": "size-8 rounded-[9px] [&_svg]:size-4",
+  sm: "h-7 gap-1.5 rounded-[6px] px-2.5 text-xs [&_svg]:size-3.5",
+  md: "h-9 gap-2 rounded-[8px] px-3.5 text-[13px] [&_svg]:size-4",
+  lg: "h-10 gap-2 rounded-[8px] px-4 text-sm [&_svg]:size-4",
+  icon: "size-9 rounded-[8px] [&_svg]:size-[17px]",
+  "icon-sm": "size-7 rounded-[6px] [&_svg]:size-3.5",
 } as const;
 
 export type ButtonVariant = keyof typeof VARIANTS;

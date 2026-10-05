@@ -13,12 +13,12 @@ type SearchBarProps = Omit<ComponentProps<"input">, "type"> & {
 export function SearchBar({ className, containerClassName, placeholder = "Search", trailing, ...props }: SearchBarProps) {
   return (
     <div className={cn("relative", containerClassName)}>
-      <Search aria-hidden className="pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2 text-stone" />
+      <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-stone" />
       <input
         type="search"
         placeholder={placeholder}
         aria-label={placeholder}
-        className={cn(fieldStyles, "h-12 rounded-[14px] pl-11 text-[15px] [&::-webkit-search-cancel-button]:hidden", trailing && "pr-16", className)}
+        className={cn(fieldStyles, "h-10 rounded-[10px] pl-10 text-sm [&::-webkit-search-cancel-button]:hidden", trailing && "pr-16", className)}
         {...props}
       />
       {trailing && <div className="absolute top-1/2 right-3 -translate-y-1/2">{trailing}</div>}

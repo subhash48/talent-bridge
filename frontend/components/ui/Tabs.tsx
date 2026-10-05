@@ -19,12 +19,12 @@ type TabsListProps = {
 export function TabsList({ tabs, value, label, className }: TabsListProps) {
   const indicatorId = useId();
   return (
-    <TabsPrimitive.List aria-label={label} className={cn("scrollbar-none flex shrink-0 gap-6 overflow-x-auto border-b border-border", className)}>
+    <TabsPrimitive.List aria-label={label} className={cn("scrollbar-none flex shrink-0 gap-5 overflow-x-auto border-b border-border", className)}>
       {tabs.map((tab) => (
         <TabsPrimitive.Trigger
           key={tab.value}
           value={tab.value}
-          className="relative shrink-0 rounded-sm pt-1 pb-3 text-[15px] text-stone transition-colors duration-200 outline-none hover:text-charcoal focus-visible:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 data-[state=active]:text-ink"
+          className="relative shrink-0 rounded-sm pt-1 pb-2.5 text-sm text-stone transition-colors duration-200 outline-none hover:text-charcoal focus-visible:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 data-[state=active]:text-ink"
         >
           {tab.label}
           {value === tab.value && (

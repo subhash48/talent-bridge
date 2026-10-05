@@ -23,7 +23,7 @@ export function ApiUnavailable({ message, title = "The recruiting workspace can'
           <div className="flex flex-col items-center gap-4">
             {serverDown && (
               <p className="text-xs text-faint">
-                Start the API with <code className="rounded bg-white/[0.06] px-1.5 py-0.5 text-charcoal">uvicorn app.main:app --reload --port 8000</code> in
+                Start the API with <code className="rounded bg-ink/[0.06] px-1.5 py-0.5 text-charcoal">uvicorn app.main:app --reload --port 8000</code> in
                 backend/, then try again.
               </p>
             )}

@@ -90,7 +90,7 @@ export function ResumeInput({ id, file, onChange, error, disabled }: ResumeInput
       }}
       onDrop={drop}
       className={cn(
-        "rounded-[12px] border border-dashed border-border-strong bg-white/[0.02] transition-[border-color,background-color,box-shadow] duration-150 has-[input:focus-visible]:border-white/30 has-[input:focus-visible]:ring-4 has-[input:focus-visible]:ring-white/[0.06]",
+        "rounded-[10px] border border-dashed border-border-strong bg-ink/[0.02] transition-[border-color,background-color,box-shadow] duration-150 has-[input:focus-visible]:border-ink/30 has-[input:focus-visible]:ring-4 has-[input:focus-visible]:ring-ink/[0.06]",
         file && "border-solid border-border",
         error && "border-danger/60",
         dragging && "border-ai/60 bg-ai/[0.06]",
@@ -111,7 +111,7 @@ export function ResumeInput({ id, file, onChange, error, disabled }: ResumeInput
       />
       {file ? (
         <div className="flex items-center gap-3 p-3 sm:p-3.5">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.05] ring-1 ring-white/[0.08]">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-[8px] bg-ink/[0.05] ring-1 ring-ink/[0.08]">
             <FileText aria-hidden className="size-[18px] text-charcoal" />
           </span>
           <div className="min-w-0 flex-1">
@@ -129,7 +129,7 @@ export function ResumeInput({ id, file, onChange, error, disabled }: ResumeInput
         </div>
       ) : (
         <div className="flex flex-col items-center gap-2 px-4 py-7 text-center">
-          <span className="flex size-10 items-center justify-center rounded-full bg-white/[0.05] ring-1 ring-white/[0.08]">
+          <span className="flex size-10 items-center justify-center rounded-full bg-ink/[0.05] ring-1 ring-ink/[0.08]">
             <Upload aria-hidden className="size-[18px] text-charcoal" />
           </span>
           <p className="text-sm text-charcoal">

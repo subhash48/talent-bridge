@@ -46,7 +46,7 @@ export function CareerJobView({ job }: { job: CareerJobDetail }) {
             <Section title="Skills">
               <ul className="flex flex-wrap gap-2">
                 {job.skills.map((skill) => (
-                  <li key={skill} className="rounded-full bg-white/[0.05] px-3 py-1 text-[13px] text-charcoal ring-1 ring-white/[0.08]">
+                  <li key={skill} className="rounded-full bg-ink/[0.05] px-3 py-1 text-[13px] text-charcoal ring-1 ring-ink/[0.08]">
                     {skill}
                   </li>
                 ))}

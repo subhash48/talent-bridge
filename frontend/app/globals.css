@@ -1,33 +1,35 @@
 @import "tailwindcss";
 
 /*
- * Encord Recruiting design tokens. Dark only: the recruiter workspace and the candidate portal
- * both read these, so the palette changes in one place. Colour carries meaning sparingly:
- * green = positive, blue = screening, amber = sourced/attention, red = warnings, violet = AI.
+ * Encord Recruiting design tokens. Dark only: the sign-in page, the recruiter workspace and the
+ * candidate portal all read these, so the palette changes in one place.
+ *
+ * Two colours carry the product: ink black for the page and its surfaces, warm ivory for text, active
+ * states and primary buttons. Three muted accents carry meaning and nothing else: sage = positive,
+ * caution = waiting on someone, danger = a problem. AI accents are ivory like everything else.
  */
 @theme {
-  --color-canvas: #080a0d;
-  --color-surface: #0b0e12;
-  --color-surface-raised: #101318;
-  --color-overlay: #13171d;
-  --color-muted: rgb(255 255 255 / 0.06);
-  --color-border: rgb(255 255 255 / 0.08);
-  --color-border-strong: rgb(255 255 255 / 0.14);
+  --color-canvas: #031211;
+  --color-surface: #051715;
+  --color-surface-raised: #071c1a;
+  --color-overlay: #08201d;
+  --color-muted: rgb(232 228 211 / 0.06);
+  --color-border: rgb(232 228 211 / 0.1);
+  --color-border-strong: rgb(232 228 211 / 0.2);
 
-  --color-ink: #f5f5f5;
-  --color-charcoal: #d1d5db;
-  --color-stone: #9ca3af;
-  --color-faint: #80868f;
+  --color-ink: #e8e4d3;
+  --color-ink-bright: #f4f1e6;
+  --color-charcoal: rgb(232 228 211 / 0.85);
+  --color-stone: rgb(232 228 211 / 0.7);
+  --color-faint: rgb(232 228 211 / 0.55);
 
-  --color-sage: #4ade80;
-  --color-accent-blue: #8fb4ff;
-  --color-accent-lavender: #a594f9;
-  --color-accent-orange: #f5b454;
-  --color-ai: #a594f9;
-  --color-danger: #f87171;
+  --color-sage: #9fd3ae;
+  --color-caution: #e3c383;
+  --color-danger: #ef9a8f;
+  --color-ai: #e8e4d3;
 
-  --shadow-soft: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 12px 32px -18px rgb(0 0 0 / 0.7);
-  --shadow-raised: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 24px 48px -24px rgb(0 0 0 / 0.85);
+  --shadow-soft: inset 0 1px 0 rgb(232 228 211 / 0.04), 0 12px 32px -18px rgb(0 0 0 / 0.7);
+  --shadow-raised: inset 0 1px 0 rgb(232 228 211 / 0.06), 0 24px 48px -24px rgb(0 0 0 / 0.85);
 
   --animate-fade-in: fade-in 180ms ease-out;
   --animate-fade-out: fade-out 150ms ease-in;
@@ -113,27 +115,31 @@
   }
 
   ::selection {
-    background-color: rgb(165 148 249 / 0.35);
-    color: #fff;
+    background-color: rgb(232 228 211 / 0.24);
+    color: var(--color-ink-bright);
   }
 
   :focus-visible {
-    outline: 2px solid rgb(255 255 255 / 0.6);
+    outline: 2px solid rgb(232 228 211 / 0.7);
     outline-offset: 2px;
   }
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgb(255 255 255 / 0.14) transparent;
+    scrollbar-color: rgb(232 228 211 / 0.16) transparent;
   }
 }
 
-/* Translucent card surface: a faint top-lit gradient instead of a blur, so dense pages stay fast. */
+/*
+ * Card surface: ink black with the faintest ivory tint, so a card sits in the page rather than on it.
+ * It is nearly opaque: the night sky behind the page shows in the gaps between cards, not through them.
+ */
 @utility glass {
-  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.02));
+  background-color: rgb(3 18 17 / 0.86);
+  background-image: linear-gradient(180deg, rgb(232 228 211 / 0.04), rgb(232 228 211 / 0.018));
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.05),
-    0 24px 48px -32px rgb(0 0 0 / 0.9);
+    inset 0 1px 0 rgb(232 228 211 / 0.035),
+    0 16px 32px -28px rgb(0 0 0 / 0.9);
 }
 
 @utility scrollbar-none {
@@ -143,12 +149,9 @@
   }
 }
 
-/* Soft charcoal light at the top of the workspace; keeps the header dark while giving it depth. */
+/* The faintest ivory light at the top of a page: depth, without colour. */
 @utility app-backdrop {
-  background-image:
-    radial-gradient(55% 70% at 72% -8%, rgb(255 255 255 / 0.075), transparent 70%),
-    radial-gradient(35% 50% at 100% 0%, rgb(165 148 249 / 0.06), transparent 70%),
-    radial-gradient(40% 45% at 10% -5%, rgb(255 255 255 / 0.03), transparent 70%);
+  background-image: radial-gradient(60% 70% at 70% -10%, rgb(232 228 211 / 0.04), transparent 70%);
 }
 
 @media (prefers-reduced-motion: reduce) {

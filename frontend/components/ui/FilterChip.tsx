@@ -11,10 +11,10 @@ export function FilterChip({ active, className, ...props }: FilterChipProps) {
       type="button"
       aria-pressed={active}
       className={cn(
-        "h-9 shrink-0 rounded-full px-4 text-sm whitespace-nowrap transition-[background-color,color,border-color] duration-200",
+        "h-8 shrink-0 rounded-full px-3 text-[13px] whitespace-nowrap transition-[background-color,color,border-color] duration-200",
         active
           ? "bg-ink font-medium text-canvas"
-          : "border border-border bg-white/[0.04] text-charcoal hover:border-border-strong hover:bg-white/[0.08] hover:text-ink",
+          : "border border-border bg-ink/[0.04] text-charcoal hover:border-border-strong hover:bg-ink/[0.08] hover:text-ink",
         className,
       )}
       {...props}

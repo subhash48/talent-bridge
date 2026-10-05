@@ -14,12 +14,12 @@ export function CareersShell({ children }: { children: ReactNode }) {
     <div className="relative flex min-h-dvh flex-col">
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:rounded-[10px] focus:bg-ink focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-canvas"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:rounded-[8px] focus:bg-ink focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-canvas"
       >
         Skip to content
       </a>
       <div aria-hidden className="app-backdrop pointer-events-none absolute inset-x-0 top-0 h-[520px]" />
-      <p className="relative flex items-center justify-center gap-2 border-b border-amber-300/15 bg-amber-400/[0.08] px-4 py-2 text-center text-xs text-amber-100">
+      <p className="relative flex items-center justify-center gap-2 border-b border-caution/15 bg-caution/[0.08] px-4 py-2 text-center text-xs text-caution">
         <FlaskConical aria-hidden className="size-3.5 shrink-0" />
         Development demo — these roles are not real
       </p>

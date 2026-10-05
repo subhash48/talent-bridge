@@ -20,7 +20,7 @@ export function PortalStatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex h-7 items-center justify-center rounded-[8px] bg-white/[0.05] px-2.5 text-xs font-medium whitespace-nowrap text-stone ring-1 ring-white/10 ring-inset",
+        "inline-flex h-6 items-center justify-center rounded-[6px] bg-ink/[0.05] px-2 text-xs font-medium whitespace-nowrap text-stone ring-1 ring-ink/10 ring-inset",
         className,
       )}
     >

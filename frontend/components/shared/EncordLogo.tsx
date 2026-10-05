@@ -15,9 +15,9 @@ export function EncordMark({ className, ...props }: ComponentProps<"svg">) {
 
 export function EncordLogo({ className }: { className?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-2.5 text-ink", className)}>
-      <EncordMark className="h-[22px] w-auto" />
-      <span className="text-[15px] font-semibold tracking-[0.08em]">ENCORD</span>
+    <span className={cn("inline-flex items-center gap-2 text-ink", className)}>
+      <EncordMark className="h-5 w-auto" />
+      <span className="text-sm font-semibold tracking-[0.08em]">ENCORD</span>
     </span>
   );
 }

@@ -25,13 +25,13 @@ export function AIThread({ messages, className }: { messages: AIMessage[]; class
       aria-label="AI conversation"
       aria-live="polite"
       aria-busy={busy}
-      className={cn("flex flex-col gap-4 overflow-y-auto overscroll-contain pr-1", className)}
+      className={cn("flex flex-col gap-3.5 overflow-y-auto overscroll-contain pr-1", className)}
     >
       {messages.map((message) =>
         message.role === "user" ? (
           <p
             key={message.id}
-            className="max-w-[85%] animate-rise self-end rounded-[14px] rounded-br-[5px] bg-white/[0.09] px-3.5 py-2 text-sm text-ink"
+            className="max-w-[85%] animate-rise self-end rounded-[12px] rounded-br-[4px] bg-ink/[0.1] px-3.5 py-2 text-sm text-ink"
           >
             {message.content}
           </p>
@@ -58,8 +58,8 @@ function AssistantMessage({ message }: { message: AIMessage }) {
 
   return (
     <div className="flex animate-rise gap-2.5">
-      <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-ai/15 ring-1 ring-ai/30">
-        <Sparkles aria-hidden className="size-3.5 text-ai" />
+      <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-ink/[0.05] ring-1 ring-ink/10">
+        <Sparkles aria-hidden className="size-3.5 text-ink" />
       </span>
       <div className="min-w-0 flex-1 text-sm leading-relaxed text-charcoal">
         {message.status === "thinking" ? (
@@ -69,28 +69,28 @@ function AssistantMessage({ message }: { message: AIMessage }) {
               <span
                 key={delay}
                 aria-hidden
-                className="size-1.5 animate-pulse rounded-full bg-ai/70"
+                className="size-1.5 animate-pulse rounded-full bg-ink/70"
                 style={{ animationDelay: `${delay}ms` }}
               />
             ))}
           </span>
         ) : message.status === "error" ? (
-          <p className="text-red-200">{message.content}</p>
+          <p className="text-danger">{message.content}</p>
         ) : (
           <AIMessageContent text={message.content} streaming={message.status === "streaming"} />
         )}
 
         {message.status === "done" && (
-          <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-xs text-faint">
+          <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-faint">
             {message.sources?.map((source) => (
-              <span key={`${source.type}-${source.id}`} className="rounded-full bg-white/[0.04] px-2 py-0.5 ring-1 ring-white/[0.06]">
+              <span key={`${source.type}-${source.id}`} className="rounded-full bg-ink/[0.05] px-2 py-0.5 ring-1 ring-ink/10">
                 {source.label}
               </span>
             ))}
             <button
               type="button"
               onClick={copy}
-              className="ml-auto inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-stone transition-colors hover:bg-white/[0.06] hover:text-ink"
+              className="ml-auto inline-flex h-7 items-center gap-1 rounded-[6px] px-2 text-stone transition-colors hover:bg-ink/[0.06] hover:text-ink"
             >
               {copied ? <Check aria-hidden className="size-3.5" /> : <Copy aria-hidden className="size-3.5" />}
               {copied ? "Copied" : "Copy"}

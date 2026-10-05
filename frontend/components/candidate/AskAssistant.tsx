@@ -51,18 +51,18 @@ export function AskAssistant({
   }, [askShortcut, send]);
 
   return (
-    <Card className={cn("flex flex-col p-5 sm:p-6", className)}>
+    <Card className={cn("flex flex-col p-5 sm:p-5", className)}>
       <div className="flex items-center gap-3">
-        <span className="flex size-9 items-center justify-center rounded-full bg-ai/15 ring-1 ring-ai/30">
-          <Sparkles aria-hidden className="size-4 text-ai" />
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-ink/[0.05] ring-1 ring-ink/10">
+          <Sparkles aria-hidden className="size-4 text-ink" />
         </span>
         <div>
-          <h2 className="font-semibold tracking-tight text-ink">Ask AI</h2>
+          <h2 className="text-base font-semibold tracking-tight text-ink">Ask AI</h2>
           <p className="text-[13px] text-stone">{description}</p>
         </div>
       </div>
 
-      {messages.length > 0 && <AIThread messages={messages} className={cn("mt-5 max-h-[420px] min-h-[120px]", threadClassName)} />}
+      {messages.length > 0 && <AIThread messages={messages} className={cn("mt-4 max-h-[380px] min-h-[96px]", threadClassName)} />}
 
       <AIComposer
         id={composerId}
@@ -72,9 +72,9 @@ export function AskAssistant({
         pending={pending}
         onSend={(prompt) => void send(prompt)}
         onStop={stop}
-        className="mt-5"
+        className="mt-4"
       />
-      <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-faint">
+      <p className="mt-3.5 flex items-start gap-2 text-xs leading-relaxed text-faint">
         <ShieldCheck aria-hidden className="mt-px size-3.5 shrink-0" />
         Uses only what you can see in this portal. Your recruiter sees the topic you asked about, never your question.
       </p>

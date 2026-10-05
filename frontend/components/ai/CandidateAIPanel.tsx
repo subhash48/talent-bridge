@@ -36,13 +36,13 @@ export function CandidateAIPanel({ candidate, ai, focusKey, className }: Candida
     <section
       aria-labelledby={headingId}
       className={cn(
-        "rounded-[18px] border border-ai/15 bg-[linear-gradient(180deg,rgb(165_148_249/0.075),rgb(255_255_255/0.02))] p-4 shadow-[inset_0_1px_0_rgb(255_255_255/0.05)]",
+        "rounded-[14px] border border-border bg-ink/[0.03] p-3.5",
         className,
       )}
     >
       <div className="flex items-center justify-between gap-3">
-        <h3 id={headingId} className="flex items-center gap-2 text-[17px] font-medium tracking-tight text-ink">
-          <Sparkles aria-hidden className="size-5 text-ai" />
+        <h3 id={headingId} className="flex items-center gap-2 text-[15px] font-medium tracking-tight text-ink">
+          <Sparkles aria-hidden className="size-4 text-ink" />
           Ask AI about {first}
         </h3>
         <Link
@@ -54,9 +54,9 @@ export function CandidateAIPanel({ candidate, ai, focusKey, className }: Candida
           <Maximize2 />
         </Link>
       </div>
-      {ai.messages.length > 0 && <AIThread messages={ai.messages} className="mt-4 max-h-60" />}
+      {ai.messages.length > 0 && <AIThread messages={ai.messages} className="mt-3.5 max-h-60" />}
       <AIComposer
-        className="mt-4"
+        className="mt-3.5"
         id={`${headingId}-prompt`}
         label={`Ask AI about ${first}`}
         placeholder={`Summarize ${possessivePronoun(candidate.pronouns)} profile, suggest next steps, or draft a message...`}

@@ -20,7 +20,7 @@ type AIComposerProps = {
 
 /** A suggested prompt. Also used for shortcuts into Ask AI, so they look the same everywhere. */
 export const suggestionChipStyles =
-  "inline-flex h-8 items-center rounded-full border border-border bg-white/[0.05] px-3 text-xs text-charcoal transition-[background-color,border-color,color] duration-200 hover:border-ai/35 hover:bg-ai/10 hover:text-ink disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex h-7 items-center rounded-full border border-border bg-ink/[0.05] px-3 text-xs text-charcoal transition-[background-color,border-color,color] duration-200 hover:border-ink/35 hover:bg-ink/10 hover:text-ink disabled:pointer-events-none disabled:opacity-50";
 
 /** Prompt box with quick actions. Enter sends, Shift+Enter adds a line, quick actions send at once. */
 export function AIComposer({ id, label, placeholder, suggestions, pending, onSend, onStop, textareaRef, className }: AIComposerProps) {
@@ -58,7 +58,7 @@ export function AIComposer({ id, label, placeholder, suggestions, pending, onSen
         }}
         placeholder={placeholder}
         aria-describedby={`${id}-hint`}
-        className="field-sizing-content max-h-40 min-h-[68px] rounded-[12px] bg-black/25 px-3.5 py-3 focus-visible:border-ai/40 focus-visible:ring-ai/10"
+        className="field-sizing-content max-h-40 min-h-[60px] rounded-[10px] px-3.5 py-2.5"
       />
       <p id={`${id}-hint`} className="sr-only">
         Press Enter to send and Shift plus Enter for a new line.
@@ -83,11 +83,11 @@ export function AIComposer({ id, label, placeholder, suggestions, pending, onSen
           disabled={!pending && !value.trim()}
           aria-label={pending ? "Stop generating" : "Send"}
           className={cn(
-            "flex size-12 shrink-0 items-center justify-center rounded-[12px] border border-white/20 bg-canvas text-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.08)] transition-[border-color,background-color,opacity,transform] duration-200 hover:border-white/40 hover:bg-black active:scale-95 disabled:opacity-40",
-            pending && "border-ai/40",
+            "flex size-9 shrink-0 items-center justify-center rounded-[8px] border border-ink/20 bg-ink/[0.08] text-ink transition-[border-color,background-color,opacity,transform] duration-200 hover:border-ink/35 hover:bg-ink/[0.13] active:scale-95 disabled:opacity-40",
+            pending && "border-ink/40",
           )}
         >
-          {pending ? <Square aria-hidden className="size-4 fill-current" /> : <SendHorizontal aria-hidden className="size-5" />}
+          {pending ? <Square aria-hidden className="size-3.5 fill-current" /> : <SendHorizontal aria-hidden className="size-4" />}
         </button>
       </div>
     </form>

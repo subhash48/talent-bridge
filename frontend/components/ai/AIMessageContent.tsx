@@ -43,7 +43,7 @@ function inline(text: string): ReactNode[] {
   );
 }
 
-const caret = <span aria-hidden className="ml-0.5 inline-block h-[1em] w-[2px] translate-y-[3px] animate-caret bg-ai" />;
+const caret = <span aria-hidden className="ml-0.5 inline-block h-[1em] w-[2px] translate-y-[3px] animate-caret bg-ink" />;
 
 export function AIMessageContent({ text, streaming }: { text: string; streaming?: boolean }) {
   const blocks = parseBlocks(text);

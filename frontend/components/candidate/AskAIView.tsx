@@ -47,21 +47,21 @@ export function AskAIView() {
   return (
     <>
       <CandidateHeader title="Ask AI" subtitle={subtitle} />
-      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_288px]">
         {/* A conversation is about one application: switching applications starts a new one. */}
         <AskAssistant
           key={applicationId}
           description={`Answers from your application and what ${me.company} shares with candidates`}
           prompts={ASK_AI_PROMPTS}
-          threadClassName="max-h-[60vh] min-h-[200px]"
+          threadClassName="max-h-[60vh] min-h-[160px]"
           askShortcut
         />
-        <Card className="p-5 sm:p-6">
-          <h2 className="font-semibold tracking-tight text-ink">What you can ask about</h2>
-          <ul className="mt-4 flex flex-col gap-3.5">
+        <Card className="p-5 sm:p-5">
+          <h2 className="text-base font-semibold tracking-tight text-ink">What you can ask about</h2>
+          <ul className="mt-3.5 flex flex-col gap-3.5">
             {TOPICS.map(({ icon: Icon, title, description }) => (
               <li key={title} className="flex gap-3">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/[0.05] ring-1 ring-white/[0.08]">
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-ink/[0.05] ring-1 ring-ink/10">
                   <Icon aria-hidden className="size-4 text-charcoal" />
                 </span>
                 <span className="min-w-0 pt-0.5">
@@ -71,7 +71,7 @@ export function AskAIView() {
               </li>
             ))}
           </ul>
-          <p className="mt-5 border-t border-border pt-4 text-[13px] text-stone">
+          <p className="mt-4 border-t border-border pt-3.5 text-[13px] text-stone">
             More about {me.company} is on the{" "}
             <Link href="/candidate/company" className={authLinkStyles}>
               Company

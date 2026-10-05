@@ -1,17 +1,22 @@
 "use client";
 
-import { BarChart3, BriefcaseBusiness, CalendarClock, History, Mic, ShieldCheck, Sparkles, UsersRound, X } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
+import { BarChart3, BriefcaseBusiness, CalendarClock, History, Mic, MicOff, ShieldCheck, Sparkles, UsersRound, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AIComposer, suggestionChipStyles } from "@/components/ai/AIComposer";
 import { AIMessageContent } from "@/components/ai/AIMessageContent";
 import { AssistantCardView, type CardActions } from "@/components/recruiter/assistant/AssistantCards";
 import { RecentActions } from "@/components/recruiter/assistant/RecentActions";
+import { VoicePanel } from "@/components/recruiter/assistant/VoicePanel";
 import { RecruiterHeader } from "@/components/recruiter/RecruiterHeader";
 import { useWorkspace } from "@/components/recruiter/WorkspaceProvider";
 import { useAssistant, type AssistantTurn } from "@/hooks/useAssistant";
+import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { firstName } from "@/lib/format";
-import type { AssistantResponse } from "@/types/assistant";
+import { cn } from "@/lib/utils";
+import { errorMessage } from "@/services/api";
+import { getAssistantStatus } from "@/services/assistant";
+import type { AssistantResponse, AssistantStatus } from "@/types/assistant";
 
 const CAPABILITIES = [
   { icon: UsersRound, label: "Message candidates", example: "Send Sophia an interview invitation for next Tuesday" },
@@ -23,13 +28,39 @@ const CAPABILITIES = [
 const STARTERS = ["Show my open jobs", "What were candidates looking for this week?", "Show candidates interviewing for Product Designer"];
 
 /**
- * The recruiter AI Assistant: one conversation for every request, run by the action
+ * The recruiter AI Assistant: one conversation for typed and spoken requests, run by the same action
  * engine (/assistant/requests). It answers, drafts and prepares; sending a message or publishing a job
  * always waits for the recruiter's confirmation. ?candidate= focuses it on one application.
  */
 export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: string }) {
   const { candidates } = useWorkspace();
   const assistant = useAssistant(initialCandidateId);
+  const [status, setStatus] = useState<AssistantStatus | null>(null);
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [voiceAnswer, setVoiceAnswer] = useState<{ session: number; id: string } | null>(null);
+
+  useEffect(() => {
+    getAssistantStatus().then(setStatus, () => setStatus(null));
+  }, []);
+
+  const voice = useVoiceInput({
+    serverTranscription: status?.voice_transcription ?? false,
+    onTranscript: async (text, session) => {
+      const response = await assistant.send(text, "voice");
+      if (!response) {
+        voice.fail(session, "The assistant couldn't answer just now. Try again, or type your request.");
+        return;
+      }
+      setVoiceAnswer({ session, id: response.id });
+      voice.responded(session, response.status === "completed");
+    },
+  });
+  const { press } = voice;
+
+  const openVoice = useCallback(() => {
+    setVoiceOpen(true);
+    press();
+  }, [press]);
 
   const focused = useMemo(
     () => candidates.find((candidate) => candidate.id === assistant.context.application_id) ?? null,
@@ -43,11 +74,55 @@ export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: strin
     busy: assistant.pending,
   };
 
+  // In the voice panel, confirming moves the voice state through Executing… to Complete.
+  const voiceActions: CardActions = {
+    ...actions,
+    onConfirm: async (actionId, body) => {
+      const session = voice.state.session;
+      voice.executing(session);
+      try {
+        const result = await assistant.confirm(actionId, body);
+        if (result.status === "completed") voice.executed(session);
+        else voice.fail(session, result.reply);
+        return result;
+      } catch (error) {
+        voice.fail(session, errorMessage(error));
+        throw error;
+      }
+    },
+  };
+
+  const voiceResponse = useMemo(() => {
+    if (!voiceAnswer || voiceAnswer.session !== voice.state.session) return null;
+    for (const turn of assistant.turns) {
+      if (turn.role === "assistant" && turn.status === "done" && turn.response.id === voiceAnswer.id) return turn.response;
+    }
+    return null;
+  }, [voiceAnswer, voice.state.session, assistant.turns]);
+
+  const listening = voice.state.phase === "listening";
+  const micUnavailable = voice.engine === "unsupported";
+  const mic = (
+    <button
+      type="button"
+      onClick={() => (voiceOpen ? press() : openVoice())}
+      aria-pressed={listening}
+      aria-label={listening ? "Stop listening" : "Speak to the AI Assistant"}
+      title={micUnavailable ? "Voice input isn't supported in this browser" : undefined}
+      className={cn(
+        "flex size-9 shrink-0 items-center justify-center rounded-[8px] border border-ink/20 bg-ink/[0.04] text-ink transition-[border-color,background-color,transform] duration-200 hover:border-ink/35 hover:bg-ink/[0.1] active:scale-95",
+        listening && "border-ink/50 bg-ink/[0.14]",
+      )}
+    >
+      {micUnavailable ? <MicOff aria-hidden className="size-4 text-stone" /> : <Mic aria-hidden className={cn("size-4", listening && "animate-pulse")} />}
+    </button>
+  );
+
   return (
     <div>
       <RecruiterHeader
         title="AI Assistant"
-        subtitle="Ask anything. It drafts and prepares; nothing is sent or published until you confirm."
+        subtitle="Ask or speak. It drafts and prepares; nothing is sent or published until you confirm."
       />
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
         <section
@@ -80,6 +155,7 @@ export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: strin
             suggestions={[]}
             pending={assistant.pending}
             onSend={(text) => void assistant.send(text, "text")}
+            extraActions={mic}
           />
         </section>
 
@@ -97,13 +173,31 @@ export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: strin
               <ShieldCheck aria-hidden className="size-4 text-ai" /> How it works
             </h2>
             <p className="mt-3 text-xs leading-relaxed text-stone">
-              Every request goes through the same steps. Messages and job postings are prepared for you to review, and
+              Typed and spoken requests go through the same steps. Messages and job postings are prepared for you to review, and
               only go out when you confirm. It never ranks or rejects candidates, and never sees anyone&apos;s demographic answers;
               those exist only as aggregates on the Analytics page.
+            </p>
+            <p className="mt-3 text-xs leading-relaxed text-faint">
+              Voice: only the words are kept, never the recording.
+              {status && !status.voice_transcription && " Your browser transcribes speech on this server."}
             </p>
           </div>
         </aside>
       </div>
+
+      {voiceOpen && (
+        <VoicePanel
+          state={voice.state}
+          levels={voice.levels}
+          response={voiceResponse}
+          actions={voiceActions}
+          onMic={press}
+          onClose={() => {
+            voice.cancel();
+            setVoiceOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -118,7 +212,7 @@ function Welcome({ focusedName, onPick, disabled }: { focusedName: string | null
         <Sparkles aria-hidden className="size-5 text-ai" />
       </span>
       <h2 className="mt-3.5 text-lg font-semibold tracking-tight text-ink">What can I do for you?</h2>
-      <p className="mt-1.5 max-w-md text-sm text-stone">Type a request, or start from one of these.</p>
+      <p className="mt-1.5 max-w-md text-sm text-stone">Type a request, or tap the microphone and say it.</p>
       <ul className="mt-5 grid w-full max-w-xl gap-2 text-left sm:grid-cols-2">
         {CAPABILITIES.map(({ icon: Icon, label, example }) => (
           <li key={label}>

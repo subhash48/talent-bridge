@@ -60,3 +60,15 @@ export async function getAssistantStatus(): Promise<AssistantStatus | null> {
   if (USE_MOCK_API) return null;
   return apiFetch<AssistantStatus>("/assistant/status");
 }
+
+/** POST /assistant/transcribe: the recording in, the words out. Nothing is kept. */
+export async function transcribe(audio: Blob, signal?: AbortSignal): Promise<string> {
+  if (USE_MOCK_API) throw NEEDS_API;
+  const { text } = await apiFetch<{ text: string }>("/assistant/transcribe", {
+    method: "POST",
+    body: audio,
+    headers: { "Content-Type": audio.type || "audio/webm" },
+    signal,
+  });
+  return text;
+}

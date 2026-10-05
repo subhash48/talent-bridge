@@ -1,7 +1,7 @@
 "use client";
 
 import { LoaderCircle, SendHorizontal, Square } from "lucide-react";
-import { useState, type Ref } from "react";
+import { useState, type ReactNode, type Ref } from "react";
 
 import { Textarea } from "@/components/ui/Textarea";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,8 @@ type AIComposerProps = {
   /** Stop the answer being written. Without it, the button shows progress while pending. */
   onStop?: () => void;
   textareaRef?: Ref<HTMLTextAreaElement>;
+  /** More controls beside the send button, e.g. the recruiter assistant's microphone. */
+  extraActions?: ReactNode;
   className?: string;
 };
 
@@ -24,7 +26,7 @@ export const suggestionChipStyles =
   "inline-flex h-7 items-center rounded-full border border-border bg-ink/[0.05] px-3 text-xs text-charcoal transition-[background-color,border-color,color] duration-200 hover:border-ink/35 hover:bg-ink/10 hover:text-ink disabled:pointer-events-none disabled:opacity-50";
 
 /** Prompt box with quick actions. Enter sends, Shift+Enter adds a line, quick actions send at once. */
-export function AIComposer({ id, label, placeholder, suggestions, pending, onSend, onStop, textareaRef, className }: AIComposerProps) {
+export function AIComposer({ id, label, placeholder, suggestions, pending, onSend, onStop, textareaRef, extraActions, className }: AIComposerProps) {
   const [value, setValue] = useState("");
 
   function submit() {
@@ -78,6 +80,7 @@ export function AIComposer({ id, label, placeholder, suggestions, pending, onSen
             </button>
           ))}
         </div>
+        {extraActions}
         <button
           type={pending ? "button" : "submit"}
           onClick={pending ? onStop : undefined}

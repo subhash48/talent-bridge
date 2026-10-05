@@ -5,6 +5,7 @@ import { useId, useState, type FormEvent } from "react";
 
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
 import { CandidateHeader } from "@/components/candidate/CandidateHeader";
+import { DemographicsCard } from "@/components/candidate/DemographicsCard";
 import { LoadError } from "@/components/candidate/LoadError";
 import { Avatar } from "@/components/shared/Avatar";
 import { Button } from "@/components/ui/Button";
@@ -101,85 +102,88 @@ function ProfileForm({ profile, onSaved }: { profile: CandidateProfile; onSaved:
 
   return (
     <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_288px]">
-      <form onSubmit={(event) => void save(event)}>
-        <Card className="p-5 sm:p-5">
-          <h2 className="text-base font-semibold tracking-tight text-ink">Contact details</h2>
-          <div className="mt-4 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-            <Field label="Phone" htmlFor={`${id}-phone`}>
-              <Input id={`${id}-phone`} type="tel" autoComplete="tel" maxLength={40} value={phone} onChange={(event) => setPhone(event.target.value)} />
-            </Field>
-            <Field label="Location" htmlFor={`${id}-location`}>
-              <Input
-                id={`${id}-location`}
-                autoComplete="address-level2"
-                maxLength={200}
-                placeholder="City, country"
-                value={location}
-                onChange={(event) => setLocation(event.target.value)}
-              />
-            </Field>
-            <Field label="Headline" htmlFor={`${id}-headline`} className="sm:col-span-2">
-              <Textarea
-                id={`${id}-headline`}
-                rows={2}
-                maxLength={300}
-                placeholder="A one-line summary of what you do"
-                value={headline}
-                onChange={(event) => setHeadline(event.target.value)}
-              />
-            </Field>
-            <div className="flex flex-col gap-1.5 sm:col-span-2">
-              <label htmlFor={`${id}-skills`} className="text-xs font-medium text-charcoal">
-                Skills
-              </label>
-              {skills.length > 0 && (
-                <ul className="flex flex-wrap gap-2" aria-label="Your skills">
-                  {skills.map((skill) => (
-                    <li key={skill} className="inline-flex h-6 items-center gap-1 rounded-full bg-ink/[0.05] pr-1 pl-2.5 text-xs text-charcoal ring-1 ring-ink/10">
-                      {skill}
-                      <button
-                        type="button"
-                        onClick={() => setSkills(skills.filter((item) => item !== skill))}
-                        aria-label={`Remove ${skill}`}
-                        className="relative rounded-full p-0.5 text-stone transition-colors after:absolute after:-inset-1.5 hover:bg-ink/[0.08] hover:text-ink"
-                      >
-                        <X aria-hidden className="size-3.5" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <Input
-                id={`${id}-skills`}
-                value={skillDraft}
-                maxLength={61}
-                placeholder={skills.length >= MAX_SKILLS ? "You've added the maximum number of skills" : "Add a skill and press Enter"}
-                disabled={skills.length >= MAX_SKILLS}
-                onChange={(event) => {
-                  if (event.target.value.endsWith(",")) addSkill(event.target.value);
-                  else setSkillDraft(event.target.value);
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    addSkill(skillDraft);
-                  }
-                }}
-                onBlur={() => addSkill(skillDraft)}
-              />
+      <div className="flex flex-col gap-4">
+        <form onSubmit={(event) => void save(event)}>
+          <Card className="p-5 sm:p-5">
+            <h2 className="text-base font-semibold tracking-tight text-ink">Contact details</h2>
+            <div className="mt-4 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+              <Field label="Phone" htmlFor={`${id}-phone`}>
+                <Input id={`${id}-phone`} type="tel" autoComplete="tel" maxLength={40} value={phone} onChange={(event) => setPhone(event.target.value)} />
+              </Field>
+              <Field label="Location" htmlFor={`${id}-location`}>
+                <Input
+                  id={`${id}-location`}
+                  autoComplete="address-level2"
+                  maxLength={200}
+                  placeholder="City, country"
+                  value={location}
+                  onChange={(event) => setLocation(event.target.value)}
+                />
+              </Field>
+              <Field label="Headline" htmlFor={`${id}-headline`} className="sm:col-span-2">
+                <Textarea
+                  id={`${id}-headline`}
+                  rows={2}
+                  maxLength={300}
+                  placeholder="A one-line summary of what you do"
+                  value={headline}
+                  onChange={(event) => setHeadline(event.target.value)}
+                />
+              </Field>
+              <div className="flex flex-col gap-1.5 sm:col-span-2">
+                <label htmlFor={`${id}-skills`} className="text-xs font-medium text-charcoal">
+                  Skills
+                </label>
+                {skills.length > 0 && (
+                  <ul className="flex flex-wrap gap-2" aria-label="Your skills">
+                    {skills.map((skill) => (
+                      <li key={skill} className="inline-flex h-6 items-center gap-1 rounded-full bg-ink/[0.05] pr-1 pl-2.5 text-xs text-charcoal ring-1 ring-ink/10">
+                        {skill}
+                        <button
+                          type="button"
+                          onClick={() => setSkills(skills.filter((item) => item !== skill))}
+                          aria-label={`Remove ${skill}`}
+                          className="relative rounded-full p-0.5 text-stone transition-colors after:absolute after:-inset-1.5 hover:bg-ink/[0.08] hover:text-ink"
+                        >
+                          <X aria-hidden className="size-3.5" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <Input
+                  id={`${id}-skills`}
+                  value={skillDraft}
+                  maxLength={61}
+                  placeholder={skills.length >= MAX_SKILLS ? "You've added the maximum number of skills" : "Add a skill and press Enter"}
+                  disabled={skills.length >= MAX_SKILLS}
+                  onChange={(event) => {
+                    if (event.target.value.endsWith(",")) addSkill(event.target.value);
+                    else setSkillDraft(event.target.value);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      addSkill(skillDraft);
+                    }
+                  }}
+                  onBlur={() => addSkill(skillDraft)}
+                />
+              </div>
             </div>
-          </div>
-          <div className="mt-5 flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">
-            <Button variant="ghost" onClick={reset} disabled={!dirty || saving}>
-              Discard changes
-            </Button>
-            <Button type="submit" disabled={!dirty || saving}>
-              {saving && <LoaderCircle className="animate-spin" />}
-              {saving ? "Saving…" : "Save changes"}
-            </Button>
-          </div>
-        </Card>
-      </form>
+            <div className="mt-5 flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">
+              <Button variant="ghost" onClick={reset} disabled={!dirty || saving}>
+                Discard changes
+              </Button>
+              <Button type="submit" disabled={!dirty || saving}>
+                {saving && <LoaderCircle className="animate-spin" />}
+                {saving ? "Saving…" : "Save changes"}
+              </Button>
+            </div>
+          </Card>
+        </form>
+        <DemographicsCard />
+      </div>
 
       <div className="flex flex-col gap-4">
         <Card className="p-5 sm:p-5">

@@ -1,3 +1,4 @@
+import type { DemographicAnswers } from "@/lib/demographics";
 import { apiFetch } from "@/services/api";
 import type {
   ApiCandidateApplicationDetail,
@@ -117,6 +118,23 @@ export async function getCandidateProfile(): Promise<CandidateProfile> {
 export async function updateCandidateProfile(input: ProfileUpdateInput): Promise<CandidateProfile> {
   const profile = await apiFetch<ApiPortalCandidate>("/candidate/profile", { method: "PATCH", body: JSON.stringify(input) });
   return fromCandidate(profile);
+}
+
+/** GET /candidate/demographics: the candidate's own voluntary answers. Only they can read them. */
+export async function getCandidateDemographics(): Promise<DemographicAnswers> {
+  const { region, race_ethnicity, disability_status, sexual_orientation } = await apiFetch<DemographicAnswers>("/candidate/demographics");
+  return { region, race_ethnicity, disability_status, sexual_orientation };
+}
+
+/** PUT /candidate/demographics: replaces the answers; a blank question stays unanswered. */
+export async function saveCandidateDemographics(answers: DemographicAnswers): Promise<DemographicAnswers> {
+  const saved = await apiFetch<DemographicAnswers>("/candidate/demographics", { method: "PUT", body: JSON.stringify(answers) });
+  return {
+    region: saved.region,
+    race_ethnicity: saved.race_ethnicity,
+    disability_status: saved.disability_status,
+    sexual_orientation: saved.sexual_orientation,
+  };
 }
 
 /** GET /candidate/company: the company-approved profile the Company page shows and the assistant answers from. */

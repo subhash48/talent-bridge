@@ -19,7 +19,7 @@ from app.services.analytics import insights
 from app.services.analytics.periods import resolve_period
 from app.services.analytics.portal import PortalStats, bucket_label, buckets, hour_window, portal_stats, present
 from app.services.analytics.topics import topic_for_event, topic_for_question
-from tests.conftest import API, application_id, candidate_id
+from tests.conftest import API, SOPHIA_AUTH, application_id, bearer, candidate_id
 
 SOPHIA_APP = application_id("sophia-martinez")
 # A fixed "now" years after the seeded demo activity, so only what each test records is in range.
@@ -288,6 +288,48 @@ async def test_custom_ranges_are_whole_local_days(sessions: async_sessionmaker[A
         stats = await portal_stats(session, period)
     assert len(stats.visits) == 1
     assert period.label == "Mar 1, 2031"
+
+
+# The API
+
+
+async def test_recruiters_get_portal_analytics_and_candidates_cannot(
+    client: AsyncClient, anonymous: AsyncClient
+) -> None:
+    response = await client.get(f"{API}/analytics/portal", params={"range": "last_90_days", "granularity": "week"})
+    assert response.status_code == 200
+    body = response.json()
+    assert [kpi["key"] for kpi in body["kpis"]] == [
+        "active_candidates",
+        "weekly_engaged",
+        "avg_engagement_time",
+        "repeat_visit_rate",
+    ]
+    assert body["engagement"]["granularity"] == "week"
+    assert body["engagement"]["total_visits"] >= 4  # the seeded demo candidate's visits
+    assert len(body["heatmap"]["values"]) == 7 and len(body["heatmap"]["values"][0]) == 12
+    assert len(body["topics"]["items"]) == 6
+    # Aggregates only: no candidate's id, name or email anywhere.
+    text = response.text
+    assert candidate_id("sophia-martinez") not in text and "Sophia" not in text and "@" not in text
+
+    for path in ("/analytics/portal", "/analytics/insights", "/analytics/demographics"):
+        assert (await anonymous.get(f"{API}{path}", headers=bearer(SOPHIA_AUTH))).status_code == 403
+        assert (await anonymous.get(f"{API}{path}")).status_code == 401
+
+
+async def test_custom_ranges_are_checked(client: AsyncClient) -> None:
+    missing = await client.get(f"{API}/analytics/portal", params={"range": "custom"})
+    assert missing.status_code == 400 and missing.json()["error"]["code"] == "invalid_range"
+    backwards = await client.get(
+        f"{API}/analytics/portal", params={"range": "custom", "start": "2026-05-02", "end": "2026-05-01"}
+    )
+    assert backwards.status_code == 400
+    ok = await client.get(
+        f"{API}/analytics/portal", params={"range": "custom", "start": "2026-05-01", "end": "2026-05-31"}
+    )
+    assert ok.status_code == 200 and ok.json()["period"]["label"] == "May 1 – May 31, 2026"
+    assert (await client.get(f"{API}/analytics/portal", params={"range": "forever"})).status_code == 422
 
 
 # Insights

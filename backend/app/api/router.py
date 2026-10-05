@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends
 from app.api import (
     activities,
     ai,
+    analytics,
     applications,
     auth,
     candidate,
@@ -27,7 +28,18 @@ from app.core.dependencies import require_candidate, require_demo_enabled, requi
 
 api_router = APIRouter()
 # The recruiter workspace: recruiters and admins.
-for module in (candidates, engagement, applications, activities, interviews, jobs, messages, ai, dashboard):
+for module in (
+    candidates,
+    engagement,
+    applications,
+    activities,
+    interviews,
+    jobs,
+    messages,
+    ai,
+    dashboard,
+    analytics,
+):
     api_router.include_router(module.router, dependencies=[Depends(require_recruiter)])
 # The candidate portal: the signed-in candidate, scoped to their own record.
 for module in (candidate, candidate_engagement):

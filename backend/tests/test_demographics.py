@@ -16,9 +16,9 @@ from app.main import app
 from app.models import Candidate, CandidateDemographics, DemoApplicationDemographics
 from app.models.base import utcnow
 from app.services.ai.context import build_candidate_context
-from app.services.demographics import OTHER_INSUFFICIENT, summarize
+from app.services.demographics import MIN_GROUP_SIZE, OTHER_INSUFFICIENT, summarize
 from tests.ashby_support import FakeSupabaseAdmin
-from tests.conftest import ALEX_AUTH, API, application_id, bearer, candidate_id
+from tests.conftest import ALEX_AUTH, API, SOPHIA_AUTH, application_id, bearer, candidate_id
 from tests.test_demo_careers import EMAIL, apply_to, demo_job, demo_on  # noqa: F401  (demo_on: autouse here too)
 
 SOPHIA = candidate_id("sophia-martinez")
@@ -80,7 +80,7 @@ async def test_only_the_candidate_can_reach_their_own_answers(
     assert (await anonymous.get(f"{API}/candidate/demographics")).status_code == 401
     # No recruiter route takes a candidate and returns their answers: there is none to ask.
     paths = {path for path in app.openapi()["paths"] if "demographic" in path}
-    assert paths == {f"{API}/candidate/demographics"}
+    assert paths == {f"{API}/candidate/demographics", f"{API}/analytics/demographics"}
 
 
 async def test_no_recruiter_view_of_a_person_carries_their_answers(
@@ -133,6 +133,40 @@ async def test_answers_never_change_the_pipeline_order(
 # Aggregates
 
 
+async def test_recruiters_see_aggregates_with_small_groups_combined(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    answers = (
+        [{"region": "united_states", "race_ethnicity": "white"}] * 9
+        + [{"region": "india", "race_ethnicity": "asian"}] * 6
+        + [{"region": "canada", "race_ethnicity": "black"}] * 2  # too few to show
+        + [{"region": "germany", "race_ethnicity": "asian", "disability_status": "yes"}] * 1
+        + [{"region": "prefer_not_to_say"}] * 5
+    )
+    await answer_for_many(sessions, answers)
+    response = await client.get(f"{API}/analytics/demographics")
+    assert response.status_code == 200
+    summary = response.json()
+    assert summary["min_group_size"] == MIN_GROUP_SIZE
+    region = next(d for d in summary["dimensions"] if d["dimension"] == "region")
+    assert region["respondents_approx"] == 20  # 23, rounded down to a multiple of 5
+    shares = {bucket["key"]: bucket["share"] for bucket in region["buckets"]}
+    # Canada (2) and Germany (1) are too few, and so is the 3 they'd make together: the next-smallest
+    # group (prefer not to say, 5) joins them, so none of the three can be worked out.
+    assert shares == {"united_states": 39, "india": 26, OTHER_INSUFFICIENT: 35}
+
+    # Disability: one answer in all. Nothing is reported.
+    disability = next(d for d in summary["dimensions"] if d["dimension"] == "disability_status")
+    assert disability["suppressed"] is True and disability["buckets"] == []
+
+    # Nothing about any person in the response: no ids, names or emails.
+    text = json.dumps(summary).lower()
+    async with sessions() as session:
+        people = (await session.execute(select(Candidate.id, Candidate.email, Candidate.last_name))).all()
+    for candidate, email, last_name in people:
+        assert str(candidate) not in text and email not in text and last_name.lower() not in text
+
+
 def test_a_combined_group_too_small_to_stand_alone_takes_in_the_next_smallest() -> None:
     # Bisexual (3) alone would identify three people; combined with lesbian (5) it can't be subtracted out.
     counts = Counter({"straight": 40, "lesbian": 5, "bisexual": 3})
@@ -143,6 +177,10 @@ def test_a_combined_group_too_small_to_stand_alone_takes_in_the_next_smallest() 
     assert [bucket.label for bucket in other.buckets] == ["United States", "Other"]
     # Too few answers in all: nothing at all.
     assert summarize("region", "Region", Counter({"india": 4})).suppressed
+
+
+async def test_candidates_cant_read_the_aggregates(anonymous: AsyncClient) -> None:
+    assert (await anonymous.get(f"{API}/analytics/demographics", headers=bearer(SOPHIA_AUTH))).status_code == 403
 
 
 # The demo careers application form

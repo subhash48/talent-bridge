@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BarChart3,
   BriefcaseBusiness,
   CalendarDays,
   ChevronsUpDown,
@@ -32,6 +33,7 @@ const NAV = [
   { href: "/recruiter/jobs", label: "Jobs", icon: BriefcaseBusiness },
   { href: "/recruiter/interviews", label: "Interviews", icon: CalendarDays },
   { href: "/recruiter/messages", label: "Messages", icon: MessageSquareText },
+  { href: "/recruiter/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/recruiter/ai", label: "AI Assistant", icon: Sparkles },
 ] as const;
 

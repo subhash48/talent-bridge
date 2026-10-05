@@ -1,6 +1,6 @@
 "use client";
 
-import { SendHorizontal, Square } from "lucide-react";
+import { LoaderCircle, SendHorizontal, Square } from "lucide-react";
 import { useState, type Ref } from "react";
 
 import { Textarea } from "@/components/ui/Textarea";
@@ -13,7 +13,8 @@ type AIComposerProps = {
   suggestions: string[];
   pending: boolean;
   onSend: (prompt: string) => void;
-  onStop: () => void;
+  /** Stop the answer being written. Without it, the button shows progress while pending. */
+  onStop?: () => void;
   textareaRef?: Ref<HTMLTextAreaElement>;
   className?: string;
 };
@@ -80,14 +81,22 @@ export function AIComposer({ id, label, placeholder, suggestions, pending, onSen
         <button
           type={pending ? "button" : "submit"}
           onClick={pending ? onStop : undefined}
-          disabled={!pending && !value.trim()}
-          aria-label={pending ? "Stop generating" : "Send"}
+          disabled={pending ? !onStop : !value.trim()}
+          aria-label={pending ? (onStop ? "Stop generating" : "Working…") : "Send"}
           className={cn(
             "flex size-9 shrink-0 items-center justify-center rounded-[8px] border border-ink/20 bg-ink/[0.08] text-ink transition-[border-color,background-color,opacity,transform] duration-200 hover:border-ink/35 hover:bg-ink/[0.13] active:scale-95 disabled:opacity-40",
             pending && "border-ink/40",
           )}
         >
-          {pending ? <Square aria-hidden className="size-3.5 fill-current" /> : <SendHorizontal aria-hidden className="size-4" />}
+          {pending ? (
+            onStop ? (
+              <Square aria-hidden className="size-3.5 fill-current" />
+            ) : (
+              <LoaderCircle aria-hidden className="size-4 animate-spin" />
+            )
+          ) : (
+            <SendHorizontal aria-hidden className="size-4" />
+          )}
         </button>
       </div>
     </form>

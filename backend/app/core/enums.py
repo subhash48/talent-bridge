@@ -154,6 +154,9 @@ class EngagementEventType(StrEnum):
     MESSAGE_READ = "message_read"
     # A section of the Company page read for a moment (metadata.target is a CompanySection).
     COMPANY_SECTION_VIEWED = "company_section_viewed"
+    # The candidate asked the portal assistant something. Only its topic is kept (metadata.topic, a
+    # PortalTopic), never the question.
+    AI_QUESTION_ASKED = "ai_question_asked"
 
 
 # The only types the portal may send to POST /candidate/engagement/events. The rest are recorded by
@@ -176,6 +179,17 @@ class CompanySection(StrEnum):
     BENEFITS = "benefits"
     LOCATIONS = "locations"
     HIRING = "hiring"
+
+
+class PortalTopic(StrEnum):
+    """What a portal interaction was about, for recruiter analytics (services/analytics/topics.py)."""
+
+    INTERVIEW_PREPARATION = "interview_preparation"
+    COMPANY_INFORMATION = "company_information"
+    APPLICATION_STATUS = "application_status"
+    COMPENSATION = "compensation"
+    BENEFITS = "benefits"
+    CULTURE_TEAM = "culture_team"
 
 
 class PortalPage(StrEnum):

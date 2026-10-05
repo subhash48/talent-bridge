@@ -3,9 +3,11 @@
 import { BarChart3 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 
+import { ActivityHeatmap } from "@/components/recruiter/analytics/ActivityHeatmap";
 import { DateRangeFilter, Segmented } from "@/components/recruiter/analytics/AnalyticsFilters";
 import { EngagementChart, EngagementLegend, EngagementTable } from "@/components/recruiter/analytics/EngagementChart";
 import { KpiCards } from "@/components/recruiter/analytics/KpiCards";
+import { TopicBreakdown } from "@/components/recruiter/analytics/TopicBreakdown";
 import { DetailError } from "@/components/recruiter/DetailError";
 import { RecruiterHeader } from "@/components/recruiter/RecruiterHeader";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -142,6 +144,15 @@ export function AnalyticsView({ initialRange }: { initialRange: AnalyticsRange }
               </>
             )}
           </Section>
+
+          <div className="grid items-start gap-4 lg:grid-cols-2">
+            <Section title="What Candidates Are Looking For" subtitle="Share of portal interactions by topic">
+              <TopicBreakdown items={data.topics.items} total={data.topics.total} />
+            </Section>
+            <Section title="When Candidates Use the Portal" subtitle="Visits by weekday and time of day">
+              <ActivityHeatmap heatmap={data.heatmap} />
+            </Section>
+          </div>
         </div>
       ) : (
         <div aria-busy="true" aria-label="Loading analytics" className="flex flex-col gap-4">

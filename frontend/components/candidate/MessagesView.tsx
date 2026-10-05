@@ -77,7 +77,7 @@ function MessagesView({ applicationId, initialThread }: { applicationId: string 
         {error ? (
           <LoadError title="Your messages couldn't load" message={error} onRetry={() => void refresh()} />
         ) : (
-          <Skeleton className="h-[560px] rounded-[22px]" />
+          <Skeleton className="h-[460px] rounded-[16px] lg:h-[calc(100dvh-12.5rem)]" />
         )}
       </>
     );
@@ -91,12 +91,12 @@ function MessagesView({ applicationId, initialThread }: { applicationId: string 
       <CandidateHeader title="Messages" subtitle={`Your conversation with ${recruiter ? recruiter.name : `the ${me.company} hiring team`}`} />
       <section
         aria-label="Conversation"
-        className="glass flex min-h-[520px] flex-col overflow-hidden rounded-[22px] border border-border lg:h-[calc(100dvh-16rem)]"
+        className="glass flex min-h-[460px] flex-col overflow-hidden rounded-[16px] border border-border lg:h-[calc(100dvh-12.5rem)]"
       >
-        <header className="flex items-center gap-3 border-b border-border px-4 py-3.5 sm:px-5">
-          <Avatar name={recruiter?.name ?? me.company} size={40} />
+        <header className="flex items-center gap-3 border-b border-border px-4 py-3 sm:px-5">
+          <Avatar name={recruiter?.name ?? me.company} size={32} />
           <div className="min-w-0 flex-1">
-            <h2 className="truncate font-medium text-ink">{recruiter?.name ?? `${me.company} hiring team`}</h2>
+            <h2 className="truncate text-[15px] leading-5 font-medium text-ink">{recruiter?.name ?? `${me.company} hiring team`}</h2>
             <p className="truncate text-[13px] text-stone">
               {recruiter ? `${recruiter.title} · ${me.company}` : "Recruiting"}
               {me.job && ` · ${me.job.title}`}
@@ -132,11 +132,11 @@ function MessageList({ messages, firstUnreadId, recruiterFirst }: { messages: Ca
 
   if (messages.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-        <span className="flex size-11 items-center justify-center rounded-full bg-white/[0.05] ring-1 ring-white/10">
-          <MessageSquareText aria-hidden className="size-5 text-stone" />
+      <div className="flex flex-1 flex-col items-center justify-center gap-1 px-5 py-6 text-center">
+        <span className="mb-2 flex size-9 items-center justify-center rounded-full bg-ink/[0.05] ring-1 ring-ink/10">
+          <MessageSquareText aria-hidden className="size-4 text-stone" />
         </span>
-        <p className="font-medium text-ink">No messages yet.</p>
+        <p className="text-[15px] font-medium text-ink">No messages yet.</p>
         <p className="max-w-xs text-sm text-stone">Questions about your application or interviews? Write to {recruiterFirst} below.</p>
       </div>
     );
@@ -145,7 +145,7 @@ function MessageList({ messages, firstUnreadId, recruiterFirst }: { messages: Ca
   const lastOwnId = messages.findLast((message) => message.sender === "candidate")?.id;
 
   return (
-    <div ref={scrollRef} role="log" aria-label="Messages" className="flex min-h-[240px] flex-1 flex-col overflow-y-auto px-4 py-5 sm:px-6">
+    <div ref={scrollRef} role="log" aria-label="Messages" className="flex min-h-[200px] flex-1 flex-col overflow-y-auto px-4 py-4 sm:px-5">
       {messages.map((message, index) => {
         const previous = messages[index - 1];
         const day = formatDayLabel(message.sentAt, { long: true });
@@ -154,13 +154,13 @@ function MessageList({ messages, firstUnreadId, recruiterFirst }: { messages: Ca
         return (
           <div key={message.id}>
             {newDay && (
-              <p className="my-4 text-center text-xs font-medium text-faint" suppressHydrationWarning>
+              <p className="my-3 text-center text-xs font-medium text-faint" suppressHydrationWarning>
                 {day}
               </p>
             )}
             {message.id === firstUnreadId && (
-              <p className="my-3 flex items-center gap-3 text-xs font-medium text-violet-200">
-                <span aria-hidden className="h-px flex-1 bg-ai/30" /> New <span aria-hidden className="h-px flex-1 bg-ai/30" />
+              <p className="my-3 flex items-center gap-3 text-xs font-medium text-ink">
+                <span aria-hidden className="h-px flex-1 bg-ink/20" /> New <span aria-hidden className="h-px flex-1 bg-ink/20" />
               </p>
             )}
             <MessageItem message={message} grouped={grouped} receipt={message.id === lastOwnId} />
@@ -213,7 +213,7 @@ function Composer({ applicationId, recruiterFirst, onSent }: ComposerProps) {
             onClick={() => setKind(option.value)}
             className={cn(
               "h-7 rounded-full px-3 text-xs font-medium ring-1 transition-colors",
-              kind === option.value ? "bg-white/[0.1] text-ink ring-white/20" : "text-stone ring-white/[0.08] hover:text-ink",
+              kind === option.value ? "bg-ink/[0.1] text-ink ring-ink/20" : "text-stone ring-ink/[0.08] hover:text-ink",
             )}
           >
             {option.label}
@@ -237,7 +237,7 @@ function Composer({ applicationId, recruiterFirst, onSent }: ComposerProps) {
         }}
         placeholder={`Write to ${recruiterFirst}…`}
         aria-describedby={`${composerId}-hint`}
-        className="field-sizing-content max-h-48 min-h-[64px] bg-black/20"
+        className="field-sizing-content max-h-48 min-h-[56px] bg-black/20"
       />
       <div className="mt-3 flex items-center gap-3">
         <p id={`${composerId}-hint`} className="hidden flex-1 text-xs text-faint sm:block">

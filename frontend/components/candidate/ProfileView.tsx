@@ -36,9 +36,9 @@ export function ProfileView({ initialProfile }: { initialProfile?: CandidateProf
       ) : error ? (
         <LoadError title="Your profile couldn't load" message={error} onRetry={() => void refresh()} />
       ) : (
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]" aria-busy="true" aria-label="Loading your profile">
-          <Skeleton className="h-[520px] rounded-[18px]" />
-          <Skeleton className="h-[260px] rounded-[18px]" />
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_288px]" aria-busy="true" aria-label="Loading your profile">
+          <Skeleton className="h-[420px] rounded-[14px]" />
+          <Skeleton className="h-[232px] rounded-[14px]" />
         </div>
       )}
     </>
@@ -100,11 +100,11 @@ function ProfileForm({ profile, onSaved }: { profile: CandidateProfile; onSaved:
   const resumeLink = profile.resumeUrl && /^https?:\/\//i.test(profile.resumeUrl) ? profile.resumeUrl : null;
 
   return (
-    <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+    <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_288px]">
       <form onSubmit={(event) => void save(event)}>
-        <Card className="p-5 sm:p-6">
-          <h2 className="font-semibold tracking-tight text-ink">Contact details</h2>
-          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Card className="p-5 sm:p-5">
+          <h2 className="text-base font-semibold tracking-tight text-ink">Contact details</h2>
+          <div className="mt-4 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
             <Field label="Phone" htmlFor={`${id}-phone`}>
               <Input id={`${id}-phone`} type="tel" autoComplete="tel" maxLength={40} value={phone} onChange={(event) => setPhone(event.target.value)} />
             </Field>
@@ -135,13 +135,13 @@ function ProfileForm({ profile, onSaved }: { profile: CandidateProfile; onSaved:
               {skills.length > 0 && (
                 <ul className="flex flex-wrap gap-2" aria-label="Your skills">
                   {skills.map((skill) => (
-                    <li key={skill} className="inline-flex items-center gap-1 rounded-full bg-white/[0.05] py-1 pr-1 pl-3 text-[13px] text-charcoal ring-1 ring-white/[0.08]">
+                    <li key={skill} className="inline-flex h-6 items-center gap-1 rounded-full bg-ink/[0.05] pr-1 pl-2.5 text-xs text-charcoal ring-1 ring-ink/10">
                       {skill}
                       <button
                         type="button"
                         onClick={() => setSkills(skills.filter((item) => item !== skill))}
                         aria-label={`Remove ${skill}`}
-                        className="rounded-full p-0.5 text-stone transition-colors hover:bg-white/[0.08] hover:text-ink"
+                        className="relative rounded-full p-0.5 text-stone transition-colors after:absolute after:-inset-1.5 hover:bg-ink/[0.08] hover:text-ink"
                       >
                         <X aria-hidden className="size-3.5" />
                       </button>
@@ -169,7 +169,7 @@ function ProfileForm({ profile, onSaved }: { profile: CandidateProfile; onSaved:
               />
             </div>
           </div>
-          <div className="mt-6 flex flex-wrap items-center justify-end gap-2 border-t border-border pt-5">
+          <div className="mt-5 flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">
             <Button variant="ghost" onClick={reset} disabled={!dirty || saving}>
               Discard changes
             </Button>
@@ -181,35 +181,35 @@ function ProfileForm({ profile, onSaved }: { profile: CandidateProfile; onSaved:
         </Card>
       </form>
 
-      <div className="flex flex-col gap-5">
-        <Card className="p-5 sm:p-6">
+      <div className="flex flex-col gap-4">
+        <Card className="p-5 sm:p-5">
           <div className="flex items-center gap-3">
-            <Avatar name={profile.fullName} src={profile.avatarUrl} size={48} />
+            <Avatar name={profile.fullName} src={profile.avatarUrl} size={40} />
             <div className="min-w-0">
-              <p className="truncate font-semibold text-ink">{profile.fullName}</p>
+              <p className="truncate text-base font-semibold text-ink">{profile.fullName}</p>
               {profile.pronouns && <p className="text-[13px] text-stone">{profile.pronouns}</p>}
             </div>
           </div>
-          <dl className="mt-5 flex flex-col gap-3 text-sm">
+          <dl className="mt-4 flex flex-col gap-3 text-sm">
             <div>
               <dt className="text-xs text-faint">Email</dt>
               <dd className="mt-0.5 truncate text-charcoal">{profile.email}</dd>
             </div>
           </dl>
-          <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-faint">
+          <p className="mt-3.5 flex items-start gap-2 text-xs leading-relaxed text-faint">
             <Lock aria-hidden className="mt-px size-3.5 shrink-0" />
             To change your name or email, message your recruiter.
           </p>
         </Card>
 
-        <Card className="p-5 sm:p-6">
-          <h2 className="font-semibold tracking-tight text-ink">Resume</h2>
+        <Card className="p-5 sm:p-5">
+          <h2 className="text-base font-semibold tracking-tight text-ink">Resume</h2>
           {resumeLink ? (
             <a
               href={resumeLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 flex items-center gap-3 rounded-[12px] bg-white/[0.04] px-3.5 py-3 text-sm text-charcoal ring-1 ring-white/[0.08] transition-colors hover:text-ink"
+              className="mt-3.5 flex items-center gap-3 rounded-[10px] bg-ink/[0.03] px-3.5 py-2.5 text-sm text-charcoal ring-1 ring-ink/10 transition-colors hover:text-ink"
             >
               <FileText aria-hidden className="size-4 text-stone" /> View your resume
             </a>

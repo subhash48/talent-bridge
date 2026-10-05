@@ -13,7 +13,7 @@ const KIND_LABELS: Partial<Record<MessageKind, string>> = {
 
 /**
  * One message in the thread. Compact and document-like rather than chat bubbles: the hiring team's
- * messages sit on the left with their name, the candidate's own on the right with a faint violet tint.
+ * messages sit on the left with their name, the candidate's own on the right with a faint ivory tint.
  */
 type MessageItemProps = {
   message: CandidateMessage;
@@ -26,8 +26,8 @@ type MessageItemProps = {
 export function MessageItem({ message, grouped, receipt = false }: MessageItemProps) {
   const own = message.sender === "candidate";
   return (
-    <div className={cn("flex gap-3", own ? "flex-row-reverse" : "flex-row", grouped ? "mt-1" : "mt-4")}>
-      {own ? null : grouped ? <span aria-hidden className="w-8 shrink-0" /> : <Avatar name={message.senderName} size={32} />}
+    <div className={cn("flex gap-3", own ? "flex-row-reverse" : "flex-row", grouped ? "mt-1" : "mt-3")}>
+      {own ? null : grouped ? <span aria-hidden className="w-7 shrink-0" /> : <Avatar name={message.senderName} size={28} />}
       <div className={cn("flex max-w-[85%] min-w-0 flex-col sm:max-w-[72%]", own ? "items-end" : "items-start")}>
         {!grouped && (
           <p className="mb-1 flex items-baseline gap-2 px-1 text-xs">
@@ -40,8 +40,8 @@ export function MessageItem({ message, grouped, receipt = false }: MessageItemPr
         )}
         <p
           className={cn(
-            "rounded-[14px] px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-line",
-            own ? "bg-ai/[0.12] text-ink ring-1 ring-ai/20" : "bg-white/[0.04] text-charcoal ring-1 ring-white/[0.07]",
+            "rounded-[12px] px-3.5 py-2 text-sm leading-relaxed whitespace-pre-line",
+            own ? "bg-ink/[0.1] text-ink ring-1 ring-ink/15" : "bg-ink/[0.04] text-charcoal ring-1 ring-ink/[0.07]",
           )}
         >
           <span className="sr-only">{own ? "You" : message.senderName}: </span>
@@ -49,7 +49,7 @@ export function MessageItem({ message, grouped, receipt = false }: MessageItemPr
         </p>
         {own && receipt && (
           <p className="mt-1 flex items-center gap-1 px-1 text-[11px] text-faint">
-            {message.readAt ? <CheckCheck aria-hidden className="size-3.5 text-violet-200" /> : <Check aria-hidden className="size-3.5" />}
+            {message.readAt ? <CheckCheck aria-hidden className="size-3.5 text-ink" /> : <Check aria-hidden className="size-3.5" />}
             {message.readAt ? "Read" : "Sent"}
           </p>
         )}

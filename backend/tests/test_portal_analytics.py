@@ -7,15 +7,16 @@ from typing import Any
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.core.enums import PortalTopic
-from app.models import CandidateEngagementEvent, PortalSession
+from app.core.config import settings
+from app.core.enums import EngagementEventType, PortalTopic
+from app.models import Candidate, CandidateDemographics, CandidateEngagementEvent, PortalSession
 from app.schemas.analytics import AnalyticsInsight
 from app.services.ai.client import AIProviderError
 from app.services.ai.fallback import MockProvider
-from app.services.analytics import insights
+from app.services.analytics import demo_activity, insights
 from app.services.analytics.periods import resolve_period
 from app.services.analytics.portal import PortalStats, bucket_label, buckets, hour_window, portal_stats, present
 from app.services.analytics.topics import topic_for_event, topic_for_question
@@ -383,3 +384,49 @@ async def test_a_models_insights_are_used_only_when_they_pass_the_checks(
     sensitive = [AnalyticsInsight(title="Demographics", detail="Most visitors are of one ethnicity.")]
     for answer in (invented, hiring, sensitive, None, []):
         assert (await insights.generate(stats, Model(answer))).model_name == insights.RULES
+
+
+# Demo data
+
+
+async def test_demo_activity_is_raw_records_that_reset_removes(
+    sessions: async_sessionmaker[AsyncSession], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    result = await demo_activity.generate(sessions, candidates=12, days=30, seed=3)
+    assert result.candidates == 12 and result.visits > 0 and result.events > result.visits
+    async with sessions() as session:
+        made = await session.scalar(
+            select(func.count()).select_from(Candidate).where(Candidate.external_id.startswith(demo_activity.PREFIX))
+        )
+        answered = await session.scalar(select(func.count()).select_from(CandidateDemographics))
+        stats = await portal_stats(session, resolve_period("last_30_days"))
+    assert made == 12 and answered == result.demographics
+    assert stats.active_candidates >= 10 and stats.topic_counts
+    # Run again: replaced, not added to.
+    await demo_activity.generate(sessions, candidates=12, days=30, seed=3)
+    async with sessions() as session:
+        assert (
+            await session.scalar(
+                select(func.count())
+                .select_from(Candidate)
+                .where(Candidate.external_id.startswith(demo_activity.PREFIX))
+            )
+            == 12
+        )
+    assert await demo_activity.reset(sessions) == 12
+    async with sessions() as session:
+        left = await session.scalar(
+            select(func.count())
+            .select_from(PortalSession)
+            .where(PortalSession.candidate_id.not_in([uuid.UUID(candidate_id("sophia-martinez"))]))
+        )
+        events = await session.scalar(
+            select(func.count())
+            .select_from(CandidateEngagementEvent)
+            .where(CandidateEngagementEvent.event_type == EngagementEventType.AI_QUESTION_ASKED)
+        )
+    assert left == 0 and events == 0
+
+    monkeypatch.setattr(settings, "environment", "production")
+    with pytest.raises(SystemExit):
+        await demo_activity.generate(sessions)

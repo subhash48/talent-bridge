@@ -9,8 +9,8 @@ export function MessageBubble({ message, authorName }: { message: ThreadMessage;
     <div className={cn("flex flex-col gap-1", outgoing ? "items-end" : "items-start")}>
       <p
         className={cn(
-          "max-w-[85%] rounded-[16px] px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-line",
-          outgoing ? "rounded-br-[6px] bg-white/[0.09] text-ink" : "rounded-bl-[6px] bg-white/[0.035] text-charcoal ring-1 ring-white/[0.07]",
+          "max-w-[85%] rounded-[12px] px-3.5 py-2 text-sm leading-relaxed whitespace-pre-line",
+          outgoing ? "rounded-br-[5px] bg-ink/[0.1] text-ink" : "rounded-bl-[5px] bg-ink/[0.04] text-charcoal ring-1 ring-ink/[0.07]",
         )}
       >
         <span className="sr-only">{outgoing ? "You" : authorName}: </span>

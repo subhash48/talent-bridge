@@ -92,14 +92,14 @@ export function MessagesInbox({ initialConversations, initialCandidateId }: Mess
   }
 
   return (
-    <div className="glass grid min-h-[560px] overflow-hidden rounded-[22px] border border-border lg:h-[calc(100dvh-15rem)] lg:grid-cols-[340px_minmax(0,1fr)]">
+    <div className="glass grid min-h-[504px] overflow-hidden rounded-[16px] border border-border lg:h-[calc(100dvh-15rem)] lg:grid-cols-[304px_minmax(0,1fr)]">
       <section aria-label="Conversations" className={cn("flex min-h-0 flex-col border-border lg:border-r", threadOpen && "hidden lg:flex")}>
         <div className="p-3">
           <SearchBar
             value={filter}
             onChange={(event) => setFilter(event.target.value)}
             placeholder="Search conversations"
-            className="h-10 rounded-[10px] text-sm"
+            className="h-9 rounded-[8px] text-sm"
           />
         </div>
         <ul className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
@@ -113,11 +113,11 @@ export function MessagesInbox({ initialConversations, initialCandidateId }: Mess
                   onClick={() => open(conversation.candidate.id)}
                   aria-current={selected || undefined}
                   className={cn(
-                    "flex w-full items-start gap-3 rounded-[12px] px-3 py-3 text-left transition-colors hover:bg-white/[0.04]",
-                    selected && "bg-white/[0.07] hover:bg-white/[0.07]",
+                    "flex w-full items-start gap-3 rounded-[10px] px-3 py-2.5 text-left transition-colors hover:bg-ink/[0.04]",
+                    selected && "bg-ink/[0.06] hover:bg-ink/[0.06]",
                   )}
                 >
-                  <Avatar name={conversation.candidate.name} src={conversation.candidate.avatarUrl} size={40} />
+                  <Avatar name={conversation.candidate.name} src={conversation.candidate.avatarUrl} size={32} />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-baseline justify-between gap-2">
                       <span className={cn("truncate text-sm", conversation.unread ? "font-semibold text-ink" : "font-medium text-charcoal")}>
@@ -140,7 +140,7 @@ export function MessagesInbox({ initialConversations, initialCandidateId }: Mess
               </li>
             );
           })}
-          {shown.length === 0 && <li className="px-3 py-8 text-center text-sm text-stone">No conversations match.</li>}
+          {shown.length === 0 && <li className="px-3 py-6 text-center text-sm text-stone">No conversations match.</li>}
         </ul>
       </section>
 
@@ -148,7 +148,7 @@ export function MessagesInbox({ initialConversations, initialCandidateId }: Mess
         {active ? (
           <Thread key={active.candidate.id} conversation={active} onBack={() => setThreadOpen(false)} onSent={appendMessage} />
         ) : (
-          <EmptyState icon={MessageSquareText} title="No conversation selected" description="Choose a candidate to read and reply." className="m-6 flex-1 border-none" />
+          <EmptyState icon={MessageSquareText} title="No conversation selected" description="Choose a candidate to read and reply." className="m-5 flex-1 border-none" />
         )}
       </section>
     </div>
@@ -215,13 +215,13 @@ function Thread({ conversation, onBack, onSent }: ThreadProps) {
 
   return (
     <>
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3.5 sm:px-5">
+      <header className="flex items-center gap-3 border-b border-border px-4 py-3 sm:px-5">
         <Button variant="ghost" size="icon-sm" onClick={onBack} aria-label="Back to conversations" className="lg:hidden">
           <ArrowLeft />
         </Button>
-        <Avatar name={conversation.candidate.name} src={conversation.candidate.avatarUrl} size={40} />
+        <Avatar name={conversation.candidate.name} src={conversation.candidate.avatarUrl} size={32} />
         <div className="min-w-0 flex-1">
-          <h2 className="truncate font-medium text-ink">{conversation.candidate.name}</h2>
+          <h2 className="truncate text-[15px] font-medium text-ink">{conversation.candidate.name}</h2>
           <p className="truncate text-[13px] text-stone">{conversation.candidate.role}</p>
         </div>
         {candidate && <StatusBadge stage={candidate.stage} className="hidden sm:inline-flex" />}
@@ -230,7 +230,7 @@ function Thread({ conversation, onBack, onSent }: ThreadProps) {
         </Link>
       </header>
 
-      <div ref={scrollRef} className="flex min-h-[240px] flex-1 flex-col gap-4 overflow-y-auto px-4 py-5 sm:px-6">
+      <div ref={scrollRef} className="flex min-h-[216px] flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-4 sm:px-5">
         {conversation.messages.length === 0 ? (
           <p className="m-auto max-w-xs text-center text-sm text-stone">
             No messages with {first} yet. Write one below, or let AI draft an opener for you to review.
@@ -241,7 +241,7 @@ function Thread({ conversation, onBack, onSent }: ThreadProps) {
       </div>
 
       <form
-        className="border-t border-border p-3 sm:p-4"
+        className="border-t border-border p-3 sm:p-3.5"
         onSubmit={(event) => {
           event.preventDefault();
           void send();
@@ -264,9 +264,9 @@ function Thread({ conversation, onBack, onSent }: ThreadProps) {
           placeholder={`Write to ${first}…`}
           aria-describedby={`${composerId}-hint`}
           readOnly={drafting}
-          className="field-sizing-content max-h-56 min-h-[84px] bg-black/20"
+          className="field-sizing-content max-h-52 min-h-[72px] bg-black/20"
         />
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="mt-2.5 flex flex-wrap items-center gap-2">
           <Button variant="ai" size="sm" onClick={() => void draftWithAI()} disabled={drafting || sending}>
             {drafting ? <LoaderCircle className="animate-spin" /> : <Sparkles />}
             {drafting ? "Drafting…" : "Draft with AI"}

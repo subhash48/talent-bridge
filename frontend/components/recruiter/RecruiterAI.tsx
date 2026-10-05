@@ -39,10 +39,10 @@ export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: strin
     <div>
       <RecruiterHeader title="AI Assistant" subtitle="Summaries, next steps and drafts, grounded in your pipeline data." />
       {candidate ? (
-        <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_324px]">
           <Conversation key={candidate.id} candidate={candidate} />
           <aside aria-label="Context" className="flex flex-col gap-4 xl:sticky xl:top-6">
-            <div className="glass rounded-[20px] border border-border p-5">
+            <div className="glass rounded-[14px] border border-border p-5">
               <label htmlFor="copilot-focus" className="text-xs font-medium text-stone">
                 Candidate in focus
               </label>
@@ -55,7 +55,7 @@ export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: strin
               </Select>
               <CandidateContext candidate={candidate} />
             </div>
-            <div className="glass rounded-[20px] border border-border p-5 text-sm">
+            <div className="glass rounded-[14px] border border-border p-5 text-sm">
               <h2 className="flex items-center gap-2 font-medium text-ink">
                 <ShieldCheck aria-hidden className="size-4 text-ai" /> What the Copilot uses
               </h2>
@@ -95,22 +95,22 @@ function Conversation({ candidate }: { candidate: PipelineCandidate }) {
   return (
     <section
       aria-label={`Conversation about ${candidate.name}`}
-      className="glass flex min-h-[560px] flex-col rounded-[22px] border border-border p-4 sm:p-6 xl:h-[calc(100dvh-15rem)]"
+      className="glass flex min-h-[504px] flex-col rounded-[16px] border border-border p-4 sm:p-5 xl:h-[calc(100dvh-15rem)]"
     >
       {ai.messages.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center py-8 text-center">
-          <span className="flex size-12 items-center justify-center rounded-full bg-ai/15 ring-1 ring-ai/30">
-            <Sparkles aria-hidden className="size-6 text-ai" />
+        <div className="flex flex-1 flex-col items-center justify-center py-6 text-center">
+          <span className="flex size-10 items-center justify-center rounded-full bg-ai/10 ring-1 ring-ai/20">
+            <Sparkles aria-hidden className="size-5 text-ai" />
           </span>
-          <h2 className="mt-4 text-xl font-semibold tracking-tight text-ink">How can I help with {first}?</h2>
+          <h2 className="mt-3.5 text-lg font-semibold tracking-tight text-ink">How can I help with {first}?</h2>
           <p className="mt-1.5 max-w-sm text-sm text-stone">Pick a starting point or ask anything about {possessivePronoun(candidate.pronouns)} application.</p>
-          <div className="mt-6 grid w-full max-w-xl gap-2.5 sm:grid-cols-2">
+          <div className="mt-5 grid w-full max-w-lg gap-2 sm:grid-cols-2">
             {STARTERS.map(({ icon: Icon, label, prompt }) => (
               <button
                 key={label}
                 type="button"
                 onClick={() => void ai.send(prompt)}
-                className="flex items-center gap-3 rounded-[14px] border border-border bg-white/[0.03] px-4 py-3.5 text-left text-sm text-charcoal transition-[background-color,border-color,color] duration-200 hover:border-ai/30 hover:bg-ai/[0.07] hover:text-ink"
+                className="flex items-center gap-2.5 rounded-[10px] border border-border bg-ink/[0.03] px-3.5 py-2.5 text-left text-sm text-charcoal transition-[background-color,border-color,color] duration-200 hover:border-ai/30 hover:bg-ai/[0.07] hover:text-ink"
               >
                 <Icon aria-hidden className="size-4 shrink-0 text-ai" />
                 {label}
@@ -137,11 +137,11 @@ function Conversation({ candidate }: { candidate: PipelineCandidate }) {
 
 function CandidateContext({ candidate }: { candidate: PipelineCandidate }) {
   return (
-    <div className="mt-5 border-t border-border pt-5">
+    <div className="mt-4 border-t border-border pt-4">
       <div className="flex items-center gap-3">
-        <Avatar name={candidate.name} src={candidate.avatarUrl} size={44} />
+        <Avatar name={candidate.name} src={candidate.avatarUrl} size={36} />
         <div className="min-w-0">
-          <p className="truncate font-medium text-ink">{candidate.name}</p>
+          <p className="truncate text-[15px] font-medium text-ink">{candidate.name}</p>
           <p className="truncate text-[13px] text-stone">{candidate.role}</p>
         </div>
       </div>

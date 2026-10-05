@@ -22,16 +22,16 @@ export default async function SettingsPage() {
           <h2 className="flex items-center gap-2 text-sm font-medium text-stone">
             <UserRound aria-hidden className="size-4" /> Profile
           </h2>
-          <div className="mt-5 flex items-center gap-4">
-            <Avatar name={user.name} src={user.avatarUrl} size={56} />
+          <div className="mt-4 flex items-center gap-3">
+            <Avatar name={user.name} src={user.avatarUrl} size={44} />
             <div>
-              <p className="text-lg font-semibold text-ink">{user.name}</p>
+              <p className="text-base font-semibold text-ink">{user.name}</p>
               <p className="text-sm text-stone">
                 {user.title} · {user.organization}
               </p>
             </div>
           </div>
-          <dl className="mt-6 grid gap-4 border-t border-border pt-5 text-sm sm:grid-cols-2">
+          <dl className="mt-5 grid gap-4 border-t border-border pt-4 text-sm sm:grid-cols-2">
             <Row label="Email" icon={<Mail aria-hidden className="size-4" />}>
               {user.email}
             </Row>
@@ -43,7 +43,7 @@ export default async function SettingsPage() {
           <h2 className="flex items-center gap-2 text-sm font-medium text-stone">
             <Database aria-hidden className="size-4" /> Data source
           </h2>
-          <p className="mt-4 text-[15px] text-ink">{USE_MOCK_API ? "Demo data (mock mode)" : "Talent Bridge API"}</p>
+          <p className="mt-3.5 text-sm font-medium text-ink">{USE_MOCK_API ? "Demo data (mock mode)" : "Talent Bridge API"}</p>
           <p className="mt-1.5 text-sm leading-relaxed text-stone">
             {USE_MOCK_API
               ? "Candidates, jobs, interviews and messages come from seeded demo data in this browser. Changes last for this session. Remove NEXT_PUBLIC_USE_MOCK_API to use the API."
@@ -55,9 +55,9 @@ export default async function SettingsPage() {
 
         <Card>
           <h2 className="flex items-center gap-2 text-sm font-medium text-stone">
-            <Sparkles aria-hidden className="size-4 text-ai" /> AI assistant
+            <Sparkles aria-hidden className="size-4 text-ink" /> AI assistant
           </h2>
-          <p className="mt-4 text-[15px] text-ink">{USE_MOCK_API ? "Template responses" : "Recruiter Copilot via the Talent Bridge API"}</p>
+          <p className="mt-3.5 text-sm font-medium text-ink">{USE_MOCK_API ? "Template responses" : "Recruiter Copilot via the Talent Bridge API"}</p>
           <p className="mt-1.5 text-sm leading-relaxed text-stone">
             The browser never holds model API keys. Answers are generated on the server from the candidate&apos;s record,
             and the assistant only drafts: you review and send every message.

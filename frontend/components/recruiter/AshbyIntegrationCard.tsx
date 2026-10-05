@@ -13,9 +13,9 @@ import { errorMessage } from "@/services/api";
 import { getAshbyStatus, syncAshby, type AshbyStatus } from "@/services/engagement";
 
 const STATE: Record<AshbyStatus["status"], { label: string; className: string }> = {
-  connected: { label: "Connected", className: "bg-emerald-400/10 text-emerald-200 ring-emerald-300/20" },
-  disconnected: { label: "Not connected", className: "bg-white/[0.06] text-stone ring-white/10" },
-  error: { label: "Needs attention", className: "bg-amber-400/10 text-amber-200 ring-amber-300/20" },
+  connected: { label: "Connected", className: "bg-sage/10 text-sage ring-sage/20" },
+  disconnected: { label: "Not connected", className: "bg-ink/[0.06] text-stone ring-ink/10" },
+  error: { label: "Needs attention", className: "bg-caution/10 text-caution ring-caution/20" },
 };
 
 /** Ashby connection health: webhooks, the reconciliation sync and portal invitations. */
@@ -45,16 +45,16 @@ export function AshbyIntegrationCard() {
           <Workflow aria-hidden className="size-4" /> Ashby
         </h2>
         {data && (
-          <span className={cn("rounded-[8px] px-2.5 py-1 text-xs font-medium ring-1 ring-inset", STATE[data.status].className)}>
+          <span className={cn("inline-flex h-6 items-center justify-center rounded-[6px] px-2 text-xs font-medium whitespace-nowrap ring-1 ring-inset", STATE[data.status].className)}>
             {STATE[data.status].label}
           </span>
         )}
       </div>
       {!data ? (
-        <p className="mt-4 text-sm text-stone">{error ?? "Checking the connection…"}</p>
+        <p className="mt-3.5 text-sm text-stone">{error ?? "Checking the connection…"}</p>
       ) : (
         <>
-          <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
+          <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
             <Item label="Last webhook">
               {data.lastWebhookAt ? (
                 <>
@@ -74,8 +74,8 @@ export function AshbyIntegrationCard() {
               {[data.apiKeyConfigured ? "API key" : "No API key", data.webhookSecretConfigured ? "webhook secret" : "no webhook secret"].join(", ")}
             </Item>
           </dl>
-          {data.lastError && <p className="mt-4 rounded-[12px] bg-amber-400/[0.06] px-3.5 py-2.5 text-sm text-amber-100 ring-1 ring-amber-300/20">{data.lastError}</p>}
-          <div className="mt-5 flex items-center gap-3 border-t border-border pt-4">
+          {data.lastError && <p className="mt-3.5 rounded-[10px] bg-caution/[0.06] px-3.5 py-2.5 text-sm text-caution ring-1 ring-caution/20">{data.lastError}</p>}
+          <div className="mt-4 flex items-center gap-3 border-t border-border pt-3.5">
             <Button variant="secondary" size="sm" onClick={() => void sync()} disabled={syncing || !data.apiKeyConfigured}>
               {syncing ? <LoaderCircle className="animate-spin" /> : <RefreshCw />}
               Sync now

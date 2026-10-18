@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 
 import { CommunicationBadge } from "@/components/recruiter/communication/CommunicationBadge";
 import { DraftPanel } from "@/components/recruiter/communication/DraftPanel";
+import { PortalAccessRow } from "@/components/recruiter/communication/PortalAccessRow";
 import { useWorkspace } from "@/components/recruiter/WorkspaceProvider";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -113,6 +114,7 @@ export function CommunicationCard({ candidate, health, loading }: CommunicationC
                 <span suppressHydrationWarning>{formatRelativeTime(health.nextDueAt)}</span>
               </Fact>
             )}
+            <PortalAccessRow candidate={candidate} />
           </dl>
         </>
       ) : null}

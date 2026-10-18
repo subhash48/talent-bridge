@@ -1,5 +1,5 @@
-"""Pipeline rows: an application with its person, job, latest activity, engagement and next
-interview. Shared by the candidate, application and dashboard services."""
+"""Pipeline rows: an application with its person, job, latest activity, communication health,
+engagement and next interview. Shared by the candidate, application and dashboard services."""
 
 import uuid
 from collections import defaultdict
@@ -19,6 +19,9 @@ from app.schemas.application import origin_of
 from app.schemas.candidate import CandidateListItem, CandidateRead
 from app.schemas.interview import InterviewBrief
 from app.schemas.job import JobBrief
+from app.services.communication.health import assess
+from app.services.communication.present import summary
+from app.services.communication.rules import Rules, load_rules
 from app.services.engagement.scoring import MEANINGFUL_VIEWS
 from app.services.engagement.service import engagement_read
 from app.services.engagement.snapshot import ApplicationSnapshot
@@ -100,7 +103,7 @@ async def _grouped(session: AsyncSession, query) -> dict[uuid.UUID, list]:  # ty
     return groups
 
 
-def to_list_item(snapshot: ApplicationSnapshot, now: datetime) -> CandidateListItem:
+def to_list_item(snapshot: ApplicationSnapshot, now: datetime, rules: Rules) -> CandidateListItem:
     application = snapshot.application
     upcoming = snapshot.upcoming_interview(now)
     return CandidateListItem(
@@ -115,6 +118,7 @@ def to_list_item(snapshot: ApplicationSnapshot, now: datetime) -> CandidateListI
         archived_at=application.archived_at,
         last_activity=ActivityBrief.model_validate(snapshot.activities[0]) if snapshot.activities else None,
         engagement=engagement_read(snapshot, application.candidate, now),
+        communication=summary(assess(snapshot, rules, now), now),
         next_interview=InterviewBrief.model_validate(upcoming) if upcoming else None,
     )
 
@@ -125,4 +129,5 @@ async def build_list_items(
     """Applications must have their candidate and job loaded."""
     now = now or utcnow()
     snapshots = await load_snapshots(session, applications, with_engagement=True)
-    return [to_list_item(snapshot, now) for snapshot in snapshots]
+    rules = await load_rules(session)
+    return [to_list_item(snapshot, now, rules) for snapshot in snapshots]

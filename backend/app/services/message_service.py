@@ -160,6 +160,12 @@ def email_text(application: Application, content: str) -> str:
     )
 
 
+async def with_deliveries(session: AsyncSession, messages: list[Message]) -> list[MessageRead]:
+    """Messages as the recruiter sees them: each of theirs with how it was delivered."""
+    deliveries = await _deliveries(session, messages)
+    return [_read(message, deliveries) for message in messages]
+
+
 async def _deliveries(session: AsyncSession, messages: list[Message]) -> dict[uuid.UUID, MessageDelivery]:
     ids = [message.id for message in messages if message.sender_type == SenderType.RECRUITER]
     if not ids:

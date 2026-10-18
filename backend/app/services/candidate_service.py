@@ -28,9 +28,12 @@ from app.schemas.candidate import CandidateCreate, CandidateDetail, CandidateLis
 from app.schemas.common import Page
 from app.schemas.interview import InterviewRead
 from app.schemas.job import JobRead
-from app.schemas.message import MessageRead
+from app.services import message_service
 from app.services.activity_service import record_activity
 from app.services.application_service import check_initial_stage, record_stage
+from app.services.communication.health import assess
+from app.services.communication.present import health_read
+from app.services.communication.rules import load_rules
 from app.services.engagement.service import engagement_read
 from app.services.pipeline_service import build_list_items, load_snapshots
 
@@ -153,10 +156,11 @@ async def get_candidate_detail(
         job=JobRead.model_validate(focus.job),
         stage=focus.stage,
         engagement=engagement_read(snapshot, candidate, now),
+        communication=health_read(focus, assess(snapshot, await load_rules(session), now), now),
         next_interview=InterviewRead.model_validate(upcoming) if upcoming else None,
         activity=[ActivityRead.model_validate(row) for row in snapshot.activities[:DETAIL_ACTIVITY_LIMIT]],
         interviews=[InterviewRead.model_validate(row) for row in snapshot.interviews],
-        messages=[MessageRead.model_validate(row) for row in snapshot.messages],
+        messages=await message_service.with_deliveries(session, list(snapshot.messages)),
         stage_history=[StageHistoryRead.model_validate(row) for row in history],
         applications=briefs,
     )

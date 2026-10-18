@@ -13,6 +13,7 @@ from app.core.enums import ApplicationStage, EngagementLevel, PortalAccountStatu
 from app.schemas.activity import ActivityBrief, ActivityRead
 from app.schemas.application import ApplicationBrief, ApplicationRead, Origin, StageHistoryRead
 from app.schemas.common import APIModel, OptionalText, OptionalURL, Timestamp
+from app.schemas.communication import CommunicationHealthRead, CommunicationSummary
 from app.schemas.interview import InterviewBrief, InterviewRead
 from app.schemas.job import JobBrief, JobRead
 from app.schemas.message import MessageRead
@@ -94,6 +95,7 @@ class CandidateListItem(APIModel):
     archived_at: Timestamp | None = None
     last_activity: ActivityBrief | None = None
     engagement: EngagementRead
+    communication: CommunicationSummary
     next_interview: InterviewBrief | None = None
 
 
@@ -105,6 +107,7 @@ class CandidateDetail(APIModel):
     job: JobRead | None = None
     stage: ApplicationStage | None = None
     engagement: EngagementRead | None = None
+    communication: CommunicationHealthRead | None = None  # what they've heard from us; recruiter-only
     next_interview: InterviewRead | None = None
     activity: list[ActivityRead] = []  # newest first
     interviews: list[InterviewRead] = []  # by scheduled time

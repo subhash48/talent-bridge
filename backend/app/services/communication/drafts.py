@@ -24,7 +24,7 @@ from app.services import ai_service, message_service
 from app.services.ai.client import AIProvider
 from app.services.communication import rules as rule_store
 from app.services.communication.health import Health, assess
-from app.services.communication.service import candidate_status, draft_read
+from app.services.communication.present import candidate_status, draft_read
 from app.services.pipeline_service import get_application, load_snapshots
 
 K = CommunicationRuleKey

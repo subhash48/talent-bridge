@@ -20,16 +20,11 @@ from app.schemas.communication import (
     AttentionRead,
     CommunicationHealthRead,
     CommunicationRuleRead,
-    CommunicationSummary,
     DraftRead,
-    FollowUpCheckRead,
-    InterviewCheckRead,
-    OpenQuestionRead,
-    StageChangeRead,
 )
-from app.services import candidate_visibility
 from app.services.communication import rules as rule_store
 from app.services.communication.health import Health, assess
+from app.services.communication.present import candidate_status, draft_read, health_read
 from app.services.communication.rules import Rule, Rules
 from app.services.engagement.snapshot import ApplicationSnapshot
 from app.services.pipeline_service import get_application, load_snapshots
@@ -59,24 +54,6 @@ async def update_rule(
     return rule_read(rule)
 
 
-def draft_read(draft: CommunicationDraft) -> DraftRead:
-    return DraftRead(
-        id=draft.id,
-        application_id=draft.application_id,
-        reason=draft.reason,
-        status=draft.status,
-        subject=draft.subject,
-        body=draft.body,
-        edited=(draft.subject, draft.body) != (draft.ai_subject, draft.ai_body),
-        model_name=draft.model_name,
-        message_id=draft.message_id,
-        created_at=draft.created_at,
-        updated_at=draft.updated_at,
-        sent_at=draft.sent_at,
-        discarded_at=draft.discarded_at,
-    )
-
-
 async def open_drafts(session: AsyncSession, application_ids: list[uuid.UUID] | None = None) -> list[DraftRead]:
     query = select(CommunicationDraft).where(CommunicationDraft.status == DraftStatus.DRAFTED)
     if application_ids is not None:
@@ -85,43 +62,13 @@ async def open_drafts(session: AsyncSession, application_ids: list[uuid.UUID] | 
     return [draft_read(row) for row in rows]
 
 
-def candidate_status(application: Application) -> str:
-    """The status the candidate sees in their portal."""
-    return candidate_visibility.portal_status(application, application.job.status).label
-
-
-def health_read(snapshot: ApplicationSnapshot, health: Health, now: datetime) -> CommunicationHealthRead:
-    return CommunicationHealthRead(
-        status=health.status,
-        candidate_status=candidate_status(snapshot.application),
-        last_update_at=health.last_update_at,
-        waiting_since=health.waiting_since,
-        days_since_update=health.days_since_update(now),
-        open_question=OpenQuestionRead.model_validate(health.open_question) if health.open_question else None,
-        next_interview=InterviewCheckRead.model_validate(health.next_interview) if health.next_interview else None,
-        last_interview=FollowUpCheckRead.model_validate(health.last_interview) if health.last_interview else None,
-        stage_change=StageChangeRead.model_validate(health.stage_change) if health.stage_change else None,
-        attention=[AttentionRead.model_validate(item) for item in health.attention],
-        next_due_at=health.next_due_at,
-    )
-
-
-def summary(health: Health, now: datetime) -> CommunicationSummary:
-    return CommunicationSummary(
-        status=health.status,
-        last_update_at=health.last_update_at,
-        days_since_update=health.days_since_update(now),
-        reason=health.attention[0].title if health.attention else None,
-    )
-
-
 async def application_health(
     session: AsyncSession, application_id: uuid.UUID, now: datetime | None = None
 ) -> CommunicationHealthRead:
     now = now or utcnow()
     application = await get_application(session, application_id)
     [snapshot] = await load_snapshots(session, [application])
-    return health_read(snapshot, assess(snapshot, await rule_store.load_rules(session), now), now)
+    return health_read(application, assess(snapshot, await rule_store.load_rules(session), now), now)
 
 
 async def assess_all(

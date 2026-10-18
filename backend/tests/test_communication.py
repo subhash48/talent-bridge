@@ -19,13 +19,14 @@ from app.models import Application, CandidateActivity, Interview, Message
 from app.services.communication.health import Health, assess
 from app.services.communication.rules import SPECS, Rule, Rules, default_rules
 from app.services.engagement.snapshot import ApplicationSnapshot
-from tests.conftest import API, SOPHIA_AUTH, application_id, bearer
+from tests.conftest import API, SOPHIA_AUTH, application_id, bearer, candidate_id
 
 K = CommunicationRuleKey
 S = ApplicationStage
 C = CommunicationStatus
 NOW = datetime(2026, 10, 18, 12, 0, tzinfo=UTC)
 SOPHIA_APP = application_id("sophia-martinez")
+SOPHIA_CANDIDATE = candidate_id("sophia-martinez")
 
 
 def ago(**delta: float) -> datetime:
@@ -283,3 +284,31 @@ async def test_candidates_cannot_see_communication(anonymous: AsyncClient) -> No
     sophia = bearer(SOPHIA_AUTH)
     for path in ("/communication/attention", "/communication/rules", f"/applications/{SOPHIA_APP}/communication"):
         assert (await anonymous.get(f"{API}{path}", headers=sophia)).status_code == 403
+
+
+async def test_pipeline_rows_and_the_candidate_panel_show_communication(client: AsyncClient) -> None:
+    page = (await client.get(f"{API}/candidates", params={"limit": 200})).json()
+    rows = {row["application_id"]: row["communication"] for row in page["items"]}
+    assert all(row["status"] in {status.value for status in C} for row in rows.values())
+    attention = (await client.get(f"{API}/communication/attention")).json()["items"]
+    for item in attention:
+        row = rows.get(item["candidate"]["application_id"])
+        if row is not None:
+            assert row["status"] == "needs_attention" and row["reason"] == item["reasons"][0]["title"]
+
+    sophia = rows[SOPHIA_APP]
+    detail = (await client.get(f"{API}/candidates/{SOPHIA_CANDIDATE}")).json()
+    assert detail["communication"]["candidate_status"] == "Interview"
+    assert detail["communication"]["last_update_at"] == sophia["last_update_at"]
+    recruiter_messages = [m for m in detail["messages"] if m["sender_type"] == "recruiter"]
+    assert recruiter_messages and all("delivery" in m for m in recruiter_messages)
+
+    # Moving the stage shows up on the row straight away.
+    moved = await client.patch(f"{API}/applications/{SOPHIA_APP}/stage", json={"stage": "offer"})
+    assert moved.json()["communication"]["status"] == "needs_attention"
+    assert moved.json()["communication"]["reason"] == "Status changed, candidate not told"
+
+
+async def test_the_candidate_never_sees_communication_health(client: AsyncClient) -> None:
+    portal = str([(await client.get(f"{API}/candidate/{path}")).json() for path in ("me", "application", "messages")])
+    assert "communication" not in portal and "delivery" not in portal and "needs_attention" not in portal

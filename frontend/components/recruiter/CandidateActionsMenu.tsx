@@ -1,8 +1,7 @@
 "use client";
 
-import { Archive, ArrowRightLeft, Copy, EllipsisVertical, MessageSquareText, Sparkles, UserRound } from "lucide-react";
+import { Archive, ArrowRightLeft, Copy, EllipsisVertical, MessageSquareText, UserRound } from "lucide-react";
 import Link from "next/link";
-import { useRef } from "react";
 
 import { useWorkspace } from "@/components/recruiter/WorkspaceProvider";
 import { Button } from "@/components/ui/Button";
@@ -27,18 +26,14 @@ import { PIPELINE_STAGES, type CandidateStage, type PipelineCandidate } from "@/
 
 type CandidateActionsMenuProps = {
   candidate: PipelineCandidate;
-  /** Focus the AI panel on this candidate. Omitted where the AI panel isn't on screen. */
-  onAskAI?: () => void;
   className?: string;
 };
 
-/** Row and panel "⋮" menu: open, message, ask AI, move stage, copy email, archive (with undo). */
-export function CandidateActionsMenu({ candidate, onAskAI, className }: CandidateActionsMenuProps) {
+/** Row and panel "⋮" menu: open, message, move stage, copy email, archive (with undo). */
+export function CandidateActionsMenu({ candidate, className }: CandidateActionsMenuProps) {
   const { moveCandidate, archiveCandidate, restoreCandidate } = useWorkspace();
   const toast = useToast();
   const first = firstName(candidate.name);
-  // "Ask AI" moves focus to the prompt box, so the menu must not hand focus back to its trigger.
-  const keepFocusAway = useRef(false);
 
   async function move(stage: CandidateStage) {
     if (stage === candidate.stage) return;
@@ -95,10 +90,6 @@ export function CandidateActionsMenu({ candidate, onAskAI, className }: Candidat
       <DropdownMenuContent
         className="w-52"
         onClick={(event) => event.stopPropagation()}
-        onCloseAutoFocus={(event) => {
-          if (keepFocusAway.current) event.preventDefault();
-          keepFocusAway.current = false;
-        }}
       >
         <DropdownMenuItem asChild>
           <Link href={`/recruiter/candidates/${candidate.id}`}>
@@ -110,16 +101,6 @@ export function CandidateActionsMenu({ candidate, onAskAI, className }: Candidat
             <MessageSquareText /> Message {first}
           </Link>
         </DropdownMenuItem>
-        {onAskAI && (
-          <DropdownMenuItem
-            onSelect={() => {
-              keepFocusAway.current = true;
-              onAskAI();
-            }}
-          >
-            <Sparkles className="text-ink!" /> Ask AI about {first}
-          </DropdownMenuItem>
-        )}
         <DropdownMenuSeparator />
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>

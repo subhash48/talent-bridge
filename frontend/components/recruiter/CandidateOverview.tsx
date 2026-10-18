@@ -1,10 +1,11 @@
 import { ArrowRight, CalendarClock, CircleAlert, Link2, Sparkles, type LucideIcon } from "lucide-react";
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { CandidateActivity, CandidateActivitySkeleton } from "@/components/recruiter/CandidateActivity";
 import { DetailError } from "@/components/recruiter/DetailError";
 import { EngagementCard } from "@/components/recruiter/EngagementCard";
-import { Button } from "@/components/ui/Button";
+import { buttonStyles } from "@/components/ui/Button";
 import type { CandidateDetailState } from "@/hooks/useCandidateDetail";
 import { formatSchedule } from "@/lib/format";
 import type { PipelineCandidate } from "@/types/workspace";
@@ -13,11 +14,9 @@ type CandidateOverviewProps = {
   candidate: PipelineCandidate;
   state: CandidateDetailState;
   onViewAll: () => void;
-  onDraftFollowUp: () => void;
-  aiPending: boolean;
 };
 
-export function CandidateOverview({ candidate, state, onViewAll, onDraftFollowUp, aiPending }: CandidateOverviewProps) {
+export function CandidateOverview({ candidate, state, onViewAll }: CandidateOverviewProps) {
   return (
     <div className="@container flex flex-col gap-5">
       {candidate.followUp && (
@@ -28,9 +27,12 @@ export function CandidateOverview({ candidate, state, onViewAll, onDraftFollowUp
               <span className="font-medium">Needs follow-up.</span> {candidate.followUp.reason}.
             </span>
           </p>
-          <Button variant="ai" size="sm" onClick={onDraftFollowUp} disabled={aiPending} className="self-start sm:self-auto">
+          <Link
+            href={`/recruiter/messages?candidate=${candidate.id}&draft=1`}
+            className={buttonStyles({ variant: "ai", size: "sm", className: "self-start sm:self-auto" })}
+          >
             <Sparkles /> Draft follow-up
-          </Button>
+          </Link>
         </div>
       )}
 

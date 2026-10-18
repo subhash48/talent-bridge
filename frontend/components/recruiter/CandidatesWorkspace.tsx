@@ -58,7 +58,6 @@ export function CandidatesWorkspace({ greeting, trends, initialCandidateId }: Ca
   const [selectedId, setSelectedId] = useState(initialCandidateId);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
-  const [aiFocus, setAiFocus] = useState<{ candidateId: string; key: number }>();
   const [bulkBusy, setBulkBusy] = useState(false);
 
   // Follow new ?candidate= links while staying on this page (e.g. from the notifications menu).
@@ -114,9 +113,8 @@ export function CandidatesWorkspace({ greeting, trends, initialCandidateId }: Ca
     });
   }
 
-  function openCandidate(id: string, focusAI: boolean) {
+  function openCandidate(id: string) {
     setSelectedId(id);
-    setAiFocus((current) => (focusAI ? { candidateId: id, key: (current?.key ?? 0) + 1 } : undefined));
     if (!window.matchMedia(PANEL_QUERY).matches) setSheetOpen(true);
   }
 
@@ -166,7 +164,6 @@ export function CandidatesWorkspace({ greeting, trends, initialCandidateId }: Ca
     });
   }
 
-  const aiFocusKey = selected && aiFocus?.candidateId === selected.id ? aiFocus.key : undefined;
   const firstShown = (currentPage - 1) * PAGE_SIZE + 1;
 
   return (
@@ -219,10 +216,9 @@ export function CandidatesWorkspace({ greeting, trends, initialCandidateId }: Ca
                 candidates={pageItems}
                 selectedId={selected?.id}
                 checkedIds={checkedIds}
-                onSelect={(id) => openCandidate(id, false)}
+                onSelect={openCandidate}
                 onCheckedChange={toggleChecked}
                 onCheckAll={toggleAll}
-                onAskAI={(id) => openCandidate(id, true)}
                 emptyState={
                   candidates.length === 0 ? (
                     <EmptyState
@@ -279,7 +275,7 @@ export function CandidatesWorkspace({ greeting, trends, initialCandidateId }: Ca
 
         {selected && (
           <aside aria-label="Selected candidate" className="hidden xl:sticky xl:top-6 xl:block">
-            <CandidateDetail candidate={selected} variant="panel" aiFocusKey={aiFocusKey} />
+            <CandidateDetail candidate={selected} variant="panel" />
           </aside>
         )}
       </div>
@@ -289,7 +285,7 @@ export function CandidatesWorkspace({ greeting, trends, initialCandidateId }: Ca
         onOpenChange={setSheetOpen}
         title={selected ? `${selected.name}, candidate details` : "Candidate details"}
       >
-        {selected && <CandidateDetail candidate={selected} variant="sheet" aiFocusKey={aiFocusKey} />}
+        {selected && <CandidateDetail candidate={selected} variant="sheet" />}
       </Sheet>
 
       <AddCandidateDialog

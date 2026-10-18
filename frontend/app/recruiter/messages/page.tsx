@@ -6,15 +6,19 @@ import { getConversations } from "@/services/messages";
 
 export const metadata: Metadata = { title: "Messages" };
 
-type MessagesPageProps = { searchParams: Promise<{ candidate?: string | string[] }> };
+type MessagesPageProps = { searchParams: Promise<{ candidate?: string | string[]; draft?: string | string[] }> };
 
 export default async function MessagesPage({ searchParams }: MessagesPageProps) {
-  const [{ candidate }, conversations] = await Promise.all([searchParams, getConversations()]);
+  const [{ candidate, draft }, conversations] = await Promise.all([searchParams, getConversations()]);
 
   return (
     <div>
       <RecruiterHeader title="Messages" subtitle={`${conversations.length} conversations with candidates in your pipeline`} />
-      <MessagesInbox initialConversations={conversations} initialCandidateId={typeof candidate === "string" ? candidate : undefined} />
+      <MessagesInbox
+        initialConversations={conversations}
+        initialCandidateId={typeof candidate === "string" ? candidate : undefined}
+        draftOnArrival={draft === "1"}
+      />
     </div>
   );
 }

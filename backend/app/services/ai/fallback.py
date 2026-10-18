@@ -1,7 +1,7 @@
 """Mock provider: deterministic, offline answers composed from the candidate context.
 
 Used when no AI key is configured, in the tests, and as the automatic fallback when Gemini or
-Groq fails, so the recruiter always gets a grounded answer. It never recommends rejecting anyone.
+Groq fails, so the recruiter always gets a grounded answer. It never evaluates anyone.
 The candidate assistant's answers live in portal_fallback, which only sees a PortalContext.
 Job postings for demo jobs are composed from the recruiter's brief alone.
 """
@@ -10,12 +10,11 @@ import re
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from app.core.enums import ActivityType, ApplicationStage, SenderType
+from app.core.enums import ApplicationStage, SenderType
 from app.schemas.ai import (
     AskContent,
     DraftContent,
     DraftPurpose,
-    SkillEvidence,
 )
 from app.schemas.demo import MAX_ABOUT_ROLE, MAX_ABOUT_TEAM, MAX_SUMMARY, JobPostingBrief, JobPostingContent, clean_list
 from app.schemas.portal import AssistContent, PrepContent
@@ -32,16 +31,18 @@ from app.services.ai.portal_context import PortalContext
 
 FORMATS = {"video": "over video", "phone": "by phone", "onsite": "at our office"}
 
+# Questions that ask for an evaluation get a polite no: strengths, concerns and decisions stay with people.
 INTENTS: list[tuple[str, re.Pattern[str]]] = [
     (
-        "strengths",
-        re.compile(r"strong|strength|reasons?|why (should|would|interview|hire)|stand out|good fit|best fit"),
+        "evaluation",
+        re.compile(
+            r"\b(strong\w*|strength\w*|weak\w*|concerns?|risks?|red flags?|gaps?|lacks?|good fit|best fit|stand out"
+            r"|hire|reject\w*|rank\w*|scor\w*|rate|rating|compare)\b|reasons? to interview|why (should|would) (we|i)"
+        ),
     ),
-    ("concerns", re.compile(r"concern|risk|gap|weak|red flag|worr|missing|lack")),
     ("draft", re.compile(r"draft|write|e-?mail|message|follow[- ]?up|reach out|reply")),
-    ("summary", re.compile(r"summar|overview|profile|tell me about|who is|background")),
-    ("next_steps", re.compile(r"next step|what should|recommend|suggest|plan|do next")),
-    ("interview", re.compile(r"interview|brief|prep|question")),
+    ("summary", re.compile(r"summar|overview|profile|tell me about|who is|background|status|where")),
+    ("next_steps", re.compile(r"next step|what should|suggest|plan|do next")),
 ]
 
 
@@ -73,81 +74,6 @@ class MockProvider(AIProvider):
         return _job_posting(brief, organization, overview)
 
 
-# Analysis
-
-
-def match_requirements(context: CandidateContext) -> tuple[list[SkillEvidence], list[str]]:
-    matched: list[SkillEvidence] = []
-    missing: list[str] = []
-    for requirement in context.job_requirements:
-        evidence = _evidence_for(context, requirement)
-        if evidence:
-            matched.append(SkillEvidence(skill=requirement, evidence=evidence))
-        else:
-            missing.append(requirement)
-    return matched, missing
-
-
-def _mentions(text: str, term: str) -> bool:
-    return re.search(rf"\b{re.escape(term)}\b", text, re.IGNORECASE) is not None
-
-
-def _evidence_for(context: CandidateContext, requirement: str) -> str | None:
-    for interview in context.completed_interviews:
-        if interview.notes and _mentions(interview.notes, requirement):
-            return f"{interview.title} feedback: “{interview.notes}”"
-    for skill in context.skills:
-        if _mentions(skill, requirement) or _mentions(requirement, skill):
-            return f"Listed on {context.first_name}'s profile as “{skill}”."
-    if context.headline and _mentions(context.headline, requirement):
-        return f"Mentioned in {context.their} headline: “{context.headline}”."
-    return None
-
-
-def _strengths(context: CandidateContext, matched: list[SkillEvidence]) -> list[str]:
-    items: list[str] = []
-    if matched:
-        items.append(
-            f"Evidence for {len(matched)} of {len(context.job_requirements)} requirements: "
-            f"{_join([m.skill for m in matched])}."
-        )
-    for interview in context.completed_interviews:
-        if interview.notes:
-            items.append(f"{interview.title}: {interview.notes}")
-    if context.candidate_questions:
-        items.append(f"Shows interest in the role: {_lower_first(context.candidate_questions[0].title)}.")
-    extra = [
-        skill
-        for skill in context.skills
-        if not any(_mentions(skill, m.skill) or _mentions(m.skill, skill) for m in matched)
-    ]
-    if extra and context.job_requirements:
-        items.append(f"Also brings {_join(extra)}.")
-    if not items:
-        items.append(
-            f"Profile lists {_join(list(context.skills))}."
-            if context.skills
-            else "The record doesn't show strengths yet; a first conversation will help."
-        )
-    return items[:5]
-
-
-def _concerns(context: CandidateContext, missing: list[str]) -> list[str]:
-    items: list[str] = []
-    if missing:
-        items.append(f"No evidence yet for {_join(missing)}; worth probing in the next conversation.")
-    if context.follow_up_reason:
-        items.append(f"Needs attention: {_lower_first(context.follow_up_reason)}.")
-    reschedule = next((a for a in context.activities if a.type == ActivityType.INTERVIEW_RESCHEDULE_REQUESTED), None)
-    if reschedule:
-        items.append(f"Asked to reschedule an interview {ago(reschedule.at, context.now)}.")
-    if "feedback" not in (context.follow_up_reason or "").lower():
-        for interview in context.completed_interviews:
-            if not interview.notes:
-                items.append(f"No feedback recorded for the {interview.title.lower()} yet.")
-    return items
-
-
 # Answers
 
 
@@ -162,7 +88,9 @@ def _summary_answer(context: CandidateContext) -> AskContent:
         lines.append(f"- **Skills:** {', '.join(context.skills)}.")
     lines.append(f"- **Next step:** {_next_step_line(context)}")
     if context.candidate_questions:
-        lines.append(f"- **Worth covering:** {_lower_first(context.candidate_questions[0].title)}.")
+        lines.append(
+            f"- **Open question from {context.first_name}:** {_lower_first(context.candidate_questions[0].title)}."
+        )
     if context.follow_up_reason:
         lines.append(f"- **Needs attention:** {context.follow_up_reason}.")
     lines.append("")
@@ -176,7 +104,6 @@ def _summary_answer(context: CandidateContext) -> AskContent:
 def _next_steps_answer(context: CandidateContext) -> AskContent:
     first = context.first_name
     upcoming = context.upcoming_interview
-    _, missing = match_requirements(context)
     steps: list[str] = []
     if context.follow_up_reason:
         steps.append(f"**Act today:** {_lower_first(context.follow_up_reason)}.")
@@ -201,8 +128,7 @@ def _next_steps_answer(context: CandidateContext) -> AskContent:
             if upcoming:
                 steps.append(
                     f"**Brief {people(upcoming.interviewers)}** before the {upcoming.title.lower()} "
-                    f"{when(upcoming.scheduled_at, context.now)}"
-                    + (f"; cover {_join(missing[:2])}, which the record doesn't evidence yet." if missing else ".")
+                    f"{when(upcoming.scheduled_at, context.now)}."
                 )
                 steps.append("**Plan the debrief:** collect written feedback within 24 hours.")
             else:
@@ -237,55 +163,13 @@ def _draft_answer(context: CandidateContext) -> AskContent:
     )
 
 
-def _interview_answer(context: CandidateContext) -> AskContent:
-    upcoming = context.upcoming_interview
-    matched, missing = match_requirements(context)
-    header = f"Interview brief for **{context.name}**"
-    if upcoming:
-        header += f": {upcoming.title}, {when(upcoming.scheduled_at, context.now)}"
-    focus = missing[:3] or [m.skill for m in matched[:3]] or list(context.skills[:3])
-    lines = [
-        f"{header}.",
-        "",
-        f"- **Focus areas:** {_join(focus) if focus else 'role fundamentals'}.",
-        f"- **Already evidenced:** {_join([m.skill for m in matched]) if matched else 'nothing yet'}.",
-        f"- **Candidate questions:** {'; '.join(_lower_first(q.title) for q in context.candidate_questions) or 'none raised yet'}.",
-    ]
-    if context.activities:
-        lines.append(f"- **Recent signals:** {_recent(context, 2)}.")
-    if upcoming:
-        lines.append(
-            f"- **Logistics:** {upcoming.duration_minutes} min, {FORMATS.get(upcoming.interview_type, upcoming.interview_type)}, "
-            f"with {people(upcoming.interviewers)}."
-        )
-    for interview in context.completed_interviews[:1]:
-        if interview.notes:
-            lines.append(f"- **Earlier feedback ({interview.title}):** {interview.notes}")
-    return AskContent(answer="\n".join(lines), sources=context.sources("profile", "job", "activity", "interviews"))
-
-
-def _strengths_answer(context: CandidateContext) -> AskContent:
-    matched, missing = match_requirements(context)
-    reasons = _strengths(context, matched)
-    lines = [f"The strongest reasons to interview {context.first_name}, from the record:", ""]
-    lines += [f"{index}. {reason}" for index, reason in enumerate(reasons, start=1)]
-    if matched:
-        lines += ["", "**Evidence by requirement:**", *(f"- **{m.skill}:** {m.evidence}" for m in matched[:4])]
-    if missing:
-        lines += ["", f"**Still to confirm:** {_join(missing)}. Worth covering in the interview."]
-    return AskContent(answer="\n".join(lines), sources=context.sources("profile", "job", "activity", "interviews"))
-
-
-def _concerns_answer(context: CandidateContext) -> AskContent:
-    _, missing = match_requirements(context)
-    concerns = _concerns(context, missing)
-    if not concerns:
-        answer = f"Nothing in {context.first_name}'s record raises a concern so far."
-    else:
-        answer = "\n".join(
-            [f"Things to check for {context.first_name}:", "", *(f"- {concern}" for concern in concerns)]
-        )
-    return AskContent(answer=answer, sources=context.sources("profile", "job", "activity", "interviews"))
+def _evaluation_answer(context: CandidateContext) -> AskContent:
+    return AskContent(
+        answer=(
+            "I don't evaluate candidates: strengths, concerns and hiring decisions stay with your team. "
+            f"I can tell you where {context.first_name} stands, what's waiting on you, or draft {context.their} next update."
+        ),
+    )
 
 
 def _general_answer(context: CandidateContext) -> AskContent:
@@ -298,10 +182,7 @@ def _general_answer(context: CandidateContext) -> AskContent:
         else "- **Last activity:** none yet.",
         f"- **Next step:** {_next_step_line(context)}",
         "",
-        (
-            f"I can summarize {context.their} profile, list strengths and gaps, suggest next steps, "
-            "draft a message, or prepare an interview brief."
-        ),
+        f"I can tell you where {context.first_name} stands, what's waiting on you, or draft {context.their} next update.",
     ]
     return AskContent(answer="\n".join(lines), sources=context.sources("profile", "activity"))
 
@@ -310,9 +191,7 @@ COMPOSERS = {
     "summary": _summary_answer,
     "next_steps": _next_steps_answer,
     "draft": _draft_answer,
-    "interview": _interview_answer,
-    "strengths": _strengths_answer,
-    "concerns": _concerns_answer,
+    "evaluation": _evaluation_answer,
     "general": _general_answer,
 }
 

@@ -3,7 +3,6 @@
 import { Mail, Phone } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-import { CandidateAIPanel } from "@/components/ai/CandidateAIPanel";
 import { CandidateActionsMenu } from "@/components/recruiter/CandidateActionsMenu";
 import { CandidateActivity, CandidateActivitySkeleton } from "@/components/recruiter/CandidateActivity";
 import { CandidateInterviewList } from "@/components/recruiter/CandidateInterviewList";
@@ -15,7 +14,6 @@ import { ResumeLink } from "@/components/recruiter/ResumeLink";
 import { Avatar } from "@/components/shared/Avatar";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/Tabs";
-import { useCandidateAI } from "@/hooks/useCandidateAI";
 import { useCandidateDetail, type CandidateDetailState } from "@/hooks/useCandidateDetail";
 import { DURATION, formatDate, isWithin } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -40,14 +38,12 @@ type Variant = "panel" | "sheet" | "page";
 type CandidateDetailProps = {
   candidate: PipelineCandidate;
   variant?: Variant;
-  /** Changing this focuses the AI prompt box. */
-  aiFocusKey?: number;
   className?: string;
 };
 
 // Shared by the dashboard panel, the mobile sheet and /recruiter/candidates/[id] (ARCHITECTURE.md 12.1).
-// The active tab and the loaded details survive switching candidates; the AI thread starts fresh.
-export function CandidateDetail({ candidate, variant = "panel", aiFocusKey, className }: CandidateDetailProps) {
+// The active tab and the loaded details survive switching candidates.
+export function CandidateDetail({ candidate, variant = "panel", className }: CandidateDetailProps) {
   const [tab, setTab] = useState<TabValue>("overview");
   const state = useCandidateDetail(candidate);
   return (
@@ -58,22 +54,19 @@ export function CandidateDetail({ candidate, variant = "panel", aiFocusKey, clas
       tab={tab}
       onTabChange={setTab}
       state={state}
-      aiFocusKey={aiFocusKey}
       className={className}
     />
   );
 }
 
 type BodyProps = Required<Pick<CandidateDetailProps, "candidate" | "variant">> &
-  Pick<CandidateDetailProps, "aiFocusKey" | "className"> & {
+  Pick<CandidateDetailProps, "className"> & {
     tab: TabValue;
     onTabChange: (tab: TabValue) => void;
     state: CandidateDetailState;
   };
 
-function CandidateDetailBody({ candidate, variant, tab, onTabChange, state, aiFocusKey, className }: BodyProps) {
-  const ai = useCandidateAI(candidate.id);
-  const [focusKey, setFocusKey] = useState(0);
+function CandidateDetailBody({ candidate, variant, tab, onTabChange, state, className }: BodyProps) {
   const Heading = variant === "page" ? "h1" : "h2";
   const isPage = variant === "page";
 
@@ -121,7 +114,6 @@ function CandidateDetailBody({ candidate, variant, tab, onTabChange, state, aiFo
         </div>
         <CandidateActionsMenu
           candidate={candidate}
-          onAskAI={() => setFocusKey((key) => key + 1)}
           className="size-9 rounded-[8px] bg-ink/[0.05] ring-1 ring-ink/10 [&_svg]:size-4"
         />
       </div>
@@ -149,8 +141,6 @@ function CandidateDetailBody({ candidate, variant, tab, onTabChange, state, aiFo
             candidate={candidate}
             state={state}
             onViewAll={() => onTabChange("activity")}
-            onDraftFollowUp={() => void ai.send("Draft follow-up message")}
-            aiPending={ai.pending}
           />
         </TabsContent>
         <TabsContent value="interviews">
@@ -166,18 +156,12 @@ function CandidateDetailBody({ candidate, variant, tab, onTabChange, state, aiFo
     </Tabs>
   );
 
-  // Both counters only grow while this candidate is shown, so their sum changes on every request.
-  const aiPanel = <CandidateAIPanel candidate={candidate} ai={ai} focusKey={(aiFocusKey ?? 0) + focusKey} />;
-
   if (isPage) {
     return (
-      <div className={cn("grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]", className)}>
-        <section aria-label="Candidate details" className="glass flex flex-col rounded-[16px] border border-border pt-5 sm:pt-5">
-          <div className="px-5 sm:px-5">{header}</div>
-          {tabs}
-        </section>
-        <div className="flex flex-col gap-4 lg:sticky lg:top-6">{aiPanel}</div>
-      </div>
+      <section aria-label="Candidate details" className={cn("glass flex flex-col rounded-[16px] border border-border pt-5 sm:pt-5", className)}>
+        <div className="px-5 sm:px-5">{header}</div>
+        {tabs}
+      </section>
     );
   }
 
@@ -192,7 +176,6 @@ function CandidateDetailBody({ candidate, variant, tab, onTabChange, state, aiFo
     >
       <div className="shrink-0 px-5 pt-5 sm:px-5">{header}</div>
       {tabs}
-      <div className="shrink-0 px-3 pb-3 sm:px-3.5 sm:pb-3.5">{aiPanel}</div>
     </section>
   );
 }

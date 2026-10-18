@@ -1,25 +1,13 @@
-"""Recruiter AI. It answers questions about a record and drafts messages for a recruiter to review; it
-never evaluates candidates, changes a stage, sends a message or makes a hiring decision."""
+"""Recruiter AI. It drafts messages to a candidate for a recruiter to edit and send; it never evaluates
+candidates, changes a stage, sends a message or makes a hiring decision."""
 
 from fastapi import APIRouter
 
 from app.core.dependencies import AIProviderDep, RecruiterDep, SessionDep
-from app.schemas.ai import (
-    AskCandidateRequest,
-    AskCandidateResponse,
-    DraftMessageRequest,
-    DraftMessageResponse,
-)
+from app.schemas.ai import DraftMessageRequest, DraftMessageResponse
 from app.services import ai_service
 
 router = APIRouter(prefix="/ai", tags=["ai"])
-
-
-@router.post("/ask-candidate", response_model=AskCandidateResponse, summary="Ask about a candidate")
-async def ask_candidate(
-    body: AskCandidateRequest, session: SessionDep, provider: AIProviderDep, user: RecruiterDep
-) -> AskCandidateResponse:
-    return await ai_service.ask_candidate(session, body.application_id, body.message, provider, user)
 
 
 @router.post("/draft-message", response_model=DraftMessageResponse, summary="Draft a message")

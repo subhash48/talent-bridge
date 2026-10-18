@@ -1,5 +1,6 @@
-"""Recruiter AI for one application: questions about the record and drafts of messages to the
-candidate. It never evaluates or ranks anyone, changes a stage or sends a message: people send.
+"""Recruiter AI for one application: the assistant's status questions about the record, and drafts
+of messages to the candidate. It never evaluates or ranks anyone, changes a stage or sends a message:
+people send.
 """
 
 import logging

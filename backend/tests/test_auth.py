@@ -98,7 +98,6 @@ RECRUITER_ROUTES = [
     ("GET", "/messages/conversations"),
     ("GET", "/messages/unread-count"),
     ("GET", "/dashboard/summary"),
-    ("POST", "/ai/ask-candidate"),
     ("POST", "/ai/draft-message"),
     ("GET", f"/candidates/{SOPHIA}/engagement"),
     ("POST", f"/candidates/{SOPHIA}/portal-invite"),
@@ -282,7 +281,6 @@ async def test_candidate_cannot_change_their_stage(client: AsyncClient) -> None:
 
 async def test_candidate_cannot_use_recruiter_ai(anonymous: AsyncClient) -> None:
     for path, body in (
-        ("/ai/ask-candidate", {"application_id": SOPHIA_APP, "question": "Should we hire her?"}),
         ("/ai/draft-message", {"application_id": JAMES_APP, "intent": "follow up"}),
     ):
         assert (await anonymous.post(f"{API}{path}", json=body, headers=SOPHIA_TOKEN)).status_code == 403

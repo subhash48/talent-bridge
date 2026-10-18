@@ -163,7 +163,6 @@ export type ApiUser = {
   created_at: string;
 };
 
-export type ApiAskResponse = { answer: string; sources: { type: string; id: string; label: string }[]; model_name: string };
 
 export type ApiDraftPurpose = "follow_up" | "outreach" | "interview_confirmation" | "status_update" | "offer_check_in";
 

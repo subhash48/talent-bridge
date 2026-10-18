@@ -14,7 +14,6 @@ export type CandidateSelectionProps = {
   checked: boolean;
   onSelect: (id: string) => void;
   onCheckedChange: (id: string, checked: boolean) => void;
-  onAskAI: (id: string) => void;
 };
 
 const cell = (className?: string) =>
@@ -24,7 +23,7 @@ const cell = (className?: string) =>
   );
 
 /** Whole row selects the candidate; the name is the keyboard target. Checkbox and menu don't select. */
-export function CandidateRow({ candidate, selected, checked, onSelect, onCheckedChange, onAskAI }: CandidateSelectionProps) {
+export function CandidateRow({ candidate, selected, checked, onSelect, onCheckedChange }: CandidateSelectionProps) {
   return (
     <tr data-selected={selected || undefined} onClick={() => onSelect(candidate.id)} className="group cursor-pointer">
       <td className={cell("w-10 pl-3")} onClick={(event) => event.stopPropagation()}>
@@ -69,7 +68,7 @@ export function CandidateRow({ candidate, selected, checked, onSelect, onChecked
         <RelativeTime iso={candidate.lastActivityAt} className="text-[13px] text-stone" />
       </td>
       <td className={cell("w-10 pr-2 text-right")}>
-        <CandidateActionsMenu candidate={candidate} onAskAI={() => onAskAI(candidate.id)} />
+        <CandidateActionsMenu candidate={candidate} />
       </td>
     </tr>
   );

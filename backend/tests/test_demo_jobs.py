@@ -424,7 +424,6 @@ class BrokenProvider(AIProvider):
 
     name = model = "broken"
 
-
     async def ask_candidate(self, context: CandidateContext, question: str) -> Any:
         raise AIProviderError("timed out")
 

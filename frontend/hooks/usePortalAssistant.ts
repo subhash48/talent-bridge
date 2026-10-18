@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { AIMessage } from "@/hooks/useCandidateAI";
+import type { AIMessage } from "@/components/ai/AIThread";
 import { errorMessage } from "@/services/api";
 import { askCandidateAssistant } from "@/services/portal";
 
 /**
- * One conversation with the candidate assistant about one application. Same message shape as the
- * recruiter Copilot, so the shared AIThread renders it, but a different endpoint with candidate-safe
- * context only.
+ * One conversation with the candidate assistant about one application, rendered by AIThread. Its
+ * endpoint sees candidate-safe context only.
  */
 export function usePortalAssistant(applicationId: string | null) {
   const [messages, setMessages] = useState<AIMessage[]>([]);

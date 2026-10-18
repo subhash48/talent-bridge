@@ -5,19 +5,9 @@ stage, send a message or make a hiring decision.
 """
 
 from enum import StrEnum
-from typing import Annotated
 from uuid import UUID
 
-from pydantic import Field
-
 from app.schemas.common import APIModel, OptionalText
-
-
-class SkillEvidence(APIModel):
-    """A job requirement and where the record shows it (the mock provider's answers)."""
-
-    skill: str
-    evidence: str
 
 
 class AISource(APIModel):
@@ -28,12 +18,9 @@ class AISource(APIModel):
     label: str
 
 
-class AskCandidateRequest(APIModel):
-    application_id: UUID
-    message: Annotated[str, Field(min_length=1, max_length=2000)]
-
-
 class AskCandidateResponse(APIModel):
+    """The assistant's answer to a status question about one application."""
+
     answer: str
     sources: list[AISource] = []
     model_name: str

@@ -249,25 +249,16 @@ async def test_engagement_never_reaches_the_qualification_prompt(client: AsyncCl
 
     def handler(request: httpx.Request) -> httpx.Response:
         prompts.append(request.content.decode())
-        analysis = {
-            "summary": "Strong design systems background.",
-            "skills_matched": [],
-            "missing_skills": [],
-            "strengths": [],
-            "concerns": [],
-            "suggested_questions": [],
-            "recommended_next_step": "Brief the panel.",
-        }
-        return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(analysis)}}]})
+        draft = {"subject": "Next steps", "body": "Hi Sophia,\n\nThanks for your time.\n\nBest,\nAlex"}
+        return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(draft)}}]})
 
     app.dependency_overrides[get_ai_provider] = lambda: GroqProvider(
         api_key="k", model="llama", transport=httpx.MockTransport(handler)
     )
     breakdown = (await client.get(f"{API}/candidates/{SOPHIA}/engagement")).json()
-    for path in ("ask-candidate", "draft-message"):
-        body = {"application_id": SOPHIA_APP, "message": "Summarise her", "purpose": "follow_up"}
-        assert (await client.post(f"{API}/ai/{path}", json=body)).status_code in (200, 201)
-    assert len(prompts) == 2
+    body = {"application_id": SOPHIA_APP, "purpose": "follow_up"}
+    assert (await client.post(f"{API}/ai/draft-message", json=body)).status_code == 200
+    assert len(prompts) == 1
     for prompt in prompts:
         lowered = prompt.lower()
         assert "engagement:" not in lowered and "high engagement" not in lowered

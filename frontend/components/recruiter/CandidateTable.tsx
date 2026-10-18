@@ -14,7 +14,6 @@ type CandidateTableProps = {
   onSelect: (id: string) => void;
   onCheckedChange: (id: string, checked: boolean) => void;
   onCheckAll: (checked: boolean) => void;
-  onAskAI: (id: string) => void;
   emptyState: ReactNode;
 };
 
@@ -28,7 +27,6 @@ export function CandidateTable({
   onSelect,
   onCheckedChange,
   onCheckAll,
-  onAskAI,
   emptyState,
 }: CandidateTableProps) {
   if (candidates.length === 0) return <div className="px-4 pb-5 sm:px-5">{emptyState}</div>;
@@ -41,7 +39,6 @@ export function CandidateTable({
     checked: checkedIds.has(candidate.id),
     onSelect,
     onCheckedChange,
-    onAskAI,
   });
 
   return (

@@ -11,6 +11,7 @@ from app.models.base import utcnow
 from app.schemas.ai import AskContent, DraftContent, DraftPurpose
 from app.services.ai.client import AIProvider, AIProviderError, get_ai_provider
 from app.services.ai.context import CandidateContext, build_candidate_context
+from app.services.ai.fallback import MockProvider
 from app.services.ai.gemini import GeminiProvider
 from app.services.ai.groq import GroqProvider
 from tests.conftest import API, application_id, candidate_id
@@ -20,27 +21,13 @@ SOPHIA = application_id("sophia-martinez")
 
 async def test_ai_never_evaluates_candidates(client: AsyncClient) -> None:
     """No analysis, scoring, strengths or concerns: TalentBridge's AI drafts communication."""
-    response = await client.post(f"{API}/ai/analyze-candidate", json={"application_id": SOPHIA})
-    assert response.status_code in (404, 405)
-    assert not any("analy" in path for path in app.openapi()["paths"] if "/analytics/" not in path)
+    for path in ("analyze-candidate", "ask-candidate"):
+        response = await client.post(f"{API}/ai/{path}", json={"application_id": SOPHIA, "message": "Any concerns?"})
+        assert response.status_code in (404, 405)
+    ai_paths = [path for path in app.openapi()["paths"] if path.startswith(f"{API}/ai/")]
+    assert ai_paths == [f"{API}/ai/draft-message"]
     detail = (await client.get(f"{API}/candidates/{candidate_id('sophia-martinez')}")).json()
     assert "ai_analysis" not in detail
-
-
-async def test_ask_candidate(client: AsyncClient) -> None:
-    response = await client.post(
-        f"{API}/ai/ask-candidate",
-        json={"application_id": SOPHIA, "message": "What are the strongest reasons to interview this candidate?"},
-    )
-    assert response.status_code == 200
-    body = response.json()
-    assert body["answer"].startswith("The strongest reasons to interview Sophia")
-    assert {source["type"] for source in body["sources"]} >= {"profile", "job"}
-    assert body["model_name"] == "mock"
-
-    for prompt in ("Summarize candidate", "What are good next steps?", "Prepare an interview brief", "Any concerns?"):
-        answer = await client.post(f"{API}/ai/ask-candidate", json={"application_id": SOPHIA, "message": prompt})
-        assert answer.status_code == 200 and answer.json()["answer"]
 
 
 async def test_draft_message(client: AsyncClient) -> None:
@@ -62,8 +49,6 @@ async def test_ai_validation(client: AsyncClient) -> None:
         f"{API}/ai/draft-message", json={"application_id": "00000000-0000-0000-0000-000000000000"}
     )
     assert missing.status_code == 404
-    empty = await client.post(f"{API}/ai/ask-candidate", json={"application_id": SOPHIA, "message": ""})
-    assert empty.status_code == 422
     purpose = await client.post(f"{API}/ai/draft-message", json={"application_id": SOPHIA, "purpose": "rejection"})
     assert purpose.status_code == 422
 
@@ -87,6 +72,34 @@ async def test_failed_provider_falls_back_to_mock(client: AsyncClient) -> None:
     response = await client.post(f"{API}/ai/draft-message", json={"application_id": SOPHIA, "purpose": "follow_up"})
     assert response.status_code == 200
     assert response.json()["model_name"] == "mock (fallback from broken)"
+
+
+# The assistant's status questions (ai_service.ask_candidate), answered offline by the mock
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "What are the strongest reasons to interview this candidate?",
+        "Any concerns?",
+        "What are her weaknesses?",
+        "Should we hire her?",
+        "Is she a good fit?",
+        "Rate her out of 10",
+    ],
+)
+async def test_the_mock_declines_to_evaluate(context: CandidateContext, question: str) -> None:
+    answer = (await MockProvider().ask_candidate(context, question)).answer
+    assert answer.startswith("I don't evaluate candidates")
+    assert "Figma" not in answer and "design system" not in answer.lower()
+
+
+async def test_the_mock_answers_status_questions(context: CandidateContext) -> None:
+    status = await MockProvider().ask_candidate(context, "Tell me about Sophia's application")
+    assert "**Sophia Martinez**" in status.answer and "**Interview**" in status.answer
+    steps = await MockProvider().ask_candidate(context, "What should I do next?")
+    assert steps.answer.startswith("Here's what I'd do next for Sophia")
+    assert "evidence" not in steps.answer
 
 
 # Hosted providers, against a fake HTTP transport

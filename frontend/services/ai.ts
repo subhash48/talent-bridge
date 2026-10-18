@@ -1,49 +1,9 @@
-import { ApiError, USE_MOCK_API, apiFetch, errorMessage } from "@/services/api";
-import { mockCandidateChat } from "@/services/mock/ai";
-import type { ApiAskResponse, ApiDraft, ApiDraftPurpose } from "@/types/api";
+import { USE_MOCK_API, apiFetch } from "@/services/api";
+import { mockDraftMessage } from "@/services/mock/ai";
+import type { ApiDraft, ApiDraftPurpose } from "@/types/api";
 
-// Recruiter AI. The browser sends only the application id and the question; the server builds the
-// context and holds every model key. The AI answers and drafts; it never evaluates, sends or decides.
-
-export type ChatSource = { type: string; id: string; label: string };
-
-// The events the AI panel renders. Answers arrive whole from the API and stream in mock mode.
-export type ChatStreamEvent =
-  | { event: "meta"; data: { conversation_id: string; message_id: string; sources: ChatSource[] } }
-  | { event: "delta"; data: { text: string } }
-  | { event: "action"; data: { type: "handoff"; label: string; prefill: string } }
-  | { event: "done"; data: { stop_reason: string; usage: Record<string, number> } }
-  | { event: "error"; data: { code: string; fallback?: string } };
-
-export type AskCandidateAIInput = {
-  candidateId: string;
-  message: string;
-  signal?: AbortSignal;
-};
-
-/** POST /ai/ask-candidate about one application (candidateId is the application id). */
-export async function* askCandidateAI({ candidateId, message, signal }: AskCandidateAIInput): AsyncGenerator<ChatStreamEvent> {
-  if (USE_MOCK_API) {
-    yield* mockCandidateChat(candidateId, message, signal);
-    return;
-  }
-  let response: ApiAskResponse;
-  try {
-    response = await apiFetch<ApiAskResponse>("/ai/ask-candidate", {
-      method: "POST",
-      body: JSON.stringify({ application_id: candidateId, message }),
-      signal,
-    });
-  } catch (error) {
-    if (signal?.aborted) throw error;
-    const code = error instanceof ApiError ? error.code : "error";
-    yield { event: "error", data: { code, fallback: errorMessage(error, "I couldn't reach the AI service. Try again in a moment.") } };
-    return;
-  }
-  yield { event: "meta", data: { conversation_id: "", message_id: "", sources: response.sources } };
-  yield { event: "delta", data: { text: response.answer } };
-  yield { event: "done", data: { stop_reason: "end", usage: {} } };
-}
+// Recruiter AI. The browser sends only the application id; the server builds the context and holds
+// every model key. The AI drafts messages for the recruiter to edit; it never evaluates, sends or decides.
 
 export type MessageDraft = { subject: string; body: string };
 
@@ -53,21 +13,11 @@ export async function draftMessage(
   purpose: ApiDraftPurpose = "follow_up",
   signal?: AbortSignal,
 ): Promise<MessageDraft> {
-  if (USE_MOCK_API) return mockDraft(candidateId, signal);
+  if (USE_MOCK_API) return mockDraftMessage(candidateId, signal);
   const { subject, body } = await apiFetch<ApiDraft>("/ai/draft-message", {
     method: "POST",
     body: JSON.stringify({ application_id: candidateId, purpose }),
     signal,
   });
   return { subject, body };
-}
-
-async function mockDraft(candidateId: string, signal?: AbortSignal): Promise<MessageDraft> {
-  let text = "";
-  for await (const event of mockCandidateChat(candidateId, "Draft a follow-up message", signal)) {
-    if (event.event === "delta") text += event.data.text;
-  }
-  const subject = /\*\*Subject:\*\*\s*(.+)/.exec(text)?.[1]?.trim() ?? "";
-  const start = text.indexOf("Hi ");
-  return { subject, body: start === -1 ? text : text.slice(start).replace(/\*\*/g, "") };
 }

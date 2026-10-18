@@ -2,7 +2,7 @@
 
 import { ArrowLeft, LoaderCircle, MessageSquareText, SendHorizontal, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useId, useMemo, useRef, useState } from "react";
 
 import { MessageBubble } from "@/components/recruiter/MessageBubble";
 import { useWorkspace } from "@/components/recruiter/WorkspaceProvider";
@@ -26,9 +26,11 @@ type MessagesInboxProps = {
   initialConversations: Conversation[];
   /** From ?candidate=: opens (or starts) that candidate's thread. */
   initialCandidateId?: string;
+  /** From ?draft=1 ("Draft follow-up" on a candidate): an AI draft starts in that thread's composer. */
+  draftOnArrival?: boolean;
 };
 
-export function MessagesInbox({ initialConversations, initialCandidateId }: MessagesInboxProps) {
+export function MessagesInbox({ initialConversations, initialCandidateId, draftOnArrival }: MessagesInboxProps) {
   const { candidates, markThreadRead, syncUnreadThreads } = useWorkspace();
   const firstId = initialCandidateId ?? initialConversations[0]?.candidate.id;
   const [conversations, setConversations] = useState(() =>
@@ -37,6 +39,7 @@ export function MessagesInbox({ initialConversations, initialCandidateId }: Mess
   const [activeId, setActiveId] = useState(firstId);
   const [threadOpen, setThreadOpen] = useState(Boolean(initialCandidateId));
   const [filter, setFilter] = useState("");
+  const [draftFor, setDraftFor] = useState(draftOnArrival ? initialCandidateId : undefined);
 
   // The thread shown on arrival counts as read; tell the server and the sidebar once.
   const initialUnread = useRef(initialConversations.find((conversation) => conversation.candidate.id === firstId)?.unread ?? 0);
@@ -146,7 +149,14 @@ export function MessagesInbox({ initialConversations, initialCandidateId }: Mess
 
       <section aria-label="Conversation" className={cn("min-h-0 flex-col", threadOpen ? "flex" : "hidden lg:flex")}>
         {active ? (
-          <Thread key={active.candidate.id} conversation={active} onBack={() => setThreadOpen(false)} onSent={appendMessage} />
+          <Thread
+            key={active.candidate.id}
+            conversation={active}
+            onBack={() => setThreadOpen(false)}
+            onSent={appendMessage}
+            draftOnOpen={draftFor === active.candidate.id}
+            onDraftStarted={() => setDraftFor(undefined)}
+          />
         ) : (
           <EmptyState icon={MessageSquareText} title="No conversation selected" description="Choose a candidate to read and reply." className="m-5 flex-1 border-none" />
         )}
@@ -159,9 +169,11 @@ type ThreadProps = {
   conversation: Conversation;
   onBack: () => void;
   onSent: (conversation: Conversation, message: Conversation["messages"][number]) => void;
+  draftOnOpen?: boolean;
+  onDraftStarted?: () => void;
 };
 
-function Thread({ conversation, onBack, onSent }: ThreadProps) {
+function Thread({ conversation, onBack, onSent, draftOnOpen, onDraftStarted }: ThreadProps) {
   const { candidates, refresh } = useWorkspace();
   const toast = useToast();
   const composerId = useId();
@@ -180,6 +192,15 @@ function Thread({ conversation, onBack, onSent }: ThreadProps) {
 
   useEffect(() => () => draftController.current?.abort(), []);
 
+  // Once: the recruiter edits the draft, then sends it themselves.
+  const startDraft = useEffectEvent(() => {
+    onDraftStarted?.();
+    void draftWithAI();
+  });
+  useEffect(() => {
+    if (draftOnOpen) startDraft();
+  }, [draftOnOpen]);
+
   async function draftWithAI() {
     const controller = new AbortController();
     draftController.current = controller;
@@ -192,7 +213,7 @@ function Thread({ conversation, onBack, onSent }: ThreadProps) {
         toast({ title: "Couldn't draft a message", description: errorMessage(error, "Try again in a moment."), tone: "error" });
       }
     } finally {
-      setDrafting(false);
+      if (draftController.current === controller) setDrafting(false); // not a draft that was replaced
     }
   }
 

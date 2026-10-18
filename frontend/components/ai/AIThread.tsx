@@ -4,8 +4,15 @@ import { Check, Copy, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { AIMessageContent } from "@/components/ai/AIMessageContent";
-import type { AIMessage } from "@/hooks/useCandidateAI";
 import { cn } from "@/lib/utils";
+
+export type AIMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  status: "thinking" | "streaming" | "done" | "error";
+  sources?: { type: string; id: string; label: string }[];
+};
 
 export function AIThread({ messages, className }: { messages: AIMessage[]; className?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);

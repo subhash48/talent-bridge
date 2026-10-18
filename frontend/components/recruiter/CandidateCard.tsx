@@ -8,7 +8,7 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Checkbox } from "@/components/ui/Checkbox";
 
 /** The table row's small-screen counterpart. */
-export function CandidateCard({ candidate, selected, checked, onSelect, onCheckedChange, onAskAI }: CandidateSelectionProps) {
+export function CandidateCard({ candidate, selected, checked, onSelect, onCheckedChange }: CandidateSelectionProps) {
   return (
     <div
       data-selected={selected || undefined}
@@ -39,7 +39,7 @@ export function CandidateCard({ candidate, selected, checked, onSelect, onChecke
           </span>
         </span>
       </button>
-      <CandidateActionsMenu candidate={candidate} onAskAI={() => onAskAI(candidate.id)} />
+      <CandidateActionsMenu candidate={candidate} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { InterviewFormat } from "@/components/shared/InterviewFormat";
+import { RemindButton } from "@/components/recruiter/communication/RemindButton";
 import { InterviewStatusBadge } from "@/components/recruiter/InterviewStatusBadge";
 import { Avatar } from "@/components/shared/Avatar";
 import { RelativeTime } from "@/components/shared/RelativeTime";
@@ -41,6 +42,9 @@ export function InterviewRow({ interview, past }: { interview: ScheduledIntervie
           <span>{interview.interviewers.join(", ")}</span>
         </span>
         <InterviewStatusBadge interview={interview} />
+        {!past && interview.status === "scheduled" && (
+          <RemindButton candidate={interview.candidate} interviewTitle={interview.title} />
+        )}
       </div>
     </li>
   );

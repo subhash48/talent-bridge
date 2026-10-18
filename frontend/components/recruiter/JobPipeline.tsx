@@ -4,6 +4,7 @@ import { ArrowLeft, MapPin, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
 
+import { JobStatusActions } from "@/components/recruiter/JobStatusActions";
 import { JobStatusBadge } from "@/components/recruiter/JobStatusBadge";
 import { StageBreakdown, emptyStageCounts } from "@/components/recruiter/StageBreakdown";
 import { useWorkspace } from "@/components/recruiter/WorkspaceProvider";
@@ -46,7 +47,10 @@ export function JobPipeline({ job }: { job: JobOpening }) {
             <h1 className="mt-1 text-xl leading-tight font-semibold tracking-[-0.02em] text-ink sm:text-2xl">{job.title}</h1>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-stone">{job.summary}</p>
           </div>
-          <JobStatusBadge status={job.status} className="h-6 px-2" />
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <JobStatusBadge status={job.status} className="h-6 px-2" />
+            <JobStatusActions job={job} />
+          </div>
         </div>
         <p className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-stone">
           <span className="inline-flex items-center gap-1.5">

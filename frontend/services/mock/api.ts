@@ -1,11 +1,13 @@
 import { STAGE_LABELS } from "@/types/application";
 import type { CandidateQuery } from "@/services/candidates";
+import type { NewJobInput } from "@/services/jobs";
 import type {
   CandidateActivity,
   CandidateDetail,
   CandidateRef,
   CandidateStage,
   Conversation,
+  JobOpening,
   NewCandidateInput,
   NewInterviewInput,
   PipelineCandidate,
@@ -170,6 +172,30 @@ export const mockApi = {
 
   async getJob(id: string) {
     return clone(getMockDb().jobs.find((job) => job.id === id) ?? null);
+  },
+
+  async createJob(input: NewJobInput): Promise<JobOpening> {
+    await mockDelay(300);
+    const job: JobOpening = {
+      id: `${slugify(input.title)}-${crypto.randomUUID().slice(0, 4)}`,
+      title: input.title.trim(),
+      department: input.department.trim(),
+      location: input.location.trim(),
+      employmentType: input.employmentType,
+      status: "open",
+      hiringManager: "Unassigned",
+      openedAt: new Date().toISOString(),
+      summary: input.description.split(/\n\s*\n/)[0] ?? "",
+    };
+    getMockDb().jobs.unshift(job);
+    return clone(job);
+  },
+
+  async setJobStatus(id: string, status: JobOpening["status"]): Promise<JobOpening> {
+    const job = getMockDb().jobs.find((item) => item.id === id);
+    if (!job) throw new Error("Job not found");
+    job.status = status;
+    return clone(job);
   },
 
   async getInterviews() {

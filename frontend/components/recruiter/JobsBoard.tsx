@@ -4,6 +4,7 @@ import { BriefcaseBusiness, MapPin, Plus, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import { CreateJobButton } from "@/components/recruiter/CreateJobDialog";
 import { DemoJobsSection } from "@/components/recruiter/DemoJobsSection";
 import { JobStatusBadge } from "@/components/recruiter/JobStatusBadge";
 import { RecruiterHeader } from "@/components/recruiter/RecruiterHeader";
@@ -62,12 +63,14 @@ export function JobsBoard({ jobs, demoJobs = null, demoError }: JobsBoardProps) 
         title="Jobs"
         subtitle={`${openRoles} open roles · ${candidates.length} candidates in the pipeline`}
         actions={
-          demoJobs &&
-          !demoError && (
-            <Link href="/recruiter/jobs/demo/new" className={buttonStyles()}>
-              <Plus aria-hidden /> Create Demo Job
-            </Link>
-          )
+          <>
+            {demoJobs && !demoError && (
+              <Link href="/recruiter/jobs/demo/new" className={buttonStyles({ variant: "secondary" })}>
+                <Plus aria-hidden /> Create Demo Job
+              </Link>
+            )}
+            <CreateJobButton />
+          </>
         }
       />
 

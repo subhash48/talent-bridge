@@ -21,6 +21,31 @@ export async function getJob(id: string): Promise<JobOpening | null> {
   }
 }
 
+export type NewJobInput = { title: string; department: string; location: string; employmentType: string; description: string };
+
+/** POST /jobs: open straight away, so it's on the careers site. */
+export async function createJob(input: NewJobInput): Promise<JobOpening> {
+  if (USE_MOCK_API) return mockApi.createJob(input);
+  const job = await apiFetch<ApiJob>("/jobs", {
+    method: "POST",
+    body: JSON.stringify({
+      title: input.title.trim(),
+      department: input.department.trim() || null,
+      location: input.location.trim() || null,
+      employment_type: input.employmentType,
+      description: input.description.trim() || null,
+      status: "open",
+    }),
+  });
+  return fromJob(job);
+}
+
+/** PATCH /jobs/{id}: close a role (it leaves the careers site; its candidates stay) or reopen it. */
+export async function setJobStatus(id: string, status: JobOpening["status"]): Promise<JobOpening> {
+  if (USE_MOCK_API) return mockApi.setJobStatus(id, status);
+  return fromJob(await apiFetch<ApiJob>(`/jobs/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ status }) }));
+}
+
 function fromJob(job: ApiJob): JobOpening {
   return {
     id: job.id,

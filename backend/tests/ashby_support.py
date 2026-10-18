@@ -174,7 +174,7 @@ class FakeSupabaseAdmin:
             self.failures -= 1
             raise SupabaseAdminError("Supabase Auth returned HTTP 500.")
         if email in self.existing or email in self.users:
-            raise AuthUserExists("This email already has a Talent Bridge sign-in.")
+            raise AuthUserExists("This email already has a TalentBridge sign-in.")
         user_id = uuid.uuid5(uuid.NAMESPACE_URL, f"auth:{email}")
         self.users[email] = user_id
         self.invites.append({"email": email, "redirect_to": redirect_to, "data": data})
@@ -231,7 +231,7 @@ class FakeAshbyAPI:
         if key in self.details:
             return httpx.Response(200, json={"success": True, "results": self.details[key]})
         if endpoint == "apiKey.info":
-            return httpx.Response(200, json={"success": True, "results": {"title": "Talent Bridge"}})
+            return httpx.Response(200, json={"success": True, "results": {"title": "TalentBridge"}})
         return httpx.Response(200, json={"success": False, "errorInfo": {"code": "not_found", "message": "Not found"}})
 
     def _list(self, endpoint: str, body: dict[str, Any]) -> dict[str, Any]:

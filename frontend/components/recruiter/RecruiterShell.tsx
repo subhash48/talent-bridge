@@ -8,7 +8,7 @@ import { NotificationsMenu } from "@/components/recruiter/NotificationsMenu";
 import { SidebarContent } from "@/components/recruiter/RecruiterSidebar";
 import { useWorkspace } from "@/components/recruiter/WorkspaceProvider";
 import { Avatar } from "@/components/shared/Avatar";
-import { EncordLogo } from "@/components/shared/EncordLogo";
+import { TalentBridgeLogo } from "@/components/shared/TalentBridgeLogo";
 import { NightSky } from "@/components/shared/NightSky";
 import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
@@ -44,8 +44,8 @@ export function RecruiterShell({ children }: { children: ReactNode }) {
               <Button variant="ghost" size="icon" onClick={() => setNavOpen(true)} aria-label="Open navigation">
                 <Menu />
               </Button>
-              <Link href="/recruiter/today" aria-label="Encord recruiting home" className="rounded-md px-1">
-                <EncordLogo />
+              <Link href="/recruiter/today" aria-label="TalentBridge home" className="rounded-md px-1">
+                <TalentBridgeLogo />
               </Link>
             </div>
             <div className="flex items-center gap-1.5">

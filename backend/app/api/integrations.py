@@ -1,4 +1,4 @@
-"""Ashby integration endpoints. The rest of Talent Bridge works without Ashby connected."""
+"""Ashby integration endpoints. The rest of TalentBridge works without Ashby connected."""
 
 from typing import Annotated
 

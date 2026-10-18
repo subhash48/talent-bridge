@@ -20,6 +20,7 @@ import { HelpDialog } from "@/components/candidate/HelpDialog";
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
 import { Avatar } from "@/components/shared/Avatar";
 import { EncordLogo } from "@/components/shared/EncordLogo";
+import { PoweredByTalentBridge } from "@/components/shared/TalentBridgeLogo";
 import { SidebarNavItem } from "@/components/shared/SidebarNavItem";
 import {
   DropdownMenu,
@@ -80,6 +81,7 @@ export function CandidateSidebarContent({ onNavigate }: { onNavigate?: () => voi
       </nav>
 
       <div className="mt-auto flex flex-col gap-3 pt-6">
+        <PoweredByTalentBridge className="px-2.5" />
         <button
           type="button"
           onClick={() => setHelpOpen(true)}

@@ -12,5 +12,5 @@ export const metadata: Metadata = {
 // The company's careers site, run by TalentBridge. No sign-in here: proxy.ts only guards /recruiter and
 // /candidate, so /careers is public, and applying needs no account.
 export default function CareersLayout({ children }: { children: ReactNode }) {
-  return <CareersShell>{children}</CareersShell>;
+  return <CareersShell site="native">{children}</CareersShell>;
 }

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
-import { EncordMark } from "@/components/shared/EncordLogo";
 import { NightSky } from "@/components/shared/NightSky";
+import { TalentBridgeMark } from "@/components/shared/TalentBridgeLogo";
 
 type LoginCardProps = {
   title: string;
@@ -18,11 +18,11 @@ export function LoginCard({ title, description, children, footer }: LoginCardPro
       <div className="w-full max-w-[460px] rounded-[24px] border border-ink/25 bg-canvas bg-linear-to-b from-ink/[0.045] to-ink/[0.02] px-6 pt-8 pb-7 sm:px-10">
         <div className="flex flex-col items-center text-center">
           <span className="inline-flex items-center gap-3 text-ink">
-            <EncordMark className="h-[30px] w-auto" />
-            <span className="text-xl font-bold tracking-[0.08em]">ENCORD</span>
+            <TalentBridgeMark className="h-[30px] w-auto" />
+            <span className="text-xl font-bold tracking-[-0.01em]">TalentBridge</span>
           </span>
           {/* Padded on the left by its letter spacing, which otherwise pulls the label off centre. */}
-          <p className="mt-3 pl-[0.34em] text-[13px] tracking-[0.34em] text-stone uppercase">Talent Bridge</p>
+          <p className="mt-3 text-[13px] text-stone">Every candidate, kept informed</p>
           <h1 className="mt-2 text-[32px] leading-tight font-bold tracking-tight text-ink sm:text-[38px]">{title}</h1>
           {description && <p className="mt-1 text-[15px] leading-relaxed text-stone">{description}</p>}
         </div>

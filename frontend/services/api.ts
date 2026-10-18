@@ -92,7 +92,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
 export async function apiDownload(path: string): Promise<Blob> {
   const url = new URL(path, API_URL);
   if (url.origin !== new URL(API_URL).origin) {
-    throw new ApiError("This file isn't served by the Talent Bridge API.", 0, "invalid_path");
+    throw new ApiError("This file isn't served by the TalentBridge API.", 0, "invalid_path");
   }
   return (await send(url.href)).blob();
 }
@@ -109,7 +109,7 @@ async function send(url: string, { headers, ...init }: RequestInit = {}): Promis
     response = await fetch(url, { cache: "no-store", ...init, headers: merged });
   } catch (cause) {
     if (init.signal?.aborted) throw cause;
-    throw new ApiError(`Can't reach the Talent Bridge API at ${API_URL}. Is the backend running?`, 0, "network_error");
+    throw new ApiError(`Can't reach the TalentBridge API at ${API_URL}. Is the backend running?`, 0, "network_error");
   }
   if (!response.ok) {
     const error = await toApiError(response);

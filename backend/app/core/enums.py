@@ -97,7 +97,7 @@ class ApplicationBucket(StrEnum):
 class PortalAccountStatus(StrEnum):
     """The candidate's portal sign-in. Stored as text (migration 011)."""
 
-    NOT_REQUIRED = "not_required"  # added in Talent Bridge; nobody asked for portal access
+    NOT_REQUIRED = "not_required"  # added in TalentBridge; nobody asked for portal access
     PENDING_INVITATION = "pending_invitation"  # should be invited; not sent yet (or invites aren't configured)
     INVITED = "invited"  # an account exists or an invitation went out; not signed in yet
     ACTIVE = "active"  # signed in to the portal at least once

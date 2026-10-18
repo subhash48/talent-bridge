@@ -25,7 +25,7 @@ class ApplicationRead(APIModel):
     applied_at: Timestamp
     updated_at: Timestamp
     archived_at: Timestamp | None = None
-    # Ashby's own view of it, for recruiters (null for applications made in Talent Bridge).
+    # Ashby's own view of it, for recruiters (null for applications made in TalentBridge).
     external_id: str | None = None
     external_status: str | None = None
     external_stage_title: str | None = None

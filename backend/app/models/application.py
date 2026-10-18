@@ -18,7 +18,7 @@ LOCAL_ONLY = text("external_id IS NULL")
 class Application(UUIDPrimaryKey, Base):
     """One candidate's candidacy for one job. The pipeline stage belongs here, not on the person.
 
-    Applications synced from Ashby keep Ashby's raw stage and status next to the stage Talent Bridge
+    Applications synced from Ashby keep Ashby's raw stage and status next to the stage TalentBridge
     mapped them to (integrations/ashby/mapping.py), so the mapping can be re-run or audited.
     """
 
@@ -47,7 +47,7 @@ class Application(UUIDPrimaryKey, Base):
     # Archived applications leave the active pipeline but keep their history.
     archived_at: Mapped[datetime | None]
 
-    # Ashby (migration 011). Null for applications created in Talent Bridge.
+    # Ashby (migration 011). Null for applications created in TalentBridge.
     external_id: Mapped[str | None] = mapped_column(Text, unique=True)
     external_status: Mapped[str | None] = mapped_column(Text)  # Active, Lead, Hired or Archived
     external_stage_id: Mapped[str | None] = mapped_column(Text)

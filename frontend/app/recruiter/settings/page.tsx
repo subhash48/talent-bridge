@@ -53,7 +53,7 @@ export default async function SettingsPage() {
           <h2 className="flex items-center gap-2 text-sm font-medium text-stone">
             <Database aria-hidden className="size-4" /> Data source
           </h2>
-          <p className="mt-3.5 text-sm font-medium text-ink">{USE_MOCK_API ? "Demo data (mock mode)" : "Talent Bridge API"}</p>
+          <p className="mt-3.5 text-sm font-medium text-ink">{USE_MOCK_API ? "Demo data (mock mode)" : "TalentBridge API"}</p>
           <p className="mt-1.5 text-sm leading-relaxed text-stone">
             {USE_MOCK_API
               ? "Candidates, jobs, interviews and messages come from seeded demo data in this browser. Changes last for this session. Remove NEXT_PUBLIC_USE_MOCK_API to use the API."

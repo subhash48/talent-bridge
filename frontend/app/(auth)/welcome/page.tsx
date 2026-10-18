@@ -61,7 +61,7 @@ function InvitationExpired() {
   );
 }
 
-// Signed in, but not as a candidate Talent Bridge knows. /login ends that session before anyone signs in.
+// Signed in, but not as a candidate TalentBridge knows. /login ends that session before anyone signs in.
 function NotLinked({ code }: { code: string }) {
   const reason = code in LOGIN_NOTICES ? code : "account_not_linked";
   return (

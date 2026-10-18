@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
-import { EncordLogo } from "@/components/shared/EncordLogo";
 import { NightSky } from "@/components/shared/NightSky";
+import { TalentBridgeLogo } from "@/components/shared/TalentBridgeLogo";
 import { Card } from "@/components/ui/Card";
 
 type AuthCardProps = {
@@ -17,9 +17,8 @@ export function AuthCard({ title, description, children, footer }: AuthCardProps
     <main className="relative isolate flex min-h-dvh flex-col items-center justify-center px-4 py-10">
       <NightSky />
       <Card className="w-full max-w-sm p-8">
-        <EncordLogo />
-        <p className="mt-8 text-xs font-medium tracking-wide text-stone">Talent Bridge</p>
-        <h1 className="mt-1.5 text-2xl font-semibold tracking-tight text-ink">{title}</h1>
+        <TalentBridgeLogo />
+        <h1 className="mt-8 text-2xl font-semibold tracking-tight text-ink">{title}</h1>
         {description && <p className="mt-1.5 text-sm leading-relaxed text-stone">{description}</p>}
         <div className="mt-7">{children}</div>
       </Card>

@@ -9,8 +9,8 @@ import "@/lib/supabase-server";
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 
 export const metadata: Metadata = {
-  title: { default: "Encord Recruiting", template: "%s · Encord Recruiting" },
-  description: "AI-powered recruiting workspace for the Encord hiring team.",
+  title: { default: "TalentBridge", template: "%s · TalentBridge" },
+  description: "Never leave another candidate wondering what's happening.",
 };
 
 export const viewport: Viewport = {

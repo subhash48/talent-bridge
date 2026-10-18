@@ -91,7 +91,7 @@ async def _signed_in_user(request: Request, session: AsyncSession, claims: Token
     user = await user_for_auth_account(session, claims.subject)
     if user is None:
         raise ForbiddenError(
-            "Your account isn't linked to Talent Bridge yet. Contact the hiring team.", code="account_not_linked"
+            "Your account isn't linked to TalentBridge yet. Contact the hiring team.", code="account_not_linked"
         )
     if user.disabled_at is not None:
         raise ForbiddenError("This account has been disabled.", code="account_disabled")

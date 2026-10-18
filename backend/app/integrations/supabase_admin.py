@@ -68,7 +68,7 @@ class SupabaseAdmin:
             raise SupabaseAdminError(f"Couldn't reach Supabase Auth ({exc.__class__.__name__}).") from None
 
         if response.status_code in (400, 422) and _is_existing_user(response):
-            raise AuthUserExists("This email already has a Talent Bridge sign-in.")
+            raise AuthUserExists("This email already has a TalentBridge sign-in.")
         if response.status_code == 429:
             raise SupabaseAdminError("Supabase is rate limiting invitation emails. It will be retried.")
         if response.status_code in (401, 403):

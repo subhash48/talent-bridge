@@ -38,7 +38,7 @@ def normalize_database_url(raw: str) -> str:
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", env_ignore_empty=True)
 
-    app_name: str = "Talent Bridge API"
+    app_name: str = "TalentBridge API"
     environment: Literal["development", "test", "production"] = "development"
     organization_name: str = "Encord"
 
@@ -94,11 +94,11 @@ class Settings(BaseSettings):
     # The reconciliation sync invites applicants it finds only if they applied this recently, so a
     # first sync never emails a backlog of past candidates.
     ashby_sync_invite_max_age_days: int = 14
-    # Custom Ashby stage titles to Talent Bridge stages, as JSON: {"Take-home": "screening"}.
+    # Custom Ashby stage titles to TalentBridge stages, as JSON: {"Take-home": "screening"}.
     # Stages not listed map by their Ashby type (integrations/ashby/mapping.py).
     ashby_stage_title_map: dict[str, ApplicationStage] = {}
     # Development only: recruiter-created demo jobs and the public demo careers site (/demo/careers),
-    # whose applications reach Talent Bridge through the Ashby simulator. Every demo route answers 404
+    # whose applications reach TalentBridge through the Ashby simulator. Every demo route answers 404
     # unless this is true, and always when ENVIRONMENT=production.
     enable_ashby_demo: bool = False
 

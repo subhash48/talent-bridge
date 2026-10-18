@@ -11,7 +11,7 @@ export type ApiSenderType = "candidate" | "recruiter" | "system" | "ai";
 /** The candidate's own label for a message, chosen in the portal (never inferred from its text). */
 export type ApiMessageKind = "message" | "thank_you" | "follow_up" | "question";
 export type ApiPortalAccountStatus = "not_required" | "pending_invitation" | "invited" | "active" | "invite_failed";
-/** Synced from Ashby (the system of record) or created in Talent Bridge. */
+/** Synced from Ashby (the system of record) or created in TalentBridge. */
 export type ApiOrigin = "ashby" | "talent_bridge";
 
 export type ApiPage<T> = { items: T[]; total: number; limit: number; offset: number };

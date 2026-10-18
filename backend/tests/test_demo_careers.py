@@ -1,6 +1,6 @@
 """The development-only demo careers site (services/demo_careers.py): a published demo job takes
 applications without a sign-in; each waits, unseen by recruiters, until the applicant activates their
-portal account or signs in, and then reaches Talent Bridge through the Ashby simulator, exactly once.
+portal account or signs in, and then reaches TalentBridge through the Ashby simulator, exactly once.
 Also the résumé checks and download, the simulator's submit() and reset. That it all runs from app/
 alone, with no backend/tests, is in test_production_boundary.py."""
 
@@ -962,7 +962,7 @@ async def test_activating_never_links_a_staff_users_row(
 async def test_signing_in_never_rewrites_someone_talent_bridge_has(
     anonymous: AsyncClient, sessions: async_sessionmaker[AsyncSession], ashby: FakeSupabaseAdmin
 ) -> None:
-    """Ana is in Talent Bridge with her own details and a recruiter's link to her résumé. Someone sends
+    """Ana is in TalentBridge with her own details and a recruiter's link to her résumé. Someone sends
     the form with her email and their own name, phone and résumé, and Ana's next routine sign-in submits
     it. Her record keeps what it had, and stays hers: not taken for simulator data, which reset deletes."""
     ana, cv = "ana.silva@inbox.dev", "https://files.example.org/ana-silva-cv.pdf"
@@ -993,7 +993,7 @@ async def test_moving_a_careers_application_in_the_simulator_moves_only_the_appl
     anonymous: AsyncClient, sessions: async_sessionmaker[AsyncSession], ashby: FakeSupabaseAdmin
 ) -> None:
     """`demo stage` on careers applicants: a new one keeps the name as typed and their own phone (not the
-    fixture's), and someone Talent Bridge had before keeps no Ashby id, so reset never takes them."""
+    fixture's), and someone TalentBridge had before keeps no Ashby id, so reset never takes them."""
     await apply_to(anonymous, await demo_job(sessions), first_name="Mary Ann", last_name="Smith")
     assert (await anonymous.get(f"{API}/me", headers=bearer(ashby.users[EMAIL], email=EMAIL))).status_code == 200
     ana = "ana.silva@inbox.dev"
@@ -1034,7 +1034,7 @@ async def test_an_application_a_recruiter_made_meanwhile_stands(
     anonymous: AsyncClient, sessions: async_sessionmaker[AsyncSession], ashby: FakeSupabaseAdmin
 ) -> None:
     """Ana applies on the careers site. Before she signs in, a recruiter adds her to the same job in
-    Talent Bridge and moves her on. Signing in takes that application for this one and leaves it as it
+    TalentBridge and moves her on. Signing in takes that application for this one and leaves it as it
     is: nothing is delivered, so the importer never adopts it and moves it back to screening."""
     ana = "ana.silva@inbox.dev"
     async with sessions() as session:
@@ -1070,7 +1070,7 @@ async def test_an_application_a_recruiter_made_meanwhile_stands(
 async def test_an_existing_application_for_the_role_means_already_applied(
     anonymous: AsyncClient, sessions: async_sessionmaker[AsyncSession], ashby: FakeSupabaseAdmin
 ) -> None:
-    """However it was made: here, a recruiter added her to the job in Talent Bridge."""
+    """However it was made: here, a recruiter added her to the job in TalentBridge."""
     job_id = await demo_job(sessions)
     async with sessions() as session:
         candidate = Candidate(first_name="Maya", last_name="Patel", email=EMAIL)
@@ -1382,7 +1382,7 @@ async def test_reset_works_without_the_demo_careers_tables(sessions: async_sessi
 async def test_reset_keeps_people_talent_bridge_had_without_their_demo_resume(
     anonymous: AsyncClient, sessions: async_sessionmaker[AsyncSession], ashby: FakeSupabaseAdmin
 ) -> None:
-    """Ana was in Talent Bridge before she applied on the careers site. Reset deletes that application
+    """Ana was in TalentBridge before she applied on the careers site. Reset deletes that application
     and the résumé she sent with it, but not Ana, whose record stops linking to that résumé."""
     ana = "ana.silva@inbox.dev"
     async with sessions() as session:

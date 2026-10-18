@@ -17,8 +17,8 @@ import { usePathname } from "next/navigation";
 
 import { useWorkspace } from "@/components/recruiter/WorkspaceProvider";
 import { Avatar } from "@/components/shared/Avatar";
-import { EncordLogo } from "@/components/shared/EncordLogo";
 import { SidebarNavItem } from "@/components/shared/SidebarNavItem";
+import { TalentBridgeLogo } from "@/components/shared/TalentBridgeLogo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,10 +50,10 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <Link
         href="/recruiter/today"
         onClick={onNavigate}
-        aria-label="Encord recruiting home"
+        aria-label="TalentBridge home"
         className="mb-7 flex w-fit items-center rounded-md px-2.5"
       >
-        <EncordLogo />
+        <TalentBridgeLogo />
       </Link>
 
       <nav aria-label="Primary" className="flex flex-col gap-0.5">

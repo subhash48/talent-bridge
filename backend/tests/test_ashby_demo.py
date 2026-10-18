@@ -225,7 +225,7 @@ async def test_reset_keeps_what_the_simulator_did_not_make(sessions: async_sessi
     async with sessions() as session:
         candidate = await session.scalar(select(Candidate).where(Candidate.email == EMAIL))
         assert candidate is not None
-        # A recruiter adds the demo candidate to a real job, in Talent Bridge.
+        # A recruiter adds the demo candidate to a real job, in TalentBridge.
         local = Application(
             candidate_id=candidate.id, job_id=seed_id("job", "ML Engineer"), stage=ApplicationStage.SCREENING
         )

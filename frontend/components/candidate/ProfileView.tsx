@@ -5,7 +5,6 @@ import { useId, useState, type FormEvent } from "react";
 
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
 import { CandidateHeader } from "@/components/candidate/CandidateHeader";
-import { DemographicsCard } from "@/components/candidate/DemographicsCard";
 import { LoadError } from "@/components/candidate/LoadError";
 import { Avatar } from "@/components/shared/Avatar";
 import { Button } from "@/components/ui/Button";
@@ -182,7 +181,6 @@ function ProfileForm({ profile, onSaved }: { profile: CandidateProfile; onSaved:
             </div>
           </Card>
         </form>
-        <DemographicsCard />
       </div>
 
       <div className="flex flex-col gap-4">

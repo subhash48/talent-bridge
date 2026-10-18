@@ -1,39 +1,14 @@
-"""Voluntary demographic information: the candidate's own answers, and the aggregates recruiters see.
-
-No recruiter schema has a field for an individual's answers, and the aggregates carry no candidate
-id, name or email. Mirrors frontend/types/demographics.ts.
+"""Voluntary demographic information given before TalentBridge stopped collecting it: the aggregates
+recruiters see. They carry no candidate id, name or email.
 """
 
-from pydantic import ConfigDict
-
-from app.core.enums import DisabilityStatus, RaceEthnicity, Region, SexualOrientation
-from app.schemas.common import APIModel, Timestamp
+from app.schemas.common import APIModel
 
 DEMOGRAPHICS_NOTE = (
     "Voluntary and optional. Reported only in aggregate, with groups smaller than {k} combined or hidden, to "
     "understand and improve the candidate experience. Individual answers are never shown and never used in "
     "hiring decisions."
 )
-
-
-class DemographicAnswers(APIModel):
-    """Every question is optional: null is unanswered, and each has its own prefer_not_to_say."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    region: Region | None = None
-    race_ethnicity: RaceEthnicity | None = None
-    disability_status: DisabilityStatus | None = None
-    sexual_orientation: SexualOrientation | None = None
-
-    def answered(self) -> dict[str, str]:
-        return {field: value for field, value in self.model_dump(mode="json").items() if value is not None}
-
-
-class CandidateDemographicsRead(DemographicAnswers):
-    """GET/PUT /candidate/demographics: the signed-in candidate's own answers. Candidate-only."""
-
-    updated_at: Timestamp | None = None
 
 
 class DemographicBucket(APIModel):

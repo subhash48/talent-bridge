@@ -1,5 +1,6 @@
-"""Voluntary demographic information: optional for candidates, aggregate-only for recruiters, and never
-part of anything that ranks, filters, evaluates or describes a person."""
+"""Voluntary demographic information. TalentBridge no longer collects it: no form or endpoint asks for
+it. Answers given before stay in their own table, aggregate-only for recruiters and never part of
+anything that ranks, filters, evaluates or describes a person."""
 
 import json
 import re
@@ -18,8 +19,8 @@ from app.models.base import utcnow
 from app.services.ai.context import build_candidate_context
 from app.services.demographics import MIN_GROUP_SIZE, OTHER_INSUFFICIENT, summarize
 from tests.ashby_support import FakeSupabaseAdmin
-from tests.conftest import ALEX_AUTH, API, SOPHIA_AUTH, application_id, bearer, candidate_id
-from tests.test_demo_careers import EMAIL, apply_to, demo_job, demo_on  # noqa: F401  (demo_on: autouse here too)
+from tests.conftest import API, SOPHIA_AUTH, application_id, bearer, candidate_id
+from tests.test_demo_careers import apply_to, demo_job, demo_on  # noqa: F401  (demo_on: autouse here too)
 
 SOPHIA = candidate_id("sophia-martinez")
 ANSWERS = {
@@ -40,54 +41,31 @@ async def answer_for_many(sessions: async_sessionmaker[AsyncSession], answers: l
         await session.commit()
 
 
-# The candidate's own answers
+# Nothing collects them any more
 
 
-async def test_a_candidate_can_answer_change_and_clear_their_answers(client: AsyncClient) -> None:
-    empty = (await client.get(f"{API}/candidate/demographics")).json()
-    assert empty == {
-        "region": None,
-        "race_ethnicity": None,
-        "disability_status": None,
-        "sexual_orientation": None,
-        "updated_at": None,
-    }
-
-    saved = await client.put(f"{API}/candidate/demographics", json=ANSWERS)
-    assert saved.status_code == 200
-    assert {key: saved.json()[key] for key in ANSWERS} == ANSWERS
-
-    partial = await client.put(f"{API}/candidate/demographics", json={"region": "prefer_not_to_say"})
-    assert partial.json()["region"] == "prefer_not_to_say"
-    assert partial.json()["race_ethnicity"] is None  # a PUT replaces: left out is unanswered
-
-    cleared = await client.put(f"{API}/candidate/demographics", json={})
-    assert cleared.json()["region"] is None
-
-
-async def test_answers_are_validated_and_nothing_else_is_accepted(client: AsyncClient) -> None:
-    assert (await client.put(f"{API}/candidate/demographics", json={"region": "mars"})).status_code == 422
-    assert (await client.put(f"{API}/candidate/demographics", json={"name": "Sophia"})).status_code == 422
-
-
-async def test_only_the_candidate_can_reach_their_own_answers(
-    anonymous: AsyncClient, client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+async def test_no_endpoint_or_form_collects_answers(
+    anonymous: AsyncClient, client: AsyncClient, sessions: async_sessionmaker[AsyncSession], ashby: FakeSupabaseAdmin
 ) -> None:
-    await client.put(f"{API}/candidate/demographics", json=ANSWERS)
-    recruiter = bearer(ALEX_AUTH)
-    assert (await anonymous.get(f"{API}/candidate/demographics", headers=recruiter)).status_code == 403
-    assert (await anonymous.put(f"{API}/candidate/demographics", json={}, headers=recruiter)).status_code == 403
-    assert (await anonymous.get(f"{API}/candidate/demographics")).status_code == 401
-    # No recruiter route takes a candidate and returns their answers: there is none to ask.
+    assert (await client.get(f"{API}/candidate/demographics")).status_code == 404
+    assert (await client.put(f"{API}/candidate/demographics", json=ANSWERS)).status_code in (404, 405)
     paths = {path for path in app.openapi()["paths"] if "demographic" in path}
-    assert paths == {f"{API}/candidate/demographics", f"{API}/analytics/demographics"}
+    assert paths == {f"{API}/analytics/demographics"}  # aggregates of answers given before
+    # A careers form that still sends answers is taken, and the answers are dropped.
+    job = await demo_job(sessions)
+    assert (await apply_to(anonymous, job, demographics=ANSWERS)).status_code == 200
+    async with sessions() as session:
+        assert await session.scalar(select(func.count()).select_from(DemoApplicationDemographics)) == 0
+        assert await session.scalar(select(func.count()).select_from(CandidateDemographics)) == 0
 
 
 async def test_no_recruiter_view_of_a_person_carries_their_answers(
     client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
 ) -> None:
     """Candidate list, search, detail, interviews, messages and the AI's context: none of them."""
-    await client.put(f"{API}/candidate/demographics", json=ANSWERS)
+    async with sessions() as session:
+        session.add(CandidateDemographics(candidate_id=uuid.UUID(SOPHIA), **ANSWERS))
+        await session.commit()
     responses = [
         await client.get(f"{API}/candidates"),
         await client.get(f"{API}/candidates", params={"search": "Asian"}),
@@ -181,45 +159,3 @@ def test_a_combined_group_too_small_to_stand_alone_takes_in_the_next_smallest() 
 
 async def test_candidates_cant_read_the_aggregates(anonymous: AsyncClient) -> None:
     assert (await anonymous.get(f"{API}/analytics/demographics", headers=bearer(SOPHIA_AUTH))).status_code == 403
-
-
-# The demo careers application form
-
-
-async def test_answers_given_with_a_careers_application_move_to_the_candidate_on_submit(
-    anonymous: AsyncClient, sessions: async_sessionmaker[AsyncSession], ashby: FakeSupabaseAdmin
-) -> None:
-    job = await demo_job(sessions)
-    response = await apply_to(anonymous, job, demographics={"region": "canada", "race_ethnicity": "prefer_not_to_say"})
-    assert response.status_code == 200
-    async with sessions() as session:
-        assert await session.scalar(select(func.count()).select_from(DemoApplicationDemographics)) == 1
-        assert await session.scalar(select(func.count()).select_from(CandidateDemographics)) == 0
-
-    token = bearer(ashby.users[EMAIL], email=EMAIL)
-    assert (await anonymous.get(f"{API}/me", headers=token)).status_code == 200  # activating submits it
-
-    async with sessions() as session:
-        assert await session.scalar(select(func.count()).select_from(DemoApplicationDemographics)) == 0
-        candidate = await session.scalar(select(Candidate.id).where(Candidate.email == EMAIL))
-        row = await session.get(CandidateDemographics, candidate)
-        assert row is not None
-        assert (row.region, row.race_ethnicity, row.disability_status) == ("canada", "prefer_not_to_say", None)
-    own = (await anonymous.get(f"{API}/candidate/demographics", headers=token)).json()
-    assert own["region"] == "canada"
-
-
-async def test_a_careers_application_needs_no_demographic_answers(
-    anonymous: AsyncClient, sessions: async_sessionmaker[AsyncSession], ashby: FakeSupabaseAdmin
-) -> None:
-    job = await demo_job(sessions)
-    assert (await apply_to(anonymous, job)).status_code == 200
-    assert (await apply_to(anonymous, job, demographics={})).status_code == 200
-    assert (
-        await apply_to(anonymous, job, demographics={"region": None, "sexual_orientation": "prefer_not_to_say"})
-    ).status_code == 200
-    assert (await apply_to(anonymous, job, demographics={"region": "atlantis"})).status_code == 422
-    await anonymous.get(f"{API}/me", headers=bearer(ashby.users[EMAIL], email=EMAIL))
-    async with sessions() as session:
-        rows = (await session.scalars(select(CandidateDemographics))).all()
-    assert [(row.region, row.sexual_orientation) for row in rows] == [(None, "prefer_not_to_say")]

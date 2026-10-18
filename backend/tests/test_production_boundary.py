@@ -95,9 +95,7 @@ from app.main import app
 from app.models import (
     Application,
     Candidate,
-    CandidateDemographics,
     DemoApplication,
-    DemoApplicationDemographics,
     User,
 )
 from app.schemas.demo import DemoJobCreate
@@ -158,7 +156,7 @@ async def main():
         listed = (await client.get("/api/v1/demo/careers/jobs")).json()
         assert [item["id"] for item in listed] == [str(job.id)], listed
         assert (await client.get(f"/api/v1/demo/careers/jobs/{job.id}")).status_code == 200
-        # 5-7. The application, with a résumé and voluntary answers: a success, not a 503.
+        # 5-7. The application, with a résumé: a success, not a 503.
         response = await client.post(
             f"/api/v1/demo/careers/jobs/{job.id}/apply",
             json={
@@ -167,25 +165,23 @@ async def main():
                 "email": EMAIL,
                 "phone": "+44 20 7946 0958",
                 "resume": {"file_name": "Maya Patel CV.pdf", "content_type": "application/pdf", "data": base64.b64encode(PDF).decode()},
-                "demographics": {"region": "united_kingdom", "disability_status": "prefer_not_to_say"},
             },
         )
     assert response.status_code == 200, response.text
     assert response.json()["status"] == "invitation_sent", response.json()
 
-    # 8. Stored as pending, with its answers held apart; recruiters see no one yet.
+    # 8. Stored as pending; recruiters see no one yet.
     async with factory() as session:
         pending = await session.scalar(select(DemoApplication).where(DemoApplication.email == EMAIL))
         assert pending.status == DemoApplicationStatus.AWAITING_ACTIVATION, pending.status
         assert pending.auth_user_id == admin.invited[EMAIL]
-        assert await session.get(DemoApplicationDemographics, pending.id) is not None
         assert await session.scalar(select(func.count()).select_from(Candidate).where(Candidate.email == EMAIL)) == 0
 
     # 9. Activating the invited account submits it through the Ashby simulator.
     claims = TokenClaims(subject=admin.invited[EMAIL], email=EMAIL, session_id=None)
     await demo_careers.submit_on_sign_in(factory, claims, background=BackgroundTasks(), provider=MockProvider())
 
-    # 10-11. Now the candidate and application exist; the answers became the candidate's own.
+    # 10. Now the candidate and application exist.
     async with factory() as session:
         pending = await session.get(DemoApplication, pending.id, populate_existing=True)
         assert pending.status == DemoApplicationStatus.SUBMITTED, pending.status
@@ -194,8 +190,6 @@ async def main():
         assert (candidate.email, candidate.first_name, candidate.last_name) == (EMAIL, "Maya", "Patel")
         assert application.source == demo_careers.DEMO_CAREERS_SOURCE
         assert candidate.user_id is not None
-        assert await session.get(DemoApplicationDemographics, pending.id) is None
-        assert (await session.get(CandidateDemographics, candidate.id)).region == "united_kingdom"
     await engine.dispose()
     print("submitted")
 

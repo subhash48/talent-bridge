@@ -46,5 +46,13 @@ export function fromMessage(message: ApiMessage): ThreadMessage {
     author: message.sender_type === "candidate" ? "candidate" : "recruiter",
     body: message.content,
     sentAt: message.created_at,
+    delivery: message.delivery
+      ? {
+          subject: message.delivery.subject,
+          emailStatus: message.delivery.email_status,
+          error: message.delivery.error ?? undefined,
+          sentAt: message.delivery.sent_at ?? undefined,
+        }
+      : undefined,
   };
 }

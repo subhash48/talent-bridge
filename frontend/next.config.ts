@@ -9,7 +9,7 @@ const CANDIDATE_MOVES = [{ source: "/candidate/resources", destination: "/candid
 const nextConfig: NextConfig = {
   async redirects() {
     return [
-      { source: "/dashboard", destination: "/recruiter/candidates", permanent: false },
+      { source: "/dashboard", destination: "/recruiter/today", permanent: false },
       ...RECRUITER_ALIASES.map((path) => ({
         source: `/${path}`,
         destination: `/recruiter/${path}`,

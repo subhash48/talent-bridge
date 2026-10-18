@@ -44,7 +44,7 @@ export function RecruiterShell({ children }: { children: ReactNode }) {
               <Button variant="ghost" size="icon" onClick={() => setNavOpen(true)} aria-label="Open navigation">
                 <Menu />
               </Button>
-              <Link href="/recruiter/candidates" aria-label="Encord recruiting home" className="rounded-md px-1">
+              <Link href="/recruiter/today" aria-label="Encord recruiting home" className="rounded-md px-1">
                 <EncordLogo />
               </Link>
             </div>

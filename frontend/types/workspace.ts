@@ -1,4 +1,5 @@
 import type { ApplicationStage } from "@/types/application";
+import type { CommunicationSummary, MessageDelivery } from "@/types/communication";
 import type { Role } from "@/types/candidate";
 import type { EngagementLevel } from "@/types/event";
 import type { InterviewStatus } from "@/types/interview";
@@ -53,6 +54,8 @@ export type PipelineCandidate = CandidateRef & {
   source?: string;
   /** Present when the next-action engine says the recruiter owes this candidate a reply. */
   followUp?: { reason: string };
+  /** What they've heard from us: the SLA rules' view of this application. */
+  communication: CommunicationSummary;
   nextStep?: { title: string; date: string };
   skills: string[];
   addedAt: string;
@@ -98,6 +101,8 @@ export type ThreadMessage = {
   author: MessageAuthor;
   body: string;
   sentAt: string;
+  /** A recruiter's message sent from TalentBridge: portal always, email when configured. */
+  delivery?: MessageDelivery;
 };
 
 export type Conversation = {

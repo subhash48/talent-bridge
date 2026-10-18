@@ -178,6 +178,12 @@ function fromListItem(item: ApiCandidateListItem): PipelineCandidate {
     origin: item.origin,
     source: item.source ?? undefined,
     followUp: item.engagement.follow_up_reason ? { reason: item.engagement.follow_up_reason } : undefined,
+    communication: {
+      status: item.communication.status,
+      lastUpdateAt: item.communication.last_update_at ?? undefined,
+      daysSinceUpdate: item.communication.days_since_update,
+      reason: item.communication.reason ?? undefined,
+    },
     nextStep: item.next_interview ? { title: item.next_interview.title, date: item.next_interview.scheduled_at } : undefined,
     skills: item.candidate.skills,
     addedAt: item.applied_at,
@@ -185,8 +191,10 @@ function fromListItem(item: ApiCandidateListItem): PipelineCandidate {
 }
 
 function fromDetail(detail: ApiCandidateDetail): PipelineCandidate {
-  const { application, job, engagement, stage } = detail;
-  if (!application || !job || !engagement || !stage) throw new Error("This candidate has no application yet.");
+  const { application, job, engagement, communication, stage } = detail;
+  if (!application || !job || !engagement || !communication || !stage) {
+    throw new Error("This candidate has no application yet.");
+  }
   return fromListItem({
     application_id: application.id,
     candidate: detail.candidate,
@@ -199,6 +207,12 @@ function fromDetail(detail: ApiCandidateDetail): PipelineCandidate {
     archived_at: application.archived_at,
     last_activity: detail.activity[0] ?? null,
     engagement,
+    communication: {
+      status: communication.status,
+      last_update_at: communication.last_update_at,
+      days_since_update: communication.days_since_update,
+      reason: communication.attention[0]?.title ?? null,
+    },
     next_interview: detail.next_interview,
   });
 }

@@ -1,3 +1,4 @@
+import type { CommunicationRule, CommunicationStatus, DraftReason, EmailStatus } from "@/types/communication";
 import type { EngagementLevel } from "@/types/event";
 import type { JobStatus } from "@/types/job";
 
@@ -110,6 +111,7 @@ export type ApiCandidateListItem = {
   archived_at: string | null;
   last_activity: ApiActivityBrief | null;
   engagement: ApiEngagement;
+  communication: ApiCommunicationSummary;
   next_interview: ApiInterviewBrief | null;
 };
 
@@ -121,6 +123,8 @@ export type ApiMessage = {
   kind: ApiMessageKind;
   created_at: string;
   read_at: string | null;
+  /** A recruiter's message sent from TalentBridge: how it reached the candidate. */
+  delivery?: { subject: string; email_status: EmailStatus; error: string | null; sent_at: string | null } | null;
 };
 
 export type ApiConversation = { candidate: ApiCandidateRef; unread: number; messages: ApiMessage[] };
@@ -147,6 +151,7 @@ export type ApiCandidateDetail = {
   job: ApiJob | null;
   stage: ApiStage | null;
   engagement: ApiEngagement | null;
+  communication: ApiCommunicationHealth | null;
   next_interview: ApiInterview | null;
   activity: ApiActivity[];
   interviews: ApiInterview[];
@@ -370,4 +375,103 @@ export type ApiAshbyStatus = {
   last_error_at: string | null;
   invitations_pending: number;
   invitations_failed: number;
+};
+
+// Candidate communication (backend/app/schemas/communication.py)
+
+export type ApiAttentionReason = {
+  rule: CommunicationRule;
+  title: string;
+  detail: string;
+  since: string;
+  due_at: string;
+  interview_id: string | null;
+  message_id: string | null;
+};
+
+export type ApiCommunicationSummary = {
+  status: CommunicationStatus;
+  last_update_at: string | null;
+  days_since_update: number;
+  reason: string | null;
+};
+
+export type ApiCommunicationHealth = {
+  status: CommunicationStatus;
+  candidate_status: string;
+  last_update_at: string | null;
+  waiting_since: string;
+  days_since_update: number;
+  open_question: { message_id: string; asked_at: string; excerpt: string; count: number } | null;
+  next_interview: { interview_id: string; title: string; scheduled_at: string; confirmed: boolean } | null;
+  last_interview: { interview_id: string; title: string; ended_at: string; followed_up: boolean } | null;
+  stage_change: { stage: ApiStage; changed_at: string; told: boolean } | null;
+  attention: ApiAttentionReason[];
+  next_due_at: string | null;
+};
+
+export type ApiUpdateDraft = {
+  id: string;
+  application_id: string;
+  reason: DraftReason;
+  status: "drafted" | "sent" | "discarded";
+  subject: string;
+  body: string;
+  edited: boolean;
+  model_name: string | null;
+  message_id: string | null;
+  created_at: string;
+  updated_at: string;
+  sent_at: string | null;
+  discarded_at: string | null;
+};
+
+export type ApiDraftSent = { draft: ApiUpdateDraft; message: ApiMessage };
+
+export type ApiAttentionList = {
+  items: {
+    candidate: ApiCandidateRef;
+    stage: ApiStage;
+    candidate_status: string;
+    last_update_at: string | null;
+    days_since_update: number;
+    reasons: ApiAttentionReason[];
+    draft: ApiUpdateDraft | null;
+  }[];
+  counts: Partial<Record<CommunicationRule, number>>;
+  upcoming: number;
+};
+
+export type ApiCommunicationRule = {
+  key: CommunicationRule;
+  title: string;
+  description: string;
+  unit: string;
+  enabled: boolean;
+  threshold_hours: number;
+  default_hours: number;
+};
+
+export type ApiEmailDelivery = { configured: boolean; provider: string | null; sender: string | null };
+
+export type ApiCommunicationAnalytics = {
+  days: number;
+  since: string;
+  needs_attention: number;
+  unanswered_messages: number;
+  median_hours_between_updates: number | null;
+  sla_compliance: number | null;
+  compliance: { rule: CommunicationRule; title: string; met: number; total: number }[];
+  interview_confirmation_rate: number | null;
+  interviews_confirmed: number;
+  interviews_total: number;
+  updates_sent: number;
+  emails_sent: number;
+  emails_failed: number;
+  drafts_generated: number;
+  drafts_sent: number;
+  drafts_sent_unedited: number;
+  drafts_discarded: number;
+  minutes_saved: number;
+  minutes_saved_per_draft: number;
 };

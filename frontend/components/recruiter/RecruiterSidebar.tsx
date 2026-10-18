@@ -5,6 +5,7 @@ import {
   BriefcaseBusiness,
   CalendarDays,
   ChevronsUpDown,
+  Inbox,
   LogOut,
   MessageSquareText,
   Settings,
@@ -29,6 +30,7 @@ import {
 import { useSignOut } from "@/hooks/useSignOut";
 
 const NAV = [
+  { href: "/recruiter/today", label: "Today", icon: Inbox },
   { href: "/recruiter/candidates", label: "Candidates", icon: UsersRound },
   { href: "/recruiter/jobs", label: "Jobs", icon: BriefcaseBusiness },
   { href: "/recruiter/interviews", label: "Interviews", icon: CalendarDays },
@@ -39,13 +41,14 @@ const NAV = [
 
 export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
-  const { user, unreadThreads } = useWorkspace();
+  const { user, unreadThreads, candidates } = useWorkspace();
+  const waiting = candidates.filter((candidate) => candidate.communication.status === "needs_attention").length;
   const { signOut, signingOut } = useSignOut();
 
   return (
     <div className="flex h-full flex-col px-3 pt-5 pb-4">
       <Link
-        href="/recruiter/candidates"
+        href="/recruiter/today"
         onClick={onNavigate}
         aria-label="Encord recruiting home"
         className="mb-7 flex w-fit items-center rounded-md px-2.5"
@@ -62,6 +65,11 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             indicator={
               item.href === "/recruiter/messages" && unreadThreads > 0
                 ? `${unreadThreads} unread conversation${unreadThreads === 1 ? "" : "s"}`
+                : undefined
+            }
+            badge={
+              item.href === "/recruiter/today" && waiting > 0
+                ? { count: waiting, label: `${waiting} candidate${waiting === 1 ? "" : "s"} need${waiting === 1 ? "s" : ""} an update` }
                 : undefined
             }
             onNavigate={onNavigate}

@@ -7,8 +7,8 @@ import { AskAIEntry } from "@/components/candidate/AskAIEntry";
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
 import { CandidateTopActions } from "@/components/candidate/CandidateTopActions";
 import { CurrentApplicationCard } from "@/components/candidate/CurrentApplicationCard";
-import { LatestUpdateCard } from "@/components/candidate/LatestUpdateCard";
-import { NextStepCard } from "@/components/candidate/NextStepCard";
+import { FourQuestions } from "@/components/candidate/FourQuestions";
+import { LastUpdateCard } from "@/components/candidate/LastUpdateCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ASK_AI_PROMPTS } from "@/lib/ask-ai";
 import { greetingFor } from "@/lib/format";
@@ -16,7 +16,8 @@ import type { CandidateApplication, PortalJob } from "@/types/portal";
 
 /**
  * The portal home, in order of what matters: the greeting with one sentence on where they stand, the
- * current application, the one next step, the latest update, and a way into Ask AI.
+ * company and role with its progress, then plain answers to where am I, what happens next, do I need
+ * to do anything and how should I prepare, the last update from the team, and a way into Ask AI.
  * Everything else (every application, interviews, messages, the company, the full assistant) has
  * its own page.
  */
@@ -46,14 +47,14 @@ export function CandidateDashboard({ greeting }: { greeting: string }) {
       {application && job ? (
         <>
           <CurrentApplicationCard application={application} job={job} otherApplications={me.applications.length - 1} />
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-            <NextStepCard me={me} application={application} />
-            <LatestUpdateCard latest={me.recentActivity[0] ?? null} applicationId={application.id} />
+          <FourQuestions me={me} application={application} />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <LastUpdateCard me={me} />
+            <AskAIEntry
+              description={`Questions about ${me.company}, the role, benefits or your application?`}
+              prompts={ASK_AI_PROMPTS.slice(0, 2)}
+            />
           </div>
-          <AskAIEntry
-            description={`Questions about ${me.company}, the role, benefits or your application?`}
-            prompts={ASK_AI_PROMPTS.slice(0, 2)}
-          />
         </>
       ) : (
         <EmptyState

@@ -6,7 +6,6 @@ import { useSyncExternalStore } from "react";
 import { AskAIEntry } from "@/components/candidate/AskAIEntry";
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
 import { CandidateTopActions } from "@/components/candidate/CandidateTopActions";
-import { CareerRunGreeting } from "@/components/candidate/CareerRunGreeting";
 import { CurrentApplicationCard } from "@/components/candidate/CurrentApplicationCard";
 import { LatestUpdateCard } from "@/components/candidate/LatestUpdateCard";
 import { NextStepCard } from "@/components/candidate/NextStepCard";
@@ -16,8 +15,8 @@ import { greetingFor } from "@/lib/format";
 import type { CandidateApplication, PortalJob } from "@/types/portal";
 
 /**
- * The portal home, in order of what matters: the greeting (set in a small game, Career Run), where
- * the current application stands, the one next step, the latest update, and a way into Ask AI.
+ * The portal home, in order of what matters: the greeting with one sentence on where they stand, the
+ * current application, the one next step, the latest update, and a way into Ask AI.
  * Everything else (every application, interviews, messages, the company, the full assistant) has
  * its own page.
  */
@@ -29,12 +28,20 @@ export function CandidateDashboard({ greeting }: { greeting: string }) {
 
   return (
     <div className="flex flex-col gap-5">
-      <CareerRunGreeting
-        greeting={localGreeting}
-        name={me.candidate.firstName}
-        status={statusSentence(application, job, me.company)}
-        actions={<CandidateTopActions />}
-      />
+      <section className="lg:pt-3">
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="min-w-0 pt-1.5">
+            <span className="block text-base leading-6 text-stone sm:text-lg sm:leading-6">{localGreeting},</span>
+            <span className="block truncate text-[30px] leading-[1.1] font-semibold tracking-[-0.03em] text-ink sm:text-[38px]">
+              {me.candidate.firstName}
+            </span>
+          </h1>
+          <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
+            <CandidateTopActions />
+          </div>
+        </div>
+        <p className="mt-1 max-w-[62ch] text-sm text-stone">{statusSentence(application, job, me.company)}</p>
+      </section>
 
       {application && job ? (
         <>

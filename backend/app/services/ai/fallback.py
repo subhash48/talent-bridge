@@ -79,6 +79,9 @@ class MockProvider(AIProvider):
     async def prepare_candidate(self, context: PortalContext) -> PrepContent:
         return portal_fallback.prepare(context)
 
+    async def mock_interview_feedback(self, context: PortalContext, question: str, answer: str) -> AssistContent:
+        return portal_fallback.mock_feedback(context, question, answer)
+
     async def write_job_posting(self, brief: JobPostingBrief, organization: str, overview: str) -> JobPostingContent:
         return _job_posting(brief, organization, overview)
 

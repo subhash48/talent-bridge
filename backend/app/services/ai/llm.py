@@ -83,7 +83,17 @@ Prepare {first_name} for {interview}.
 Return a JSON object with exactly these keys:
 - "interview_format": one sentence describing the format.
 - "what_to_expect", "role_focus", "topics_to_review", "questions_to_ask", "practice_questions": arrays of 3 to 5 short strings, grounded in the context.
-- "company_info": array of strings taken only from the [company] section."""
+- "company_info": array of strings taken only from the [company] section.
+- "resume_talking_points": 2 to 4 experiences from the [your résumé] section worth having a story ready about, each naming the experience and what to bring out; an empty array if there is no résumé."""
+
+CANDIDATE_MOCK_PROMPT = """{context}
+
+{first_name} is practising for an interview for the {role} role.
+Practice question: {question}
+{first_name}'s answer: {answer}
+
+Coach them on this answer in 2 to 4 short "-" bullet points: what works, and what would make it stronger (a specific example, the outcome, what they did themselves, a link to the role). Be encouraging and practical. Never give a score or a grade, and never guess what the interviewers will think or whether they will get the job.
+Return a JSON object: {{"answer": string}}."""
 
 # The AI job writer drafts the postings of demo jobs (services/demo_jobs.py). A recruiter reviews and
 # edits every draft before publishing it, and services/ai/job_posting_policy.py leaves out anything
@@ -276,6 +286,16 @@ class LLMProvider(AIProvider):
             interview=f"the {interview.title}" if interview else "their next interview (none is scheduled yet)",
         )
         return self._parse(await self._generate(_candidate_system(context), prompt), PrepContent)
+
+    async def mock_interview_feedback(self, context: PortalContext, question: str, answer: str) -> AssistContent:
+        prompt = CANDIDATE_MOCK_PROMPT.format(
+            context=context.to_prompt(),
+            first_name=context.first_name,
+            role=context.job_title,
+            question=question,
+            answer=answer,
+        )
+        return self._parse(await self._generate(_candidate_system(context), prompt), AssistContent)
 
     async def write_job_posting(self, brief: JobPostingBrief, organization: str, overview: str) -> JobPostingContent:
         prompt = JOB_WRITER_PROMPT.format(

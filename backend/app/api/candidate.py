@@ -23,6 +23,8 @@ from app.schemas.portal import (
     CandidateMe,
     CandidatePrep,
     MessageThread,
+    MockAnswer,
+    MockFeedback,
     PortalActivity,
     PortalApplicationSummary,
     PortalCandidate,
@@ -163,6 +165,16 @@ async def prep(
     """Preparation for the next interview from the candidate assistant, using candidate-safe context only."""
     return await candidate_ai_service.prepare(
         session, candidate, provider, utc_offset_minutes=utc_offset_minutes, application_id=application_id
+    )
+
+
+@router.post("/prep/mock", response_model=MockFeedback, summary="Feedback on a practice answer")
+async def practice(
+    body: MockAnswer, session: SessionDep, candidate: CurrentCandidateDep, provider: AIProviderDep
+) -> MockFeedback:
+    """A text mock interview: coaching on one answer. Nothing is stored or shared with the hiring team."""
+    return await candidate_ai_service.mock_feedback(
+        session, candidate, body.question, body.answer, provider, application_id=body.application_id
     )
 
 

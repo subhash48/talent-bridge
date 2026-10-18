@@ -52,6 +52,10 @@ class AIProvider(ABC):
         """Interview preparation for the candidate's next interview."""
         raise AIProviderError(f"{self.name} has no candidate assistant")
 
+    async def mock_interview_feedback(self, context: PortalContext, question: str, answer: str) -> AssistContent:
+        """Coaching on one practice answer: a few short points, never a score or a prediction."""
+        raise AIProviderError(f"{self.name} has no candidate assistant")
+
     # The AI job writer, for the development-only demo jobs. It only ever drafts: the recruiter
     # reviews, edits and publishes. A provider without it falls back to the mock provider.
 

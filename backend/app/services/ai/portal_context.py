@@ -34,6 +34,9 @@ class PortalInterviewFact:
         return f"{self.duration_minutes}-minute {kind} interview{with_whom}"
 
 
+RESUME_CHARS = 3000  # the start of the résumé is enough for preparation
+
+
 @dataclass(frozen=True)
 class PortalContext:
     first_name: str
@@ -59,6 +62,7 @@ class PortalContext:
     recruiter_name: str | None
     now: datetime
     utc_offset_minutes: int | None = None  # the candidate's time zone, when the browser sent it
+    resume: str | None = None  # the candidate's own résumé, as text, from their application
 
     @property
     def next_interview(self) -> PortalInterviewFact | None:
@@ -128,6 +132,11 @@ class PortalContext:
             "[interviews]",
             *(_interview_line(self, i) for i in self.interviews),
             "",
+            *(
+                ["[your résumé] the candidate's own, from their application", self.resume[:RESUME_CHARS], ""]
+                if self.resume
+                else []
+            ),
             "[recent activity] newest first",
             *(f"- {title}" for title in self.activity[:10]),
             "",

@@ -180,6 +180,8 @@ export type CandidatePrep = {
   companyInfo: string[];
   questionsToAsk: string[];
   practiceQuestions: string[];
+  /** Experiences from their own résumé worth having a story ready about. */
+  resumeTalkingPoints: string[];
   modelName: string;
 };
 

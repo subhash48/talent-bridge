@@ -293,6 +293,7 @@ export type ApiCandidatePrep = {
   company_info: string[];
   questions_to_ask: string[];
   practice_questions: string[];
+  resume_talking_points: string[];
   model_name: string;
 };
 

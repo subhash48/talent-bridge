@@ -110,7 +110,9 @@ def answer(context: PortalContext, question: str) -> AssistContent:
 
 def prepare(context: PortalContext) -> PrepContent:
     interview = context.next_interview
-    kind = interview_kind(interview.title) if interview else "general"
+    # No interview booked yet: prepare for the stage they're at.
+    stage_kind = {"screening": "screen", "offer": "offer"}.get(context.stage_label.lower(), "general")
+    kind = interview_kind(interview.title) if interview else stage_kind
     return PrepContent(
         interview_format=(
             f"{interview.format}." if interview else "No interview is scheduled yet. Your recruiter will share details."
@@ -121,7 +123,44 @@ def prepare(context: PortalContext) -> PrepContent:
         company_info=context.company_facts,
         questions_to_ask=_questions_to_ask(context, interview),
         practice_questions=_practice_questions(context, kind),
+        resume_talking_points=resume_talking_points(context.resume),
     )
+
+
+def resume_talking_points(resume: str | None) -> list[str]:
+    """Experiences from the résumé to have a story ready about: its substantive lines, not the name."""
+    if not resume:
+        return []
+    lines = [line.strip(" -•*\t") for line in resume.splitlines()]
+    worth = [line for line in lines[1:] if len(line.split()) >= 3 and not re.search(r"@|\+?\d[\d \-]{7,}", line)]
+    return [f"Be ready to talk through: {line.rstrip('.')}. What you did, and how it turned out." for line in worth[:3]]
+
+
+def mock_feedback(context: PortalContext, question: str, answer: str) -> AssistContent:
+    """Practical points on a practice answer, from its shape alone. Never a score."""
+    words = len(answer.split())
+    points: list[str] = []
+    if words < 40:
+        points.append("**Say more.** Give one specific example: the situation, what you did, and what happened.")
+    elif words > 350:
+        points.append("**Tighten it.** Aim for about two minutes: lead with the example, then the outcome.")
+    else:
+        points.append("**Good length.** That's about right for a spoken answer.")
+    if not re.search(r"\b(I|I've|I'd|my)\b", answer):
+        points.append("**Make your part clear.** Say what *you* did, not only what the team did.")
+    if not re.search(
+        r"\d|\b(result|outcome|impact|improv\w*|reduc\w*|increas\w*|launch\w*|shipp\w*)\b", answer, re.IGNORECASE
+    ):
+        points.append("**End with the outcome.** What changed because of your work? A number helps if you have one.")
+    mentioned = [skill for skill in context.job_requirements if skill.lower() in answer.lower()]
+    if context.job_requirements and not mentioned:
+        skills = ", ".join(context.job_requirements[:2])
+        points.append(
+            f"**Link it to the role.** The {context.job_title} posting mentions {skills}: connect your example to one of them."
+        )
+    elif mentioned:
+        points.append(f"**Nice link to the role** through {mentioned[0]}.")
+    return AssistContent(answer="\n".join(f"- {point}" for point in points[:4]))
 
 
 # Prep

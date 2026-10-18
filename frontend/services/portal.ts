@@ -155,8 +155,18 @@ export async function getCandidatePrep(applicationId?: string | null, signal?: A
     companyInfo: prep.company_info,
     questionsToAsk: prep.questions_to_ask,
     practiceQuestions: prep.practice_questions,
+    resumeTalkingPoints: prep.resume_talking_points ?? [],
     modelName: prep.model_name,
   };
+}
+
+/** POST /candidate/prep/mock: coaching on one practice answer. Nothing is stored. */
+export async function getMockFeedback(question: string, answer: string, applicationId?: string | null): Promise<string> {
+  const { feedback } = await apiFetch<{ feedback: string; model_name: string }>("/candidate/prep/mock", {
+    method: "POST",
+    body: JSON.stringify({ question, answer, application_id: applicationId ?? null }),
+  });
+  return feedback;
 }
 
 /** POST /candidate/ai/ask. The recruiter's timeline records the topic, never the question. */

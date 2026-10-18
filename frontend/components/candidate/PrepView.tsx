@@ -6,6 +6,7 @@ import {
   CalendarPlus,
   CircleCheck,
   Compass,
+  FileText,
   Lightbulb,
   LoaderCircle,
   MessageCircleQuestion,
@@ -20,6 +21,7 @@ import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvid
 import { CandidateHeader } from "@/components/candidate/CandidateHeader";
 import { InterviewStatus } from "@/components/candidate/InterviewStatus";
 import { LoadError } from "@/components/candidate/LoadError";
+import { MockInterview } from "@/components/candidate/MockInterview";
 import { InterviewFormat } from "@/components/shared/InterviewFormat";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -33,11 +35,19 @@ import type { CandidateInterview, CandidatePrep } from "@/types/portal";
 
 const PREP_REFRESH_MS = 5 * 60_000;
 
-type PrepList = "whatToExpect" | "roleFocus" | "topicsToReview" | "companyInfo" | "questionsToAsk" | "practiceQuestions";
+type PrepList =
+  | "whatToExpect"
+  | "roleFocus"
+  | "resumeTalkingPoints"
+  | "topicsToReview"
+  | "companyInfo"
+  | "questionsToAsk"
+  | "practiceQuestions";
 
 const SECTIONS: { field: PrepList; title: string; icon: LucideIcon; hint?: string }[] = [
   { field: "whatToExpect", title: "What to expect", icon: Compass },
   { field: "roleFocus", title: "Role focus", icon: Target },
+  { field: "resumeTalkingPoints", title: "From your résumé", icon: FileText, hint: "Stories worth having ready" },
   { field: "topicsToReview", title: "Suggested topics to review", icon: BookOpenCheck },
   { field: "companyInfo", title: "About the company", icon: Building2, hint: "Company-approved information" },
   { field: "questionsToAsk", title: "Questions you may want to ask", icon: MessageCircleQuestion },
@@ -72,13 +82,14 @@ function PrepView({ applicationId }: { applicationId: string | null }) {
                 onConfirmed={(interview) => setData((current) => current && { ...current, interview })}
               />
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {SECTIONS.map((section) => (
+                {SECTIONS.filter((section) => prep[section.field].length > 0).map((section) => (
                   <PrepSection key={section.field} title={section.title} icon={section.icon} hint={section.hint} items={prep[section.field]} />
                 ))}
               </div>
+              <MockInterview questions={prep.practiceQuestions} applicationId={applicationId} />
               <p className="flex items-start gap-2 text-xs leading-relaxed text-faint">
                 <ShieldCheck aria-hidden className="mt-px size-3.5 shrink-0" />
-                Prepared by AI from your application and the job posting. It never sees the hiring team’s internal notes or feedback.
+                Prepared by AI from your application, your résumé and the job posting. It never sees the hiring team’s internal notes or feedback.
               </p>
             </>
           )}

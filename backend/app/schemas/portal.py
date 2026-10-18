@@ -222,6 +222,8 @@ class PrepContent(APIModel):
     company_info: list[str] = []
     questions_to_ask: list[str] = []
     practice_questions: list[str] = []
+    # Experiences from the candidate's own résumé worth having a story ready about. Empty without one.
+    resume_talking_points: list[str] = []
 
 
 class CandidatePrep(PrepContent):
@@ -234,6 +236,19 @@ class CandidatePrep(PrepContent):
 
 
 UTCOffset = Annotated[int, Field(ge=-840, le=840, description="Minutes ahead of UTC, e.g. 60 for BST")]
+
+
+class MockAnswer(APIModel):
+    """One answer in a practice interview. Nothing is stored or shared with the hiring team."""
+
+    question: Annotated[str, Field(min_length=1, max_length=500)]
+    answer: Annotated[str, Field(min_length=1, max_length=4000)]
+    application_id: UUID | None = None
+
+
+class MockFeedback(APIModel):
+    feedback: str  # a few short points, never a score
+    model_name: str
 
 
 class CandidateAskRequest(APIModel):

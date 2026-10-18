@@ -2,21 +2,31 @@ import { Database, Mail, Sparkles, UserRound } from "lucide-react";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
-import { AshbyIntegrationCard } from "@/components/recruiter/AshbyIntegrationCard";
 import { RecruiterHeader } from "@/components/recruiter/RecruiterHeader";
+import { CandidateStatusCard } from "@/components/recruiter/settings/CandidateStatusCard";
+import { CommunicationRulesCard } from "@/components/recruiter/settings/CommunicationRulesCard";
+import { EmailDeliveryCard } from "@/components/recruiter/settings/EmailDeliveryCard";
 import { Avatar } from "@/components/shared/Avatar";
 import { Card } from "@/components/ui/Card";
-import { API_URL, USE_MOCK_API } from "@/services/api";
+import { API_URL, USE_MOCK_API, errorMessage } from "@/services/api";
+import { getCommunicationRules, getEmailDelivery } from "@/services/communication";
 import { getCurrentUser } from "@/services/me";
 
 export const metadata: Metadata = { title: "Settings" };
 
 export default async function SettingsPage() {
-  const user = await getCurrentUser();
+  const [user, rules, email] = await Promise.all([
+    getCurrentUser(),
+    getCommunicationRules().then(
+      (value) => ({ value, error: undefined }),
+      (error: unknown) => ({ value: null, error: errorMessage(error) }),
+    ),
+    getEmailDelivery().catch(() => null),
+  ]);
 
   return (
     <div className="max-w-3xl">
-      <RecruiterHeader title="Settings" subtitle="Your profile and how this workspace connects to its data." />
+      <RecruiterHeader title="Settings" subtitle="Your profile, the communication rules, and how messages reach candidates." />
       <div className="flex flex-col gap-4">
         <Card>
           <h2 className="flex items-center gap-2 text-sm font-medium text-stone">
@@ -51,16 +61,18 @@ export default async function SettingsPage() {
           </p>
         </Card>
 
-        <AshbyIntegrationCard />
+        <CommunicationRulesCard initial={rules.value} error={rules.error} />
+        <EmailDeliveryCard status={email} />
+        <CandidateStatusCard />
 
         <Card>
           <h2 className="flex items-center gap-2 text-sm font-medium text-stone">
             <Sparkles aria-hidden className="size-4 text-ink" /> AI assistant
           </h2>
-          <p className="mt-3.5 text-sm font-medium text-ink">{USE_MOCK_API ? "Template responses" : "Recruiter Copilot via the Talent Bridge API"}</p>
+          <p className="mt-3.5 text-sm font-medium text-ink">{USE_MOCK_API ? "Template drafts" : "Drafts written on the server"}</p>
           <p className="mt-1.5 text-sm leading-relaxed text-stone">
-            The browser never holds model API keys. Answers are generated on the server from the candidate&apos;s record,
-            and the assistant only drafts: you review and send every message.
+            The AI drafts candidate updates and answers questions about who needs one. It never evaluates, ranks or
+            rejects anyone, and it never sends: you review and approve every message. Model keys stay on the server.
           </p>
         </Card>
       </div>

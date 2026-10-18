@@ -39,8 +39,8 @@ async def list_candidates(
 
 @router.get("/{candidate_id}", response_model=CandidateDetail, summary="Get a candidate")
 async def get_candidate(candidate_id: UUID, session: SessionDep, application_id: UUID | None = None) -> CandidateDetail:
-    """The candidate with one application's stage, job, activity, interviews, messages, communication health
-    and latest AI analysis. Defaults to their most recently updated application."""
+    """The candidate with one application's stage, job, activity, interviews, messages and communication
+    health. Defaults to their most recently updated application."""
     return await candidate_service.get_candidate_detail(session, candidate_id, application_id)
 
 

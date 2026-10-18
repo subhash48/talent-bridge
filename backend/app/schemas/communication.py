@@ -159,3 +159,34 @@ class AttentionList(APIModel):
     items: list[AttentionItem]  # the longest overdue first
     counts: dict[CommunicationRuleKey, int]  # applications per rule
     upcoming: int  # applications whose next rule is due within a day
+
+
+class RuleCompliance(APIModel):
+    rule: CommunicationRuleKey
+    title: str
+    met: int  # obligations met on time
+    total: int  # obligations whose window has passed
+
+
+class CommunicationAnalytics(APIModel):
+    """Are candidates hearing from us, and on time? Over the last `days` days, unless it says now."""
+
+    days: int
+    since: Timestamp
+    needs_attention: int  # now: applications where a rule's threshold has passed
+    unanswered_messages: int  # now: applications with a candidate message waiting for a reply
+    median_hours_between_updates: float | None = None
+    sla_compliance: float | None = None  # share of obligations met on time, 0 to 1
+    compliance: list[RuleCompliance]
+    interview_confirmation_rate: float | None = None  # interviews in the period and the coming week
+    interviews_confirmed: int
+    interviews_total: int
+    updates_sent: int  # recruiter messages to candidates
+    emails_sent: int
+    emails_failed: int
+    drafts_generated: int
+    drafts_sent: int  # approved and sent by a recruiter
+    drafts_sent_unedited: int
+    drafts_discarded: int
+    minutes_saved: int  # an estimate: minutes_saved_per_draft for each AI draft sent
+    minutes_saved_per_draft: int

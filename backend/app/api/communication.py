@@ -1,14 +1,16 @@
 """Candidate communication: what needs attention, each application's communication health, and the
 SLA rules behind them."""
 
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from app.core.dependencies import AIProviderDep, EmailProviderDep, RecruiterDep, SessionDep
 from app.core.enums import CommunicationRuleKey
 from app.schemas.communication import (
     AttentionList,
+    CommunicationAnalytics,
     CommunicationHealthRead,
     CommunicationRuleRead,
     CommunicationRuleUpdate,
@@ -19,7 +21,7 @@ from app.schemas.communication import (
     DraftUpdate,
     EmailDeliveryRead,
 )
-from app.services.communication import drafts, service
+from app.services.communication import analytics, drafts, service
 
 router = APIRouter(tags=["communication"])
 
@@ -37,6 +39,15 @@ async def attention(session: SessionDep) -> AttentionList:
 )
 async def application_communication(application_id: UUID, session: SessionDep) -> CommunicationHealthRead:
     return await service.application_health(session, application_id)
+
+
+@router.get("/communication/analytics", response_model=CommunicationAnalytics, summary="Communication analytics")
+async def communication_analytics(
+    session: SessionDep, days: Annotated[int, Query(ge=1, le=365)] = 30
+) -> CommunicationAnalytics:
+    """Overdue updates, time between updates, unanswered messages, SLA compliance, interview
+    confirmations, AI drafts and the recruiter time they saved (an estimate)."""
+    return await analytics.communication_analytics(session, days)
 
 
 @router.get("/communication/email", response_model=EmailDeliveryRead, summary="Email delivery status")

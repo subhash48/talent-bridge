@@ -103,6 +103,7 @@ RECRUITER_ROUTES = [
     ("GET", f"/applications/{SOPHIA_APP}/communication"),
     ("GET", "/communication/rules"),
     ("GET", "/communication/email"),
+    ("GET", "/communication/analytics"),
     ("POST", "/communication/drafts"),
     ("GET", "/communication/drafts"),
     ("PUT", "/communication/rules/no_recent_update"),

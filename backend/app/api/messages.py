@@ -4,7 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Response
 
-from app.core.dependencies import RecruiterDep, SessionDep
+from app.core.dependencies import EmailProviderDep, RecruiterDep, SessionDep
 from app.schemas.message import Conversation, MessageCreate, MessageRead, UnreadCount
 from app.services import message_service
 
@@ -35,9 +35,11 @@ async def list_messages(application_id: UUID, session: SessionDep) -> list[Messa
     summary="Send a message",
 )
 async def send_message(
-    application_id: UUID, body: MessageCreate, session: SessionDep, user: RecruiterDep
+    application_id: UUID, body: MessageCreate, session: SessionDep, user: RecruiterDep, email: EmailProviderDep
 ) -> MessageRead:
-    return await message_service.send_message(session, application_id, body.content, user)
+    """To the candidate portal at once, and by email when an email provider is configured. The
+    response's delivery says how the email went."""
+    return await message_service.send_message(session, application_id, body.content, user, email, subject=body.subject)
 
 
 @router.post("/applications/{application_id}/messages/read", status_code=204, summary="Mark thread read")

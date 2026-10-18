@@ -34,11 +34,12 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from app.core.config import normalize_database_url, settings
 from app.core.database import create_engine_for, create_tables, get_session, get_session_factory
+from app.core.enums import EmailStatus
 from app.core.security import JWKSCache, TokenVerifier, get_token_verifier
 from app.db.seed import load_seed, seed_id
 from app.db.seed_data import RECRUITER
 from app.integrations.ashby.client import get_ashby_client
-from app.integrations.email import DisabledEmail, get_email_provider
+from app.integrations.email import DisabledEmail, EmailProvider, EmailResult, OutboundEmail, get_email_provider
 from app.integrations.supabase_admin import get_supabase_admin
 from app.main import app
 from app.models import Base, User
@@ -71,6 +72,30 @@ def candidate_id(key: str) -> str:
 
 HISTORIC_SUMMARY = "Historic analysis: strong systems background, weaker on research."
 HISTORIC_NEXT_STEP = "Historic analysis: brief the panel on research depth."
+
+
+class FakeEmail(EmailProvider):
+    """A configured email provider that records what it was asked to send. fail=... makes it refuse."""
+
+    name = "fake"
+    configured = True
+    sender = "TalentBridge <updates@example.com>"
+
+    def __init__(self, fail: str | None = None) -> None:
+        self.sent: list[OutboundEmail] = []
+        self.fail = fail
+
+    async def send(self, email: OutboundEmail) -> EmailResult:
+        self.sent.append(email)
+        if self.fail:
+            return EmailResult(EmailStatus.FAILED, self.name, error=self.fail)
+        return EmailResult(EmailStatus.SENT, self.name, f"fake-{len(self.sent)}")
+
+
+def use_email(provider: EmailProvider) -> EmailProvider:
+    """Send through this provider for the rest of the test."""
+    app.dependency_overrides[get_email_provider] = lambda: provider
+    return provider
 
 
 async def seed_historic_analysis(sessions: async_sessionmaker[AsyncSession], application: str) -> None:

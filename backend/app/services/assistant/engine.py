@@ -27,8 +27,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.enums import AssistantActionStatus, DemoPostingStatus
+from app.core.enums import AssistantActionStatus, DemoPostingStatus, EmailStatus
 from app.core.errors import AppError, ConflictError, NotFoundError
+from app.integrations.email import EmailProvider
 from app.models import Application, AssistantAction, DemoJobPosting, User
 from app.models.base import utcnow
 from app.schemas.ai import AISource, DraftPurpose
@@ -46,6 +47,7 @@ from app.schemas.assistant import (
     JobCard,
     MessageCard,
 )
+from app.schemas.message import MessageRead
 from app.services import ai_service, demo_jobs, message_service
 from app.services.ai.client import AIProvider
 from app.services.assistant import answers, jobs
@@ -242,6 +244,19 @@ async def _plan(
         result = await ai_service.ask_candidate(session, application.id, request.text, provider, recruiter)
         return Outcome(reply=result.answer, sources=result.sources, context=keep)
     return Outcome(reply=answers.HELP, context=keep)
+
+
+def delivered(message: MessageRead) -> str:
+    """Where a sent message went, in a sentence."""
+    delivery = message.delivery
+    status = delivery.email_status if delivery else EmailStatus.NOT_CONFIGURED
+    if status == EmailStatus.SENT:
+        return "It was emailed and is in their candidate portal messages."
+    if status == EmailStatus.FAILED:
+        return f"It's in their candidate portal messages, but the email failed: {delivery.error if delivery else ''}"
+    if status == EmailStatus.PENDING:
+        return "It's in their candidate portal messages; the email is on its way."
+    return "It's in their candidate portal messages. Email isn't set up, so it wasn't emailed."
 
 
 def _one(resolution: Resolution, request: AssistantRequest) -> tuple[Application | None, Outcome]:
@@ -465,7 +480,9 @@ async def _propose_publish(row_id: uuid.UUID, posting: DemoJobPosting, keep: Ass
 # Confirmation
 
 
-async def confirm(session: AsyncSession, recruiter: User, action_id: uuid.UUID, body: str | None) -> AssistantResponse:
+async def confirm(
+    session: AsyncSession, recruiter: User, action_id: uuid.UUID, body: str | None, email: EmailProvider
+) -> AssistantResponse:
     """Run a proposal, once. A second confirmation of the same proposal is a 409, never a second send.
     A failure is reported as one: nothing claims success unless the service it ran succeeded."""
     row = await _own(session, recruiter, action_id)
@@ -492,12 +509,17 @@ async def confirm(session: AsyncSession, recruiter: User, action_id: uuid.UUID, 
         if payload.get("kind") == "message":
             message = MessageCard.model_validate(payload["card"])
             sent = await message_service.send_message(
-                session, message.candidate.application_id, body or message.body, recruiter
+                session,
+                message.candidate.application_id,
+                body or message.body,
+                recruiter,
+                email,
+                subject=payload.get("subject"),
             )
             summary = f"Sent {message.purpose.lower()} to {message.candidate.name}"
             card = message.model_copy(update={"status": S.COMPLETED, "mode": "execute", "body": sent.content})
             payload["message_id"] = str(sent.id)
-            reply = f"Sent to **{message.candidate.name}**. It's in their candidate portal messages."
+            reply = f"Sent to **{message.candidate.name}**. {delivered(sent)}"
         elif payload.get("kind") == "publish_job" and target_id:
             await demo_jobs.publish(session, target_id)
             posting = await session.get(DemoJobPosting, target_id, populate_existing=True)

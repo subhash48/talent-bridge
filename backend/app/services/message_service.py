@@ -1,4 +1,10 @@
-"""Message threads, one per application. Recruiters send; the AI only drafts."""
+"""Message threads, one per application. Recruiters send; the AI only drafts.
+
+Sending is one path for every recruiter message, whether typed in the inbox, approved from an AI
+draft or confirmed in the assistant: the message reaches the candidate portal and the timeline
+(the audit entry) at once, with a delivery record; then, if an email provider is configured, it's
+emailed and the delivery record says how that went. Email failing never unsends the portal message.
+"""
 
 import uuid
 from collections import defaultdict
@@ -7,12 +13,14 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import contains_eager
 
-from app.core.enums import ActivityType, SenderType
+from app.core.config import settings
+from app.core.enums import ActivityType, EmailStatus, SenderType
 from app.core.errors import BadRequestError
-from app.models import Application, Message, User
+from app.integrations.email import EmailProvider, OutboundEmail
+from app.models import Application, Message, MessageDelivery, User
 from app.models.base import utcnow
 from app.schemas.common import CandidateRef
-from app.schemas.message import Conversation, MessageRead
+from app.schemas.message import Conversation, MessageDeliveryRead, MessageRead
 from app.services.activity_service import record_activity
 from app.services.pipeline_service import get_application
 
@@ -35,6 +43,7 @@ async def list_conversations(session: AsyncSession) -> list[Conversation]:
     for message, application in rows.all():
         threads[application.id].append(message)
         applications[application.id] = application
+    deliveries = await _deliveries(session, [m for thread in threads.values() for m in thread])
 
     conversations = [
         Conversation(
@@ -46,7 +55,7 @@ async def list_conversations(session: AsyncSession) -> list[Conversation]:
                 job_title=application.job.title,
             ),
             unread=sum(1 for m in threads[app_id] if m.sender_type == SenderType.CANDIDATE and m.read_at is None),
-            messages=[MessageRead.model_validate(m) for m in threads[app_id]],
+            messages=[_read(m, deliveries) for m in threads[app_id]],
         )
         for app_id, application in applications.items()
     ]
@@ -64,15 +73,27 @@ async def unread_thread_count(session: AsyncSession) -> int:
 
 async def list_messages(session: AsyncSession, application_id: uuid.UUID) -> list[MessageRead]:
     await get_application(session, application_id)
-    rows = await session.scalars(
-        select(Message).where(Message.application_id == application_id).order_by(Message.created_at, Message.id)
+    rows = list(
+        await session.scalars(
+            select(Message).where(Message.application_id == application_id).order_by(Message.created_at, Message.id)
+        )
     )
-    return [MessageRead.model_validate(row) for row in rows]
+    deliveries = await _deliveries(session, rows)
+    return [_read(row, deliveries) for row in rows]
 
 
 async def send_message(
-    session: AsyncSession, application_id: uuid.UUID, content: str, actor: User | None
+    session: AsyncSession,
+    application_id: uuid.UUID,
+    content: str,
+    actor: User | None,
+    email: EmailProvider,
+    *,
+    subject: str | None = None,
+    draft_id: uuid.UUID | None = None,
 ) -> MessageRead:
+    """Send a recruiter's message: portal and timeline first, then email. The caller has the
+    recruiter's approval; nothing here is ever sent on its own."""
     application = await get_application(session, application_id)
     if application.archived_at is not None:
         raise BadRequestError(
@@ -83,17 +104,74 @@ async def send_message(
     message = Message(application_id=application.id, sender_type=SenderType.RECRUITER, content=content, created_at=now)
     session.add(message)
     await session.flush()
+    delivery = MessageDelivery(
+        message_id=message.id,
+        subject=subject or default_subject(application),
+        email_status=EmailStatus.PENDING if email.configured else EmailStatus.NOT_CONFIGURED,
+        provider=email.name if email.configured else None,
+        draft_id=draft_id,
+        attempted_at=now,
+    )
+    session.add(delivery)
     record_activity(
         session,
         application.id,
         ActivityType.MESSAGE_SENT,
         "Message sent",
         description=excerpt(content),
-        metadata={"message_id": message.id, "sent_by": actor.full_name if actor else None},
+        metadata={
+            "message_id": message.id,
+            "sent_by": actor.full_name if actor else None,
+            "draft_id": draft_id,
+        },
         at=now,
     )
-    await session.commit()
-    return MessageRead.model_validate(message)
+    await session.commit()  # in the portal now, whatever happens to the email
+
+    if email.configured:
+        result = await email.send(
+            OutboundEmail(
+                to=application.candidate.email,
+                subject=delivery.subject,
+                text=email_text(application, content),
+                idempotency_key=str(message.id),
+            )
+        )
+        delivery.email_status = result.status
+        delivery.provider_message_id = result.provider_message_id
+        delivery.error = result.error
+        delivery.sent_at = utcnow() if result.status == EmailStatus.SENT else None
+        await session.commit()
+    return _read(message, {message.id: delivery})
+
+
+def default_subject(application: Application) -> str:
+    return f"Your {application.job.title} application at {settings.organization_name}"
+
+
+def email_text(application: Application, content: str) -> str:
+    """The message as an email. Replies go through the portal, where the recruiter reads them."""
+    portal = f"{settings.frontend_url.rstrip('/')}/candidate/messages"
+    return (
+        f"{content}\n\n"
+        "--\n"
+        f"To reply, or to see where your application stands, open your candidate portal: {portal}\n"
+        f"{settings.organization_name} · {application.job.title}"
+    )
+
+
+async def _deliveries(session: AsyncSession, messages: list[Message]) -> dict[uuid.UUID, MessageDelivery]:
+    ids = [message.id for message in messages if message.sender_type == SenderType.RECRUITER]
+    if not ids:
+        return {}
+    rows = await session.scalars(select(MessageDelivery).where(MessageDelivery.message_id.in_(ids)))
+    return {row.message_id: row for row in rows}
+
+
+def _read(message: Message, deliveries: dict[uuid.UUID, MessageDelivery]) -> MessageRead:
+    read = MessageRead.model_validate(message)
+    delivery = deliveries.get(message.id)
+    return read.model_copy(update={"delivery": MessageDeliveryRead.model_validate(delivery)}) if delivery else read
 
 
 def excerpt(content: str, limit: int = 140) -> str:

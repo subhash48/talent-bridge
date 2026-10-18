@@ -12,7 +12,7 @@ from uuid import UUID
 from fastapi import APIRouter, Query, Request, Response
 
 from app.core.config import settings
-from app.core.dependencies import AIProviderDep, RecruiterDep, SessionDep
+from app.core.dependencies import AIProviderDep, EmailProviderDep, RecruiterDep, SessionDep
 from app.core.errors import AppError, BadRequestError, ServiceUnavailableError
 from app.schemas.assistant import (
     AssistantHistoryItem,
@@ -55,12 +55,16 @@ async def ask(
 
 @router.post("/actions/{action_id}/confirm", response_model=AssistantResponse, summary="Confirm a proposal")
 async def confirm(
-    action_id: UUID, session: SessionDep, user: RecruiterDep, body: ConfirmActionRequest | None = None
+    action_id: UUID,
+    session: SessionDep,
+    user: RecruiterDep,
+    email: EmailProviderDep,
+    body: ConfirmActionRequest | None = None,
 ) -> AssistantResponse:
     """Runs the proposal through the existing service (sending the message, publishing the job). 409
     action_already_handled if it was already confirmed, cancelled or failed: one confirmation, one send.
     A failure comes back with status failed and the reason; nothing is reported as done unless it was."""
-    return await engine.confirm(session, user, action_id, body.body if body else None)
+    return await engine.confirm(session, user, action_id, body.body if body else None, email)
 
 
 @router.post("/actions/{action_id}/cancel", status_code=204, summary="Dismiss a proposal")

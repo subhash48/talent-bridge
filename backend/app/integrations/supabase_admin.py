@@ -81,6 +81,24 @@ class SupabaseAdmin:
         except (ValueError, KeyError, TypeError):
             raise SupabaseAdminError("Supabase Auth returned an unexpected response.") from None
 
+    async def send_sign_in_link(self, email: str, *, redirect_to: str) -> None:
+        """Email a one-time sign-in link to an existing account. Never creates an account. Raises
+        SupabaseAdminError when it can't be sent."""
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout, transport=self._transport) as client:
+                response = await client.post(
+                    f"{self._url}/auth/v1/otp",
+                    params={"redirect_to": redirect_to},
+                    headers=self._headers(),
+                    json={"email": email, "create_user": False},
+                )
+        except httpx.HTTPError as exc:
+            raise SupabaseAdminError(f"Couldn't reach Supabase Auth ({exc.__class__.__name__}).") from None
+        if response.status_code == 429:
+            raise SupabaseAdminError("Supabase is rate limiting sign-in emails. Try again in a minute.")
+        if response.status_code >= 400:
+            raise SupabaseAdminError(f"Supabase Auth returned HTTP {response.status_code}.")
+
 
 def _is_existing_user(response: httpx.Response) -> bool:
     try:

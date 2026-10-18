@@ -152,6 +152,11 @@ class Settings(BaseSettings):
         return f"{self.frontend_url.rstrip('/')}/auth/callback?next=/welcome"
 
     @property
+    def portal_sign_in_redirect_url(self) -> str:
+        """Where an emailed sign-in link lands: straight into the candidate portal."""
+        return f"{self.frontend_url.rstrip('/')}/auth/callback?next=/candidate"
+
+    @property
     def ashby_demo_enabled(self) -> bool:
         """Demo jobs and the demo careers site are on: ENABLE_ASHBY_DEMO=true, outside production."""
         return self.enable_ashby_demo and self.environment != "production"

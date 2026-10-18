@@ -94,6 +94,7 @@ RECRUITER_ROUTES = [
     ("GET", "/messages/unread-count"),
     ("GET", "/dashboard/summary"),
     ("POST", "/ai/draft-message"),
+    ("GET", f"/resumes/{uuid.uuid4()}"),
     ("GET", "/communication/attention"),
     ("GET", f"/applications/{SOPHIA_APP}/communication"),
     ("GET", "/communication/rules"),

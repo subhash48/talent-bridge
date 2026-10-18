@@ -14,6 +14,7 @@ from app.models.integration import AshbySyncState, AshbyWebhookEvent
 from app.models.interview import Interview
 from app.models.job import Job
 from app.models.message import Message
+from app.models.resume import CandidateResume
 from app.models.user import User
 
 __all__ = [
@@ -27,6 +28,7 @@ __all__ = [
     "CandidateActivity",
     "CandidateDemographics",
     "CandidateEngagementEvent",
+    "CandidateResume",
     "CandidateStageHistory",
     "CommunicationDraft",
     "CommunicationRule",

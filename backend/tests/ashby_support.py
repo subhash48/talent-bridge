@@ -163,6 +163,10 @@ class FakeSupabaseAdmin:
         self.existing = {email.lower() for email in existing or set()}
         self.invites: list[dict[str, Any]] = []
         self.users: dict[str, uuid.UUID] = {}
+        self.sign_in_links: list[dict[str, str]] = []
+
+    async def send_sign_in_link(self, email: str, *, redirect_to: str) -> None:
+        self.sign_in_links.append({"email": email.lower(), "redirect_to": redirect_to})
 
     async def invite(self, email: str, *, redirect_to: str, data: dict[str, Any]) -> InvitedUser:
         email = email.lower()

@@ -13,6 +13,7 @@ from app.api import (
     auth,
     candidate,
     candidates,
+    careers,
     communication,
     dashboard,
     demo_careers,
@@ -23,6 +24,7 @@ from app.api import (
     jobs,
     messages,
     portal_access,
+    resumes,
 )
 from app.core.dependencies import require_candidate, require_demo_enabled, require_recruiter
 
@@ -40,6 +42,7 @@ for module in (
     ai,
     dashboard,
     assistant,
+    resumes,
 ):
     api_router.include_router(module.router, dependencies=[Depends(require_recruiter)])
 # The candidate portal: the signed-in candidate, scoped to their own record.
@@ -48,6 +51,8 @@ for module in (candidate,):
 # Guarded route by route: /me is for anyone signed in; the Ashby webhook checks Ashby's signature
 # and the other Ashby routes require a recruiter.
 api_router.include_router(auth.router)
+# TalentBridge's careers site: public, no sign-in.
+api_router.include_router(careers.router)
 api_router.include_router(integrations.router)
 # Development only (ENABLE_ASHBY_DEMO=true, never in production). The flag is checked first, so
 # elsewhere these answer 404 to everyone: demo jobs and résumés for recruiters, and the public demo

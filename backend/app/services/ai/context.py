@@ -6,6 +6,10 @@ can cite its sources. Contact details are left out on purpose: no answer needs t
 Candidate engagement (services/engagement) is deliberately not part of it: portal visits, time spent
 and response speed say nothing about whether someone can do the job, so they can never reach an
 analysis, a strength, a concern or anything else the AI writes.
+
+A draft to the candidate gets the candidate-safe version (to_prompt(for_candidate=True)): no
+interviewer feedback, no recruiter's free text on the timeline, and no internal activity, so a draft
+can't repeat what the candidate must never see, whatever the model does.
 """
 
 import re
@@ -20,6 +24,29 @@ from app.core.enums import ActivityType, ApplicationStage, InterviewStatus, Send
 from app.schemas.ai import AISource
 
 SECTIONS = ("profile", "job", "activity", "interviews", "messages")
+
+# Timeline entries a draft to the candidate may know about: what happened in their process, by title
+# only. AI analyses, résumé views, archiving, invitations and portal behaviour stay out.
+CANDIDATE_SAFE_ACTIVITY: frozenset[str] = frozenset(
+    {
+        ActivityType.APPLICATION_CREATED,
+        ActivityType.STAGE_CHANGED,
+        ActivityType.ONBOARDING_STARTED,
+        ActivityType.INTERVIEW_SCHEDULED,
+        ActivityType.INTERVIEW_CONFIRMED,
+        ActivityType.INTERVIEW_RESCHEDULE_REQUESTED,
+        ActivityType.INTERVIEW_COMPLETED,
+        ActivityType.INTERVIEW_CANCELLED,
+        ActivityType.MESSAGE_SENT,
+        ActivityType.MESSAGE_RECEIVED,
+        ActivityType.DOCUMENT_SHARED,
+        ActivityType.QUESTION_ASKED,
+        ActivityType.ASSESSMENT_SENT,
+        ActivityType.ASSESSMENT_COMPLETED,
+        ActivityType.OFFER_SENT,
+        ActivityType.OFFER_ACCEPTED,
+    }
+)
 
 _REQUIREMENTS = re.compile(
     r"^\s*(?:requirements|what you[’']?ll bring|skills)\s*:\s*(.+)$", re.IGNORECASE | re.MULTILINE
@@ -123,8 +150,10 @@ class CandidateContext:
                 chips.append(AISource(type=section, id=entry[0], label=entry[1]))
         return chips
 
-    def to_prompt(self) -> str:
-        """The context as labelled sections, the format the LLM providers send."""
+    def to_prompt(self, *, for_candidate: bool = False) -> str:
+        """The context as labelled sections, the format the LLM providers send. for_candidate: the
+        candidate-safe version, for drafts the candidate will read."""
+        activities = [a for a in self.activities if not for_candidate or a.type in CANDIDATE_SAFE_ACTIVITY]
         lines = [
             "[profile]",
             f"Name: {self.name}" + (f" ({self.pronouns})" if self.pronouns else ""),
@@ -139,16 +168,17 @@ class CandidateContext:
             "",
             "[application]",
             f"Stage: {self.stage.label}. Source: {self.source or 'unknown'}. Applied {ago(self.applied_at, self.now)}.",
-            f"Needs follow-up: {self.follow_up_reason or 'no'}",
+            *([] if for_candidate else [f"Needs follow-up: {self.follow_up_reason or 'no'}"]),
             "",
             "[activity] newest first",
             *(
-                f"- {ago(a.at, self.now)}: {a.title}" + (f" ({a.description})" if a.description else "")
-                for a in self.activities[:25]
+                f"- {ago(a.at, self.now)}: {a.title}"
+                + (f" ({a.description})" if a.description and not for_candidate else "")
+                for a in activities[:25]
             ),
             "",
             "[interviews]",
-            *(_interview_line(i, self.now) for i in self.interviews),
+            *(_interview_line(i, self.now, feedback=not for_candidate) for i in self.interviews),
             "",
             "[messages] oldest first",
             *(f"- {m.sender.value}, {ago(m.at, self.now)}: {m.content}" for m in self.messages[-12:]),
@@ -161,13 +191,13 @@ class CandidateContext:
         return "\n".join(lines)
 
 
-def _interview_line(interview: InterviewFact, now: datetime) -> str:
+def _interview_line(interview: InterviewFact, now: datetime, *, feedback: bool = True) -> str:
     status = interview.status.value + (", confirmed" if interview.confirmed else "")
-    feedback = f' Feedback: "{interview.notes}"' if interview.notes else ""
+    notes = f' Feedback: "{interview.notes}"' if interview.notes and feedback else ""
     with_whom = f" with {people(interview.interviewers)}" if interview.interviewers else ""
     return (
         f"- {interview.title}, {interview.interview_type}, {when(interview.scheduled_at, now)}, "
-        f"{interview.duration_minutes} min{with_whom} ({status}).{feedback}"
+        f"{interview.duration_minutes} min{with_whom} ({status}).{notes}"
     )
 
 

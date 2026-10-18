@@ -1,12 +1,13 @@
 """Candidate communication: SLA rules, each application's communication health, and what needs attention."""
 
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import Field
 
-from app.core.enums import ApplicationStage, CommunicationRuleKey, CommunicationStatus
-from app.schemas.common import APIModel, CandidateRef, Timestamp
+from app.core.enums import ApplicationStage, CommunicationRuleKey, CommunicationStatus, DraftStatus
+from app.schemas.common import APIModel, CandidateRef, OptionalText, Timestamp
+from app.schemas.message import MessageRead
 from app.services.communication.rules import MAX_THRESHOLD_HOURS
 
 
@@ -97,6 +98,51 @@ class CommunicationSummary(APIModel):
     reason: str | None = None  # the first rule needing attention
 
 
+DraftReason = CommunicationRuleKey | Literal["manual"]
+
+
+class DraftCreate(APIModel):
+    application_id: UUID
+    # Default: the first rule needing attention, or a general update when none does.
+    reason: DraftReason | None = None
+    instructions: OptionalText(500) = None  # anything the recruiter wants it to say
+
+
+class DraftUpdate(APIModel):
+    subject: Annotated[str, Field(min_length=1, max_length=200)]
+    body: Annotated[str, Field(min_length=1, max_length=5000)]
+
+
+class DraftSend(APIModel):
+    """The recruiter's approval, with any last edits."""
+
+    subject: OptionalText(200) = None
+    body: OptionalText(5000) = None
+
+
+class DraftRead(APIModel):
+    """An update the AI drafted. Never sent until a recruiter sends it."""
+
+    id: UUID
+    application_id: UUID
+    reason: DraftReason
+    status: DraftStatus
+    subject: str
+    body: str
+    edited: bool  # the recruiter changed what the AI wrote
+    model_name: str | None = None
+    message_id: UUID | None = None  # once sent
+    created_at: Timestamp
+    updated_at: Timestamp
+    sent_at: Timestamp | None = None
+    discarded_at: Timestamp | None = None
+
+
+class DraftSent(APIModel):
+    draft: DraftRead
+    message: MessageRead  # its delivery says whether it was emailed
+
+
 class AttentionItem(APIModel):
     """One application on the recruiter's Needs Attention list."""
 
@@ -106,6 +152,7 @@ class AttentionItem(APIModel):
     last_update_at: Timestamp | None = None
     days_since_update: int
     reasons: list[AttentionRead]
+    draft: DraftRead | None = None  # the open draft, if one was written
 
 
 class AttentionList(APIModel):

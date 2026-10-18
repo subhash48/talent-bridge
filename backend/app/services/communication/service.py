@@ -10,8 +10,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.enums import CommunicationRuleKey, CommunicationStatus
-from app.models import Application, User
+from app.core.enums import CommunicationRuleKey, CommunicationStatus, DraftStatus
+from app.models import Application, CommunicationDraft, User
 from app.models.base import utcnow
 from app.schemas.common import CandidateRef
 from app.schemas.communication import (
@@ -21,6 +21,7 @@ from app.schemas.communication import (
     CommunicationHealthRead,
     CommunicationRuleRead,
     CommunicationSummary,
+    DraftRead,
     FollowUpCheckRead,
     InterviewCheckRead,
     OpenQuestionRead,
@@ -56,6 +57,32 @@ async def update_rule(
 ) -> CommunicationRuleRead:
     rule = await rule_store.update_rule(session, key, enabled=enabled, threshold_hours=threshold_hours, actor=actor)
     return rule_read(rule)
+
+
+def draft_read(draft: CommunicationDraft) -> DraftRead:
+    return DraftRead(
+        id=draft.id,
+        application_id=draft.application_id,
+        reason=draft.reason,
+        status=draft.status,
+        subject=draft.subject,
+        body=draft.body,
+        edited=(draft.subject, draft.body) != (draft.ai_subject, draft.ai_body),
+        model_name=draft.model_name,
+        message_id=draft.message_id,
+        created_at=draft.created_at,
+        updated_at=draft.updated_at,
+        sent_at=draft.sent_at,
+        discarded_at=draft.discarded_at,
+    )
+
+
+async def open_drafts(session: AsyncSession, application_ids: list[uuid.UUID] | None = None) -> list[DraftRead]:
+    query = select(CommunicationDraft).where(CommunicationDraft.status == DraftStatus.DRAFTED)
+    if application_ids is not None:
+        query = query.where(CommunicationDraft.application_id.in_(application_ids))
+    rows = await session.scalars(query.order_by(CommunicationDraft.created_at))
+    return [draft_read(row) for row in rows]
 
 
 def candidate_status(application: Application) -> str:
@@ -145,4 +172,12 @@ async def attention_list(session: AsyncSession, now: datetime | None = None) -> 
         )
         items.append((min(reason.due_at for reason in health.attention), item))
     items.sort(key=lambda pair: pair[0])
-    return AttentionList(items=[item for _, item in items], counts=dict(counts), upcoming=upcoming)
+    drafts = {
+        draft.application_id: draft
+        for draft in await open_drafts(session, [item.candidate.application_id for _, item in items])
+    }
+    return AttentionList(
+        items=[item.model_copy(update={"draft": drafts.get(item.candidate.application_id)}) for _, item in items],
+        counts=dict(counts),
+        upcoming=upcoming,
+    )

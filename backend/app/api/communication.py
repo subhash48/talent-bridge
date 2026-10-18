@@ -5,16 +5,21 @@ from uuid import UUID
 
 from fastapi import APIRouter
 
-from app.core.dependencies import EmailProviderDep, RecruiterDep, SessionDep
+from app.core.dependencies import AIProviderDep, EmailProviderDep, RecruiterDep, SessionDep
 from app.core.enums import CommunicationRuleKey
 from app.schemas.communication import (
     AttentionList,
     CommunicationHealthRead,
     CommunicationRuleRead,
     CommunicationRuleUpdate,
+    DraftCreate,
+    DraftRead,
+    DraftSend,
+    DraftSent,
+    DraftUpdate,
     EmailDeliveryRead,
 )
-from app.services.communication import service
+from app.services.communication import drafts, service
 
 router = APIRouter(tags=["communication"])
 
@@ -51,3 +56,42 @@ async def update_rule(
     key: CommunicationRuleKey, body: CommunicationRuleUpdate, session: SessionDep, user: RecruiterDep
 ) -> CommunicationRuleRead:
     return await service.update_rule(session, key, body.enabled, body.threshold_hours, user)
+
+
+# Drafts: the AI writes, the recruiter edits and approves. Nothing is sent without that approval.
+
+
+@router.post("/communication/drafts", response_model=DraftRead, status_code=201, summary="Draft an update")
+async def create_draft(
+    body: DraftCreate, session: SessionDep, provider: AIProviderDep, user: RecruiterDep
+) -> DraftRead:
+    """An AI draft for one application, written for the rule that needs attention (or the reason
+    given). It replaces the application's previous open draft. Nothing is sent."""
+    reason = body.reason.value if isinstance(body.reason, CommunicationRuleKey) else body.reason
+    return await drafts.create_draft(session, body.application_id, reason, body.instructions, provider, user)
+
+
+@router.get("/communication/drafts", response_model=list[DraftRead], summary="Open drafts")
+async def list_drafts(session: SessionDep, application_id: UUID | None = None) -> list[DraftRead]:
+    return await service.open_drafts(session, [application_id] if application_id else None)
+
+
+@router.patch("/communication/drafts/{draft_id}", response_model=DraftRead, summary="Edit a draft")
+async def edit_draft(draft_id: UUID, body: DraftUpdate, session: SessionDep) -> DraftRead:
+    return await drafts.edit_draft(session, draft_id, body.subject, body.body)
+
+
+@router.post("/communication/drafts/{draft_id}/send", response_model=DraftSent, summary="Approve and send a draft")
+async def send_draft(
+    draft_id: UUID, session: SessionDep, user: RecruiterDep, email: EmailProviderDep, body: DraftSend | None = None
+) -> DraftSent:
+    """Sends it once, with any last edits: to the candidate portal, and by email when configured. 409
+    draft_already_handled if it was already sent or discarded."""
+    return await drafts.send_draft(
+        session, draft_id, body.subject if body else None, body.body if body else None, user, email
+    )
+
+
+@router.post("/communication/drafts/{draft_id}/discard", response_model=DraftRead, summary="Discard a draft")
+async def discard_draft(draft_id: UUID, session: SessionDep) -> DraftRead:
+    return await drafts.discard_draft(session, draft_id)

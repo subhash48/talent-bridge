@@ -30,6 +30,13 @@ from app.services.ai.context import (
 from app.services.ai.portal_context import PortalContext
 
 FORMATS = {"video": "over video", "phone": "by phone", "onsite": "at our office"}
+# Where an application stands, in a status update's words.
+STANDING = {
+    ApplicationStage.SOURCED: "I wanted to let you know your application is with the team, and they're reviewing it.",
+    ApplicationStage.SCREENING: "I wanted to let you know your application is in screening, and the team is reviewing it.",
+    ApplicationStage.INTERVIEW: "I wanted to let you know you're at the interview stage, and the team is lining up next steps.",
+    ApplicationStage.OFFER: "I wanted to let you know the team is finalising the details of your offer.",
+}
 
 # Questions that ask for an evaluation get a polite no: strengths, concerns and decisions stay with people.
 INTENTS: list[tuple[str, re.Pattern[str]]] = [
@@ -62,6 +69,8 @@ class MockProvider(AIProvider):
             return _invitation(context, instructions or "")
         if purpose == DraftPurpose.CUSTOM:
             return _custom(context, instructions or "")
+        if purpose == DraftPurpose.QUESTION_REPLY:
+            return _reply(context)
         return _draft(context, purpose)
 
     async def assist_candidate(self, context: PortalContext, question: str) -> AssistContent:
@@ -223,7 +232,11 @@ def _draft(context: CandidateContext, purpose: DraftPurpose) -> DraftContent:
             f"Looking forward to your {upcoming.title.lower()} {when(upcoming.scheduled_at, context.now)} "
             f"with {people(upcoming.interviewers)}. It's {upcoming.duration_minutes} minutes "
             f"{FORMATS.get(upcoming.interview_type, '')}, and the conversation will focus on {focus}.\n\n"
-            "If anything comes up, just reply here."
+            + (
+                "If anything comes up, just reply here."
+                if upcoming.confirmed
+                else "Could you confirm in your candidate portal that this time still works? If it doesn't, just reply here."
+            )
         )
     elif purpose == DraftPurpose.OFFER_CHECK_IN:
         subject = "Checking in on your offer"
@@ -231,18 +244,51 @@ def _draft(context: CandidateContext, purpose: DraftPurpose) -> DraftContent:
             "I wanted to check in on the offer and see if you have any questions. I'm happy to set up a call "
             "with the hiring team to go through equity, benefits or anything else."
         )
+    elif context.stage == ApplicationStage.REJECTED:
+        # After a person moved the stage: kind, final, and never a reason.
+        subject = f"Your {role} application"
+        text = (
+            f"Thank you for your interest in the {role} role and for the time you've given us. We've decided not to "
+            "move forward with your application this time.\n\nWe really appreciate you applying, and we wish you "
+            "every success."
+        )
+    elif context.stage == ApplicationStage.HIRED:
+        subject = f"Welcome to {context.organization}!"
+        text = (
+            "We're so excited to have you joining the team. Your onboarding details will follow shortly, and I'm "
+            "here if you have any questions before you start."
+        )
+    elif purpose == DraftPurpose.STAGE_UPDATE:
+        # Where they stand now, whatever happened before.
+        subject = f"An update on your {role} application"
+        text = (
+            f"{STANDING.get(context.stage, STANDING[ApplicationStage.SCREENING])} I'll be in touch about next steps "
+            "in the next few days.\n\nIn the meantime, let me know if you have any questions."
+        )
     else:
         past = _latest_completed(context)
         subject = f"An update on your {role} application"
         text = (
-            f"Thanks again for your time in the {past.title.lower()}. The team is finishing their feedback, "
+            f"Thanks again for your time in the {past.title.lower()}. The team is finishing up, "
             "and I'll come back to you with next steps shortly."
             if past
-            else "Thanks for your time so far. I'll be in touch about next steps in the next few days.\n\n"
-            "In the meantime, let me know if you have any questions about the role or the team."
+            else f"{STANDING.get(context.stage, STANDING[ApplicationStage.SCREENING])} I'll be in touch about next "
+            "steps in the next few days.\n\nIn the meantime, let me know if you have any questions about the role "
+            "or the team."
         )
     body = f"Hi {first},\n\n{text}\n\nBest,\n{context.recruiter_first_name}"
     return DraftContent(subject=subject, body=body)
+
+
+def _reply(context: CandidateContext) -> DraftContent:
+    """An acknowledgement of the candidate's latest message for the recruiter to finish: the mock can't
+    answer it, and never guesses."""
+    text = (
+        "Thanks for your message, and sorry to keep you waiting. I'm checking with the team and will come "
+        "back to you as soon as I can."
+    )
+    body = f"Hi {context.first_name},\n\n{text}\n\nBest,\n{context.recruiter_first_name}"
+    return DraftContent(subject=f"Re: your {context.job_title} application", body=body)
 
 
 def _invitation(context: CandidateContext, instructions: str) -> DraftContent:

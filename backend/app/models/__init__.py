@@ -6,6 +6,7 @@ from app.models.application import Application, CandidateStageHistory
 from app.models.assistant import AssistantAction
 from app.models.base import Base
 from app.models.candidate import Candidate
+from app.models.communication import CommunicationDraft, CommunicationRule, MessageDelivery
 from app.models.demo import DemoApplication, DemoJobPosting, DemoResume
 from app.models.demographics import CandidateDemographics, DemoApplicationDemographics
 from app.models.engagement import CandidateEngagementEvent, PortalSession
@@ -27,6 +28,8 @@ __all__ = [
     "CandidateDemographics",
     "CandidateEngagementEvent",
     "CandidateStageHistory",
+    "CommunicationDraft",
+    "CommunicationRule",
     "DemoApplication",
     "DemoApplicationDemographics",
     "DemoJobPosting",
@@ -34,6 +37,7 @@ __all__ = [
     "Interview",
     "Job",
     "Message",
+    "MessageDelivery",
     "PortalSession",
     "User",
 ]

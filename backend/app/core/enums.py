@@ -284,6 +284,44 @@ class AssistantActionStatus(StrEnum):
     CANCELLED = "cancelled"  # a proposal the recruiter dismissed
 
 
+class CommunicationRuleKey(StrEnum):
+    """The communication SLA rules (services/communication/rules.py), in the order they're checked.
+    Stored as text (migration 015)."""
+
+    STAGE_UPDATE = "stage_update"  # the stage changed and the candidate hasn't been told
+    UNANSWERED_QUESTION = "unanswered_question"  # the candidate's message has no reply
+    POST_INTERVIEW = "post_interview"  # an interview happened and no follow-up was sent
+    INTERVIEW_UNCONFIRMED = "interview_unconfirmed"  # an interview is close and the candidate hasn't confirmed
+    NO_RECENT_UPDATE = "no_recent_update"  # an active application has had no update for a while
+
+
+# Why a draft was written: a rule, or the recruiter asked.
+MANUAL_DRAFT = "manual"
+
+
+class CommunicationStatus(StrEnum):
+    """Where one application stands on communication. Derived, never stored."""
+
+    NEEDS_ATTENTION = "needs_attention"  # a rule's threshold has passed
+    DUE_SOON = "due_soon"  # a rule will need attention within a day
+    ON_TRACK = "on_track"
+    CLOSED = "closed"  # hired, rejected or archived, with nothing outstanding
+
+
+class DraftStatus(StrEnum):
+    DRAFTED = "drafted"  # waiting for the recruiter: edit, then send or discard
+    SENT = "sent"
+    DISCARDED = "discarded"
+
+
+class EmailStatus(StrEnum):
+    """How a recruiter's message went out by email. The candidate portal always gets it."""
+
+    SENT = "sent"  # the email provider accepted it
+    FAILED = "failed"
+    NOT_CONFIGURED = "not_configured"  # no email provider: portal only
+
+
 class WebhookEventStatus(StrEnum):
     PROCESSING = "processing"
     PROCESSED = "processed"

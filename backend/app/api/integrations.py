@@ -6,7 +6,6 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Header, Request
 
 from app.core.config import settings
 from app.core.dependencies import (
-    AIProviderDep,
     AshbyClientDep,
     SessionDep,
     SessionFactoryDep,
@@ -18,7 +17,7 @@ from app.integrations.ashby.status import ashby_status
 from app.integrations.ashby.sync import RESOURCES, sync_from_settings
 from app.integrations.ashby.webhook import WebhookProcessor
 from app.schemas.integration import AshbyStatus, SyncReport, WebhookAck
-from app.services import account_provisioning, ai_service
+from app.services import account_provisioning
 
 router = APIRouter(prefix="/integrations/ashby", tags=["integrations"])
 
@@ -55,11 +54,10 @@ async def webhook(
     factory: SessionFactoryDep,
     client: AshbyClientDep,
     admin: SupabaseAdminDep,
-    provider: AIProviderDep,
     ashby_signature: Annotated[str | None, Header(alias="Ashby-Signature")] = None,
 ) -> WebhookAck:
     """401 for a missing or wrong signature, 503 until ASHBY_WEBHOOK_SECRET is set. Portal
-    invitations and AI analysis run after the response, so neither can fail the import."""
+    invitations run after the response, so they can't fail the import."""
     secret = settings.ashby_webhook_secret
     processor = WebhookProcessor(
         session,
@@ -67,13 +65,10 @@ async def webhook(
         client=client,
         title_map=settings.ashby_stage_title_map,
         invites_enabled=settings.portal_invites_enabled,
-        auto_analyze=settings.ashby_auto_analyze,
     )
     ack, follow_ups = await processor.handle(await request.body(), ashby_signature)
     if follow_ups.invite_candidate_ids:
         background.add_task(
             account_provisioning.provision_in_background, factory, sorted(follow_ups.invite_candidate_ids), admin
         )
-    for application_id in sorted(follow_ups.analyze_application_ids):
-        background.add_task(ai_service.analyze_in_background, factory, application_id, provider)
     return ack

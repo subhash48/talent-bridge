@@ -15,7 +15,7 @@ import logging
 from collections.abc import Awaitable, Callable
 from typing import Annotated
 
-from fastapi import BackgroundTasks, Depends, Request
+from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -58,15 +58,13 @@ async def get_current_user_submitting_demo(
     credentials: BearerDep,
     verifier: VerifierDep,
     factory: SessionFactoryDep,
-    background: BackgroundTasks,
-    provider: AIProviderDep,
 ) -> User:
     """get_current_user for GET /me, which the frontend calls after every sign-in. When the demo
     careers site is on (development only), it first submits the applications waiting for this
     sign-in: signing in as the email they applied with is what proves they're the applicant."""
     claims = await _verify_token(credentials, verifier)
     if settings.ashby_demo_enabled:  # never in production, whose database has no demo tables
-        await demo_careers.submit_on_sign_in(factory, claims, background=background, provider=provider)
+        await demo_careers.submit_on_sign_in(factory, claims)
     return await _signed_in_user(request, session, claims)
 
 

@@ -84,8 +84,6 @@ class Settings(BaseSettings):
     ashby_webhook_secret: SecretStr | None = None
     ashby_api_url: str = "https://api.ashbyhq.com"
     ashby_timeout_seconds: float = 20.0
-    # Ask the AI for an analysis of each application Ashby submits. It never blocks the import.
-    ashby_auto_analyze: bool = True
     # The reconciliation sync invites applicants it finds only if they applied this recently, so a
     # first sync never emails a backlog of past candidates.
     ashby_sync_invite_max_age_days: int = 14

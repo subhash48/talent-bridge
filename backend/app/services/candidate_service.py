@@ -14,7 +14,6 @@ from sqlalchemy.orm import contains_eager, selectinload
 from app.core.enums import ActivityType, ApplicationStage, JobStatus
 from app.core.errors import BadRequestError, ConflictError, NotFoundError
 from app.models import (
-    AIAnalysis,
     Application,
     Candidate,
     CandidateActivity,
@@ -24,7 +23,6 @@ from app.models import (
 )
 from app.models.base import utcnow
 from app.schemas.activity import ActivityRead
-from app.schemas.ai import AIAnalysisRead
 from app.schemas.application import ApplicationBrief, ApplicationRead, StageHistoryRead, origin_of
 from app.schemas.candidate import CandidateCreate, CandidateDetail, CandidateListItem, CandidateRead
 from app.schemas.common import Page
@@ -148,9 +146,6 @@ async def get_candidate_detail(
         .where(CandidateStageHistory.application_id == focus.id)
         .order_by(CandidateStageHistory.changed_at.desc(), CandidateStageHistory.id)
     )
-    analysis = await session.scalar(
-        select(AIAnalysis).where(AIAnalysis.application_id == focus.id).order_by(AIAnalysis.created_at.desc()).limit(1)
-    )
     upcoming = snapshot.upcoming_interview(now)
     return CandidateDetail(
         candidate=candidate_read,
@@ -164,7 +159,6 @@ async def get_candidate_detail(
         messages=[MessageRead.model_validate(row) for row in snapshot.messages],
         stage_history=[StageHistoryRead.model_validate(row) for row in history],
         applications=briefs,
-        ai_analysis=AIAnalysisRead.model_validate(analysis) if analysis else None,
     )
 
 

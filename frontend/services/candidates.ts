@@ -4,7 +4,6 @@ import { fromMessage } from "@/services/messages";
 import { mockApi } from "@/services/mock/api";
 import type {
   ApiActivity,
-  ApiAnalysis,
   ApiCandidateDetail,
   ApiCandidateListItem,
   ApiPage,
@@ -13,7 +12,6 @@ import {
   PIPELINE_STAGES,
   type ActivityKind,
   type CandidateActivity,
-  type CandidateAnalysis,
   type CandidateDetail,
   type CandidateStage,
   type DashboardSummary,
@@ -109,7 +107,6 @@ export async function getCandidateDetail(id: string, candidateId: string): Promi
     activities: detail.activity.map((item) => fromActivity(item, id)),
     interviews: forPanel(detail.interviews.map((interview) => fromInterview(interview, candidate))),
     messages: detail.messages.map(fromMessage),
-    analysis: detail.ai_analysis && fromAnalysis(detail.ai_analysis),
     ashby:
       detail.application?.origin === "ashby"
         ? { stageTitle: detail.application.external_stage_title, status: detail.application.external_status }
@@ -150,21 +147,6 @@ function fromActivity(activity: ApiActivity, applicationId: string): CandidateAc
     kind: ACTIVITY_KINDS[activity.activity_type] ?? "stage",
     label: activity.title,
     occurredAt: activity.created_at,
-  };
-}
-
-export function fromAnalysis(analysis: ApiAnalysis): CandidateAnalysis {
-  return {
-    id: analysis.id,
-    summary: analysis.summary,
-    skillsMatched: analysis.skills_matched,
-    missingSkills: analysis.missing_skills,
-    strengths: analysis.strengths,
-    concerns: analysis.concerns,
-    suggestedQuestions: analysis.suggested_questions,
-    recommendedNextStep: analysis.recommended_next_step,
-    modelName: analysis.model_name,
-    createdAt: analysis.created_at,
   };
 }
 

@@ -31,7 +31,6 @@ from app.models import (
     PortalSession,
     User,
 )
-from app.services.ai.fallback import MockProvider
 from tests import ashby_support
 from tests.ashby_support import FakeSupabaseAdmin
 from tests.conftest import ALEX_EMAIL, API, SOPHIA_EMAIL, bearer
@@ -59,7 +58,6 @@ TABLES = (
 @pytest.fixture(autouse=True)
 def simulator(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(settings, "portal_invites_enabled", True)
-    monkeypatch.setattr(settings, "ashby_auto_analyze", True)
     monkeypatch.setattr(settings, "ashby_stage_title_map", {})
     monkeypatch.setattr(settings, "ashby_webhook_secret", None)  # the simulator never needs the real one
 
@@ -103,7 +101,7 @@ async def apply(
     sessions: async_sessionmaker[AsyncSession], admin: FakeSupabaseAdmin | None = None, **kwargs: Any
 ) -> demo.Outcome:
     values = {"email": EMAIL, "first_name": "Maya", "last_name": "Patel", "job_title": JOB, **kwargs}
-    return await demo.apply(sessions, admin=admin, provider=MockProvider(), **values)  # type: ignore[arg-type]
+    return await demo.apply(sessions, admin=admin, **values)  # type: ignore[arg-type]
 
 
 async def test_three_cycles_from_a_clean_state(
@@ -127,7 +125,7 @@ async def test_three_cycles_from_a_clean_state(
         assert await count(sessions, Job, Job.title == JOB) == 1
         assert await count(sessions, User, User.email == EMAIL) == 1
         assert len(admin.invites) == 1 and admin.invites[0]["email"] == EMAIL
-        assert await count(sessions, AIAnalysis) == baseline["ai_analysis"] + 1  # the analysis ran once
+        assert await count(sessions, AIAnalysis) == baseline["ai_analysis"]  # nobody is evaluated by AI
 
         # 2. The recruiter portal lists the application, from Ashby, with the invitation sent.
         page = (await client.get(f"{API}/candidates", params={"search": EMAIL})).json()

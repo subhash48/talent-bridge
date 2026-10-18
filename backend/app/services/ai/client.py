@@ -11,7 +11,7 @@ from functools import cache
 from typing import TYPE_CHECKING
 
 from app.core.config import settings
-from app.schemas.ai import AnalysisContent, AskContent, DraftContent, DraftPurpose
+from app.schemas.ai import AskContent, DraftContent, DraftPurpose
 from app.schemas.demo import JobPostingBrief, JobPostingContent
 from app.schemas.portal import AssistContent, PrepContent
 from app.services.ai.context import CandidateContext
@@ -32,10 +32,6 @@ class AIProviderError(Exception):
 class AIProvider(ABC):
     name: str
     model: str
-
-    @abstractmethod
-    async def analyze_candidate(self, context: CandidateContext) -> AnalysisContent:
-        """Evidence for the recruiter: matched and missing skills, strengths, concerns, questions."""
 
     @abstractmethod
     async def ask_candidate(self, context: CandidateContext, question: str) -> AskContent:

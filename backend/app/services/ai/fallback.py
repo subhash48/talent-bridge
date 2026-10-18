@@ -12,7 +12,6 @@ from dataclasses import dataclass
 
 from app.core.enums import ActivityType, ApplicationStage, SenderType
 from app.schemas.ai import (
-    AnalysisContent,
     AskContent,
     DraftContent,
     DraftPurpose,
@@ -49,18 +48,6 @@ INTENTS: list[tuple[str, re.Pattern[str]]] = [
 class MockProvider(AIProvider):
     name = "mock"
     model = "mock"
-
-    async def analyze_candidate(self, context: CandidateContext) -> AnalysisContent:
-        matched, missing = match_requirements(context)
-        return AnalysisContent(
-            summary=_summary(context, matched, missing),
-            skills_matched=matched,
-            missing_skills=missing,
-            strengths=_strengths(context, matched),
-            concerns=_concerns(context, missing),
-            suggested_questions=_questions(context, matched, missing),
-            recommended_next_step=_next_step(context, missing),
-        )
 
     async def ask_candidate(self, context: CandidateContext, question: str) -> AskContent:
         text = question.lower()
@@ -117,20 +104,6 @@ def _evidence_for(context: CandidateContext, requirement: str) -> str | None:
     return None
 
 
-def _summary(context: CandidateContext, matched: list[SkillEvidence], missing: list[str]) -> str:
-    where = f", based in {context.location}" if context.location else ""
-    parts = [f"{context.name}{where}, is at the {context.stage.label} stage for {context.job_title}."]
-    total = len(context.job_requirements)
-    if total:
-        evidenced = f"{len(matched)} of {total} listed requirements have evidence in the record"
-        parts.append(f"{evidenced}; {_join(missing)} still need evidence." if missing else f"{evidenced}.")
-    else:
-        parts.append("The job lists no requirements, so skills weren't compared.")
-    if context.follow_up_reason:
-        parts.append(f"Needs follow-up: {_lower_first(context.follow_up_reason)}.")
-    return " ".join(parts)
-
-
 def _strengths(context: CandidateContext, matched: list[SkillEvidence]) -> list[str]:
     items: list[str] = []
     if matched:
@@ -173,49 +146,6 @@ def _concerns(context: CandidateContext, missing: list[str]) -> list[str]:
             if not interview.notes:
                 items.append(f"No feedback recorded for the {interview.title.lower()} yet.")
     return items
-
-
-def _questions(context: CandidateContext, matched: list[SkillEvidence], missing: list[str]) -> list[str]:
-    questions = [
-        f"Can you walk us through recent work that involved {skill}? What was your part in it?" for skill in missing[:2]
-    ]
-    if matched:
-        questions.append(
-            f"What's the hardest {matched[0].skill} problem you've worked on, and what trade-offs did you make?"
-        )
-    questions.append(f"What draws you to the {context.job_title} role at {context.organization}?")
-    asked = next((a.title for a in context.candidate_questions if a.title.lower().startswith("asked about ")), None)
-    if asked:
-        questions.append(f"You asked about {asked[len('asked about ') :]}. Is there anything else you'd like to know?")
-    return questions[:5]
-
-
-def _next_step(context: CandidateContext, missing: list[str]) -> str:
-    first = context.first_name
-    upcoming = context.upcoming_interview
-    if context.follow_up_reason:
-        return f"Follow up with {first} today: {_lower_first(context.follow_up_reason)}."
-    match context.stage:
-        case ApplicationStage.SOURCED:
-            return f"Send {first} a personal note about the {context.job_title} role and offer a short intro call."
-        case ApplicationStage.SCREENING:
-            if upcoming:
-                return f"Prepare {people(upcoming.interviewers)} for the {upcoming.title.lower()} {when(upcoming.scheduled_at, context.now)}."
-            return f"Book a screening call with {first} while interest is fresh."
-        case ApplicationStage.INTERVIEW:
-            if upcoming:
-                focus = f", and agree who covers {_join(missing[:2])}" if missing else ""
-                return (
-                    f"Brief {people(upcoming.interviewers)} before the {upcoming.title.lower()} "
-                    f"{when(upcoming.scheduled_at, context.now)}{focus}."
-                )
-            return f"Hold a debrief with the hiring team to agree the next step for {first}."
-        case ApplicationStage.OFFER:
-            return f"Check in with {first} on the offer and agree a decision date."
-        case ApplicationStage.HIRED:
-            return f"Send {first} the onboarding pack and confirm {context.their} start date."
-        case _:
-            return "No action needed: the application is closed unless you reopen it."
 
 
 # Answers

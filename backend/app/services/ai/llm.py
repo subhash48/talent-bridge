@@ -1,7 +1,7 @@
 """Shared prompting for hosted models. Subclasses only make the HTTP call.
 
 Every request asks for JSON and is validated against the same schemas the mock provider
-returns (the analysis and job postings after a lenient read: _analysis, _job_posting);
+returns (job postings after a lenient read: _job_posting);
 anything unusable raises AIProviderError, and ai_service falls back to the mock.
 """
 
@@ -13,7 +13,7 @@ import httpx
 from pydantic import BaseModel, BeforeValidator, ValidationError
 
 from app.core.config import settings
-from app.schemas.ai import AnalysisContent, AskContent, DraftContent, DraftPurpose, SkillEvidence
+from app.schemas.ai import AskContent, DraftContent, DraftPurpose
 from app.schemas.analytics import AnalyticsInsight
 from app.schemas.assistant import AssistantIntent
 from app.schemas.demo import (
@@ -45,20 +45,6 @@ Rules:
 - Never speculate about age, gender, ethnicity, nationality, religion, disability, family status or other protected characteristics.
 - Be concise and specific, and point to the evidence.
 - Respond with a single JSON object only."""
-
-ANALYZE_PROMPT = """Analyse this application for the recruiter.
-
-{context}
-
-Return a JSON object with exactly these keys, each of exactly this type:
-- "summary": string, 2 to 3 sentences.
-- "skills_matched": array of objects {{"skill": string, "evidence": string}}, one for each job requirement the context shows, "evidence" saying where. [] if none.
-- "missing_skills": array of strings: the job requirements with no evidence in the context. [] if none.
-- "strengths": array of short strings, each grounded in the context. [] if none.
-- "concerns": array of short factual strings: gaps, risks or open questions. No hiring decisions. [] if none.
-- "suggested_questions": array of 3 to 5 strings: interview questions that would close the gaps.
-- "recommended_next_step": string, one sentence naming a process step for the recruiter.
-Only "skills_matched" holds objects: every other array holds plain strings. Never use null."""
 
 ASK_PROMPT = """{context}
 
@@ -237,21 +223,6 @@ _List = Annotated[list[str], BeforeValidator(_as_list)]
 _Items = Annotated[list[Any], BeforeValidator(_as_list)]
 
 # A list item the model wrote as an object has its text under one of these keys.
-_ITEM_KEYS = ("skill", "name", "requirement", "text", "question")
-
-
-class _AnalysisJSON(BaseModel):
-    """The analysis, read leniently. Given a near-empty profile (a demo careers applicant's), models sometimes
-    write list items as objects, null evidence or a null list; _analysis makes that fit AnalysisContent instead
-    of the whole analysis dropping to the mock."""
-
-    summary: _Text = ""
-    skills_matched: _Items = []
-    missing_skills: _Items = []
-    strengths: _Items = []
-    concerns: _Items = []
-    suggested_questions: _Items = []
-    recommended_next_step: _Text = ""
 
 
 class _JobPostingJSON(BaseModel):
@@ -286,13 +257,6 @@ class LLMProvider(AIProvider):
     @abstractmethod
     async def _generate(self, system: str, prompt: str) -> str:
         """Send one system + user turn and return the model's text."""
-
-    async def analyze_candidate(self, context: CandidateContext) -> AnalysisContent:
-        text = await self._generate(_system(context), ANALYZE_PROMPT.format(context=context.to_prompt()))
-        content = _analysis(self._parse(text, _AnalysisJSON))
-        if not (content.summary and content.recommended_next_step):
-            raise AIProviderError(f"{self.name} returned an incomplete analysis")
-        return content
 
     async def ask_candidate(self, context: CandidateContext, question: str) -> AskContent:
         prompt = ASK_PROMPT.format(context=context.to_prompt(), question=question)
@@ -386,44 +350,6 @@ def _candidate_system(context: PortalContext) -> str:
     return CANDIDATE_SYSTEM_PROMPT.format(
         company=context.company, first_name=context.first_name, role=context.job_title
     )
-
-
-def _analysis(answer: _AnalysisJSON) -> AnalysisContent:
-    """The answer made to fit AnalysisContent: items written as objects read by their text, null evidence made "",
-    blanks and repeats dropped. A requirement is matched or missing, not both: the recruiter sees them in one list."""
-    matched = _matched(answer.skills_matched)
-    matched_skills = {item.skill.lower() for item in matched}
-    return AnalysisContent(
-        summary=answer.summary,
-        skills_matched=matched,
-        missing_skills=[skill for skill in _texts(answer.missing_skills) if skill.lower() not in matched_skills],
-        strengths=_texts(answer.strengths),
-        concerns=_texts(answer.concerns),
-        suggested_questions=_texts(answer.suggested_questions),
-        recommended_next_step=answer.recommended_next_step,
-    )
-
-
-def _matched(items: list[Any]) -> list[SkillEvidence]:
-    matched: dict[str, SkillEvidence] = {}
-    for item in items:
-        skill = " ".join(_item_text(item).split())
-        evidence = item.get("evidence") if isinstance(item, dict) else None
-        if skill and skill.lower() not in matched:
-            matched[skill.lower()] = SkillEvidence(skill=skill, evidence=evidence if isinstance(evidence, str) else "")
-    return list(matched.values())
-
-
-def _texts(items: list[Any]) -> list[str]:
-    return clean_list([_item_text(item) for item in items])
-
-
-def _item_text(item: Any) -> str:
-    """A list item's text: the item itself, or for an object its first text under _ITEM_KEYS. Anything else is blank."""
-    if isinstance(item, dict):
-        texts = (item.get(key) for key in _ITEM_KEYS)
-        item = next((text for text in texts if isinstance(text, str) and text.strip()), "")
-    return item if isinstance(item, str) else ""
 
 
 def _job_posting(answer: _JobPostingJSON, brief: JobPostingBrief) -> JobPostingContent:

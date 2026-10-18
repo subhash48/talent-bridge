@@ -29,6 +29,7 @@ from app.services.account_service import AuthAccount
 from tests.conftest import (
     ALEX_AUTH,
     API,
+    HISTORIC_SUMMARY,
     ISSUER,
     KEY_ID,
     SIGNING_KEY,
@@ -40,6 +41,7 @@ from tests.conftest import (
     link,
     make_token,
     public_jwks,
+    seed_historic_analysis,
     user_by_email,
 )
 
@@ -96,7 +98,6 @@ RECRUITER_ROUTES = [
     ("GET", "/messages/conversations"),
     ("GET", "/messages/unread-count"),
     ("GET", "/dashboard/summary"),
-    ("POST", "/ai/analyze-candidate"),
     ("POST", "/ai/ask-candidate"),
     ("POST", "/ai/draft-message"),
     ("GET", f"/candidates/{SOPHIA}/engagement"),
@@ -282,7 +283,6 @@ async def test_candidate_cannot_change_their_stage(client: AsyncClient) -> None:
 async def test_candidate_cannot_use_recruiter_ai(anonymous: AsyncClient) -> None:
     for path, body in (
         ("/ai/ask-candidate", {"application_id": SOPHIA_APP, "question": "Should we hire her?"}),
-        ("/ai/analyze-candidate", {"application_id": SOPHIA_APP}),
         ("/ai/draft-message", {"application_id": JAMES_APP, "intent": "follow up"}),
     ):
         assert (await anonymous.post(f"{API}{path}", json=body, headers=SOPHIA_TOKEN)).status_code == 403
@@ -327,13 +327,15 @@ async def test_candidate_ids_from_the_browser_are_ignored(client: AsyncClient) -
     assert profile.status_code == 422
 
 
-async def test_internal_recruiter_data_stays_hidden_from_candidates(client: AsyncClient) -> None:
-    assert (await client.post(f"{API}/ai/analyze-candidate", json={"application_id": SOPHIA_APP})).status_code == 201
+async def test_internal_recruiter_data_stays_hidden_from_candidates(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    await seed_historic_analysis(sessions, SOPHIA_APP)
     detail = (await client.get(f"{API}/candidates/{SOPHIA}")).json()
-    assert detail["ai_analysis"] is not None  # the recruiter sees it
+    assert "ai_analysis" not in detail and HISTORIC_SUMMARY not in str(detail)  # no evaluation, even old ones
     assert (await client.get(f"{API}/candidates/{SOPHIA}", headers=SOPHIA_TOKEN)).status_code == 403
     portal = str([(await client.get(f"{API}/candidate/{p}")).json() for p in ("me", "application", "activity")])
-    assert "ai_analysis" not in portal and detail["ai_analysis"]["summary"] not in portal
+    assert "ai_analysis" not in portal and HISTORIC_SUMMARY not in portal
 
 
 # Recruiters and admins

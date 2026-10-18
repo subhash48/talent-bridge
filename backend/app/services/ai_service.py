@@ -1,72 +1,26 @@
-"""Recruiter AI: analysis, questions and drafts for one application.
-
-The AI provides evidence for a recruiter to review. Nothing here changes a stage or sends a
-message, and an analysis that recommends rejecting someone is replaced with a review step.
+"""Recruiter AI for one application: questions about the record and drafts of messages to the
+candidate. It never evaluates or ranks anyone, changes a stage or sends a message: people send.
 """
 
 import logging
-import re
 import uuid
 from collections.abc import Awaitable, Callable
 
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.enums import ActivityType
-from app.models import AIAnalysis, User
+from app.models import User
 from app.models.base import utcnow
 from app.schemas.ai import (
-    AIAnalysisRead,
-    AnalysisContent,
     AskCandidateResponse,
     DraftMessageResponse,
     DraftPurpose,
 )
-from app.services.activity_service import record_activity
 from app.services.ai.client import AIProvider, AIProviderError
 from app.services.ai.context import CandidateContext, build_candidate_context
 from app.services.ai.fallback import MockProvider
 
 logger = logging.getLogger(__name__)
-
-# Hiring decisions belong to people. If a model words its next step as one, replace it.
-DECISION_LANGUAGE = re.compile(
-    r"\b(reject\w*|declin\w*|disqualif\w*|(do not|don't|not) (hire|proceed|advance|move forward)|not a (good )?fit|unsuitable)\b",
-    re.IGNORECASE,
-)
-REVIEW_STEP = "Review this evidence with the hiring team and agree the next step together."
-
-
-async def analyze_candidate(
-    session: AsyncSession, application_id: uuid.UUID, provider: AIProvider, actor: User | None
-) -> AIAnalysisRead:
-    context = await _context(session, application_id, actor)
-    content, model_name = await with_fallback(provider, lambda p: p.analyze_candidate(context))
-    content = enforce_review_policy(content)
-
-    now = utcnow()
-    analysis = AIAnalysis(
-        application_id=application_id,
-        **content.model_dump(mode="json"),
-        model_name=model_name,
-        created_at=now,
-    )
-    session.add(analysis)
-    await session.flush()
-    record_activity(
-        session,
-        application_id,
-        ActivityType.AI_ANALYSIS_GENERATED,
-        "AI analysis generated",
-        metadata={
-            "analysis_id": analysis.id,
-            "model": model_name,
-            "requested_by": actor.full_name if actor else None,
-        },
-        at=now,
-    )
-    await session.commit()
-    return AIAnalysisRead.model_validate(analysis)
 
 
 async def ask_candidate(
@@ -90,13 +44,6 @@ async def draft_message(
     return DraftMessageResponse(subject=content.subject, body=content.body, purpose=purpose, model_name=model_name)
 
 
-def enforce_review_policy(content: AnalysisContent) -> AnalysisContent:
-    if DECISION_LANGUAGE.search(content.recommended_next_step):
-        logger.info("Replaced an AI next step that read as a hiring decision.")
-        return content.model_copy(update={"recommended_next_step": REVIEW_STEP})
-    return content
-
-
 async def _context(session: AsyncSession, application_id: uuid.UUID, actor: User | None) -> CandidateContext:
     return await build_candidate_context(
         session,
@@ -118,16 +65,3 @@ async def with_fallback[Result](
             raise
         logger.warning("%s failed (%s); answering with the mock provider instead.", provider.name, exc)
         return await call(MockProvider()), f"mock (fallback from {provider.name})"
-
-
-async def analyze_in_background(
-    session_factory: async_sessionmaker[AsyncSession], application_id: uuid.UUID, provider: AIProvider
-) -> None:
-    """Analyse an application Ashby just submitted, after the import has committed. Never raises: if
-    the analysis fails the application is still there, and a recruiter can run it by hand."""
-    try:
-        async with session_factory() as session:
-            analysis = await analyze_candidate(session, application_id, provider, actor=None)
-        logger.info("ai.auto_analysis application=%s model=%s", application_id, analysis.model_name)
-    except Exception:
-        logger.exception("ai.auto_analysis_failed application=%s", application_id)

@@ -7,7 +7,7 @@
    processed elsewhere is left alone until its lease runs out; a failed one is applied again.
 3. Apply it with the importer in one transaction that also marks the event processed, so the data
    and the record of having applied it commit together.
-4. Hand back follow-ups (portal invitations, AI analysis) to run after the response, outside that
+4. Hand back follow-ups (portal invitations) to run after the response, outside that
    transaction: their failure never loses the import.
 
 Errors Ashby should retry (the database, a record that depends on one not synced yet) answer 5xx;
@@ -66,7 +66,6 @@ class FollowUps:
     """Work to run once the import has committed."""
 
     invite_candidate_ids: set[uuid.UUID] = field(default_factory=set)
-    analyze_application_ids: set[uuid.UUID] = field(default_factory=set)
 
 
 @dataclass
@@ -113,14 +112,12 @@ class WebhookProcessor:
         client: AshbyClient | None = None,
         title_map: Mapping[str, ApplicationStage] | None = None,
         invites_enabled: bool = True,
-        auto_analyze: bool = True,
     ) -> None:
         self.session = session
         self.secret = secret
         self.client = client
         self.title_map = title_map or {}
         self.invites_enabled = invites_enabled
-        self.auto_analyze = auto_analyze
 
     async def handle(self, body: bytes, signature: str | None) -> tuple[WebhookAck, FollowUps]:
         if not self.secret:
@@ -228,8 +225,6 @@ class WebhookProcessor:
                     return _Applied(record.id, W.IGNORED, "Older than the version already applied.")
                 if result.invite:
                     follow_ups.invite_candidate_ids.add(result.candidate_id)
-                if result.created and action == "applicationSubmit" and self.auto_analyze:
-                    follow_ups.analyze_application_ids.add(result.application_id)
                 return _Applied(record.id)
             case InterviewSchedule():
                 await importer.upsert_schedule(record)

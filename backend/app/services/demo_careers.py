@@ -13,7 +13,7 @@ must first prove they own the email, so nobody can apply in someone else's name.
    Bridge already links to that email, or one Supabase says confirmed the address. Each pending
    application made (or made again) in the last day is then delivered through the Ashby simulator
    (integrations/ashby/demo.py), so it reaches Talent Bridge as a real Ashby application does: the
-   webhook processor, the importer, the stage mapping and the AI analysis all run. Then the sign-in is
+   webhook processor, the importer and the stage mapping all run. Then the sign-in is
    linked to the candidate.
 
 Until then recruiters see nothing: no candidate or application exists before it is submitted. And what
@@ -32,7 +32,6 @@ from collections.abc import Sequence
 from datetime import timedelta
 from typing import Any
 
-from fastapi import BackgroundTasks
 from sqlalchemy import or_, select, text, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -44,7 +43,7 @@ from app.core.security import TokenClaims
 from app.integrations.ashby import demo as simulator
 from app.integrations.ashby.demo_ids import can_receive_mail, is_demo
 from app.integrations.supabase_admin import AuthUserExists, SupabaseAdmin, SupabaseAdminError
-from app.models import AIAnalysis, Application, Candidate, DemoApplication, DemoJobPosting, Job, User
+from app.models import Application, Candidate, DemoApplication, DemoJobPosting, Job, User
 from app.models.base import utcnow
 from app.schemas.demo import (
     ApplyOutcome,
@@ -53,10 +52,9 @@ from app.schemas.demo import (
     CareerJobDetail,
     CareerJobSummary,
 )
-from app.services import ai_service, demo_resumes
+from app.services import demo_resumes
 from app.services.account_provisioning import NOT_CONFIGURED
 from app.services.account_service import AccountLinkError, find_auth_account, link_account
-from app.services.ai.client import AIProvider
 
 logger = logging.getLogger(__name__)
 
@@ -163,22 +161,17 @@ async def apply(
 async def submit_on_sign_in(
     factory: async_sessionmaker[AsyncSession],
     claims: TokenClaims,
-    *,
-    background: BackgroundTasks,
-    provider: AIProvider,
 ) -> None:
     """Submit the pending applications this sign-in proves the applicant owns, before GET /me looks up
     who they are. Called only when the demo is enabled. Never raises: the person signs in whatever
     happens here, and anything not submitted is tried again on their next GET /me."""
     try:
-        await _submit_pending(factory, claims, background, provider)
+        await _submit_pending(factory, claims)
     except Exception:
         logger.exception("demo_careers.submit_crashed auth_user=%s", claims.subject)
 
 
-async def _submit_pending(
-    factory: async_sessionmaker[AsyncSession], claims: TokenClaims, background: BackgroundTasks, provider: AIProvider
-) -> None:
+async def _submit_pending(factory: async_sessionmaker[AsyncSession], claims: TokenClaims) -> None:
     email = (claims.email or "").strip().lower()
     async with factory() as session:
         # Runs on every GET /me in development, so it is one indexed query when there's nothing to do.
@@ -209,7 +202,6 @@ async def _submit_pending(
         jobs = {job.id: job for job in await session.scalars(select(Job).where(Job.id.in_(job_ids)))}
 
     submitted: list[tuple[DemoApplication, uuid.UUID, uuid.UUID]] = []  # each row, its application and candidate
-    delivered: set[uuid.UUID] = set()  # the applications the simulator delivered
     for row in eligible:
         if row.id not in claimed:
             continue
@@ -247,13 +239,11 @@ async def _submit_pending(
             await _release(factory, row.id)
             continue
         submitted.append((row, result.application_id, result.candidate_id))
-        delivered.add(result.application_id)
 
     if submitted:
         if user is None:
             await _link(factory, email, claims.subject)
         await _mark_submitted(factory, submitted)
-        await _queue_analyses(factory, delivered, background, provider)
     # Applications another request is submitting: wait for it, so this request's user lookup sees the
     # sign-in it links.
     await _wait_for(factory, [row.id for row in eligible if row.id not in claimed])
@@ -375,29 +365,6 @@ async def _mark_submitted(
             )
             logger.info("demo_careers.submitted demo_application=%s application=%s", row.id, application_id)
         await session.commit()
-
-
-async def _queue_analyses(
-    factory: async_sessionmaker[AsyncSession],
-    application_ids: set[uuid.UUID],
-    background: BackgroundTasks,
-    provider: AIProvider,
-) -> None:
-    """The AI analysis of each application delivered that has none yet, once each. The import asks for
-    one only when it creates the application, so a delivery repeated after a request died part-way
-    through would otherwise never get one."""
-    if not settings.ashby_auto_analyze or not application_ids:
-        return
-    async with factory() as session:
-        analysed = set(
-            (
-                await session.scalars(
-                    select(AIAnalysis.application_id).where(AIAnalysis.application_id.in_(application_ids))
-                )
-            ).all()
-        )
-    for application_id in sorted(application_ids - analysed):
-        background.add_task(ai_service.analyze_in_background, factory, application_id, provider)
 
 
 async def _wait_for(factory: async_sessionmaker[AsyncSession], ids: list[uuid.UUID]) -> None:

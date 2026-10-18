@@ -125,20 +125,6 @@ export type ApiMessage = {
 
 export type ApiConversation = { candidate: ApiCandidateRef; unread: number; messages: ApiMessage[] };
 
-export type ApiAnalysis = {
-  id: string;
-  application_id: string;
-  summary: string;
-  skills_matched: { skill: string; evidence: string }[];
-  missing_skills: string[];
-  strengths: string[];
-  concerns: string[];
-  suggested_questions: string[];
-  recommended_next_step: string;
-  model_name: string | null;
-  created_at: string;
-};
-
 export type ApiApplication = {
   id: string;
   candidate_id: string;
@@ -165,7 +151,6 @@ export type ApiCandidateDetail = {
   activity: ApiActivity[];
   interviews: ApiInterview[];
   messages: ApiMessage[];
-  ai_analysis: ApiAnalysis | null;
 };
 
 export type ApiUser = {

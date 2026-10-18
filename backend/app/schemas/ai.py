@@ -1,7 +1,7 @@
 """AI request and response schemas.
 
-The AI analyses and drafts for a recruiter to review. Nothing here can change a stage, send a
-message or make a hiring decision.
+The AI answers and drafts for a recruiter to review. Nothing here can evaluate a candidate, change a
+stage, send a message or make a hiring decision.
 """
 
 from enum import StrEnum
@@ -10,35 +10,14 @@ from uuid import UUID
 
 from pydantic import Field
 
-from app.schemas.common import APIModel, OptionalText, Timestamp
+from app.schemas.common import APIModel, OptionalText
 
 
 class SkillEvidence(APIModel):
+    """A job requirement and where the record shows it (the mock provider's answers)."""
+
     skill: str
     evidence: str
-
-
-class AnalysisContent(APIModel):
-    """What a provider returns for an analysis, and what is stored in ai_analysis."""
-
-    summary: str
-    skills_matched: list[SkillEvidence] = []
-    missing_skills: list[str] = []
-    strengths: list[str] = []
-    concerns: list[str] = []
-    suggested_questions: list[str] = []
-    recommended_next_step: str
-
-
-class AIAnalysisRead(AnalysisContent):
-    id: UUID
-    application_id: UUID
-    model_name: str | None = None
-    created_at: Timestamp
-
-
-class AnalyzeCandidateRequest(APIModel):
-    application_id: UUID
 
 
 class AISource(APIModel):

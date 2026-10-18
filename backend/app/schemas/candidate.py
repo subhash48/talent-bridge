@@ -11,7 +11,6 @@ from pydantic import EmailStr, Field, field_validator
 
 from app.core.enums import ApplicationStage, EngagementLevel, PortalAccountStatus
 from app.schemas.activity import ActivityBrief, ActivityRead
-from app.schemas.ai import AIAnalysisRead
 from app.schemas.application import ApplicationBrief, ApplicationRead, Origin, StageHistoryRead
 from app.schemas.common import APIModel, OptionalText, OptionalURL, Timestamp
 from app.schemas.interview import InterviewBrief, InterviewRead
@@ -112,4 +111,3 @@ class CandidateDetail(APIModel):
     messages: list[MessageRead] = []  # oldest first
     stage_history: list[StageHistoryRead] = []  # newest first
     applications: list[ApplicationBrief] = []
-    ai_analysis: AIAnalysisRead | None = None

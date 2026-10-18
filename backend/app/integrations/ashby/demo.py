@@ -13,7 +13,7 @@ endpoint uses, so the importer, the stage mapping and the event ledger all run a
 delivery. The body is
 signed with a key made for that one delivery, so the signature check runs too; ASHBY_WEBHOOK_SECRET is
 never read, and there is no HTTP endpoint. The follow-ups the endpoint runs after responding (the
-portal invitation, the AI analysis) run here once the processor returns.
+portal invitation) run here once the processor returns.
 
 The development-only demo careers site (services/demo_careers.py) delivers its applications with
 submit(), the part of apply that sends the webhooks, once the applicant has signed in.
@@ -75,8 +75,7 @@ from app.models import (
 )
 from app.models.base import utcnow
 from app.schemas.integration import WebhookAck
-from app.services import account_provisioning, ai_service, demo_resumes
-from app.services.ai.client import AIProvider, get_ai_provider
+from app.services import account_provisioning, demo_resumes
 from app.services.candidate_visibility import portal_status, present_activity
 
 logger = logging.getLogger(__name__)
@@ -140,7 +139,6 @@ async def apply(
     last_name: str = "",
     job_title: str = DEFAULT_JOB,
     admin: SupabaseAdmin | None = None,
-    provider: AIProvider | None = None,
 ) -> Outcome:
     """The candidate applies in Ashby: jobCreate for the job, then applicationSubmit, then the follow-ups.
 
@@ -159,7 +157,7 @@ async def apply(
         # A rerun is a duplicate delivery with no follow-ups; a pending invitation is retried, as the
         # reconciliation sync would.
         follow_ups.invite_candidate_ids.add(submitted.candidate_id)
-    outcome.lines += await _follow_up(factory, follow_ups, admin, provider)
+    outcome.lines += await _follow_up(factory, follow_ups, admin)
     return outcome
 
 
@@ -264,7 +262,7 @@ async def stage(
             await session.execute(update(Candidate).where(Candidate.id == candidate.id).values(external_id=None))
             await session.commit()
     outcome.lines.append(_ack_line(ack))
-    outcome.lines += await _follow_up(factory, follow_ups, None, None)
+    outcome.lines += await _follow_up(factory, follow_ups, None)
     return outcome
 
 
@@ -471,7 +469,6 @@ async def _deliver(factory: async_sessionmaker[AsyncSession], payload: dict[str,
             client=None,  # simulator records don't exist in Ashby, so nothing is ever looked up there
             title_map=settings.ashby_stage_title_map,
             invites_enabled=settings.portal_invites_enabled,
-            auto_analyze=settings.ashby_auto_analyze,
         )
         return await processor.handle(body, signature)
 
@@ -480,9 +477,8 @@ async def _follow_up(
     factory: async_sessionmaker[AsyncSession],
     follow_ups: FollowUps,
     admin: SupabaseAdmin | None,
-    provider: AIProvider | None,
 ) -> list[str]:
-    """What the webhook endpoint runs once it has responded: portal invitations, then AI analyses."""
+    """What the webhook endpoint runs once it has responded: portal invitations."""
     lines = []
     candidate_ids = sorted(follow_ups.invite_candidate_ids)
     await account_provisioning.provision_in_background(factory, candidate_ids, admin)
@@ -502,10 +498,6 @@ async def _follow_up(
             candidate = await session.get(Candidate, candidate_id, populate_existing=True)
             if candidate is not None:
                 lines.append(f"Portal provisioning: {candidate.portal_status}")
-    for application_id in sorted(follow_ups.analyze_application_ids):
-        provider = provider or get_ai_provider()
-        await ai_service.analyze_in_background(factory, application_id, provider)
-        lines.append(f"AI analysis: requested from the {provider.name} provider")
     return lines
 
 
@@ -643,7 +635,6 @@ async def _run(args: argparse.Namespace) -> int:
                 last_name=args.last_name,
                 job_title=args.job,
                 admin=admin,
-                provider=get_ai_provider(),
             )
         elif args.command == "stage":
             outcome = await stage(factory, email=args.email, stage=args.stage, job_title=args.job)

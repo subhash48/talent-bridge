@@ -144,7 +144,7 @@ export const mockApi = {
         return aUpcoming ? a.scheduledAt.localeCompare(b.scheduledAt) : b.scheduledAt.localeCompare(a.scheduledAt);
       });
     const messages = db.conversations.find((conversation) => conversation.candidate.id === id)?.messages ?? [];
-    return clone({ activities, interviews, messages, analysis: null });
+    return clone({ activities, interviews, messages });
   },
 
   async scheduleInterview(candidate: CandidateRef, input: NewInterviewInput): Promise<ScheduledInterview> {

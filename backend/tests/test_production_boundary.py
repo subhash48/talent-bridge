@@ -179,7 +179,7 @@ async def main():
 
     # 9. Activating the invited account submits it through the Ashby simulator.
     claims = TokenClaims(subject=admin.invited[EMAIL], email=EMAIL, session_id=None)
-    await demo_careers.submit_on_sign_in(factory, claims, background=BackgroundTasks(), provider=MockProvider())
+    await demo_careers.submit_on_sign_in(factory, claims)
 
     # 10. Now the candidate and application exist.
     async with factory() as session:

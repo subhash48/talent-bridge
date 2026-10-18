@@ -18,7 +18,15 @@ from app.models import Candidate
 from app.services import candidate_portal_service
 from app.services.ai.gemini import GeminiProvider
 from app.services.candidate_ai_service import build_portal_context
-from tests.conftest import API, application_id, candidate_id, link
+from tests.conftest import (
+    API,
+    HISTORIC_NEXT_STEP,
+    HISTORIC_SUMMARY,
+    application_id,
+    candidate_id,
+    link,
+    seed_historic_analysis,
+)
 
 SOPHIA_APP = application_id("sophia-martinez")
 SOPHIA = candidate_id("sophia-martinez")
@@ -238,18 +246,19 @@ async def test_closed_application_hides_the_reason(client: AsyncClient) -> None:
 # Privacy
 
 
-async def test_internal_records_never_reach_the_candidate(client: AsyncClient) -> None:
-    # Recruiter-only activity: an AI analysis, archiving and restoring.
-    assert (await client.post(f"{API}/ai/analyze-candidate", json={"application_id": SOPHIA_APP})).status_code == 201
+async def test_internal_records_never_reach_the_candidate(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    # Recruiter-only records: an AI analysis from before evaluation was removed, archiving and restoring.
+    await seed_historic_analysis(sessions, SOPHIA_APP)
     assert (await client.post(f"{API}/applications/{SOPHIA_APP}/archive")).status_code == 200
     assert (await client.post(f"{API}/applications/{SOPHIA_APP}/restore")).status_code == 200
-    analysis = (await client.get(f"{API}/candidates/{SOPHIA}")).json()["ai_analysis"]
 
     snapshot = await portal_snapshot(client)
     for internal in (
         FEEDBACK,  # interviewer feedback
-        analysis["summary"],  # AI analysis
-        analysis["recommended_next_step"],
+        HISTORIC_SUMMARY,  # AI analysis
+        HISTORIC_NEXT_STEP,
         "engagement",
         "follow_up",
         "ai_analysis",

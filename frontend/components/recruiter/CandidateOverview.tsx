@@ -2,7 +2,6 @@ import { ArrowRight, CalendarClock, CircleAlert, Link2, Sparkles, type LucideIco
 import type { ReactNode } from "react";
 
 import { CandidateActivity, CandidateActivitySkeleton } from "@/components/recruiter/CandidateActivity";
-import { CandidateAnalysis } from "@/components/recruiter/CandidateAnalysis";
 import { DetailError } from "@/components/recruiter/DetailError";
 import { EngagementCard } from "@/components/recruiter/EngagementCard";
 import { Button } from "@/components/ui/Button";
@@ -58,8 +57,6 @@ export function CandidateOverview({ candidate, state, onViewAll, onDraftFollowUp
       </div>
 
       <EngagementCard candidate={candidate} />
-
-      <CandidateAnalysis candidate={candidate} analysis={state.detail ? state.detail.analysis : state.error ? null : undefined} />
 
       <section aria-label="Recent activity">
         <div className="flex items-center justify-between gap-3">

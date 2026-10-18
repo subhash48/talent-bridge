@@ -5,7 +5,6 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-import httpx
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import func, select
@@ -13,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import settings
 from app.integrations.ashby import importer
-from app.main import app
 from app.models import (
     AIAnalysis,
     Application,
@@ -24,9 +22,6 @@ from app.models import (
     Interview,
     Job,
 )
-from app.services.ai.client import get_ai_provider
-from app.services.ai.fallback import MockProvider
-from app.services.ai.groq import GroqProvider
 from tests.ashby_support import (
     APPLICATION_ID,
     CANDIDATE_ID,
@@ -158,15 +153,15 @@ async def test_application_submit_imports_everything(
         assert application.external_updated_at is not None
         history = (await session.scalars(select(CandidateStageHistory.new_stage).where(CandidateStageHistory.application_id == application.id))).all()
         assert history == ["screening"]
-        # Invited at the email they applied with; the invitation and analysis ran after the import.
+        # Invited at the email they applied with; the invitation ran after the import. No AI evaluation.
         assert candidate.portal_status == "invited" and candidate.user_id is not None
-        assert await session.scalar(select(func.count()).select_from(AIAnalysis).where(AIAnalysis.application_id == application.id)) == 1
+        assert await session.scalar(select(func.count()).select_from(AIAnalysis).where(AIAnalysis.application_id == application.id)) == 0
     assert [invite["email"] for invite in ashby.invites] == [EMAIL]
     assert ashby.invites[0]["redirect_to"].endswith("/auth/callback?next=/welcome")
     assert "password" not in json.dumps(ashby.invites)
     titles = await timeline(sessions, application.id)
     assert titles[0] == "Application received"
-    assert "Candidate portal invitation sent" in titles and "AI analysis generated" in titles
+    assert "Candidate portal invitation sent" in titles and "AI analysis generated" not in titles
 
     # Nothing personal from the payload is kept on the event record.
     async with sessions() as session:
@@ -187,7 +182,6 @@ async def test_same_webhook_delivered_three_times_is_applied_once(
     application = await application_row(sessions)
     assert (await timeline(sessions, application.id)).count("Application received") == 1
     assert await count(sessions, CandidateStageHistory, CandidateStageHistory.application_id == application.id) == 1
-    assert await count(sessions, AIAnalysis, AIAnalysis.application_id == application.id) == 1
     assert len(ashby.invites) == 1
     assert await count(sessions, AshbyWebhookEvent) == 1
 
@@ -509,43 +503,6 @@ async def test_a_database_failure_is_500_and_the_retry_applies_it(
     assert retried.json()["status"] == "processed"
     assert await count(sessions, Application, Application.external_id == APPLICATION_ID) == 1
     assert await count(sessions, Candidate, Candidate.external_id == CANDIDATE_ID) == 1
-
-
-async def test_ai_failure_never_fails_the_import(
-    anonymous: AsyncClient, sessions: async_sessionmaker[AsyncSession]
-) -> None:
-    class BrokenProvider(MockProvider):
-        name = "broken"
-
-        async def analyze_candidate(self, context: Any) -> Any:
-            raise RuntimeError("Groq is down")
-
-    app.dependency_overrides[get_ai_provider] = BrokenProvider
-    response = await deliver(anonymous, application_event())
-    assert response.json()["status"] == "processed"
-    assert await count(sessions, Application, Application.external_id == APPLICATION_ID) == 1
-    application = await application_row(sessions)
-    assert await count(sessions, AIAnalysis, AIAnalysis.application_id == application.id) == 0
-
-
-async def test_groq_unavailable_falls_back_and_still_imports(
-    anonymous: AsyncClient, sessions: async_sessionmaker[AsyncSession]
-) -> None:
-    unavailable = httpx.MockTransport(lambda request: httpx.Response(503, json={"error": "over capacity"}))
-    app.dependency_overrides[get_ai_provider] = lambda: GroqProvider(api_key="k", model="llama", transport=unavailable)
-    assert (await deliver(anonymous, application_event())).json()["status"] == "processed"
-    application = await application_row(sessions)
-    async with sessions() as session:
-        analysis = await session.scalar(select(AIAnalysis).where(AIAnalysis.application_id == application.id))
-    assert analysis is not None and analysis.model_name == "mock (fallback from groq)"
-
-
-async def test_auto_analysis_can_be_turned_off(
-    anonymous: AsyncClient, sessions: async_sessionmaker[AsyncSession], monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setattr(settings, "ashby_auto_analyze", False)
-    await deliver(anonymous, application_event())
-    assert await count(sessions, AIAnalysis) == 0
 
 
 async def test_candidate_merge_relinks_the_candidate(

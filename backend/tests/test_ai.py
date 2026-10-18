@@ -8,10 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.main import app
 from app.models.base import utcnow
-from app.schemas.ai import AnalysisContent, AskContent, DraftContent, DraftPurpose
+from app.schemas.ai import AskContent, DraftContent, DraftPurpose
 from app.services.ai.client import AIProvider, AIProviderError, get_ai_provider
 from app.services.ai.context import CandidateContext, build_candidate_context
-from app.services.ai.fallback import MockProvider
 from app.services.ai.gemini import GeminiProvider
 from app.services.ai.groq import GroqProvider
 from tests.conftest import API, application_id, candidate_id
@@ -19,23 +18,13 @@ from tests.conftest import API, application_id, candidate_id
 SOPHIA = application_id("sophia-martinez")
 
 
-async def test_analyze_candidate_with_the_mock_provider(client: AsyncClient) -> None:
+async def test_ai_never_evaluates_candidates(client: AsyncClient) -> None:
+    """No analysis, scoring, strengths or concerns: TalentBridge's AI drafts communication."""
     response = await client.post(f"{API}/ai/analyze-candidate", json={"application_id": SOPHIA})
-    assert response.status_code == 201
-    analysis = response.json()
-    assert analysis["model_name"] == "mock"
-    assert "Sophia Martinez" in analysis["summary"]
-    matched = {item["skill"]: item["evidence"] for item in analysis["skills_matched"]}
-    assert set(matched) == {"Figma", "Design systems", "Prototyping", "User research"}
-    assert matched["Prototyping"].startswith("Portfolio review feedback")  # interview notes beat the profile
-    assert analysis["missing_skills"] == ["Interaction design"]
-    assert analysis["strengths"] and analysis["suggested_questions"]
-    assert "reject" not in analysis["recommended_next_step"].lower()
-
+    assert response.status_code in (404, 405)
+    assert not any("analy" in path for path in app.openapi()["paths"] if "/analytics/" not in path)
     detail = (await client.get(f"{API}/candidates/{candidate_id('sophia-martinez')}")).json()
-    assert detail["ai_analysis"]["id"] == analysis["id"]
-    assert detail["activity"][0]["activity_type"] == "ai_analysis_generated"
-    assert detail["stage"] == "interview"  # the AI never changes the stage
+    assert "ai_analysis" not in detail
 
 
 async def test_ask_candidate(client: AsyncClient) -> None:
@@ -70,7 +59,7 @@ async def test_draft_message(client: AsyncClient) -> None:
 
 async def test_ai_validation(client: AsyncClient) -> None:
     missing = await client.post(
-        f"{API}/ai/analyze-candidate", json={"application_id": "00000000-0000-0000-0000-000000000000"}
+        f"{API}/ai/draft-message", json={"application_id": "00000000-0000-0000-0000-000000000000"}
     )
     assert missing.status_code == 404
     empty = await client.post(f"{API}/ai/ask-candidate", json={"application_id": SOPHIA, "message": ""})
@@ -79,21 +68,10 @@ async def test_ai_validation(client: AsyncClient) -> None:
     assert purpose.status_code == 422
 
 
-class DecidingProvider(MockProvider):
-    name = model = "deciding"
-
-    async def analyze_candidate(self, context: CandidateContext) -> AnalysisContent:
-        content = await super().analyze_candidate(context)
-        return content.model_copy(update={"recommended_next_step": "Reject this candidate."})
-
-
 class BrokenProvider(AIProvider):
     """A hosted provider that is down."""
 
     name = model = "broken"
-
-    async def analyze_candidate(self, context: CandidateContext) -> AnalysisContent:
-        raise AIProviderError("timed out")
 
     async def ask_candidate(self, context: CandidateContext, question: str) -> AskContent:
         raise AIProviderError("timed out")
@@ -104,32 +82,14 @@ class BrokenProvider(AIProvider):
         raise AIProviderError("timed out")
 
 
-async def test_analysis_never_recommends_rejection(client: AsyncClient) -> None:
-    app.dependency_overrides[get_ai_provider] = DecidingProvider
-    response = await client.post(f"{API}/ai/analyze-candidate", json={"application_id": SOPHIA})
-    assert response.status_code == 201
-    assert "reject" not in response.json()["recommended_next_step"].lower()
-
-
 async def test_failed_provider_falls_back_to_mock(client: AsyncClient) -> None:
     app.dependency_overrides[get_ai_provider] = BrokenProvider
-    response = await client.post(f"{API}/ai/analyze-candidate", json={"application_id": SOPHIA})
-    assert response.status_code == 201
+    response = await client.post(f"{API}/ai/draft-message", json={"application_id": SOPHIA, "purpose": "follow_up"})
+    assert response.status_code == 200
     assert response.json()["model_name"] == "mock (fallback from broken)"
 
 
 # Hosted providers, against a fake HTTP transport
-
-
-ANALYSIS_JSON = {
-    "summary": "Strong design systems background.",
-    "skills_matched": [{"skill": "Figma", "evidence": "Listed on profile"}],
-    "missing_skills": ["Interaction design"],
-    "strengths": ["Design systems"],
-    "concerns": [],
-    "suggested_questions": ["Tell us about a component library you built."],
-    "recommended_next_step": "Brief the panel before the design interview.",
-}
 
 
 @pytest.fixture
@@ -146,12 +106,13 @@ async def test_gemini_provider_parses_json_mode(context: CandidateContext) -> No
     def handler(request: httpx.Request) -> httpx.Response:
         seen["key"] = request.headers["x-goog-api-key"]
         seen["body"] = json.loads(request.content)
-        reply = {"candidates": [{"content": {"parts": [{"text": json.dumps(ANALYSIS_JSON)}]}}]}
+        draft = {"subject": "Next steps", "body": "Hi Sophia,\n\nThanks for your time.\n\nBest,\nAlex"}
+        reply = {"candidates": [{"content": {"parts": [{"text": json.dumps(draft)}]}}]}
         return httpx.Response(200, json=reply)
 
     provider = GeminiProvider(api_key="test-key", model="gemini-test", transport=httpx.MockTransport(handler))
-    content = await provider.analyze_candidate(context)
-    assert content.skills_matched[0].skill == "Figma"
+    content = await provider.draft_message(context, DraftPurpose.FOLLOW_UP)
+    assert content.subject == "Next steps"
     assert seen["key"] == "test-key"
     body = seen["body"]
     assert isinstance(body, dict) and body["generationConfig"]["responseMimeType"] == "application/json"

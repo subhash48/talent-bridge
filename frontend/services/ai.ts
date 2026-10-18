@@ -1,11 +1,9 @@
 import { ApiError, USE_MOCK_API, apiFetch, errorMessage } from "@/services/api";
-import { fromAnalysis } from "@/services/candidates";
 import { mockCandidateChat } from "@/services/mock/ai";
-import type { ApiAnalysis, ApiAskResponse, ApiDraft, ApiDraftPurpose } from "@/types/api";
-import type { CandidateAnalysis } from "@/types/workspace";
+import type { ApiAskResponse, ApiDraft, ApiDraftPurpose } from "@/types/api";
 
 // Recruiter AI. The browser sends only the application id and the question; the server builds the
-// context and holds every model key. The AI analyses and drafts; it never sends or decides.
+// context and holds every model key. The AI answers and drafts; it never evaluates, sends or decides.
 
 export type ChatSource = { type: string; id: string; label: string };
 
@@ -62,18 +60,6 @@ export async function draftMessage(
     signal,
   });
   return { subject, body };
-}
-
-/** POST /ai/analyze-candidate: evidence, gaps and questions for the recruiter to review. */
-export async function analyzeCandidate(candidateId: string): Promise<CandidateAnalysis> {
-  if (USE_MOCK_API) {
-    throw new ApiError("AI analysis needs the Talent Bridge API. Turn off mock mode to use it.", 0, "mock_mode");
-  }
-  const analysis = await apiFetch<ApiAnalysis>("/ai/analyze-candidate", {
-    method: "POST",
-    body: JSON.stringify({ application_id: candidateId }),
-  });
-  return fromAnalysis(analysis);
 }
 
 async function mockDraft(candidateId: string, signal?: AbortSignal): Promise<MessageDraft> {

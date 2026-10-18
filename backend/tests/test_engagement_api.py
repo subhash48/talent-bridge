@@ -264,10 +264,10 @@ async def test_engagement_never_reaches_the_qualification_prompt(client: AsyncCl
         api_key="k", model="llama", transport=httpx.MockTransport(handler)
     )
     breakdown = (await client.get(f"{API}/candidates/{SOPHIA}/engagement")).json()
-    for path in ("analyze-candidate", "ask-candidate", "draft-message"):
+    for path in ("ask-candidate", "draft-message"):
         body = {"application_id": SOPHIA_APP, "message": "Summarise her", "purpose": "follow_up"}
         assert (await client.post(f"{API}/ai/{path}", json=body)).status_code in (200, 201)
-    assert len(prompts) == 3
+    assert len(prompts) == 2
     for prompt in prompts:
         lowered = prompt.lower()
         assert "engagement:" not in lowered and "high engagement" not in lowered

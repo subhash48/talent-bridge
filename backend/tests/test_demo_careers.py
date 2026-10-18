@@ -99,7 +99,6 @@ def demo_on(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(settings, "enable_ashby_demo", True)
     # What the simulator reads, whatever backend/.env says.
     monkeypatch.setattr(settings, "portal_invites_enabled", True)
-    monkeypatch.setattr(settings, "ashby_auto_analyze", True)
     monkeypatch.setattr(settings, "ashby_stage_title_map", {})
 
 
@@ -473,7 +472,7 @@ async def test_apply_activate_and_reach_the_recruiter(
     assert candidate["external_id"] == demo_id("candidate", EMAIL)
     assert candidate["resume_url"] == f"{API}/demo/resumes/{pending.id}"
     application_id = uuid.UUID(items[0]["application_id"])
-    assert await count(sessions, AIAnalysis, AIAnalysis.application_id == application_id) == 1
+    assert await count(sessions, AIAnalysis) == 0  # TalentBridge never evaluates candidates
     [submitted] = await careers_applications(sessions)
     assert (submitted.status, submitted.application_id, submitted.finalizing_at) == ("submitted", application_id, None)
     assert submitted.submitted_at is not None
@@ -501,10 +500,10 @@ async def test_apply_activate_and_reach_the_recruiter(
         assert await session.scalar(select(Candidate.portal_status).where(Candidate.email == EMAIL)) == "active"
 
     # 7. Signing in again, and again, changes nothing.
-    before = (len(ashby.invites), await count(sessions, AshbyWebhookEvent), await count(sessions, AIAnalysis))
+    before = (len(ashby.invites), await count(sessions, AshbyWebhookEvent))
     for _ in range(2):
         assert (await anonymous.get(f"{API}/me", headers=token)).json()["candidate_id"] == me.json()["candidate_id"]
-    assert (len(ashby.invites), await count(sessions, AshbyWebhookEvent), await count(sessions, AIAnalysis)) == before
+    assert (len(ashby.invites), await count(sessions, AshbyWebhookEvent)) == before
     assert await count(sessions, Candidate, Candidate.email == EMAIL) == 1
     assert await count(sessions, Application, Application.candidate_id == uuid.UUID(candidate["id"])) == 1
     assert await count(sessions, User, User.email == EMAIL) == 1
@@ -562,8 +561,6 @@ async def test_one_invitation_covers_every_role_and_activating_submits_them_all(
     assert len({item["candidate"]["id"] for item in items}) == 1  # one person, two applications
     assert {item["candidate"]["resume_url"] for item in items} == {f"{API}/demo/resumes/{second.id}"}  # the latest
     assert await count(sessions, User, User.email == EMAIL) == 1
-    for item in items:
-        assert await count(sessions, AIAnalysis, AIAnalysis.application_id == uuid.UUID(item["application_id"])) == 1
     assert [row.status for row in await careers_applications(sessions)] == ["submitted", "submitted"]
 
 
@@ -624,7 +621,6 @@ async def test_two_sign_ins_at_once_submit_each_application_once(
     assert await count(sessions, Candidate) == 1
     assert await count(sessions, User) == 1
     assert await count(sessions, Application) == 2
-    assert await count(sessions, AIAnalysis) == 2
     assert [row.status for row in await careers_applications(sessions)] == ["submitted", "submitted"]
     assert len(admin.invites) == 1
 
@@ -669,7 +665,6 @@ async def test_a_submission_cut_short_is_finished_and_analysed_by_a_later_sign_i
     assert row.status == "awaiting_activation" and row.finalizing_at is not None
     async with sessions() as session:
         [application_id] = (await session.scalars(select(Application.id).where(Application.job_id == job_id))).all()
-    assert await count(sessions, AIAnalysis, AIAnalysis.application_id == application_id) == 0
 
     async def lease_taken(ago: timedelta) -> None:
         async with sessions() as session:
@@ -687,21 +682,6 @@ async def test_a_submission_cut_short_is_finished_and_analysed_by_a_later_sign_i
     [row] = await careers_applications(sessions)
     assert (row.status, row.application_id, row.finalizing_at) == ("submitted", application_id, None)
     assert await count(sessions, Application, Application.job_id == job_id) == 1
-    assert await count(sessions, AIAnalysis, AIAnalysis.application_id == application_id) == 1
-
-
-async def test_without_auto_analysis_no_analysis_is_queued(
-    anonymous: AsyncClient,
-    sessions: async_sessionmaker[AsyncSession],
-    ashby: FakeSupabaseAdmin,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(settings, "ashby_auto_analyze", False)
-    await apply_to(anonymous, await demo_job(sessions))
-    assert (await anonymous.get(f"{API}/me", headers=bearer(ashby.users[EMAIL], email=EMAIL))).status_code == 200
-    [row] = await careers_applications(sessions)
-    assert row.status == "submitted"
-    assert await count(sessions, AIAnalysis, AIAnalysis.application_id == row.application_id) == 0
 
 
 async def test_an_invitation_is_sent_again_once_its_link_has_expired(
@@ -1085,7 +1065,6 @@ async def test_an_application_a_recruiter_made_meanwhile_stands(
         ).all()
     assert [tuple(item) for item in applications] == [(added.id, "interview", "Referral", None)]
     assert await count(sessions, AshbyWebhookEvent) == 0
-    assert await count(sessions, AIAnalysis, AIAnalysis.application_id == added.id) == 0
 
 
 async def test_an_existing_application_for_the_role_means_already_applied(
@@ -1347,11 +1326,9 @@ async def test_submit_delivers_to_an_existing_job_once(sessions: async_sessionma
     first = await demo.submit(sessions, **values)
     assert first.outcome.lines == ["applicationSubmit: processed"]
     assert first.application_id is not None and first.candidate_id is not None
-    assert first.follow_ups.analyze_application_ids == {first.application_id}
     again = await demo.submit(sessions, **values)
     assert again.outcome.lines == ["applicationSubmit: duplicate (delivered before, so nothing was applied again)"]
     assert (again.application_id, again.candidate_id) == (first.application_id, first.candidate_id)
-    assert again.follow_ups.analyze_application_ids == set()
 
     assert await count(sessions, Job) == jobs_before
     async with sessions() as session:

@@ -18,9 +18,14 @@ from dataclasses import dataclass
 from app.core.enums import PortalTopic
 from app.schemas.analytics import AnalyticsInsight, AnalyticsInsights
 from app.services.ai.client import AIProvider, AIProviderError
-from app.services.ai_service import DECISION_LANGUAGE
 from app.services.analytics.portal import PortalStats, format_duration, heatmap, percent_change
 from app.services.analytics.topics import LABELS
+
+# Hiring decisions belong to people: an insight that reads as one is replaced.
+DECISION_LANGUAGE = re.compile(
+    r"\b(reject\w*|declin\w*|disqualif\w*|(do not|don't|not) (hire|proceed|advance|move forward)|not a (good )?fit|unsuitable)\b",
+    re.IGNORECASE,
+)
 
 logger = logging.getLogger(__name__)
 

@@ -68,6 +68,40 @@ def candidate_id(key: str) -> str:
     return str(seed_id("candidate", key))
 
 
+HISTORIC_SUMMARY = "Historic analysis: strong systems background, weaker on research."
+HISTORIC_NEXT_STEP = "Historic analysis: brief the panel on research depth."
+
+
+async def seed_historic_analysis(sessions: async_sessionmaker[AsyncSession], application: str) -> None:
+    """An AI analysis written before TalentBridge stopped evaluating candidates: the table and its
+    timeline entry are kept, and must reach neither the recruiter API nor the candidate."""
+    from app.core.enums import ActivityType
+    from app.models import AIAnalysis, CandidateActivity
+
+    async with sessions() as session:
+        session.add(
+            AIAnalysis(
+                application_id=uuid.UUID(application),
+                summary=HISTORIC_SUMMARY,
+                skills_matched=[],
+                missing_skills=["Research"],
+                strengths=["Systems"],
+                concerns=["Research depth"],
+                suggested_questions=[],
+                recommended_next_step=HISTORIC_NEXT_STEP,
+                model_name="mock",
+            )
+        )
+        session.add(
+            CandidateActivity(
+                application_id=uuid.UUID(application),
+                activity_type=ActivityType.AI_ANALYSIS_GENERATED,
+                title="AI analysis generated",
+            )
+        )
+        await session.commit()
+
+
 def job_id(title: str) -> str:
     return str(seed_id("job", title))
 
@@ -204,7 +238,6 @@ def ashby(anonymous: AsyncClient, monkeypatch: pytest.MonkeyPatch) -> FakeSupaba
     admin = FakeSupabaseAdmin()
     monkeypatch.setattr(settings, "ashby_webhook_secret", SecretStr(SECRET))
     monkeypatch.setattr(settings, "portal_invites_enabled", True)
-    monkeypatch.setattr(settings, "ashby_auto_analyze", True)
     monkeypatch.setattr(settings, "ashby_stage_title_map", {})
     app.dependency_overrides[get_supabase_admin] = lambda: admin
     return admin

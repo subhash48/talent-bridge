@@ -106,25 +106,10 @@ export type Conversation = {
   unread: number;
 };
 
-export type CandidateAnalysis = {
-  id: string;
-  summary: string;
-  skillsMatched: { skill: string; evidence: string }[];
-  missingSkills: string[];
-  strengths: string[];
-  concerns: string[];
-  suggestedQuestions: string[];
-  recommendedNextStep: string;
-  modelName: string | null;
-  createdAt: string;
-};
-
 export type CandidateDetail = {
   activities: CandidateActivity[];
   interviews: ScheduledInterview[];
   messages: ThreadMessage[];
-  /** The latest AI analysis, if one has been generated. */
-  analysis: CandidateAnalysis | null;
   /** Ashby's own view of the application, when it was synced from Ashby. */
   ashby?: { stageTitle: string | null; status: string | null } | null;
 };

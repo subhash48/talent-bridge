@@ -88,7 +88,7 @@ async def test_detail_has_everything_the_panel_shows(client: AsyncClient) -> Non
     assert detail["next_interview"]["confirmed_at"] is not None
     assert len(detail["interviews"]) == 2
     assert len(detail["messages"]) == 4
-    assert detail["ai_analysis"] is None
+    assert "ai_analysis" not in detail
 
     activity = detail["activity"]
     assert activity[0]["title"] == "Confirmed interview"

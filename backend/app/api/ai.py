@@ -1,12 +1,10 @@
-"""Recruiter AI. It analyses and drafts for a recruiter to review; it never changes a stage,
-sends a message or makes a hiring decision."""
+"""Recruiter AI. It answers questions about a record and drafts messages for a recruiter to review; it
+never evaluates candidates, changes a stage, sends a message or makes a hiring decision."""
 
 from fastapi import APIRouter
 
 from app.core.dependencies import AIProviderDep, RecruiterDep, SessionDep
 from app.schemas.ai import (
-    AIAnalysisRead,
-    AnalyzeCandidateRequest,
     AskCandidateRequest,
     AskCandidateResponse,
     DraftMessageRequest,
@@ -15,15 +13,6 @@ from app.schemas.ai import (
 from app.services import ai_service
 
 router = APIRouter(prefix="/ai", tags=["ai"])
-
-
-@router.post("/analyze-candidate", response_model=AIAnalysisRead, status_code=201, summary="Analyse an application")
-async def analyze_candidate(
-    body: AnalyzeCandidateRequest, session: SessionDep, provider: AIProviderDep, user: RecruiterDep
-) -> AIAnalysisRead:
-    """Gathers the candidate, job, application and activity, asks the configured provider for an
-    evidence-based analysis, stores it and records a timeline entry."""
-    return await ai_service.analyze_candidate(session, body.application_id, provider, user)
 
 
 @router.post("/ask-candidate", response_model=AskCandidateResponse, summary="Ask about a candidate")

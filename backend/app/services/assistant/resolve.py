@@ -17,7 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import contains_eager
 
-from app.models import Application, Candidate, DemoJobPosting, Job
+from app.models import Application, Candidate, Job
 
 # Words a request uses for "the candidate we were talking about".
 PRONOUNS = re.compile(r"\b(her|him|them|they|she|he|their|his)\b", re.IGNORECASE)
@@ -88,19 +88,6 @@ async def find_jobs(session: AsyncSession, title: str) -> list[Job]:
     """Jobs whose title has every word said, newest first."""
     rows = await session.scalars(select(Job).order_by(Job.created_at.desc()))
     return [job for job in rows if _title_matches(job.title, title)]
-
-
-async def find_demo_job(session: AsyncSession, title: str | None, job_id: uuid.UUID | None) -> DemoJobPosting | None:
-    """The demo job a request means: the one in context, else the newest whose title matches."""
-    if job_id is not None and title is None:
-        return await session.get(DemoJobPosting, job_id)
-    if title:
-        postings = await session.scalars(select(DemoJobPosting).order_by(DemoJobPosting.created_at.desc()))
-        for posting in postings:
-            if _title_matches(posting.job.title, title):
-                return posting
-        return None
-    return await session.get(DemoJobPosting, job_id) if job_id else None
 
 
 def _matches_name(candidate: Candidate, name: str) -> bool:

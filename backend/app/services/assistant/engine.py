@@ -1,23 +1,24 @@
 """The recruiter assistant's action engine. Typed and spoken requests take exactly the same path:
 
     words (typed, or a transcript) -> one structured action (understand.py)
-    -> policy checks -> who and what it's about (resolve.py) -> a plan:
-       a question is answered; a job draft is written or changed; an external action (sending a
-       message, publishing a job) becomes a proposal
-    -> the recruiter confirms a proposal (confirm()) -> the existing service runs it, once.
+    -> policy checks -> who it's about (resolve.py) -> a plan:
+       a question is answered (who needs an update, unanswered messages, interviews to confirm or
+       follow up on, one candidate's status); a message becomes a proposal
+    -> the recruiter confirms a proposal (confirm()) -> the existing service sends it, once.
 
 Every request is recorded (assistant_actions): the words, the structured action, the target and the
 result. A repeated request (same client_request_id) returns the first one's answer instead of doing
 anything twice, and a proposal's status moves on exactly once, so one confirmation is one send.
 
-What runs is always an existing Talent Bridge service: message_service.send_message (the recruiter's
-messages to a candidate, shown in their portal), demo_jobs (the Jobs page's demo jobs), the analytics
-services, candidate_service.list_pipeline and the recruiter AI. Nothing here decides anything about a
-candidate: it never ranks, scores, advances or rejects anyone, and it never reads demographic answers
-except as the Analytics page's aggregates.
+What runs is always an existing TalentBridge service: communication drafts (an update written for
+the rule that needs attention, sent through the one send path: candidate portal, timeline and email
+when configured), message_service for interview invitations, the communication health behind Today
+and candidate_service.list_pipeline. Nothing here decides anything about a candidate: it never ranks,
+scores, advances or rejects anyone.
 """
 
 import logging
+import re
 import uuid
 from dataclasses import dataclass, field
 from typing import Any
@@ -26,11 +27,10 @@ from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
-from app.core.enums import AssistantActionStatus, DemoPostingStatus, EmailStatus
+from app.core.enums import MANUAL_DRAFT, AssistantActionStatus, EmailStatus
 from app.core.errors import AppError, ConflictError, NotFoundError
 from app.integrations.email import EmailProvider
-from app.models import Application, AssistantAction, DemoJobPosting, User
+from app.models import Application, AssistantAction, User
 from app.models.base import utcnow
 from app.schemas.ai import AISource, DraftPurpose
 from app.schemas.assistant import (
@@ -44,24 +44,23 @@ from app.schemas.assistant import (
     ClarifyCard,
     ClarifyOption,
     InterviewDetails,
-    JobCard,
     MessageCard,
 )
 from app.schemas.message import MessageRead
-from app.services import ai_service, demo_jobs, message_service
+from app.services import ai_service, message_service
 from app.services.ai.client import AIProvider
-from app.services.assistant import answers, jobs
-from app.services.assistant.resolve import Resolution, find_demo_job, resolve_candidate
+from app.services.assistant import answers
+from app.services.assistant.resolve import Resolution, resolve_candidate
 from app.services.assistant.understand import policy_refusal, understand
+from app.services.communication import drafts
 
 logger = logging.getLogger(__name__)
 
 S = AssistantActionStatus
 DELIVERY = "Candidate portal messages"
-PURPOSES = {"send_interview_email": "Interview invitation", "draft_message": "Message"}
-JOBS_OFF = (
-    "Creating and publishing jobs here uses the demo jobs workspace, which is switched off on this server "
-    "(ENABLE_ASHBY_DEMO)."
+# A request for an update with nothing more to say than that.
+BARE_UPDATE = re.compile(
+    r"\b(an? )?(quick )?(update|follow[- ]?up|check[- ]in|status update)\s*[.!]?\s*$|^\s*(remind|nudge)\b", re.IGNORECASE
 )
 HISTORY_STATUSES = (S.COMPLETED, S.FAILED)
 
@@ -86,15 +85,10 @@ class Context:
     """The conversation's context, checked: ids the workspace sent that still mean something."""
 
     application: Application | None = None
-    posting: DemoJobPosting | None = None
     proposal: AssistantAction | None = None
 
     def describe(self) -> str:
         lines = []
-        if self.posting is not None:
-            lines.append(
-                f"Job draft in progress: {self.posting.job.title} ({self.posting.status.value} on the careers site)"
-            )
         if self.application is not None:
             lines.append(f"Candidate in focus: {self.application.candidate.full_name}, {self.application.job.title}")
         if self.proposal is not None:
@@ -136,7 +130,6 @@ async def handle(
         request.text,
         context.describe(),
         provider,
-        job_in_context=context.posting is not None,
         proposal_in_context=context.proposal is not None,
     )
     try:
@@ -197,10 +190,7 @@ async def _plan(
         context_application_id=request.context.application_id,
     )
     refusal = policy_refusal(request.text, intent, names_a_person=bool(resolution.matches))
-    keep = AssistantContext(
-        application_id=context.application.id if context.application else None,
-        job_id=context.posting.job_id if context.posting else None,
-    )
+    keep = AssistantContext(application_id=context.application.id if context.application else None)
     if refusal:
         return Outcome(reply=refusal, context=keep)
 
@@ -208,27 +198,21 @@ async def _plan(
     if action in ("send_interview_email", "draft_message"):
         return await _propose_message(session, recruiter, row_id, intent, request, resolution, keep, provider)
     if action == "confirm":
-        return await _escalate(session, context, keep)
+        return await _escalate(context, keep)
     if action == "cancel":
         return await _cancel_in_context(session, recruiter, context, keep)
-    if action in ("create_job", "update_job", "publish_job"):
-        if not settings.ashby_demo_enabled:
-            return Outcome(reply=JOBS_OFF, context=keep)
-        if action == "create_job":
-            return await _create_job(session, recruiter, intent, keep, provider)
-        posting = await find_demo_job(session, intent.job_title, keep.job_id)
-        if posting is None:
-            what = f"a demo job called **{intent.job_title}**" if intent.job_title else "a job draft to work on"
-            return Outcome(reply=f"I couldn't find {what}. Create one first, or name the job.", context=keep)
-        if action == "update_job":
-            return await _update_job(session, posting, intent, keep)
-        return await _propose_publish(row_id, posting, keep)
-    if action == "analytics":
-        reply, card, sources = await answers.analytics(session, intent, request.utc_offset_minutes)
-        return Outcome(reply=reply, cards=[card], sources=sources, context=keep)
-    if action == "list_jobs":
-        reply, jobs_card = await answers.open_jobs(session)
-        return Outcome(reply=reply, cards=[jobs_card], context=keep)
+    if action == "who_needs_update":
+        reply, card = await answers.who_needs_update(session)
+        return Outcome(reply=reply, cards=[card], context=keep)
+    if action == "unanswered":
+        reply, card = await answers.unanswered(session)
+        return Outcome(reply=reply, cards=[card], context=keep)
+    if action == "unconfirmed_interviews":
+        reply, card = await answers.unconfirmed_interviews(session, request.utc_offset_minutes)
+        return Outcome(reply=reply, cards=[card], context=keep)
+    if action == "no_follow_up":
+        reply, card = await answers.no_follow_up(session)
+        return Outcome(reply=reply, cards=[card], context=keep)
     if action == "search_candidates":
         reply, list_card = await answers.search(session, intent)
         return Outcome(reply=reply, cards=[list_card] if list_card else [], context=keep)
@@ -321,21 +305,38 @@ async def _propose_message(
         )
     candidate = answers.brief(application)  # before drafting, which reloads the application
     interview = (intent.interview or InterviewDetails()) if intent.action == "send_interview_email" else None
-    purpose = DraftPurpose.INTERVIEW_INVITATION if interview is not None else DraftPurpose.CUSTOM
-    details = [request.text]
-    if interview is not None:
-        details += [
+    draft_id: uuid.UUID | None = None
+    if interview is None:
+        # 'Draft Sarah an update' is written for the rule that needs attention; 'tell Daniel his interview
+        # moved' says what was asked. Either way it's in the drafts ledger.
+        bare = BARE_UPDATE.search(request.text) is not None
+        written = await drafts.create_draft(
+            session,
+            application.id,
+            None if bare else MANUAL_DRAFT,
+            None if bare else request.text[:500],
+            provider,
+            recruiter,
+        )
+        subject, body, draft_id = written.subject, written.body, written.id
+    else:
+        details = [
+            request.text,
             f"Thank them for their interest in the {candidate.job_title} role, naming it",
             f"Interview: {interview.interview_type}" if interview.interview_type else "",
             f"Length: {interview.duration_minutes} minutes" if interview.duration_minutes else "",
             f"Timing: {interview.timeframe}" if interview.timeframe else "",
         ]
-    elif intent.instructions and intent.instructions != request.text:
-        details.append(intent.instructions)
-    draft = await ai_service.draft_message(
-        session, application.id, purpose, ". ".join(part for part in details if part)[:500], provider, recruiter
-    )
-    label = PURPOSES[intent.action]
+        invitation = await ai_service.draft_message(
+            session,
+            application.id,
+            DraftPurpose.INTERVIEW_INVITATION,
+            ". ".join(part for part in details if part)[:500],
+            provider,
+            recruiter,
+        )
+        subject, body = invitation.subject, invitation.body
+    label = "Interview invitation" if interview is not None else ("Update" if bare else "Message")
     card = MessageCard(
         action_id=row_id,
         mode=intent.mode,
@@ -345,7 +346,7 @@ async def _propose_message(
         interview_type=interview.interview_type if interview else None,
         duration_minutes=interview.duration_minutes if interview else None,
         timeframe=interview.timeframe if interview else None,
-        body=draft.body,
+        body=body,
         delivery=DELIVERY,
     )
     if intent.mode == "draft":
@@ -362,31 +363,25 @@ async def _propose_message(
         target_type="application",
         target_id=application.id,
         target_label=candidate.name,
-        payload={"kind": "message", "card": card.model_dump(mode="json"), "subject": draft.subject},
+        payload={
+            "kind": "message",
+            "card": card.model_dump(mode="json"),
+            "subject": subject,
+            "draft_id": str(draft_id) if draft_id else None,
+        },
     )
 
 
-async def _escalate(session: AsyncSession, context: Context, keep: AssistantContext) -> Outcome:
-    """ "Send it" / "publish it": the proposal in context, shown ready to confirm. Never sent by voice
-    alone: a transcript can be wrong, so the click is the confirmation."""
+async def _escalate(context: Context, keep: AssistantContext) -> Outcome:
+    """ "Send it": the proposal in context, shown ready to confirm. Never sent by voice alone: a
+    transcript can be wrong, so the click is the confirmation."""
     proposal = context.proposal
     if proposal is None:
         return Outcome(reply="There's nothing waiting to be confirmed.", context=keep)
     payload = proposal.payload or {}
     keep = keep.model_copy(update={"action_id": proposal.id})
-    if payload.get("kind") == "message":
-        card = MessageCard.model_validate({**payload["card"], "mode": "execute"})
-        return Outcome(
-            reply=f"Ready to send to **{card.candidate.name}**. Confirm to send it.", cards=[card], context=keep
-        )
-    posting = await session.get(DemoJobPosting, proposal.target_id) if proposal.target_id else None
-    if posting is None:
-        return Outcome(reply="That job no longer exists.", context=keep)
-    return Outcome(
-        reply=f"Ready to publish **{posting.job.title}**. Confirm to put it on the careers site.",
-        cards=[jobs.card(posting, stage="ready_to_publish", status=S.PROPOSED, action_id=proposal.id)],
-        context=keep,
-    )
+    card = MessageCard.model_validate({**payload["card"], "mode": "execute"})
+    return Outcome(reply=f"Ready to send to **{card.candidate.name}**. Confirm to send it.", cards=[card], context=keep)
 
 
 async def _cancel_in_context(
@@ -396,85 +391,6 @@ async def _cancel_in_context(
         return Outcome(reply="There's nothing to cancel.", context=keep)
     await cancel(session, recruiter, context.proposal.id)
     return Outcome(reply="Cancelled. Nothing was sent.", context=keep.model_copy(update={"action_id": None}))
-
-
-# Jobs
-
-
-async def _create_job(
-    session: AsyncSession, recruiter: User, intent: AssistantIntent, keep: AssistantContext, provider: AIProvider
-) -> Outcome:
-    changes = intent.job
-    if changes is None or not changes.title:
-        return Outcome(
-            reply='What\'s the job title? For example: "Create a Backend Engineer job in London, remote."',
-            status=S.NEEDS_CLARIFICATION,
-            context=keep,
-        )
-    posting, model_name = await jobs.create(session, recruiter, changes, provider)
-    title = posting.job.title
-    return Outcome(
-        reply=(
-            f'Draft created: **{title}**. Nothing is published. Tell me what to change ("make it remote", '
-            '"salary 100 to 130K"), or say "publish the job".'
-        ),
-        status=S.COMPLETED,
-        cards=[jobs.card(posting, stage="draft_created", status=S.COMPLETED)],
-        context=keep.model_copy(update={"job_id": posting.job_id, "action_id": None}),
-        target_type="job",
-        target_id=posting.job_id,
-        target_label=title,
-        summary=f"Created draft {title}",
-        payload={"job_writer": model_name},
-    )
-
-
-async def _update_job(
-    session: AsyncSession, posting: DemoJobPosting, intent: AssistantIntent, keep: AssistantContext
-) -> Outcome:
-    keep = keep.model_copy(update={"job_id": posting.job_id})
-    if intent.job is None:
-        return Outcome(reply='What should I change? For example "make it hybrid" or "add Python".', context=keep)
-    posting, changes = await jobs.update(session, posting, intent.job)
-    title = posting.job.title
-    if not changes:
-        return Outcome(
-            reply=f'**{title}** already has that. Tell me what to change, for example "make it remote".',
-            cards=[jobs.card(posting, stage="draft_updated", status=S.ANSWERED)],
-            context=keep,
-        )
-    return Outcome(
-        reply=f"Updated **{title}**: {'; '.join(changes)}.",
-        status=S.COMPLETED,
-        cards=[jobs.card(posting, stage="draft_updated", status=S.COMPLETED, changes=changes)],
-        context=keep,
-        target_type="job",
-        target_id=posting.job_id,
-        target_label=title,
-        summary=f"Updated {title}: {'; '.join(changes)}",
-    )
-
-
-async def _propose_publish(row_id: uuid.UUID, posting: DemoJobPosting, keep: AssistantContext) -> Outcome:
-    keep = keep.model_copy(update={"job_id": posting.job_id})
-    title = posting.job.title
-    if posting.status == DemoPostingStatus.PUBLISHED:
-        return Outcome(
-            reply=f"**{title}** is already on the careers site.",
-            cards=[jobs.card(posting, stage="published", status=S.ANSWERED)],
-            context=keep,
-        )
-    demo_jobs.check_publishable(posting)  # says what's missing, if anything
-    return Outcome(
-        reply=f"**{title}** is ready. Confirm to publish it on the careers site.",
-        status=S.PROPOSED,
-        cards=[jobs.card(posting, stage="ready_to_publish", status=S.PROPOSED, action_id=row_id)],
-        context=keep.model_copy(update={"action_id": row_id}),
-        target_type="job",
-        target_id=posting.job_id,
-        target_label=title,
-        payload={"kind": "publish_job"},
-    )
 
 
 # Confirmation
@@ -503,30 +419,30 @@ async def confirm(
     await session.commit()
 
     row = await _reload(session, action_id)
-    payload, label, target_id = dict(row.payload or {}), row.target_label or "", row.target_id
+    payload, label = dict(row.payload or {}), row.target_label or ""
     card: AssistantCard
     try:
         if payload.get("kind") == "message":
             message = MessageCard.model_validate(payload["card"])
-            sent = await message_service.send_message(
-                session,
-                message.candidate.application_id,
-                body or message.body,
-                recruiter,
-                email,
-                subject=payload.get("subject"),
-            )
+            if payload.get("draft_id"):
+                sent = (
+                    await drafts.send_draft(
+                        session, uuid.UUID(payload["draft_id"]), None, body or message.body, recruiter, email
+                    )
+                ).message
+            else:
+                sent = await message_service.send_message(
+                    session,
+                    message.candidate.application_id,
+                    body or message.body,
+                    recruiter,
+                    email,
+                    subject=payload.get("subject"),
+                )
             summary = f"Sent {message.purpose.lower()} to {message.candidate.name}"
             card = message.model_copy(update={"status": S.COMPLETED, "mode": "execute", "body": sent.content})
             payload["message_id"] = str(sent.id)
             reply = f"Sent to **{message.candidate.name}**. {delivered(sent)}"
-        elif payload.get("kind") == "publish_job" and target_id:
-            await demo_jobs.publish(session, target_id)
-            posting = await session.get(DemoJobPosting, target_id, populate_existing=True)
-            assert posting is not None
-            summary = f"Published {posting.job.title}"
-            card = jobs.card(posting, stage="published", status=S.COMPLETED)
-            reply = f"Published **{posting.job.title}**. It's on the Jobs page and the careers site."
         else:
             raise ConflictError("This action can't be confirmed.", code="not_confirmable")
         status, error = S.COMPLETED, None
@@ -551,10 +467,7 @@ async def confirm(
         status=status,
         reply=reply,
         cards=[card],
-        context=AssistantContext(
-            application_id=row.target_id if row.target_type == "application" else None,
-            job_id=row.target_id if row.target_type == "job" else None,
-        ),
+        context=AssistantContext(application_id=row.target_id if row.target_type == "application" else None),
         model_name="",
     )
     row.status, row.error, row.result_summary, row.executed_at, row.updated_at = status, error, summary, now, now
@@ -575,6 +488,12 @@ async def cancel(session: AsyncSession, recruiter: User, action_id: uuid.UUID) -
         await session.rollback()
         raise ConflictError(_already(await _reload(session, action_id)), code="action_already_handled")
     await session.commit()
+    draft_id = ((await _reload(session, action_id)).payload or {}).get("draft_id")
+    if draft_id:
+        try:
+            await drafts.discard_draft(session, uuid.UUID(draft_id))
+        except AppError:
+            await session.rollback()  # already sent or discarded elsewhere
 
 
 def _already(row: AssistantAction) -> str:
@@ -587,24 +506,19 @@ def _already(row: AssistantAction) -> str:
 
 
 def _failed(payload: dict[str, Any], label: str) -> str:
-    if payload.get("kind") == "message":
-        return f"Couldn't send message to {label}"
-    return f"Couldn't publish {label}"
+    return f"Couldn't send message to {label}"
 
 
 def _failed_card(payload: dict[str, Any], error: str) -> AssistantCard:
-    if payload.get("kind") == "message":
-        return MessageCard.model_validate({**payload["card"], "status": S.FAILED, "error": error})
-    proposed = (payload.get("response") or {}).get("cards") or []
-    return JobCard.model_validate({**proposed[0], "status": S.FAILED, "action_id": None})
+    return MessageCard.model_validate({**payload["card"], "status": S.FAILED, "error": error})
 
 
 # History
 
 
 async def history(session: AsyncSession, recruiter: User, limit: int = 20) -> list[AssistantHistoryItem]:
-    """What the assistant did for this recruiter: messages sent, jobs drafted, changed and published,
-    and anything that failed. Questions and drafts that changed nothing aren't listed."""
+    """What the assistant did for this recruiter: messages sent, and anything that failed. Questions and
+    drafts that changed nothing aren't listed."""
     rows = await session.scalars(
         select(AssistantAction)
         .where(AssistantAction.recruiter_id == recruiter.id, AssistantAction.status.in_(HISTORY_STATUSES))
@@ -614,9 +528,7 @@ async def history(session: AsyncSession, recruiter: User, limit: int = 20) -> li
     items = []
     for row in rows:
         href = None
-        if row.target_type == "job" and row.target_id:
-            href = f"/recruiter/jobs/demo/{row.target_id}"
-        elif row.target_type == "application" and row.target_id:
+        if row.target_type == "application" and row.target_id:
             href = f"/recruiter/candidates/{row.target_id}"  # the workspace opens candidates by application
         items.append(
             AssistantHistoryItem(
@@ -642,7 +554,6 @@ async def _context(session: AsyncSession, recruiter: User, context: AssistantCon
     application = await session.get(Application, context.application_id) if context.application_id else None
     if application is not None and application.archived_at is not None:
         application = None
-    posting = await session.get(DemoJobPosting, context.job_id) if context.job_id else None
     proposal = None
     if context.action_id:
         proposal = await session.get(AssistantAction, context.action_id)
@@ -650,7 +561,7 @@ async def _context(session: AsyncSession, recruiter: User, context: AssistantCon
             proposal = None
     if application is not None:
         await session.refresh(application, ["candidate", "job"])
-    return Context(application=application, posting=posting, proposal=proposal)
+    return Context(application=application, proposal=proposal)
 
 
 async def _by_request(session: AsyncSession, recruiter: User, client_request_id: str) -> AssistantAction | None:

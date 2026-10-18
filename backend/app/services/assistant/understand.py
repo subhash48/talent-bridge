@@ -30,13 +30,12 @@ RANKING = re.compile(
 )
 
 SENSITIVE_REPLY = (
-    "I can't look up, filter or use anyone's race, ethnicity, disability status or sexual orientation. Voluntary "
-    "demographic answers are only reported in aggregate on the Analytics page, and they're never used in hiring "
-    "decisions."
+    "I can't look up, filter or use anyone's race, ethnicity, disability status or sexual orientation, and "
+    "they're never used in hiring decisions."
 )
 RANKING_REPLY = (
-    "I don't rank, score or prioritise candidates. Portal engagement shows how candidates use the portal, not how "
-    "strong they are, and hiring decisions stay with your team. I can list candidates by job or stage instead."
+    "I don't rank, score or prioritise candidates: hiring decisions stay with your team. I can tell you who needs "
+    "an update, or list candidates by job or stage."
 )
 
 
@@ -45,7 +44,6 @@ async def understand(
     context: str,
     provider: AIProvider,
     *,
-    job_in_context: bool,
     proposal_in_context: bool,
 ) -> tuple[AssistantIntent, str]:
     """The request as one structured action, and what read it (the model, or "rules")."""
@@ -54,17 +52,14 @@ async def understand(
     except AIProviderError as exc:
         if provider.name != "mock":
             logger.warning("assistant.understand_failed provider=%s error=%s", provider.name, exc)
-    return rules.parse(text, job_in_context=job_in_context, proposal_in_context=proposal_in_context), RULES
+    return rules.parse(text, proposal_in_context=proposal_in_context), RULES
 
 
 def policy_refusal(text: str, intent: AssistantIntent, *, names_a_person: bool) -> str | None:
-    """Why a request can't be served, or None. Aggregate demographic questions are fine; anything that
-    would tie a personal characteristic to a person, or rank people, isn't."""
+    """Why a request can't be served, or None: anything that would rank people, or tie a personal
+    characteristic to anyone."""
     if RANKING.search(text):
         return RANKING_REPLY
-    if not SENSITIVE.search(text) and intent.metric != "demographics":
-        return None
-    aggregate = intent.action == "analytics" and intent.metric in ("demographics", "regions")
-    if aggregate and not names_a_person and intent.candidate_name is None:
-        return None
-    return SENSITIVE_REPLY
+    if SENSITIVE.search(text):
+        return SENSITIVE_REPLY
+    return None

@@ -4,10 +4,10 @@ import Link from "next/link";
 import { formatDayLabel, formatTime } from "@/lib/format";
 import type { AssistantHistoryItem } from "@/types/assistant";
 
-/** What the assistant has done for you: messages sent, jobs drafted and published, and any failures. */
+/** What the assistant has done for you: messages sent, and any failures. */
 export function RecentActions({ items }: { items: AssistantHistoryItem[] }) {
   if (items.length === 0) {
-    return <p className="text-xs leading-relaxed text-faint">Messages you send and jobs you create or publish here will be listed.</p>;
+    return <p className="text-xs leading-relaxed text-faint">Messages you send from here will be listed.</p>;
   }
   const groups = new Map<string, AssistantHistoryItem[]>();
   for (const item of items) {

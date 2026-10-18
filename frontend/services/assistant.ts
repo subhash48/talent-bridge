@@ -37,7 +37,7 @@ export async function askAssistant({ text, inputType, context, clientRequestId, 
   });
 }
 
-/** Run a proposal: send the message (with the recruiter's edits) or publish the job. Once only. */
+/** Run a proposal: send the message, with the recruiter's edits. Once only. */
 export async function confirmAction(actionId: string, body?: string): Promise<AssistantResponse> {
   if (USE_MOCK_API) throw NEEDS_API;
   return apiFetch<AssistantResponse>(`/assistant/actions/${actionId}/confirm`, {

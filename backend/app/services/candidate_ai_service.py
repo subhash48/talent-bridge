@@ -3,7 +3,8 @@
 Separate from the recruiter AI by construction. Its context is assembled from the portal record
 (the same projections the candidate already sees), never from the recruiter's CandidateContext,
 so internal notes, interviewer feedback, AI analysis, engagement and other candidates are out of
-reach. The recruiter's timeline records the topic of each question, never the question itself.
+reach. What a candidate asks it stays between them and the assistant: nothing is recorded for
+recruiters.
 """
 
 import uuid
@@ -21,12 +22,10 @@ from app.services.activity_service import record_activity
 from app.services.ai.client import AIProvider
 from app.services.ai.context import parse_requirements
 from app.services.ai.portal_context import PortalContext, PortalInterviewFact
-from app.services.ai.portal_fallback import TOPIC_LABELS, topic_of
 from app.services.ai_service import with_fallback
-from app.services.analytics.topics import topic_for_question
 from app.services.candidate_portal_service import PortalRecord, owned_application, require_record
 from app.services.company_profile import company_profile
-from app.services.engagement.events import record_event, record_unless_recent
+from app.services.engagement.events import record_unless_recent
 
 # Repeat views and questions within this window are one timeline entry, not many.
 REPEAT_WINDOW = timedelta(hours=1)
@@ -90,19 +89,6 @@ async def ask(
     record = await require_record(session, candidate, application_id)
     context = build_portal_context(record, utc_offset_minutes=utc_offset_minutes)
     content, model_name = await with_fallback(provider, lambda p: p.assist_candidate(context, question))
-    # For portal analytics: the topic only, never the question.
-    await record_event(
-        session,
-        candidate.id,
-        EngagementEventType.AI_QUESTION_ASKED,
-        application_id=record.application.id,
-        metadata={"topic": topic_for_question(question).value},
-        source="candidate_portal",
-    )
-    await session.commit()
-    await _record_once(
-        session, record.application.id, ActivityType.QUESTION_ASKED, f"Asked about {TOPIC_LABELS[topic_of(question)]}"
-    )
     return CandidateAskResponse(answer=content.answer, model_name=model_name)
 
 

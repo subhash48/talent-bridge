@@ -8,7 +8,6 @@ from fastapi import APIRouter, Depends
 from app.api import (
     activities,
     ai,
-    analytics,
     applications,
     assistant,
     auth,
@@ -41,7 +40,6 @@ for module in (
     messages,
     ai,
     dashboard,
-    analytics,
     assistant,
 ):
     api_router.include_router(module.router, dependencies=[Depends(require_recruiter)])

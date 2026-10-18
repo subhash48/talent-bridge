@@ -1,7 +1,8 @@
 import type { ApplicationStage } from "@/types/application";
 
 // Mirrors backend/app/schemas/assistant.py: the recruiter assistant, one action engine for typed and
-// spoken requests. External actions come back as proposals that only run when the recruiter confirms.
+// spoken requests about candidate communication. Messages come back as proposals that only go out
+// when the recruiter confirms.
 
 export type InputType = "text" | "voice";
 
@@ -15,7 +16,7 @@ export type ActionStatus =
   | "failed"
   | "cancelled";
 
-export type AssistantContext = { application_id: string | null; job_id: string | null; action_id: string | null };
+export type AssistantContext = { application_id: string | null; action_id: string | null };
 
 export type CandidateBrief = { application_id: string; candidate_id: string; name: string; job_title: string; stage: ApplicationStage };
 
@@ -34,33 +35,15 @@ export type MessageCard = {
   error: string | null;
 };
 
-export type JobCard = {
-  type: "job";
-  action_id: string | null;
-  status: ActionStatus;
-  stage: "draft_created" | "draft_updated" | "ready_to_publish" | "published";
-  job: {
-    id: string;
-    title: string;
-    location: string | null;
-    work_arrangement: string | null;
-    seniority: string | null;
-    employment_type: string;
-    salary: string | null;
-    skills: string[];
-    summary: string | null;
-    status: string;
-    review_path: string;
-    public_path: string;
-  };
-  changes: string[];
-};
-
 export type CandidateListCard = { type: "candidates"; title: string; total: number; items: CandidateBrief[] };
 
-export type JobListCard = {
-  type: "jobs";
-  items: { id: string; title: string; location: string | null; status: string; candidates: number }[];
+/** Candidates owed something: an update, a reply, an interview confirmation or follow-up. */
+export type FollowUpListCard = {
+  type: "follow_ups";
+  title: string;
+  total: number;
+  items: { candidate: CandidateBrief; reason: string; detail: string | null; since: string | null; at: string | null }[];
+  href: string;
 };
 
 export type ClarifyCard = {
@@ -68,8 +51,6 @@ export type ClarifyCard = {
   question: string;
   options: { label: string; detail: string; reply: string; application_id: string | null }[];
 };
-
-export type AnalyticsCard = { type: "analytics"; title: string; period: string; rows: { label: string; value: string }[]; href: string };
 
 export type InterviewInfoCard = {
   type: "interview";
@@ -84,7 +65,7 @@ export type InterviewInfoCard = {
   } | null;
 };
 
-export type AssistantCard = MessageCard | JobCard | CandidateListCard | JobListCard | ClarifyCard | AnalyticsCard | InterviewInfoCard;
+export type AssistantCard = MessageCard | CandidateListCard | FollowUpListCard | ClarifyCard | InterviewInfoCard;
 
 export type AssistantSource = { type: string; id: string; label: string };
 
@@ -114,4 +95,4 @@ export type AssistantHistoryItem = {
   href: string | null;
 };
 
-export type AssistantStatus = { voice_transcription: boolean; jobs: boolean; model_name: string };
+export type AssistantStatus = { voice_transcription: boolean; model_name: string };

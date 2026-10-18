@@ -10,12 +10,12 @@ export type AssistantTurn =
   | { id: string; role: "assistant"; status: "done"; response: AssistantResponse }
   | { id: string; role: "assistant"; status: "error"; error: string };
 
-const EMPTY_CONTEXT: AssistantContext = { application_id: null, job_id: null, action_id: null };
+const EMPTY_CONTEXT: AssistantContext = { application_id: null, action_id: null };
 
 /**
  * One conversation with the recruiter assistant. Typed and spoken requests both go through send(); the
- * context the API returns (the candidate, job draft or proposal being discussed) goes back with the next
- * request, so "make it hybrid" changes the same draft. One request at a time, and each has its own id,
+ * context the API returns (the candidate or proposal being discussed) goes back with the next request,
+ * so "send it" means the draft just made. One request at a time, and each has its own id,
  * so a double click or a repeated voice result can't run anything twice.
  */
 export function useAssistant(initialApplicationId?: string) {
@@ -101,7 +101,7 @@ export function useAssistant(initialApplicationId?: string) {
     );
   }, []);
 
-  /** Run a proposal (send the message, publish the job). The result replaces the proposal's card. */
+  /** Run a proposal (send the message). The result replaces the proposal's card. */
   const confirm = useCallback(
     async (actionId: string, body?: string): Promise<AssistantResponse> => {
       try {

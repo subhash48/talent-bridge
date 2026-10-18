@@ -14,7 +14,6 @@ from pydantic import BaseModel, BeforeValidator, ValidationError
 
 from app.core.config import settings
 from app.schemas.ai import AskContent, DraftContent, DraftPurpose
-from app.schemas.analytics import AnalyticsInsight
 from app.schemas.assistant import AssistantIntent
 from app.schemas.demo import (
     MAX_ABOUT_ROLE,
@@ -32,7 +31,6 @@ from app.schemas.portal import AssistContent, PrepContent
 from app.services.ai.client import AIProvider, AIProviderError
 from app.services.ai.context import SECTIONS, CandidateContext
 from app.services.ai.portal_context import PortalContext
-from app.services.analytics.insights import InsightFacts
 
 Model = TypeVar("Model", bound=BaseModel)
 
@@ -126,12 +124,12 @@ Write the job posting for this role. Return a JSON object with exactly these key
 # The recruiter assistant: a request (typed, or transcribed speech) as one structured action
 # (schemas/assistant.AssistantIntent). The model only reads the request; the engine resolves, checks,
 # asks for confirmation and carries it out.
-ASSISTANT_SYSTEM_PROMPT = """You turn a recruiter's request in {organization}'s recruiting workspace into one structured action. You never carry anything out and never answer the request yourself.
+ASSISTANT_SYSTEM_PROMPT = """You turn a recruiter's request in {organization}'s recruiting workspace into one structured action. The workspace keeps candidates informed: who needs an update, what they're waiting for, and messages to them. You never carry anything out and never answer the request yourself.
 
 Rules:
 - Pick exactly one action. Copy names, job titles and details as the recruiter said them; never invent a candidate, job, number or date.
-- "draft", "write", "prepare" or "preview" means mode "draft"; "send", "email", "ask", "invite" or "publish" means mode "execute".
-- Race, ethnicity, disability and sexual orientation may only appear in an aggregate analytics question (action "analytics" with metric "demographics"). Never put them in a search, a message or a question about a candidate.
+- "draft", "write", "prepare" or "preview" means mode "draft"; "send", "email", "ask", "invite" or "remind" means mode "execute".
+- Never put race, ethnicity, disability, sexual orientation or any other personal characteristic in a search, a message or a question about a candidate.
 - Respond with a single JSON object only."""
 
 ASSISTANT_PROMPT = """[conversation context]
@@ -141,38 +139,23 @@ ASSISTANT_PROMPT = """[conversation context]
 {text}
 
 Actions and their fields:
+- who_needs_update: who is owed an update today ("who needs an update?", "who's waiting on us?").
+- unanswered: candidates whose messages have no reply yet.
+- unconfirmed_interviews: upcoming interviews the candidates haven't confirmed.
+- no_follow_up: candidates who interviewed recently and haven't heard from us since.
+- draft_message: a message to one candidate ("draft Sarah an update", "remind Priya about her interview"). candidate_name, instructions (what it should say), mode.
 - send_interview_email: ask a candidate to schedule an interview. candidate_name, job_title (only if said), interview {{"interview_type", "duration_minutes", "timeframe"}}, mode.
-- draft_message: any other message to a candidate. candidate_name, instructions (what it should say), mode.
-- create_job: a new job. job {{"title", "department", "location", "work_arrangement" (On-site|Hybrid|Remote), "employment_type" (Full-time|Part-time|Contract|Internship|Temporary), "seniority" (Internship|Entry Level|Mid Level|Senior|Staff|Principal|Manager|Director), "salary_min", "salary_max" (yearly whole units: "90 to 120K" is 90000 and 120000), "skills_add" (array), "notes" (the recruiter's description of the role, in their words)}}.
-- update_job: change the job draft in the context. job {{only what changes; "skills_add", "skills_remove", "shorter": true to shorten the description}}, job_title only if they name another job.
-- publish_job: publish the job in the context, or job_title.
-- list_jobs: show the open jobs.
 - search_candidates: stage (sourced|screening|interview|offer|hired|rejected), job_title, candidate_name.
-- candidate_info: a question about one candidate's application. candidate_name.
-- next_interview: candidate_name.
-- analytics: how candidates use the candidate portal. metric (overview|active_candidates|weekly_engaged|avg_engagement_time|repeat_visit_rate|engagement_change|top_topics|peak_activity|regions|demographics), period (today|this_week|last_7_days|this_month|last_month|last_30_days|last_90_days|this_year), demographic (region|race_ethnicity|disability_status|sexual_orientation).
-- confirm: "yes", "send it", "publish it" about the pending action in the context.
-- cancel: dismiss the pending action in the context.
+- candidate_info: a question about one candidate's application or communication. candidate_name.
+- next_interview: one candidate's next interview, or whether it's confirmed. candidate_name.
+- confirm: "yes", "send it" about the pending message in the context.
+- cancel: dismiss the pending message in the context.
 - help: anything else.
 
-Return a JSON object with "action" and only the fields that apply, for example {{"action": "send_interview_email", "mode": "execute", "candidate_name": "Sophia", "interview": {{"interview_type": "Recruiter interview", "duration_minutes": 30, "timeframe": "next Tuesday"}}}}."""
-
-INSIGHTS_SYSTEM_PROMPT = """You write short insights for {organization}'s recruiters about how candidates use the candidate portal, to improve the candidate experience.
-
-Rules:
-- Use only the facts provided, and only their numbers. Don't calculate new numbers.
-- Write about the experience: communication, portal usability, interview preparation and the recruiting workflow.
-- Never judge, rank, score or prioritise candidates, never suggest hiring, rejecting or advancing anyone, and never treat engagement as a sign of quality.
-- Never mention race, ethnicity, disability, sexual orientation, gender or any other personal characteristic.
-- Respond with a single JSON object only."""
-
-INSIGHTS_PROMPT = """[facts]
-{facts}
-
-Write 2 to 4 insights. Return a JSON object: {{"insights": [{{"title": string of at most 60 characters, "detail": one or two sentences of at most 200 characters}}]}}."""
+Return a JSON object with "action" and only the fields that apply, for example {{"action": "draft_message", "mode": "draft", "candidate_name": "Sarah", "instructions": "an update"}}."""
 
 TRANSCRIPTION_PROMPT = (
-    "A recruiter talking to a recruiting assistant about candidates, interviews and jobs. {vocabulary}"
+    "A recruiter talking to a recruiting assistant about candidates, interviews and updates to send. {vocabulary}"
 )
 
 NOT_GIVEN = "not given"
@@ -205,10 +188,6 @@ _HYPHENS = str.maketrans({"\u2010": "-", "\u2011": "-"})
 class _AskJSON(BaseModel):
     answer: str
     sources: list[str] = []
-
-
-class _InsightsJSON(BaseModel):
-    insights: list[AnalyticsInsight] = []
 
 
 def _or_empty(value: Any) -> Any:
@@ -320,13 +299,6 @@ class LLMProvider(AIProvider):
         system = ASSISTANT_SYSTEM_PROMPT.format(organization=settings.organization_name)
         prompt = ASSISTANT_PROMPT.format(context=context or "nothing yet", text=text)
         return self._parse(await self._generate(system, prompt), AssistantIntent)
-
-    async def portal_insights(self, facts: InsightFacts) -> list[AnalyticsInsight]:
-        system = INSIGHTS_SYSTEM_PROMPT.format(organization=settings.organization_name)
-        result = self._parse(
-            await self._generate(system, INSIGHTS_PROMPT.format(facts=facts.to_prompt())), _InsightsJSON
-        )
-        return result.insights
 
     async def _post(self, url: str, *, headers: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
         try:

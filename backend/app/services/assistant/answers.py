@@ -1,61 +1,45 @@
-"""The assistant's read-only answers: analytics, jobs, candidate lists and interviews.
+"""The assistant's read-only answers: who needs an update, unanswered messages, interviews to confirm
+or follow up on, candidate lists and interviews.
 
-Each comes from the same service the workspace page uses (analytics from services/analytics and
-services/demographics, candidate lists from candidate_service.list_pipeline in its usual order,
-jobs from the jobs table), so an answer always matches what the recruiter would see there.
+Each comes from the same service the workspace page uses (communication health from
+services/communication, as on Today; candidate lists from candidate_service.list_pipeline in its
+usual order), so an answer always matches what the recruiter would see there.
 """
 
 import uuid
 from datetime import datetime, timedelta
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from app.core.enums import InterviewStatus, JobStatus
-from app.models import Application, Interview, Job
+from app.core.enums import CommunicationRuleKey, InterviewStatus
+from app.models import Application, Interview
 from app.models.base import utcnow
-from app.schemas.ai import AISource
-from app.schemas.analytics import RangePreset
 from app.schemas.assistant import (
-    AnalyticsCard,
-    AnalyticsRow,
     AssistantIntent,
     CandidateBrief,
     CandidateListCard,
+    FollowUpItem,
+    FollowUpListCard,
     InterviewCardItem,
     InterviewInfoCard,
-    JobListCard,
-    JobListItem,
 )
-from app.services import candidate_service, demographics
-from app.services.analytics.periods import resolve_period
-from app.services.analytics.portal import portal_stats, present
+from app.services import candidate_service
 from app.services.assistant.resolve import find_jobs
+from app.services.communication import service as communication
 
-PERIOD_PRESETS: dict[str, RangePreset] = {
-    "today": "today",
-    "this_week": "last_7_days",
-    "last_7_days": "last_7_days",
-    "this_month": "last_30_days",
-    "last_month": "last_30_days",
-    "last_30_days": "last_30_days",
-    "last_90_days": "last_90_days",
-    "this_year": "this_year",
-}
-PERIOD_PHRASES: dict[str, str] = {
-    "today": "today",
-    "last_7_days": "in the last 7 days",
-    "last_30_days": "in the last 30 days",
-    "last_90_days": "in the last 90 days",
-    "this_year": "this year",
-}
+K = CommunicationRuleKey
+SHOWN = 5  # names in a reply; the card lists the rest
+WEEK = timedelta(days=7)
 HELP = (
-    "Here's what I can do:\n"
-    '- **Messages:** "Send Sophia an interview invitation for next Tuesday". You confirm before anything is sent.\n'
-    '- **Jobs:** "Create an entry-level Recruiting Engineer job in San Francisco", then "make it hybrid" or '
-    '"publish the job".\n'
-    '- **Candidates:** "Show candidates interviewing for Product Designer" or "Tell me about Sophia\'s application".\n'
-    '- **Analytics:** "What were candidates looking for this week?"'
+    "I help you keep every candidate informed. Try:\n"
+    '- **"Who needs an update today?"**\n'
+    '- **"Draft Sarah an update."** You edit and confirm before anything is sent.\n'
+    '- **"Which candidates have unanswered questions?"**\n'
+    '- **"Which interviews need confirmation?"**\n'
+    '- **"Who interviewed this week and hasn\'t had a follow-up?"**\n'
+    '- Or ask about one candidate: "Tell me about Sophia\'s application".'
 )
 
 
@@ -69,169 +53,152 @@ def brief(application: Application) -> CandidateBrief:
     )
 
 
-def analytics_source(preset: str, label: str) -> AISource:
-    return AISource(type="analytics", id=preset, label=f"Candidate Portal Analytics · {label}")
+# Communication
 
 
-# Analytics
+def _names(items: list[FollowUpItem], describe) -> str:  # type: ignore[no-untyped-def]
+    lines = [f"- **{item.candidate.name}** ({item.candidate.job_title}): {describe(item)}" for item in items[:SHOWN]]
+    if len(items) > SHOWN:
+        lines.append(f"- …and {len(items) - SHOWN} more")
+    return "\n".join(lines)
 
 
-async def analytics(
-    session: AsyncSession, intent: AssistantIntent, utc_offset_minutes: int
-) -> tuple[str, AnalyticsCard, list[AISource]]:
-    metric = intent.metric or "overview"
-    default: RangePreset = "last_7_days" if metric in ("weekly_engaged",) else "last_30_days"
-    preset = PERIOD_PRESETS.get(intent.period or "", default)
-    if metric in ("regions", "demographics"):
-        return await _demographics(session, intent)
-
-    period = resolve_period(preset, utc_offset_minutes=utc_offset_minutes)
-    stats = await portal_stats(session, period)
-    view = present(stats)
-    when = PERIOD_PHRASES.get(preset, f"in {period.label}")
-    kpis = {kpi.key: kpi for kpi in view.kpis}
-    href = f"/recruiter/analytics?range={preset}"
-    sources = [analytics_source(preset, period.label)]
-
-    if not stats.visits and not stats.active_candidates:
-        reply = f"There's no Candidate Portal activity {when} yet."
-        return reply, AnalyticsCard(title="Candidate Portal", period=period.label, rows=[], href=href), sources
-
-    if metric == "top_topics":
-        items = [item for item in view.topics.items if item.count]
-        if not items:
-            reply = f"Candidates haven't looked at any particular topic {when} yet."
-        else:
-            top, rest = items[0], items[1:3]
-            reply = (
-                f"{when.capitalize()}, candidates were most interested in **{top.label}**: {top.share}% of "
-                f"categorized portal interactions ({top.count:,})."
-            )
-            if rest:
-                reply += " Next: " + " and ".join(f"{item.label} ({item.share}%)" for item in rest) + "."
-        rows = [AnalyticsRow(label=item.label, value=f"{item.share}% · {item.count:,}") for item in view.topics.items]
-        card = AnalyticsCard(title="What candidates are looking for", period=period.label, rows=rows, href=href)
-        return reply, card, sources
-
-    if metric == "peak_activity":
-        peak = view.heatmap.peak
-        reply = (
-            f"Candidates are most active on **{peak.day}s, {peak.window}** (your time): {peak.share}% of portal visits "
-            f"{when} started then."
-            if peak
-            else f"There aren't enough portal visits {when} to show a peak."
-        )
-        rows = [AnalyticsRow(label="Peak window", value=f"{peak.day} · {peak.window}")] if peak else []
-        if peak:
-            rows.append(AnalyticsRow(label="Share of visits", value=f"{peak.share}%"))
-        return (
-            reply,
-            AnalyticsCard(title="When candidates use the portal", period=period.label, rows=rows, href=href),
-            sources,
-        )
-
-    if metric == "engagement_change":
-        change = stats.visits_change
-        visits, before = len(stats.visits), len(stats.previous_visits)
-        if change is None:
-            reply = f"There were {visits:,} portal visits {when}, and none in the period before, so there's no change to compare."
-        else:
-            direction = "up" if change > 0 else "down" if change < 0 else "flat"
-            amount = f" {abs(round(change))}%" if direction != "flat" else ""
-            reply = (
-                f"Portal visits are **{direction}{amount}** {when} compared with the period before "
-                f"({visits:,} vs {before:,})."
-            )
-        active = kpis["active_candidates"]
-        reply += f" Active candidates: {active.display}{_change(active.change, 'percent')}."
-        rows = [
-            AnalyticsRow(label="Portal visits", value=f"{visits:,}{_change(change, 'percent')}"),
-            AnalyticsRow(label="Active candidates", value=f"{active.display}{_change(active.change, 'percent')}"),
-        ]
-        return reply, AnalyticsCard(title="Engagement change", period=period.label, rows=rows, href=href), sources
-
-    sentences = {
-        "active_candidates": f"**{kpis['active_candidates'].display} candidates** used the Candidate Portal {when}",
-        "weekly_engaged": f"**{kpis['weekly_engaged'].display} candidates** had meaningful portal activity in the last 7 days",
-        "avg_engagement_time": f"Portal visits lasted **{kpis['avg_engagement_time'].display}** on average {when}",
-        "repeat_visit_rate": f"**{kpis['repeat_visit_rate'].display}** of visiting candidates came back more than once {when}",
-    }
-    if metric in sentences:
-        kpi = kpis[metric]
-        reply = f"{sentences[metric]}{_change(kpi.change, kpi.change_unit, kpi.comparison)}."
-    else:
-        reply = (
-            f"{when.capitalize()}: {kpis['active_candidates'].display} active candidates, "
-            f"{kpis['avg_engagement_time'].display} average engagement time and a "
-            f"{kpis['repeat_visit_rate'].display} repeat visit rate."
-        )
-    rows = [
-        AnalyticsRow(label=kpi.label, value=f"{kpi.display}{_change(kpi.change, kpi.change_unit)}") for kpi in view.kpis
-    ]
-    return reply, AnalyticsCard(title="Candidate Portal", period=period.label, rows=rows, href=href), sources
+def _count(total: int, one: str, many: str) -> str:
+    return f"**{total} {one if total == 1 else many}**"
 
 
-async def _demographics(session: AsyncSession, intent: AssistantIntent) -> tuple[str, AnalyticsCard, list[AISource]]:
-    """The same aggregates as the Analytics page, suppression included. Never anyone's own answer."""
-    summary = await demographics.aggregate(session)
-    wanted = "region" if intent.metric == "regions" else intent.demographic
-    dimensions = [d for d in summary.dimensions if wanted is None or d.dimension == wanted]
-    href = "/recruiter/analytics#demographics"
-    sources = [
-        AISource(type="analytics", id="demographics", label="Voluntary demographics · all responses, aggregated")
-    ]
-    rows: list[AnalyticsRow] = []
-    sentences: list[str] = []
-    for dimension in dimensions:
-        if dimension.suppressed:
-            sentences.append(f"There aren't enough voluntary {dimension.label.lower()} responses to report yet.")
-            continue
-        top = ", ".join(f"{bucket.label} {bucket.share}%" for bucket in dimension.buckets[:4])
-        sentences.append(f"**{dimension.label}** (about {dimension.respondents_approx} respondents): {top}.")
-        rows.extend(
-            AnalyticsRow(label=f"{dimension.label}: {bucket.label}", value=f"{bucket.share}%")
-            for bucket in dimension.buckets
-        )
-    sentences.append(f"Groups smaller than {summary.min_group_size} are combined so no one can be identified.")
-    title = "Top regions" if wanted == "region" else "Voluntary demographics"
-    return " ".join(sentences), AnalyticsCard(title=title, period="All responses", rows=rows, href=href), sources
-
-
-def _change(change: float | None, unit: str, comparison: str = "") -> str:
-    if change is None:
-        return ""
-    suffix = "%" if unit == "percent" else " pts"
-    rounded = round(change)
-    words = f" {comparison}" if comparison else ""
-    return f" ({'+' if rounded >= 0 else '−'}{abs(rounded)}{suffix}{words})"
-
-
-# Jobs and candidates
-
-
-async def open_jobs(session: AsyncSession) -> tuple[str, JobListCard]:
-    jobs = (
-        await session.scalars(select(Job).where(Job.status == JobStatus.OPEN).order_by(Job.created_at.desc()))
-    ).all()
-    counts = dict(
-        (
-            await session.execute(
-                select(Application.job_id, func.count())
-                .where(Application.archived_at.is_(None), Application.job_id.in_([job.id for job in jobs]))
-                .group_by(Application.job_id)
-            )
-        ).all()
-    )
+async def who_needs_update(session: AsyncSession) -> tuple[str, FollowUpListCard]:
+    """Everyone on Today: an SLA rule's threshold has passed."""
+    attention = await communication.attention_list(session)
     items = [
-        JobListItem(
-            id=job.id, title=job.title, location=job.location, status=job.status.value, candidates=counts.get(job.id, 0)
+        FollowUpItem(
+            candidate=CandidateBrief(
+                application_id=item.candidate.application_id,
+                candidate_id=item.candidate.candidate_id,
+                name=item.candidate.full_name,
+                job_title=item.candidate.job_title,
+                stage=item.stage,
+            ),
+            reason=item.reasons[0].title,
+            detail=item.reasons[0].detail,
+            since=item.reasons[0].since,
         )
-        for job in jobs
+        for item in attention.items
     ]
+    card = FollowUpListCard(title="Needs an update", total=len(items), items=items)
+    if not items:
+        return "Nobody needs an update right now: every candidate has heard from you on time.", card
     reply = (
-        f"You have **{len(items)} open job{'s' if len(items) != 1 else ''}**." if items else "You have no open jobs."
+        f"{_count(len(items), 'candidate needs', 'candidates need')} an update:\n"
+        + _names(items, lambda item: item.reason.lower())
+        + '\n\nSay "Draft an update for …" to write one, or open Today.'
     )
-    return reply, JobListCard(items=items)
+    return reply, card
+
+
+async def _assessed(session: AsyncSession, now: datetime):  # type: ignore[no-untyped-def]
+    return await communication.assess_all(session, await communication.pipeline_applications(session), now)
+
+
+async def unanswered(session: AsyncSession) -> tuple[str, FollowUpListCard]:
+    """Candidates whose message (anything but a thank-you note) has no reply yet, longest waiting first."""
+    now = utcnow()
+    waiting = [
+        (snapshot.application, health.open_question)
+        for snapshot, health in await _assessed(session, now)
+        if health.open_question is not None
+    ]
+    waiting.sort(key=lambda pair: pair[1].asked_at)
+    items = [
+        FollowUpItem(
+            candidate=brief(application), reason="Waiting for a reply", detail=question.excerpt, since=question.asked_at
+        )
+        for application, question in waiting
+    ]
+    card = FollowUpListCard(title="Unanswered messages", total=len(items), items=items)
+    if not items:
+        return "No candidate is waiting for a reply.", card
+    reply = f"{_count(len(items), 'candidate is', 'candidates are')} waiting for a reply:\n" + _names(
+        items, lambda item: f"\u201c{item.detail}\u201d"
+    )
+    return reply, card
+
+
+async def unconfirmed_interviews(session: AsyncSession, utc_offset_minutes: int) -> tuple[str, FollowUpListCard]:
+    """Interviews in the coming week the candidate hasn't confirmed, soonest first."""
+    now = utcnow()
+    rows = await session.scalars(
+        select(Interview)
+        .join(Application, Interview.application_id == Application.id)
+        .where(
+            Interview.status == InterviewStatus.SCHEDULED,
+            Interview.scheduled_at > now,
+            Interview.scheduled_at <= now + WEEK,
+            Interview.confirmed_at.is_(None),
+            Application.archived_at.is_(None),
+        )
+        .order_by(Interview.scheduled_at)
+    )
+    interviews = list(rows)
+    applications = {
+        application.id: application
+        for application in await session.scalars(
+            select(Application)
+            .where(Application.id.in_([interview.application_id for interview in interviews]))
+            .options(selectinload(Application.candidate), selectinload(Application.job))
+        )
+    }
+    items = [
+        FollowUpItem(
+            candidate=brief(applications[interview.application_id]),
+            reason="Not confirmed",
+            detail=interview.title,
+            at=interview.scheduled_at,
+        )
+        for interview in interviews
+        if interview.application_id in applications
+    ]
+    card = FollowUpListCard(title="Interviews to confirm", total=len(items), items=items)
+    if not items:
+        return "Every interview in the coming week is confirmed.", card
+    reply = (
+        f"{_count(len(items), 'interview', 'interviews')} in the coming week "
+        f"{'isn' if len(items) == 1 else 'aren'}'t confirmed yet:\n"
+        + _names(items, lambda item: f"{item.detail}, {local_time(item.at, utc_offset_minutes)}" if item.at else "")
+        + '\n\nSay "Remind … about the interview" to draft a reminder.'
+    )
+    return reply, card
+
+
+async def no_follow_up(session: AsyncSession) -> tuple[str, FollowUpListCard]:
+    """Candidates whose interview ended in the last week and who haven't heard from us since."""
+    now = utcnow()
+    found = [
+        (snapshot.application, health.last_interview)
+        for snapshot, health in await _assessed(session, now)
+        if health.last_interview is not None
+        and not health.last_interview.followed_up
+        and now - health.last_interview.ended_at <= WEEK
+    ]
+    found.sort(key=lambda pair: pair[1].ended_at)
+    items = [
+        FollowUpItem(
+            candidate=brief(application), reason="No follow-up yet", detail=interview.title, since=interview.ended_at
+        )
+        for application, interview in found
+    ]
+    card = FollowUpListCard(title="Interviewed, no follow-up", total=len(items), items=items)
+    if not items:
+        return "Everyone who interviewed this week has heard from you since.", card
+    reply = (
+        f"{_count(len(items), 'candidate', 'candidates')} interviewed in the last week and "
+        f"{'hasn' if len(items) == 1 else 'haven'}'t heard from you since:\n"
+        + _names(items, lambda item: item.detail or "")
+    )
+    return reply, card
+
+
+# Candidates and interviews
 
 
 async def search(session: AsyncSession, intent: AssistantIntent) -> tuple[str, CandidateListCard | None]:

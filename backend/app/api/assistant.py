@@ -38,9 +38,7 @@ class AudioTooLarge(AppError):
 
 @router.get("/status", response_model=AssistantStatus, summary="What the assistant can do here")
 async def status(provider: AIProviderDep) -> AssistantStatus:
-    return AssistantStatus(
-        voice_transcription=provider.can_transcribe, jobs=settings.ashby_demo_enabled, model_name=provider.model
-    )
+    return AssistantStatus(voice_transcription=provider.can_transcribe, model_name=provider.model)
 
 
 @router.post("/requests", response_model=AssistantResponse, summary="Ask the assistant (typed or spoken)")

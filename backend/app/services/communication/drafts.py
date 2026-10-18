@@ -90,11 +90,14 @@ async def create_draft(
     health = assess(snapshot, await rule_store.load_rules(session), now)
     if reason is None:
         reason = health.attention[0].rule.value if health.attention else MANUAL_DRAFT
-    purpose, guidance = brief(reason, health, application, now)
-    note = f" The recruiter adds: {instructions}" if instructions else ""
-    written = await ai_service.draft_message(
-        session, application.id, purpose, f"{guidance}{note}".strip() or None, provider, actor
-    )
+    if reason == MANUAL_DRAFT and instructions:
+        # The recruiter said what it should say: a message that says exactly that.
+        purpose, text = DraftPurpose.CUSTOM, instructions
+    else:
+        purpose, guidance = brief(reason, health, application, now)
+        note = f" The recruiter adds: {instructions}" if instructions else ""
+        text = f"{guidance}{note}".strip()
+    written = await ai_service.draft_message(session, application.id, purpose, text or None, provider, actor)
 
     await session.execute(
         update(CommunicationDraft)

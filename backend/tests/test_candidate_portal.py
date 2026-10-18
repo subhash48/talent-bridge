@@ -299,12 +299,10 @@ async def test_candidate_ai_answers_from_safe_context(client: AsyncClient) -> No
         assert answer.startswith("I don't have access to the hiring team's internal feedback"), prompt
         assert FEEDBACK not in answer and "James" not in answer
 
-    # The recruiter sees the topics asked about, never the questions, and repeats aren't duplicated.
+    # What a candidate asks the assistant stays private: nothing new on the recruiter's timeline.
     timeline = (await client.get(f"{API}/applications/{SOPHIA_APP}/activity", params={"limit": 200})).json()
     questions = [entry["title"] for entry in timeline if entry["activity_type"] == "question_asked"]
-    assert "Asked about interview preparation" in questions
-    assert questions.count("Asked about application status") == 1
-    assert not any("chances" in title or "portfolio" in title for title in questions)
+    assert questions == ["Asked about the product team"]  # seeded, from before
 
 
 async def test_interview_prep(client: AsyncClient) -> None:

@@ -1,6 +1,7 @@
-"""The recruiter assistant: one action engine for typed and spoken requests, confirmations that run once,
-jobs through the same demo jobs as the Jobs page, analytics from the analytics services, and the
-boundaries it never crosses (candidates' access, demographics, ranking)."""
+"""The recruiter assistant: one action engine for typed and spoken requests about candidate
+communication (who needs an update, unanswered messages, interviews to confirm or follow up on),
+drafts through the same ledger as Today, confirmations that run once, and the boundaries it never
+crosses (candidates' access, personal characteristics, ranking)."""
 
 import json
 import uuid
@@ -12,10 +13,9 @@ from httpx import AsyncClient
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.core.config import settings
 from app.core.enums import AssistantActionStatus
 from app.main import app
-from app.models import Application, AssistantAction, CandidateDemographics, DemoJobPosting, Job, Message
+from app.models import Application, AssistantAction, Message
 from app.models.base import utcnow
 from app.schemas.assistant import AssistantIntent, InterviewDetails
 from app.services import message_service
@@ -27,10 +27,6 @@ from tests.conftest import API, SOPHIA_AUTH, application_id, bearer, job_id
 
 SOPHIA_APP = application_id("sophia-martinez")
 INVITE = "Send Sophia a personalized email asking her to schedule a 30-minute recruiter interview next Tuesday."
-CREATE_JOB = (
-    "Create an entry-level Recruiting Engineer job in San Francisco. Hybrid. Salary 90 to 120K. "
-    "We need AI automation, recruiting, sourcing and Python."
-)
 
 
 async def ask(client: AsyncClient, text: str, **body: Any) -> dict[str, Any]:
@@ -54,27 +50,16 @@ def use_provider(provider: Any) -> None:
     app.dependency_overrides[get_ai_provider] = lambda: provider
 
 
-@pytest.fixture
-def jobs_on(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(settings, "enable_ashby_demo", True)
-
-
-@pytest.fixture
-def jobs_off(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Whatever backend/.env says."""
-    monkeypatch.setattr(settings, "enable_ashby_demo", False)
-
-
 # Who may use it
 
 
-async def test_only_recruiters_reach_the_assistant(anonymous: AsyncClient, client: AsyncClient, jobs_off: None) -> None:
+async def test_only_recruiters_reach_the_assistant(anonymous: AsyncClient, client: AsyncClient) -> None:
     candidate = bearer(SOPHIA_AUTH)
     action = uuid.uuid4()
     calls = [
         ("get", "/assistant/status", None),
         ("get", "/assistant/actions", None),
-        ("post", "/assistant/requests", {"text": "Show my open jobs"}),
+        ("post", "/assistant/requests", {"text": "Who needs an update today?"}),
         ("post", f"/assistant/actions/{action}/confirm", {}),
         ("post", f"/assistant/actions/{action}/cancel", None),
     ]
@@ -88,11 +73,7 @@ async def test_only_recruiters_reach_the_assistant(anonymous: AsyncClient, clien
         f"{API}/assistant/transcribe", content=b"audio", headers={**candidate, "content-type": "audio/webm"}
     )
     assert transcribe.status_code == 403
-    assert (await client.get(f"{API}/assistant/status")).json() == {
-        "voice_transcription": False,
-        "jobs": False,
-        "model_name": "mock",
-    }
+    assert (await client.get(f"{API}/assistant/status")).json() == {"voice_transcription": False, "model_name": "mock"}
 
 
 # One engine for text and voice
@@ -122,25 +103,20 @@ async def test_a_request_is_understood_as_one_structured_action(client: AsyncCli
         instructions=INVITE,
         interview=InterviewDetails(interview_type="Recruiter interview", duration_minutes=30, timeframe="next Tuesday"),
     )
-    assert parse("Draft a message telling Daniel his interview moved to Thursday.").action == "draft_message"
-    assert parse("How many candidates used the portal this week?").model_dump(exclude_defaults=True) == {
-        "action": "analytics",
-        "metric": "active_candidates",
-        "period": "this_week",
-    }
-    job = parse(CREATE_JOB).job
-    assert job is not None
-    assert (job.title, job.location, job.work_arrangement, job.seniority) == (
-        "Recruiting Engineer",
-        "San Francisco",
-        "Hybrid",
-        "Entry Level",
-    )
-    assert (job.salary_min, job.salary_max) == (90_000, 120_000)
-    assert job.skills_add == ["AI automation", "Recruiting", "Sourcing", "Python"]
-    edit = parse("Make the salary 100 to 130 and add talent research.", job_in_context=True)
-    assert edit.action == "update_job" and edit.job is not None
-    assert (edit.job.salary_min, edit.job.salary_max, edit.job.skills_add) == (100_000, 130_000, ["Talent research"])
+    for text, action in (
+        ("Draft a message telling Daniel his interview moved to Thursday.", "draft_message"),
+        ("Who needs an update today?", "who_needs_update"),
+        ("Which candidates have unanswered questions?", "unanswered"),
+        ("Which interviews need confirmation?", "unconfirmed_interviews"),
+        ("Who interviewed this week and has not received follow-up?", "no_follow_up"),
+        ("Draft Sarah an update.", "draft_message"),
+        ("Remind Priya about her interview", "draft_message"),
+        ("Is Priya's interview confirmed?", "next_interview"),
+        ("Show candidates in screening", "search_candidates"),
+        ("Create a Backend Engineer job", "help"),
+    ):
+        assert parse(text).action == action, text
+    assert parse("Draft Sarah an update.").candidate_name == "Sarah"
 
 
 async def test_a_models_reading_is_used_and_a_failed_one_falls_back(client: AsyncClient) -> None:
@@ -148,11 +124,11 @@ async def test_a_models_reading_is_used_and_a_failed_one_falls_back(client: Asyn
         name, model = "reader", "reader-1"
 
         async def understand_request(self, text: str, context: str) -> AssistantIntent:
-            return AssistantIntent(action="list_jobs")
+            return AssistantIntent(action="who_needs_update")
 
     use_provider(Reader())
-    answer = await ask(client, "whatever the words, the model said: jobs")
-    assert (answer["intent"], answer["model_name"]) == ("list_jobs", "reader-1")
+    answer = await ask(client, "whatever the words, the model said: who needs an update")
+    assert (answer["intent"], answer["model_name"]) == ("who_needs_update", "reader-1")
 
     class Broken(MockProvider):
         name, model = "broken", "broken-1"
@@ -161,8 +137,8 @@ async def test_a_models_reading_is_used_and_a_failed_one_falls_back(client: Asyn
             raise AIProviderError("down")
 
     use_provider(Broken())
-    answer = await ask(client, "Show my open jobs")
-    assert (answer["intent"], answer["model_name"]) == ("list_jobs", "rules")
+    answer = await ask(client, "Who needs an update today?")
+    assert (answer["intent"], answer["model_name"]) == ("who_needs_update", "rules")
 
 
 async def test_groq_reads_a_request_as_json() -> None:
@@ -196,7 +172,7 @@ async def test_an_interview_invitation_is_written_and_sent_only_when_confirmed(
     assert card["body"].startswith("Hi Sophia,\n\nThanks again for your interest in the Product Designer role.")
     assert "30-minute recruiter interview next Tuesday" in card["body"]
     assert card["body"].endswith("Best,\nAlex")
-    assert answer["context"] == {"application_id": SOPHIA_APP, "job_id": None, "action_id": answer["id"]}
+    assert answer["context"] == {"application_id": SOPHIA_APP, "action_id": answer["id"]}
     assert len(await messages_to(sessions, SOPHIA_APP)) == before  # nothing sent yet
 
     confirmed = await client.post(f"{API}/assistant/actions/{answer['id']}/confirm", json={})
@@ -353,102 +329,69 @@ async def test_a_repeated_request_runs_once(client: AsyncClient, sessions: async
 # Jobs: the same demo jobs as the Jobs page
 
 
-async def test_a_spoken_job_is_a_normal_draft_that_follow_ups_change_and_publishing_lists(
-    client: AsyncClient, anonymous: AsyncClient, sessions: async_sessionmaker[AsyncSession], jobs_on: None
-) -> None:
-    created = await ask(client, CREATE_JOB, input_type="voice", client_request_id="create-job-0001")
-    assert (created["intent"], created["status"]) == ("create_job", "completed")
-    job = created["cards"][0]["job"]
-    assert (job["title"], job["location"], job["work_arrangement"], job["seniority"], job["salary"], job["status"]) == (
-        "Recruiting Engineer",
-        "San Francisco",
-        "Hybrid",
-        "Entry Level",
-        "$90K–$120K",
-        "draft",
-    )
-    assert {"AI automation", "Recruiting", "Sourcing", "Python"} <= set(job["skills"])
-    # The same request again (a double click) creates nothing more.
-    assert await ask(client, CREATE_JOB, input_type="voice", client_request_id="create-job-0001") == created
-
-    # It is an ordinary job with an ordinary posting, as the editor makes.
-    jobs = (await client.get(f"{API}/jobs")).json()
-    assert [(item["title"], item["status"]) for item in jobs if item["id"] == job["id"]] == [
-        ("Recruiting Engineer", "draft")
-    ]
-    demo = (await client.get(f"{API}/demo/jobs/{job['id']}")).json()
-    assert (demo["salary_min"], demo["salary_max"], demo["status"]) == (90_000, 120_000, "draft")
-    assert demo["summary"] and demo["responsibilities"] and demo["requirements"]
-
-    edited = await ask(client, "Make the salary 100 to 130 and add talent research.", context=created["context"])
-    assert edited["intent"] == "update_job" and edited["cards"][0]["job"]["id"] == job["id"]
-    assert edited["cards"][0]["job"]["salary"] == "$100K–$130K"
-    assert "Talent research" in edited["cards"][0]["job"]["skills"]
-    assert edited["cards"][0]["changes"] == ["Salary: $100K–$130K", "Added Talent research"]
-    hybrid = await ask(client, "Make it remote.", context=edited["context"])
-    assert hybrid["cards"][0]["job"]["work_arrangement"] == "Remote"
-    shorter = await ask(client, "Make the description shorter.", context=hybrid["context"])
-    assert len((await client.get(f"{API}/demo/jobs/{job['id']}")).json()["responsibilities"]) <= 4
-    async with sessions() as session:
-        assert await session.scalar(select(func.count()).select_from(DemoJobPosting)) == 1  # one draft, edited
-
-    proposed = await ask(client, "Publish the job.", context=shorter["context"])
-    assert (proposed["status"], proposed["cards"][0]["stage"]) == ("proposed", "ready_to_publish")
-    assert (await anonymous.get(f"{API}/demo/careers/jobs")).json() == []  # not until confirmed
-    published = (await client.post(f"{API}/assistant/actions/{proposed['id']}/confirm")).json()
-    assert published["status"] == "completed" and published["cards"][0]["stage"] == "published"
-
-    listed = (await anonymous.get(f"{API}/demo/careers/jobs")).json()
-    assert [(item["id"], item["title"], item["salary_min"], item["salary_max"]) for item in listed] == [
-        (job["id"], "Recruiting Engineer", 100_000, 130_000)
-    ]
-    assert [item["status"] for item in (await client.get(f"{API}/jobs")).json() if item["id"] == job["id"]] == ["open"]
-    summaries = [item["summary"] for item in (await client.get(f"{API}/assistant/actions")).json()]
-    assert summaries[0] == "Published Recruiting Engineer"
-    assert "Created draft Recruiting Engineer" in summaries
-
-
-async def test_without_the_demo_jobs_switch_jobs_arent_created(
-    client: AsyncClient, sessions: async_sessionmaker[AsyncSession], jobs_off: None
-) -> None:
-    answer = await ask(client, CREATE_JOB)
-    assert "switched off" in answer["reply"]
-    async with sessions() as session:
-        assert (
-            await session.scalar(select(func.count()).select_from(Job).where(Job.title == "Recruiting Engineer")) == 0
-        )
-
-
 # Questions
 
 
-async def test_analytics_questions_are_answered_from_the_analytics(client: AsyncClient) -> None:
-    analytics = (await client.get(f"{API}/analytics/portal", params={"range": "last_7_days"})).json()
-    top = analytics["topics"]["items"][0]
-    answer = await ask(client, "What were candidates looking for the most this week?")
-    assert answer["intent"] == "analytics"
-    assert f"**{top['label']}**: {top['share']}%" in answer["reply"]
-    assert answer["sources"][0]["label"] == "Candidate Portal Analytics · Last 7 days"
-    assert answer["cards"][0]["href"] == "/recruiter/analytics?range=last_7_days"
+async def test_who_needs_an_update_is_todays_list(client: AsyncClient) -> None:
+    attention = (await client.get(f"{API}/communication/attention")).json()["items"]
+    answer = await ask(client, "Who needs an update today?")
+    [card] = answer["cards"]
+    assert (answer["intent"], card["type"], card["href"]) == ("who_needs_update", "follow_ups", "/recruiter/today")
+    assert [item["candidate"]["application_id"] for item in card["items"]] == [
+        item["candidate"]["application_id"] for item in attention
+    ]
+    assert card["total"] == len(attention) > 0
+    assert f"**{attention[0]['candidate']['full_name']}**" in answer["reply"]
+    assert card["items"][0]["reason"] == attention[0]["reasons"][0]["title"]
 
-    active = next(kpi for kpi in analytics["kpis"] if kpi["key"] == "active_candidates")
-    used = await ask(client, "How many candidates used the portal this week?")
-    assert used["reply"].startswith(f"**{active['display']} candidate")
+
+async def test_unanswered_messages_unconfirmed_interviews_and_missing_follow_ups(client: AsyncClient) -> None:
+    unanswered = await ask(client, "Which candidates have unanswered questions?")
+    [card] = unanswered["cards"]
+    assert unanswered["intent"] == "unanswered" and card["total"] > 0
+    for item in card["items"]:
+        health = (await client.get(f"{API}/applications/{item['candidate']['application_id']}/communication")).json()
+        assert health["open_question"]["excerpt"] == item["detail"]
+
+    unconfirmed = await ask(client, "Which interviews need confirmation?")
+    [card] = unconfirmed["cards"]
+    names = {item["candidate"]["name"] for item in card["items"]}
+    assert unconfirmed["intent"] == "unconfirmed_interviews"
+    assert "Priya Desai" in names and "Sophia Martinez" not in names  # Sophia confirmed hers
+    assert all(item["at"] and item["reason"] == "Not confirmed" for item in card["items"])
+
+    followed = await ask(client, "Who interviewed this week and has not received follow-up?")
+    [card] = followed["cards"]
+    assert followed["intent"] == "no_follow_up"
+    for item in card["items"]:
+        health = (await client.get(f"{API}/applications/{item['candidate']['application_id']}/communication")).json()
+        assert health["last_interview"]["followed_up"] is False
 
 
-async def test_demographic_questions_get_aggregates_and_never_a_person(
-    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
-) -> None:
-    async with sessions() as session:
-        ids = (await session.scalars(select(Application.candidate_id).limit(12))).all()
-        for index, candidate in enumerate(ids):
-            session.add(CandidateDemographics(candidate_id=candidate, race_ethnicity="asian" if index < 6 else "white"))
-        await session.commit()
-    aggregate = await ask(client, "What share of respondents identified as Asian?")
-    assert aggregate["intent"] == "analytics"
-    assert "Asian 50%" in aggregate["reply"] and "White 50%" in aggregate["reply"]
-    assert "Sophia" not in json.dumps(aggregate)
+async def test_draft_an_update_uses_the_drafts_and_sends_once(client: AsyncClient) -> None:
+    moved = await client.patch(f"{API}/applications/{SOPHIA_APP}/stage", json={"stage": "offer"})
+    assert moved.status_code == 200
+    answer = await ask(client, "Draft Sophia an update.")
+    [card] = answer["cards"]
+    assert (card["purpose"], card["mode"]) == ("Update", "draft")
+    assert "finalising the details of your offer" in card["body"]  # written for the stage change
+    [draft] = (await client.get(f"{API}/communication/drafts", params={"application_id": SOPHIA_APP})).json()
+    assert (draft["body"], draft["reason"]) == (card["body"], "stage_update")
 
+    confirmed = (await client.post(f"{API}/assistant/actions/{answer['id']}/confirm", json={})).json()
+    assert confirmed["status"] == "completed"
+    assert (await client.get(f"{API}/communication/drafts", params={"application_id": SOPHIA_APP})).json() == []
+    report = (await client.get(f"{API}/communication/analytics")).json()
+    assert (report["drafts_generated"], report["drafts_sent"]) == (1, 1)
+    assert (await client.post(f"{API}/assistant/actions/{answer['id']}/confirm", json={})).status_code == 409
+
+    # Dismissing a proposed update discards its draft.
+    again = await ask(client, "Draft Sophia an update.")
+    assert (await client.post(f"{API}/assistant/actions/{again['id']}/cancel")).status_code == 204
+    assert (await client.get(f"{API}/communication/drafts", params={"application_id": SOPHIA_APP})).json() == []
+
+
+async def test_personal_characteristics_and_ranking_are_refused(client: AsyncClient) -> None:
     for text in (
         "Did Sophia identify as Asian?",
         "Show candidates who are Hispanic",
@@ -460,7 +403,7 @@ async def test_demographic_questions_get_aggregates_and_never_a_person(
     assert ranked["reply"] == RANKING_REPLY
 
 
-async def test_candidates_interviews_and_jobs(client: AsyncClient) -> None:
+async def test_candidates_and_interviews(client: AsyncClient) -> None:
     upcoming = await ask(client, "What interview does Sophia have next?")
     assert upcoming["cards"][0]["interview"]["title"] == "Design interview"
     assert "Design interview" in upcoming["reply"] and "confirmed" in upcoming["reply"]
@@ -476,12 +419,8 @@ async def test_candidates_interviews_and_jobs(client: AsyncClient) -> None:
     assert card["total"] == expected["total"] > 0
     assert [item["application_id"] for item in card["items"]] == [item["application_id"] for item in expected["items"]]
 
-    jobs = await ask(client, "Show my open jobs")
-    open_jobs = (await client.get(f"{API}/jobs", params={"status": "open"})).json()
-    assert len(jobs["cards"][0]["items"]) == len(open_jobs) and str(len(open_jobs)) in jobs["reply"]
-
     unclear = await ask(client, "Hmm, sing me a song")
-    assert unclear["intent"] == "help" and "Messages" in unclear["reply"]
+    assert unclear["intent"] == "help" and "Who needs an update today?" in unclear["reply"]
 
 
 # Voice transcription

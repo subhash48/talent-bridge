@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, BriefcaseBusiness, CalendarClock, History, Mic, MicOff, ShieldCheck, Sparkles, UsersRound, X } from "lucide-react";
+import { CalendarClock, History, Inbox, MessageCircleQuestion, Mic, MicOff, PenLine, ShieldCheck, Sparkles, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AIComposer, suggestionChipStyles } from "@/components/ai/AIComposer";
@@ -19,18 +19,23 @@ import { getAssistantStatus } from "@/services/assistant";
 import type { AssistantResponse, AssistantStatus } from "@/types/assistant";
 
 const CAPABILITIES = [
-  { icon: UsersRound, label: "Message candidates", example: "Send Sophia an interview invitation for next Tuesday" },
-  { icon: BriefcaseBusiness, label: "Create and publish jobs", example: "Create a Backend Engineer job in London" },
-  { icon: CalendarClock, label: "Look up interviews", example: "What interview does Sophia have next?" },
-  { icon: BarChart3, label: "Portal analytics", example: "What were candidates looking for this week?" },
+  { icon: Inbox, label: "Who needs an update", example: "Who needs an update today?" },
+  { icon: PenLine, label: "Draft an update", example: "Draft Sophia an update" },
+  { icon: MessageCircleQuestion, label: "Unanswered messages", example: "Which candidates have unanswered questions?" },
+  { icon: CalendarClock, label: "Interviews to confirm", example: "Which interviews need confirmation?" },
 ];
 
-const STARTERS = ["Show my open jobs", "What were candidates looking for this week?", "Show candidates interviewing for Product Designer"];
+const STARTERS = [
+  "Who interviewed this week and has not received follow-up?",
+  "Send Sophia an interview invitation for next Tuesday",
+  "Show candidates interviewing for Product Designer",
+];
 
 /**
  * The recruiter AI Assistant: one conversation for typed and spoken requests, run by the same action
- * engine (/assistant/requests). It answers, drafts and prepares; sending a message or publishing a job
- * always waits for the recruiter's confirmation. ?candidate= focuses it on one application. Voice is a
+ * engine (/assistant/requests): who needs an update, what candidates are waiting for, and drafts to
+ * send. Sending always waits for the recruiter's confirmation. ?candidate= focuses it on one
+ * application. Voice is a
  * secondary way in: the microphone beside Send.
  */
 export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: string }) {
@@ -123,7 +128,7 @@ export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: strin
     <div>
       <RecruiterHeader
         title="AI Assistant"
-        subtitle="Ask or speak. It drafts and prepares; nothing is sent or published until you confirm."
+        subtitle="Ask who needs an update, or have it draft one. Nothing is sent until you confirm."
       />
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
         <section
@@ -174,9 +179,8 @@ export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: strin
               <ShieldCheck aria-hidden className="size-4 text-ai" /> How it works
             </h2>
             <p className="mt-3 text-xs leading-relaxed text-stone">
-              Typed and spoken requests go through the same steps. Messages and job postings are prepared for you to review, and
-              only go out when you confirm. It never ranks or rejects candidates, and never sees anyone&apos;s demographic answers;
-              those exist only as aggregates on the Analytics page.
+              Typed and spoken requests go through the same steps. Messages are drafted for you to review, and only go out
+              when you confirm. It never evaluates, ranks or rejects candidates.
             </p>
             <p className="mt-3 text-xs leading-relaxed text-faint">
               Voice: only the words are kept, never the recording.
@@ -205,7 +209,7 @@ export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: strin
 
 function Welcome({ focusedName, onPick, disabled }: { focusedName: string | null; onPick: (text: string) => void; disabled: boolean }) {
   const starters = focusedName
-    ? [`Tell me about ${focusedName}'s application`, `What interview does ${focusedName} have next?`, `Draft an interview email for ${focusedName}`]
+    ? [`Draft ${focusedName} an update`, `Tell me about ${focusedName}'s application`, `What interview does ${focusedName} have next?`]
     : STARTERS;
   return (
     <div className="flex flex-1 flex-col items-center justify-center py-6 text-center">

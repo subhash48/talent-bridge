@@ -54,11 +54,10 @@ async def test_the_assistant_answers_company_questions_from_the_profile(client: 
     assert "recruiter screen, then hiring manager conversation" in process  # Encord's usual stages
     assert "**Interview** (you're here)" in process  # and where this application is
 
-    # The recruiter sees the topic, never the question.
+    # What a candidate asks the assistant stays private: nothing new on the recruiter's timeline.
     timeline = (await client.get(f"{API}/applications/{SOPHIA_APP}/activity", params={"limit": 200})).json()
     questions = [entry["title"] for entry in timeline if entry["activity_type"] == "question_asked"]
-    assert "Asked about the company" in questions
-    assert not any("benefits" in title.lower() or "offices" in title.lower() for title in questions)
+    assert questions == ["Asked about the product team"]  # seeded, from before
 
 
 # The Ask AI page's suggested prompts (frontend/lib/ask-ai.ts), and questions that must keep their topic.

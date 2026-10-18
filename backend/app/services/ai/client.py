@@ -18,9 +18,7 @@ from app.services.ai.context import CandidateContext
 from app.services.ai.portal_context import PortalContext
 
 if TYPE_CHECKING:
-    from app.schemas.analytics import AnalyticsInsight
     from app.schemas.assistant import AssistantIntent
-    from app.services.analytics.insights import InsightFacts
 
 logger = logging.getLogger(__name__)
 
@@ -60,17 +58,6 @@ class AIProvider(ABC):
     async def write_job_posting(self, brief: JobPostingBrief, organization: str, overview: str) -> JobPostingContent:
         """A job posting drafted from the recruiter's brief and the company overview, and nothing else."""
         raise AIProviderError(f"{self.name} has no job writer")
-
-    # Portal analytics insights. Only aggregate facts go in; the rules in services/analytics/insights.py
-    # answer when a provider has none (the mock) or its answer fails the checks there.
-
-    async def portal_insights(self, facts: "InsightFacts") -> list["AnalyticsInsight"]:
-        """At most four insights about the candidate experience, phrased from the facts alone."""
-        raise AIProviderError(f"{self.name} has no analytics insights")
-
-    # The recruiter assistant's intent understanding: a request, typed or transcribed, as one
-    # structured action (services/assistant). The rules in services/assistant/rules.py read requests
-    # when a provider has none (the mock) or it fails.
 
     async def understand_request(self, text: str, context: str) -> "AssistantIntent":
         """The recruiter's request as a structured action. Never executes anything."""

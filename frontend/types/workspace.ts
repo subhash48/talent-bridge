@@ -1,5 +1,5 @@
 import type { ApplicationStage } from "@/types/application";
-import type { CommunicationSummary, MessageDelivery } from "@/types/communication";
+import type { CommunicationHealth, CommunicationSummary, MessageDelivery } from "@/types/communication";
 import type { Role } from "@/types/candidate";
 import type { EngagementLevel } from "@/types/event";
 import type { InterviewStatus } from "@/types/interview";
@@ -117,6 +117,8 @@ export type CandidateDetail = {
   messages: ThreadMessage[];
   /** Ashby's own view of the application, when it was synced from Ashby. */
   ashby?: { stageTitle: string | null; status: string | null } | null;
+  /** What they've heard from us and what they're waiting for. */
+  communication?: CommunicationHealth;
 };
 
 /** GET /candidates/{id}/engagement, for one application. Operational information for recruiters:

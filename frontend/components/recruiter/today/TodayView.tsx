@@ -49,12 +49,12 @@ const SECTIONS: Section[] = [
   },
 ];
 
-type TodayViewProps = { initial: AttentionList | null; error?: string; emailConfigured: boolean };
+type TodayViewProps = { initial: AttentionList | null; error?: string };
 
 /** The recruiter's home: who needs an update today, and the draft → edit → approve → send to give it. */
-export function TodayView({ initial, error, emailConfigured }: TodayViewProps) {
+export function TodayView({ initial, error }: TodayViewProps) {
   const toast = useToast();
-  const { refresh } = useWorkspace();
+  const { refresh, emailConfigured } = useWorkspace();
   const [list, setList] = useState<AttentionList | null>(initial);
   const [open, setOpen] = useState<string>();
 

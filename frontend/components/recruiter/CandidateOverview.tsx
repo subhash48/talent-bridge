@@ -1,11 +1,9 @@
-import { ArrowRight, CalendarClock, CircleAlert, Link2, Sparkles, type LucideIcon } from "lucide-react";
-import Link from "next/link";
+import { ArrowRight, CalendarClock, Link2, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { CandidateActivity, CandidateActivitySkeleton } from "@/components/recruiter/CandidateActivity";
 import { DetailError } from "@/components/recruiter/DetailError";
-import { EngagementCard } from "@/components/recruiter/EngagementCard";
-import { buttonStyles } from "@/components/ui/Button";
+import { CommunicationCard } from "@/components/recruiter/communication/CommunicationCard";
 import type { CandidateDetailState } from "@/hooks/useCandidateDetail";
 import { formatSchedule } from "@/lib/format";
 import type { PipelineCandidate } from "@/types/workspace";
@@ -19,22 +17,7 @@ type CandidateOverviewProps = {
 export function CandidateOverview({ candidate, state, onViewAll }: CandidateOverviewProps) {
   return (
     <div className="@container flex flex-col gap-5">
-      {candidate.followUp && (
-        <div className="flex flex-col gap-3 rounded-[10px] border border-caution/20 bg-caution/[0.06] p-3.5 sm:flex-row sm:items-center">
-          <p className="flex flex-1 items-start gap-2.5 text-sm text-caution">
-            <CircleAlert aria-hidden className="mt-0.5 size-4 shrink-0 text-caution" />
-            <span>
-              <span className="font-medium">Needs follow-up.</span> {candidate.followUp.reason}.
-            </span>
-          </p>
-          <Link
-            href={`/recruiter/messages?candidate=${candidate.id}&draft=1`}
-            className={buttonStyles({ variant: "ai", size: "sm", className: "self-start sm:self-auto" })}
-          >
-            <Sparkles /> Draft follow-up
-          </Link>
-        </div>
-      )}
+      <CommunicationCard candidate={candidate} health={state.detail?.communication} loading={state.loading} />
 
       {/* Side by side when the panel is wide enough to show "Design interview" in full. */}
       <div className="grid grid-cols-1 gap-3 @[25rem]:grid-cols-2">
@@ -57,8 +40,6 @@ export function CandidateOverview({ candidate, state, onViewAll }: CandidateOver
           }
         />
       </div>
-
-      <EngagementCard candidate={candidate} />
 
       <section aria-label="Recent activity">
         <div className="flex items-center justify-between gap-3">

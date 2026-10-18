@@ -1,7 +1,9 @@
 import { USE_MOCK_API, apiFetch } from "@/services/api";
+import { fromHealth } from "@/services/communication";
 import { fromInterview } from "@/services/interviews";
 import { fromMessage } from "@/services/messages";
 import { mockApi } from "@/services/mock/api";
+import { mockCommunication } from "@/services/mock/communication";
 import type {
   ApiActivity,
   ApiCandidateDetail,
@@ -100,7 +102,10 @@ export async function getCandidateActivities(id: string): Promise<CandidateActiv
 
 /** Everything the candidate panel's tabs need: GET /candidates/{candidateId} for one application. */
 export async function getCandidateDetail(id: string, candidateId: string): Promise<CandidateDetail> {
-  if (USE_MOCK_API) return mockApi.getCandidateDetail(id);
+  if (USE_MOCK_API) {
+    const [detail, communication] = await Promise.all([mockApi.getCandidateDetail(id), mockCommunication.getHealth(id)]);
+    return { ...detail, communication: communication ?? undefined };
+  }
   const detail = await apiFetch<ApiCandidateDetail>(`/candidates/${candidateId}?application_id=${id}`);
   const candidate = fromDetail(detail);
   return {
@@ -111,6 +116,7 @@ export async function getCandidateDetail(id: string, candidateId: string): Promi
       detail.application?.origin === "ashby"
         ? { stageTitle: detail.application.external_stage_title, status: detail.application.external_status }
         : null,
+    communication: detail.communication ? fromHealth(detail.communication) : undefined,
   };
 }
 

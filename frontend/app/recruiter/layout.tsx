@@ -9,6 +9,7 @@ import { SessionWatcher } from "@/components/shared/SessionWatcher";
 import { requireRole } from "@/lib/session";
 import { errorMessage, isServerUnavailable } from "@/services/api";
 import { getCandidates } from "@/services/candidates";
+import { getEmailDelivery } from "@/services/communication";
 import { getJobs } from "@/services/jobs";
 import { getUnreadThreadCount } from "@/services/messages";
 
@@ -23,9 +24,15 @@ export default async function RecruiterLayout({ children }: { children: ReactNod
   });
   if ("error" in workspace) return <ApiUnavailable message={workspace.error} serverDown={workspace.serverDown} />;
 
-  const [user, candidates, jobs, unreadThreads] = workspace;
+  const [user, candidates, jobs, unreadThreads, email] = workspace;
   return (
-    <WorkspaceProvider user={user} initialCandidates={candidates} initialJobs={jobs} initialUnreadThreads={unreadThreads}>
+    <WorkspaceProvider
+      user={user}
+      initialCandidates={candidates}
+      initialJobs={jobs}
+      initialUnreadThreads={unreadThreads}
+      emailConfigured={email.configured}
+    >
       <SessionWatcher />
       <RecruiterShell>{children}</RecruiterShell>
     </WorkspaceProvider>
@@ -35,5 +42,6 @@ export default async function RecruiterLayout({ children }: { children: ReactNod
 async function loadWorkspace() {
   // Recruiters and admins only; the role comes from the API before any workspace data is loaded.
   const user = await requireRole("recruiter", "admin");
-  return [user, ...(await Promise.all([getCandidates(), getJobs(), getUnreadThreadCount()]))] as const;
+  const email = getEmailDelivery().catch(() => ({ configured: false })); // optional: portal delivery works without it
+  return [user, ...(await Promise.all([getCandidates(), getJobs(), getUnreadThreadCount(), email]))] as const;
 }

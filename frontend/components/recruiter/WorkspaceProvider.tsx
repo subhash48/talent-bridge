@@ -18,6 +18,8 @@ type WorkspaceValue = {
   candidates: PipelineCandidate[];
   jobs: JobOpening[];
   unreadThreads: number;
+  /** Recruiter messages are also emailed. Without it they reach the candidate portal only. */
+  emailConfigured: boolean;
   /** Increases after every change, so views that query the API themselves know to refetch. */
   revision: number;
   /** Reload the pipeline from the API, e.g. after scheduling an interview or messaging. */
@@ -38,6 +40,7 @@ type WorkspaceProviderProps = {
   initialCandidates: PipelineCandidate[];
   initialJobs: JobOpening[];
   initialUnreadThreads: number;
+  emailConfigured: boolean;
   children: ReactNode;
 };
 
@@ -45,7 +48,14 @@ type WorkspaceProviderProps = {
  * Candidate state shared by every recruiter page, seeded by the server layout. Mutations go through
  * services/candidates and apply the returned record, so they survive client-side navigation.
  */
-export function WorkspaceProvider({ user, initialCandidates, initialJobs, initialUnreadThreads, children }: WorkspaceProviderProps) {
+export function WorkspaceProvider({
+  user,
+  initialCandidates,
+  initialJobs,
+  initialUnreadThreads,
+  emailConfigured,
+  children,
+}: WorkspaceProviderProps) {
   const [candidates, setCandidates] = useState(initialCandidates);
   const [unreadThreads, setUnreadThreads] = useState(initialUnreadThreads);
   const [revision, setRevision] = useState(0);
@@ -123,6 +133,7 @@ export function WorkspaceProvider({ user, initialCandidates, initialJobs, initia
       candidates,
       jobs: initialJobs,
       unreadThreads,
+      emailConfigured,
       revision,
       refresh,
       addCandidate,
@@ -137,6 +148,7 @@ export function WorkspaceProvider({ user, initialCandidates, initialJobs, initia
       candidates,
       initialJobs,
       unreadThreads,
+      emailConfigured,
       revision,
       refresh,
       addCandidate,

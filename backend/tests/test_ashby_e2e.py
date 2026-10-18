@@ -2,17 +2,14 @@
 again, and a reconciliation sync changes nothing. Runs three times, each from a clean database."""
 
 import json
-import uuid
-from datetime import timedelta
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.integrations.ashby.sync import AshbySync
 from app.models import Application, Candidate, PortalSession, User
-from app.models.base import utcnow
 from tests.ashby_support import (
     APPLICATION_ID,
     EMAIL,
@@ -33,19 +30,6 @@ SECOND_JOB = "1f0e9d8c-7b6a-4f5e-8d4c-3b2a1f0e9d8c"
 async def count(sessions: async_sessionmaker[AsyncSession], model: type, *where: object) -> int:
     async with sessions() as session:
         return await session.scalar(select(func.count()).select_from(model).where(*where)) or 0
-
-
-async def active_for(sessions: async_sessionmaker[AsyncSession], visit: str, client: AsyncClient, token: dict[str, str], body: dict[str, str], beats: int) -> None:
-    """Heartbeats 30 seconds apart while the candidate is using the portal."""
-    for _ in range(beats):
-        async with sessions() as session:
-            await session.execute(
-                update(PortalSession)
-                .where(PortalSession.client_session_id == uuid.UUID(visit))
-                .values(last_active_at=utcnow() - timedelta(seconds=30))
-            )
-            await session.commit()
-        assert (await client.post(f"{API}/candidate/engagement/heartbeat", json=body, headers=token)).status_code == 204
 
 
 @pytest.mark.parametrize("run", [1, 2, 3])
@@ -102,29 +86,11 @@ async def test_ashby_applicant_journey(
     assert [(i["title"], i["can_confirm"]) for i in interviews] == [("Technical Interview", True)]
     interview_id = interviews[0]["id"]
 
-    # 11-12. Two sign-ins, several pages, and some genuinely active time.
-    for login, minutes, hours_ago in ((first_login, 4, 3), (bearer(auth_id, session_id=f"login-2-{run}"), 3, 1)):
-        visit = str(uuid.uuid4())
-        body = {"session_id": visit, "application_id": portal_app}
-        await anonymous.post(f"{API}/candidate/engagement/sessions", json=body, headers=login)
-        views = {
-            "events": [
-                {"type": "page_view", "application_id": portal_app, "page": "dashboard", "session_id": visit},
-                {"type": "application_viewed", "application_id": portal_app},
-                {"type": "interview_viewed", "application_id": portal_app, "interview_id": interview_id},
-            ]
-        }
-        assert (await anonymous.post(f"{API}/candidate/engagement/events", json=views, headers=login)).status_code == 204
-        await active_for(sessions, visit, anonymous, login, body, beats=minutes * 2)
-        # Visits more than half an hour apart are separate visits.
-        async with sessions() as session:
-            await session.execute(
-                update(PortalSession)
-                .where(PortalSession.client_session_id == uuid.UUID(visit))
-                .values(started_at=utcnow() - timedelta(hours=hours_ago))
-            )
-            await session.commit()
-    await anonymous.post(f"{API}/candidate/prep/viewed", headers=first_login)
+    # 11-12. Two sign-ins and a look around. How a candidate uses the portal isn't recorded.
+    for login in (first_login, bearer(auth_id, session_id=f"login-2-{run}")):
+        for page in ("me", "interviews", "messages"):
+            assert (await anonymous.get(f"{API}/candidate/{page}", headers=login)).status_code == 200
+    assert await count(sessions, PortalSession) == 0
 
     # 13. Confirms the interview; the recruiter sees it.
     confirmed = await anonymous.patch(f"{API}/candidate/interviews/{interview_id}/confirm", headers=first_login)
@@ -141,33 +107,30 @@ async def test_ashby_applicant_journey(
     thread = (await anonymous.get(f"{API}/candidate/messages", headers=first_login)).json()
     assert thread["messages"][-1]["content"] == "Looking forward to Thursday!" and thread["unread"] == 1
     assert (await anonymous.post(f"{API}/candidate/messages/read", headers=first_login)).status_code == 204
-    for content, kind in (("Me too, see you then.", "message"), ("Thank you for the time today.", "thank_you"), ("Is there an update on next steps?", "follow_up")):
-        sent = await anonymous.post(f"{API}/candidate/messages", json={"content": content, "kind": kind}, headers=first_login)
+    for content, kind in (
+        ("Me too, see you then.", "message"),
+        ("Thank you for the time today.", "thank_you"),
+        ("Is there an update on next steps?", "follow_up"),
+    ):
+        sent = await anonymous.post(
+            f"{API}/candidate/messages", json={"content": content, "kind": kind}, headers=first_login
+        )
         assert sent.status_code == 201
     recruiter_thread = (await client.get(f"{API}/applications/{app_id}/messages")).json()
     assert [m["kind"] for m in recruiter_thread[-3:]] == ["message", "thank_you", "follow_up"]
 
-    # 17. The recruiter's view: source, stage, portal access and engagement with its reasons.
+    # 17. The recruiter's view: source, stage, portal access and communication health.
     detail = (await client.get(f"{API}/candidates/{candidate_id}")).json()
-    assert detail["application"]["origin"] == "ashby" and detail["application"]["external_stage_title"] == "Technical Interview"
+    assert (
+        detail["application"]["origin"] == "ashby"
+        and detail["application"]["external_stage_title"] == "Technical Interview"
+    )
     assert detail["candidate"]["portal_status"] == "active" and detail["stage"] == "interview"
-    engagement = (await client.get(f"{API}/candidates/{candidate_id}/engagement")).json()
-    assert engagement["sufficient_data"] and engagement["score"] is not None
-    assert engagement["portal_activity"]["sessions"] == 2 and engagement["portal_activity"]["active_minutes"] == 7
-    assert engagement["portal_activity"]["last_active_at"] is not None
-    assert engagement["responsiveness"]["responses"] == 2  # the reply and the confirmation
-    assert engagement["responsiveness"]["median_response_minutes"] is not None
-    assert engagement["communication"] == {
-        **engagement["communication"],
-        "confirmations": 1,
-        "thank_you_notes": 1,
-        "follow_ups": 1,
-    }
-    assert engagement["proactive_actions"] == 3
-    labels = {item["label"] for item in engagement["recent_portal_activity"]}
-    assert {"Signed in to the portal", "Viewed interview details", "Read your messages"} <= labels
-    total = sum(engagement[part]["score"] for part in ("portal_activity", "responsiveness", "communication"))
-    assert engagement["score"] == total
+    health = (await client.get(f"{API}/applications/{app_id}/communication")).json()
+    assert health["next_interview"]["confirmed"] is True
+    assert health["open_question"]["excerpt"] == "Is there an update on next steps?"
+    assert health["open_question"]["count"] == 2  # their reply and the follow-up; a thank-you needs no answer
+    assert health["status"] == "due_soon" and "engagement" not in detail
 
     # 18-20. Ashby closes it out: no longer under consideration, still visible, reason hidden.
     reason = "Internal: not enough distributed training depth"
@@ -177,7 +140,9 @@ async def test_ashby_applicant_journey(
     )  # fmt: skip
     await deliver(anonymous, rejected)
     me = (await anonymous.get(f"{API}/candidate/me", headers=first_login)).json()
-    assert [(a["job_title"], a["status"]) for a in me["applications"]] == [("TEST - ML Engineer", "no_longer_considered")]
+    assert [(a["job_title"], a["status"]) for a in me["applications"]] == [
+        ("TEST - ML Engineer", "no_longer_considered")
+    ]
     history = (await anonymous.get(f"{API}/candidate/applications/{portal_app}", headers=first_login)).json()
     assert history["application"]["stage_label"] == "No longer under consideration"
     assert reason not in json.dumps(history)

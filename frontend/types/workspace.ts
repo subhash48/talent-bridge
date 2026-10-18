@@ -1,7 +1,6 @@
 import type { ApplicationStage } from "@/types/application";
 import type { CommunicationHealth, CommunicationSummary, MessageDelivery } from "@/types/communication";
 import type { Role } from "@/types/candidate";
-import type { EngagementLevel } from "@/types/event";
 import type { InterviewStatus } from "@/types/interview";
 import type { JobStatus } from "@/types/job";
 
@@ -42,18 +41,11 @@ export type PipelineCandidate = CandidateRef & {
   stage: CandidateStage;
   lastActivity: string;
   lastActivityAt: string;
-  engagement: EngagementLevel;
-  /** 0-100, or null while there's too little data. Informational only: never used to rank or reject. */
-  engagementScore?: number | null;
-  /** When they last used the candidate portal for this application. */
-  portalLastActiveAt?: string;
   portalStatus?: PortalAccessStatus;
   /** Synced from Ashby, the system of record, or added in Talent Bridge. */
   origin?: "ashby" | "talent_bridge";
   /** Where the application came from, e.g. "Referral" or "Ashby Simulator / Demo Careers". */
   source?: string;
-  /** Present when the next-action engine says the recruiter owes this candidate a reply. */
-  followUp?: { reason: string };
   /** What they've heard from us: the SLA rules' view of this application. */
   communication: CommunicationSummary;
   nextStep?: { title: string; date: string };
@@ -119,48 +111,6 @@ export type CandidateDetail = {
   ashby?: { stageTitle: string | null; status: string | null } | null;
   /** What they've heard from us and what they're waiting for. */
   communication?: CommunicationHealth;
-};
-
-/** GET /candidates/{id}/engagement, for one application. Operational information for recruiters:
- * how the candidate has engaged with the process, never how good they are. */
-export type EngagementBreakdown = {
-  score: number | null;
-  label: string;
-  level: EngagementLevel;
-  sufficientData: boolean;
-  portalActivity: {
-    score: number;
-    max: number;
-    neutral: boolean;
-    visits: number;
-    activeMinutes: number;
-    meaningfulViews: number;
-    lastActiveAt: string | null;
-  };
-  responsiveness: {
-    score: number;
-    max: number;
-    neutral: boolean;
-    opportunities: number;
-    responses: number;
-    pending: number;
-    medianMinutes: number | null;
-  };
-  communication: {
-    score: number;
-    max: number;
-    initiatedMessages: number;
-    confirmations: number;
-    confirmationOpportunities: number;
-    thankYouNotes: number;
-    followUps: number;
-  };
-  proactiveActions: number;
-  overall: { visits: number; activeMinutes: number; lastActiveAt: string | null };
-  portalAccess: PortalAccess;
-  /** Newest first; a run of the same action is one entry with its count. */
-  recentPortalActivity: { label: string; occurredAt: string; count: number }[];
-  note: string;
 };
 
 export type PortalAccess = {

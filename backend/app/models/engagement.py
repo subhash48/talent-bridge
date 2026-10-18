@@ -1,3 +1,8 @@
+"""Candidate portal activity from before TalentBridge stopped recording it (migration 012).
+
+Nothing writes these tables any more and nothing reads them: the rows are kept, not migrated away.
+"""
+
 import uuid
 from datetime import datetime
 from typing import Any
@@ -13,8 +18,7 @@ class PortalSession(UUIDPrimaryKey, Base):
 
     client_session_id is a random id the portal keeps per browser tab, so reloading a page is the same
     visit. Switching applications starts a row for the other application under the same visit, which
-    keeps time on Job A from counting for Job B. active_seconds only grows from heartbeats the server
-    times itself (services/engagement/sessions.py); nothing the browser reports is a duration.
+    keeps time on Job A from counting for Job B. active_seconds grew from heartbeats the server timed.
     """
 
     __tablename__ = "portal_sessions"
@@ -36,7 +40,7 @@ class PortalSession(UUIDPrimaryKey, Base):
 
 
 class CandidateEngagementEvent(UUIDPrimaryKey, Base):
-    """An explicit first-party portal action (core.enums.EngagementEventType). Append-only.
+    """An explicit first-party portal action. Append-only.
 
     Metadata holds identifiers and page names only: never message text, keystrokes, pointer
     positions or anything about the browser.
@@ -52,7 +56,7 @@ class CandidateEngagementEvent(UUIDPrimaryKey, Base):
     candidate_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("candidates.id", ondelete="CASCADE"))
     application_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("applications.id", ondelete="CASCADE"))
     session_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("portal_sessions.id", ondelete="SET NULL"))
-    event_type: Mapped[str] = mapped_column(Text)  # an EngagementEventType value
+    event_type: Mapped[str] = mapped_column(Text)  # page_view, interview_viewed, message_read...
     source: Mapped[str] = mapped_column(Text, default="candidate_portal")  # candidate_portal or server
     occurred_at: Mapped[datetime] = mapped_column(default=utcnow, server_default=func.now())
     meta: Mapped[dict[str, Any] | None] = mapped_column("metadata", JSONType)

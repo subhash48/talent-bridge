@@ -2,7 +2,6 @@
 
 import { useCallback, useState } from "react";
 
-import { engagement } from "@/lib/engagement";
 import { SUPABASE_CONFIGURED, createClient } from "@/lib/supabase";
 
 /**
@@ -14,7 +13,6 @@ export function useSignOut() {
 
   const signOut = useCallback(async () => {
     setSigningOut(true);
-    engagement.stop(); // ends the portal visit while the session can still report it
     if (SUPABASE_CONFIGURED) await createClient().auth.signOut({ scope: "local" });
     window.location.replace("/login");
   }, []);

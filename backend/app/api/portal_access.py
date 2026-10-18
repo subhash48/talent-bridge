@@ -1,8 +1,4 @@
-"""Candidate engagement and portal access, for recruiters.
-
-Engagement is operational information: it is shown to recruiters with its reasons and is never used
-to rank, advance or reject anyone (services/engagement/scoring.py).
-"""
+"""Candidate portal access, for recruiters: invite a candidate (or retry their invitation)."""
 
 from uuid import UUID
 
@@ -11,18 +7,10 @@ from fastapi import APIRouter
 from app.core.dependencies import SessionDep, SupabaseAdminDep
 from app.core.errors import NotFoundError
 from app.models import Candidate
-from app.schemas.engagement import EngagementBreakdown, PortalAccess
+from app.schemas.candidate import PortalAccess
 from app.services import account_provisioning
-from app.services.engagement.breakdown import engagement_breakdown
 
-router = APIRouter(prefix="/candidates", tags=["engagement"])
-
-
-@router.get("/{candidate_id}/engagement", response_model=EngagementBreakdown, summary="Candidate engagement")
-async def engagement(candidate_id: UUID, session: SessionDep, application_id: UUID | None = None) -> EngagementBreakdown:
-    """The score for one application (default: the most recent), its three components and the
-    counts behind them, plus the candidate's portal use across all their applications."""
-    return await engagement_breakdown(session, candidate_id, application_id)
+router = APIRouter(prefix="/candidates", tags=["portal access"])
 
 
 @router.post("/{candidate_id}/portal-invite", response_model=PortalAccess, summary="Invite to the candidate portal")

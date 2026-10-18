@@ -104,10 +104,8 @@ function createMockDb(now: number): MockDb {
       stage: seed.stage,
       lastActivity: seed.lastActivity,
       lastActivityAt: ago(seed.minutesAgo),
-      engagement: seed.engagement,
-      followUp: seed.followUp ? { reason: seed.followUp } : undefined,
-      communication: seed.followUp
-        ? { status: "needs_attention", daysSinceUpdate: Math.max(1, Math.floor(seed.minutesAgo / (24 * 60))), reason: seed.followUp }
+      communication: seed.needsUpdate
+        ? { status: "needs_attention", daysSinceUpdate: Math.max(1, Math.floor(seed.minutesAgo / (24 * 60))), reason: seed.needsUpdate }
         : { status: upcoming ? "on_track" : "due_soon", daysSinceUpdate: Math.floor(seed.minutesAgo / (24 * 60)) },
       nextStep: seed.nextStep
         ? { title: seed.nextStep.title, date: onDay(seed.nextStep.inDays, seed.nextStep.at) }

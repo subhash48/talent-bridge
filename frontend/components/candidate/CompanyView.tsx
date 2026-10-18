@@ -9,9 +9,7 @@ import { LoadError } from "@/components/candidate/LoadError";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useLiveQuery } from "@/hooks/useLiveQuery";
-import { useSectionView } from "@/hooks/useSectionView";
 import { ASK_AI_PROMPTS } from "@/lib/ask-ai";
-import type { CompanySection } from "@/lib/engagement";
 import { getCandidateCompany } from "@/services/portal";
 import type { CandidateCompany } from "@/types/portal";
 
@@ -57,21 +55,21 @@ export function CompanyView({ initialCompany }: { initialCompany?: CandidateComp
         </Card>
 
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-          <Section title="Products" icon={Boxes} section="products">
+          <Section title="Products" icon={Boxes}>
             <ItemList items={company.products} />
           </Section>
-          <Section title="Culture" icon={UsersRound} hint="What the team looks for, in its own words" section="culture">
+          <Section title="Culture" icon={UsersRound} hint="What the team looks for, in its own words">
             <ItemList items={company.values} />
           </Section>
         </div>
 
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-          <Section title="Benefits" icon={Gift} section="benefits">
+          <Section title="Benefits" icon={Gift}>
             <Bullets items={company.benefits} />
             <p className="mt-3.5 text-xs leading-relaxed text-faint">{company.benefitsNote}</p>
           </Section>
           <div className="flex flex-col gap-4">
-            <Section title="Locations" icon={MapPin} section="locations">
+            <Section title="Locations" icon={MapPin}>
               <ul className="flex flex-wrap gap-2" aria-label="Offices">
                 {company.locations.map((city) => (
                   <li key={city} className="flex h-6 items-center rounded-full bg-ink/[0.05] px-2.5 text-xs text-charcoal ring-1 ring-ink/10">
@@ -81,7 +79,7 @@ export function CompanyView({ initialCompany }: { initialCompany?: CandidateComp
               </ul>
               <p className="mt-3.5 text-sm text-stone">{company.locationsNote}</p>
             </Section>
-            <Section title="How hiring works" icon={Route} section="hiring">
+            <Section title="How hiring works" icon={Route}>
               <ol className="flex flex-col gap-2.5 text-sm text-charcoal">
                 {company.hiringProcess.map((step, index) => (
                   <li key={step} className="flex gap-3">
@@ -125,13 +123,12 @@ export function CompanyView({ initialCompany }: { initialCompany?: CandidateComp
   );
 }
 
-type SectionProps = { title: string; icon: LucideIcon; hint?: string; section?: CompanySection; children: ReactNode };
+type SectionProps = { title: string; icon: LucideIcon; hint?: string; children: ReactNode };
 
-/** A card on the page. With section, reading it counts towards portal analytics (hooks/useSectionView). */
-function Section({ title, icon: Icon, hint, section, children }: SectionProps) {
-  const ref = useSectionView<HTMLDivElement>(section);
+/** A card on the page. */
+function Section({ title, icon: Icon, hint, children }: SectionProps) {
   return (
-    <Card ref={ref} className="p-5 sm:p-5">
+    <Card className="p-5 sm:p-5">
       <h2 className="flex items-center gap-2.5 text-base font-semibold tracking-tight text-ink">
         <span className="flex size-8 items-center justify-center rounded-full bg-ink/[0.05] ring-1 ring-ink/10">
           <Icon aria-hidden className="size-4 text-charcoal" />

@@ -18,7 +18,7 @@ from app.core.enums import (
 from app.models import Application, CandidateActivity, Interview, Message
 from app.services.communication.health import Health, assess
 from app.services.communication.rules import SPECS, Rule, Rules, default_rules
-from app.services.engagement.snapshot import ApplicationSnapshot
+from app.services.snapshot import ApplicationSnapshot
 from tests.conftest import API, SOPHIA_AUTH, application_id, bearer, candidate_id
 
 K = CommunicationRuleKey

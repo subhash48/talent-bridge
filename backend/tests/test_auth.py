@@ -67,14 +67,9 @@ CANDIDATE_ROUTES = [
     ("GET", "/candidate/profile"),
     ("PATCH", "/candidate/profile"),
     ("GET", "/candidate/prep"),
-    ("POST", "/candidate/prep/viewed"),
     ("POST", "/candidate/ai/ask"),
     ("GET", "/candidate/applications"),
     ("GET", f"/candidate/applications/{uuid.uuid4()}"),
-    ("POST", "/candidate/engagement/sessions"),
-    ("POST", "/candidate/engagement/heartbeat"),
-    ("POST", "/candidate/engagement/sessions/end"),
-    ("POST", "/candidate/engagement/events"),
 ]
 
 RECRUITER_ROUTES = [
@@ -107,7 +102,6 @@ RECRUITER_ROUTES = [
     ("POST", "/communication/drafts"),
     ("GET", "/communication/drafts"),
     ("PUT", "/communication/rules/no_recent_update"),
-    ("GET", f"/candidates/{SOPHIA}/engagement"),
     ("POST", f"/candidates/{SOPHIA}/portal-invite"),
     ("GET", "/integrations/ashby/status"),
     ("POST", "/integrations/ashby/sync"),

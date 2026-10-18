@@ -23,14 +23,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import ActivityType, ApplicationStage, InterviewStatus, InterviewType, SenderType, UserRole
 from app.db.seed_data import (
+    APPLIED_UPDATE,
     CANDIDATES,
+    CHECK_IN,
     DAY,
     INTERVIEWS,
     JOBS,
-    PORTAL_VIEWS,
-    PORTAL_VISITS,
+    NO_FOLLOW_UP,
     RECRUITER,
+    STAGE_UPDATES,
     THREADS,
+    WAITING,
     CandidateSeed,
 )
 from app.models import (
@@ -67,6 +70,7 @@ TABLES: list[type[Base]] = [
     Interview,
     Message,
     CandidateActivity,
+    # No longer written (portal activity isn't tracked); listed so a reset clears rows from before.
     PortalSession,
     CandidateEngagementEvent,
 ]
@@ -250,37 +254,46 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
                 }
             )
 
-    for index, visit in enumerate(PORTAL_VISITS):
-        row_id = seed_id("portal_session", f"{visit.candidate}:{index}")
-        rows[PortalSession].append(
-            {
-                "id": row_id,
-                "candidate_id": seed_id("candidate", visit.candidate),
-                "application_id": application_ids[visit.candidate],
-                "client_session_id": seed_id("visit", f"{visit.candidate}:{index}"),
-                "started_at": Ago(visit.started_minutes_ago),
-                "last_active_at": Ago(visit.started_minutes_ago - visit.active_minutes),
-                "ended_at": Ago(visit.started_minutes_ago - visit.active_minutes),
-                "active_seconds": visit.active_minutes * 60,
-                "page_views": visit.page_views,
-            }
-        )
-    for index, view in enumerate(PORTAL_VIEWS):
-        target = str(seed_id("interview", f"{view.candidate}:{view.interview}")) if view.interview else None
-        rows[CandidateEngagementEvent].append(
-            {
-                "id": seed_id("engagement_event", f"{view.candidate}:{index}"),
-                "candidate_id": seed_id("candidate", view.candidate),
-                "application_id": application_ids[view.candidate],
-                "session_id": None,
-                "event_type": view.event.value,
-                "source": "candidate_portal",
-                "occurred_at": Ago(view.minutes_ago),
-                "metadata": {"target": target} if target else None,
-                "dedupe_key": None,
-            }
-        )
+    upcoming = {i.candidate for i in INTERVIEWS if i.days > 0 and i.status == InterviewStatus.SCHEDULED}
+    threaded = {thread.candidate for thread in THREADS}
+    for seed in CANDIDATES:
+        if seed.key in threaded or seed.key in WAITING:
+            continue
+        for index, (minutes, text) in enumerate(_updates(seed, has_interview_booked=seed.key in upcoming)):
+            rows[Message].append(
+                {
+                    "id": seed_id("message", f"{seed.key}:update:{index}"),
+                    "application_id": application_ids[seed.key],
+                    "sender_type": SenderType.RECRUITER,
+                    "content": text.format(first=seed.first_name, job=seed.job),
+                    "created_at": Ago(minutes),
+                    "read_at": Ago(minutes - 60) if minutes > DAY else None,
+                }
+            )
     return rows
+
+
+def _updates(seed: CandidateSeed, *, has_interview_booked: bool) -> list[tuple[int, str]]:
+    """The recruiter's status updates to a candidate, oldest first, in minutes ago."""
+    latest = min((event.minutes_ago for event in seed.events), default=seed.added_minutes_ago)
+    stages = PIPELINE[1 : PIPELINE.index(seed.stage) + 1]
+    updates = [
+        (max(minutes - 120, minutes // 2), STAGE_UPDATES[stage])
+        for stage, minutes in zip(stages, _moves(seed, latest), strict=True)
+    ]
+    if not updates and seed.added_minutes_ago > DAY:
+        updates.append((seed.added_minutes_ago - 12 * 60, APPLIED_UPDATE))
+    last = min((minutes for minutes, _ in updates), default=seed.added_minutes_ago)
+    check_in = DAY + DAY // 2
+    waited_too_long = last > 3 * DAY and seed.added_minutes_ago > check_in
+    if (
+        seed.stage != ApplicationStage.HIRED
+        and not has_interview_booked
+        and seed.key not in NO_FOLLOW_UP
+        and waited_too_long
+    ):
+        updates.append((check_in, CHECK_IN))
+    return sorted(updates, reverse=True)
 
 
 def _moves(seed: CandidateSeed, latest: int) -> list[int]:
@@ -307,6 +320,8 @@ def resolve(value: Any, now: datetime) -> Any:
 async def load_seed(session: AsyncSession, now: datetime | None = None) -> None:
     now = now or utcnow()
     for table, items in build_seed().items():
+        if not items:
+            continue
         await session.execute(
             insert(table.__table__), [{key: resolve(value, now) for key, value in row.items()} for row in items]
         )
@@ -349,6 +364,8 @@ def render_sql() -> str:
         "",
     ]
     for table, items in build_seed().items():
+        if not items:
+            continue
         columns = list(items[0])
         lines.append(f"insert into public.{table.__tablename__} ({', '.join(columns)}) values")
         values = [f"  ({', '.join(_literal(row[column]) for column in columns)})" for row in items]

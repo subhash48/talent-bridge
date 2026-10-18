@@ -1,5 +1,4 @@
 import type { ApplicationStage } from "@/types/application";
-import type { EngagementLevel } from "@/types/event";
 import type { InterviewStatus } from "@/types/interview";
 import type { JobStatus } from "@/types/job";
 import { PIPELINE_STAGES, type CandidateStage } from "@/types/workspace";
@@ -36,13 +35,6 @@ export const PROGRESS_STEPS = PIPELINE_STAGES.filter((stage) => stage !== "hired
 export function stageOrder(stage: CandidateStage): number {
   return PIPELINE_STAGES.indexOf(stage);
 }
-
-export const ENGAGEMENT_STYLES: Record<EngagementLevel, string> = {
-  high: "text-sage",
-  medium: "text-ink",
-  low: "text-caution",
-  insufficient: "text-stone",
-};
 
 export const JOB_STATUS: Record<JobStatus, { label: string; className: string }> = {
   open: { label: "Open", className: "bg-sage/10 text-sage ring-sage/20" },

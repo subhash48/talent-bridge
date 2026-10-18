@@ -3,7 +3,7 @@ import type { InterviewFormat } from "@/types/workspace";
 
 // View models for the Candidate Portal. services/portal.ts maps the /candidate API (backend
 // app/schemas/portal.py) into these. Every field is something the candidate may see: interviewer
-// feedback, engagement and internal notes don't exist in these types.
+// feedback and internal notes don't exist in these types.
 
 export type StepState = "complete" | "current" | "upcoming";
 /** Where an application sits for the candidate. The real stage is kept separately. */

@@ -26,8 +26,8 @@ from app.services.communication import rules as rule_store
 from app.services.communication.health import Health, assess
 from app.services.communication.present import candidate_status, draft_read, health_read
 from app.services.communication.rules import Rule, Rules
-from app.services.engagement.snapshot import ApplicationSnapshot
 from app.services.pipeline_service import get_application, load_snapshots
+from app.services.snapshot import ApplicationSnapshot
 
 
 def rule_read(rule: Rule) -> CommunicationRuleRead:

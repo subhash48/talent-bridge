@@ -1,10 +1,8 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, type ReactNode } from "react";
 
 import { useLiveQuery } from "@/hooks/useLiveQuery";
-import { engagement, portalPage } from "@/lib/engagement";
 import { rememberApplication } from "@/lib/selected-application";
 import { getCandidateMe } from "@/services/portal";
 import type { CandidateMeResponse } from "@/types/portal";
@@ -32,7 +30,7 @@ const CandidatePortalContext = createContext<CandidatePortalValue | null>(null);
 /**
  * The signed-in candidate's portal state, seeded by the server layout and kept current: it refetches
  * on focus and every few seconds, so the recruiter's changes (a new interview, a message, a stage
- * move) appear without a reload. It also starts the portal's activity reporting (lib/engagement.ts).
+ * move) appear without a reload.
  */
 export function CandidatePortalProvider({ initialMe, children }: { initialMe: CandidateMeResponse; children: ReactNode }) {
   const selected = useRef(initialMe.application?.id ?? null);
@@ -40,7 +38,6 @@ export function CandidatePortalProvider({ initialMe, children }: { initialMe: Ca
   const { data, offline, refresh, setData } = useLiveQuery(fetchMe, { initialData: initialMe });
   const me = data ?? initialMe;
   const applicationId = me.application?.id ?? null;
-  const pathname = usePathname();
 
   const update = useCallback(
     (change: (current: CandidateMeResponse) => CandidateMeResponse) => setData((current) => change(current ?? initialMe)),
@@ -62,12 +59,7 @@ export function CandidatePortalProvider({ initialMe, children }: { initialMe: Ca
     if (!applicationId) return;
     selected.current = applicationId;
     rememberApplication(applicationId);
-    engagement.start(applicationId);
   }, [applicationId]);
-  useEffect(() => () => engagement.stop(), []);
-  useEffect(() => {
-    if (applicationId) engagement.track({ type: "page_view", page: portalPage(pathname) });
-  }, [pathname, applicationId]);
 
   const value = useMemo(
     () => ({ me, applicationId, selectApplication, offline, refresh, update }),

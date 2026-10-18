@@ -166,14 +166,6 @@ async def prep(
     )
 
 
-@router.post("/prep/viewed", status_code=204, summary="Record that I opened interview prep")
-async def prep_viewed(
-    session: SessionDep, candidate: CurrentCandidateDep, application_id: ApplicationParam = None
-) -> Response:
-    await candidate_ai_service.record_prep_viewed(session, candidate, application_id)
-    return Response(status_code=204)
-
-
 @router.post("/ai/ask", response_model=CandidateAskResponse, summary="Ask the candidate assistant")
 async def ask(
     body: CandidateAskRequest, session: SessionDep, candidate: CurrentCandidateDep, provider: AIProviderDep

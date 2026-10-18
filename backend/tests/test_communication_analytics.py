@@ -10,7 +10,7 @@ from app.core.enums import ActivityType, ApplicationStage, CommunicationRuleKey,
 from app.models import Application, CandidateActivity, Interview, Message
 from app.services.communication.analytics import gaps, obligations
 from app.services.communication.rules import SPECS, Rule, default_rules
-from app.services.engagement.snapshot import ApplicationSnapshot
+from app.services.snapshot import ApplicationSnapshot
 from tests.conftest import API, FakeEmail, application_id, use_email
 from tests.test_communication import NOW, ago, interview, received, sent
 

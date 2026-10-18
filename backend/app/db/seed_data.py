@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from app.core.enums import ActivityType as A
 from app.core.enums import (
     ApplicationStage,
-    EngagementEventType,
     InterviewStatus,
     InterviewType,
     JobStatus,
@@ -90,26 +89,6 @@ class ThreadSeed:
     candidate: str
     messages: tuple[MessageSeed, ...]
     unread: int = 0  # the last N candidate messages are unread
-
-
-@dataclass(frozen=True)
-class VisitSeed:
-    """A candidate portal visit: when it started and how long the candidate was active in it."""
-
-    candidate: str
-    started_minutes_ago: int
-    active_minutes: int
-    page_views: int
-
-
-@dataclass(frozen=True)
-class ViewSeed:
-    """An explicit portal action. interview names the interview viewed, by title."""
-
-    candidate: str
-    event: EngagementEventType
-    minutes_ago: int
-    interview: str | None = None
 
 
 JOBS: tuple[JobSeed, ...] = (
@@ -792,20 +771,32 @@ THREADS: tuple[ThreadSeed, ...] = (
     ),
 )
 
-E = EngagementEventType
+# Status updates from the recruiter. A candidate without a written thread gets one after each stage
+# move, one after applying, and a check-in when they would otherwise wait too long, so most of the demo
+# pipeline has heard from the team. These are left waiting on purpose, so Today shows each kind:
+WAITING = frozenset({"kenji-watanabe", "arjun-mehta"})  # moved and never told; applied and never updated
+NO_FOLLOW_UP = frozenset({"diego-fernandez"})  # told about each move, but nothing since his interview
 
-# Sophia Martinez, the demo candidate, has been using her portal this week.
-PORTAL_VISITS: tuple[VisitSeed, ...] = (
-    VisitSeed("sophia-martinez", 6 * DAY, 6, 4),
-    VisitSeed("sophia-martinez", 3 * DAY, 7, 5),
-    VisitSeed("sophia-martinez", 1500, 8, 6),
-    VisitSeed("sophia-martinez", 130, 5, 3),
+STAGE_UPDATES: dict[ApplicationStage, str] = {
+    ApplicationStage.SCREENING: (
+        "Hi {first},\n\nThanks for applying for the {job} role. Your application has moved to screening, "
+        "and I'll be in touch about next steps within a few days.\n\nBest,\nAlex"
+    ),
+    ApplicationStage.INTERVIEW: (
+        "Hi {first},\n\nGood news: we'd like you to interview for the {job} role. I'll send the details and "
+        "some notes to help you prepare shortly.\n\nBest,\nAlex"
+    ),
+    ApplicationStage.OFFER: (
+        "Hi {first},\n\nThe team would love to make you an offer for the {job} role. I'll call you to talk it "
+        "through.\n\nBest,\nAlex"
+    ),
+    ApplicationStage.HIRED: "Hi {first},\n\nWelcome to Encord! Your onboarding details are on their way.\n\nBest,\nAlex",
+}
+APPLIED_UPDATE = (
+    "Hi {first},\n\nThanks for applying for the {job} role. We've received your application and the team is "
+    "reviewing it. I'll update you within a week.\n\nBest,\nAlex"
 )
-
-PORTAL_VIEWS: tuple[ViewSeed, ...] = (
-    ViewSeed("sophia-martinez", E.INTERVIEW_VIEWED, 3 * DAY - 5, "Design interview"),
-    ViewSeed("sophia-martinez", E.APPLICATION_VIEWED, 1495),
-    ViewSeed("sophia-martinez", E.PREP_VIEWED, 1440),
-    ViewSeed("sophia-martinez", E.INTERVIEW_VIEWED, 126, "Design interview"),
-    ViewSeed("sophia-martinez", E.MESSAGE_READ, 122),
+CHECK_IN = (
+    "Hi {first},\n\nA quick update on your {job} application: the team is still reviewing applications, and "
+    "I'll be back in touch with next steps soon.\n\nBest,\nAlex"
 )

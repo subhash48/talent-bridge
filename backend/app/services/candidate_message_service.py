@@ -12,14 +12,13 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.enums import ActivityType, EngagementEventType, MessageKind, SenderType
+from app.core.enums import ActivityType, MessageKind, SenderType
 from app.models import Candidate, Message
 from app.models.base import utcnow
 from app.schemas.portal import MessageThread, PortalMessage
 from app.services.activity_service import record_activity
 from app.services.candidate_portal_service import current_application, owned_application, require_record
 from app.services.candidate_visibility import INCOMING_SENDERS, present_message
-from app.services.engagement.events import record_unless_recent
 from app.services.message_service import excerpt
 
 CANDIDATE_UNREAD = Message.sender_type.in_(INCOMING_SENDERS) & Message.read_at.is_(None)
@@ -84,11 +83,7 @@ async def mark_read(session: AsyncSession, candidate: Candidate, application_id:
             return
     else:
         application = await owned_application(session, candidate, application_id)
-    result = await session.execute(
+    await session.execute(
         update(Message).where(Message.application_id == application.id, CANDIDATE_UNREAD).values(read_at=utcnow())
     )
-    if result.rowcount:  # type: ignore[attr-defined]
-        await record_unless_recent(
-            session, candidate.id, EngagementEventType.MESSAGE_READ, application_id=application.id
-        )
     await session.commit()

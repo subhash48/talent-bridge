@@ -36,8 +36,8 @@ from app.models.base import utcnow
 from app.schemas.communication import CommunicationAnalytics, RuleCompliance
 from app.services.communication.health import ACTIVE_STAGES, OUTGOING, assess
 from app.services.communication.rules import SPECS, Rules, load_rules
-from app.services.engagement.snapshot import ApplicationSnapshot
 from app.services.pipeline_service import load_snapshots
+from app.services.snapshot import ApplicationSnapshot
 
 K = CommunicationRuleKey
 

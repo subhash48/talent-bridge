@@ -28,7 +28,7 @@ async def test_list_returns_the_pipeline_most_recent_first(client: AsyncClient) 
     assert sophia["stage"] == "interview"
     assert sophia["job"]["title"] == "Product Designer"
     assert sophia["candidate"]["location"] == "London, UK"
-    assert sophia["engagement"]["level"] == "high"
+    assert sophia["communication"]["status"] in {"on_track", "due_soon"} and "engagement" not in sophia
     assert sophia["last_activity"]["title"] == "Confirmed interview"
     assert sophia["next_interview"]["title"] == "Design interview"
 
@@ -62,13 +62,13 @@ async def test_list_rejects_an_unknown_stage(client: AsyncClient) -> None:
     assert response.json()["error"]["code"] == "validation_error"
 
 
-async def test_follow_ups_come_from_the_rules(client: AsyncClient) -> None:
+async def test_follow_ups_come_from_the_communication_rules(client: AsyncClient) -> None:
     items = (await client.get(f"{API}/candidates", params={"limit": 200})).json()["items"]
-    reasons = {item["candidate"]["first_name"]: item["engagement"]["follow_up_reason"] for item in items}
-    assert reasons["Daniel"] == "No outreach sent yet"
-    assert reasons["Diego"] == "Interview feedback is overdue"
-    assert reasons["Hana"] == "No reply in 4 days"
-    assert reasons["Sophia"] is None
+    reasons = {item["candidate"]["first_name"]: item["communication"]["reason"] for item in items}
+    assert reasons["Kenji"] == "Status changed, candidate not told"
+    assert reasons["Arjun"] == "No update in a while"
+    assert reasons["Isabella"] == "Unanswered message"
+    assert reasons["Sophia"] is None and reasons["Daniel"] is None
 
 
 # GET /candidates/{id}
@@ -83,7 +83,7 @@ async def test_detail_has_everything_the_panel_shows(client: AsyncClient) -> Non
     assert detail["application"]["id"] == application_id(SOPHIA)
     assert detail["stage"] == "interview"
     assert detail["job"]["title"] == "Product Designer"
-    assert detail["engagement"]["level"] == "high"
+    assert detail["communication"]["candidate_status"] == "Interview" and "engagement" not in detail
     assert detail["next_interview"]["title"] == "Design interview"
     assert detail["next_interview"]["confirmed_at"] is not None
     assert len(detail["interviews"]) == 2
@@ -246,7 +246,7 @@ async def test_activity_is_newest_first(client: AsyncClient) -> None:
 
 async def test_messages_inbox_send_and_read(client: AsyncClient) -> None:
     conversations = (await client.get(f"{API}/messages/conversations")).json()
-    assert len(conversations) == 9
+    assert len(conversations) == 30  # every candidate the team has written to
     assert conversations[0]["candidate"]["full_name"] == "Sophia Martinez"
     assert (await client.get(f"{API}/messages/unread-count")).json() == {"count": 3}
 

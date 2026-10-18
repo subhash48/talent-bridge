@@ -1,5 +1,5 @@
-"""Pipeline rows: an application with its person, job, latest activity, communication health,
-engagement and next interview. Shared by the candidate, application and dashboard services."""
+"""Pipeline rows: an application with its person, job, latest activity, communication health and next
+interview. Shared by the candidate, application and dashboard services."""
 
 import uuid
 from collections import defaultdict
@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.errors import NotFoundError
-from app.models import Application, CandidateActivity, CandidateEngagementEvent, Interview, Message, PortalSession
+from app.models import Application, CandidateActivity, Interview, Message
 from app.models.base import utcnow
 from app.schemas.activity import ActivityBrief
 from app.schemas.application import origin_of
@@ -22,11 +22,9 @@ from app.schemas.job import JobBrief
 from app.services.communication.health import assess
 from app.services.communication.present import summary
 from app.services.communication.rules import Rules, load_rules
-from app.services.engagement.scoring import MEANINGFUL_VIEWS
-from app.services.engagement.service import engagement_read
-from app.services.engagement.snapshot import ApplicationSnapshot
+from app.services.snapshot import ApplicationSnapshot
 
-Row = TypeVar("Row", CandidateActivity, Message, Interview, PortalSession, CandidateEngagementEvent)
+Row = TypeVar("Row", CandidateActivity, Message, Interview)
 
 
 async def get_application(session: AsyncSession, application_id: uuid.UUID, *, for_update: bool = False) -> Application:
@@ -44,11 +42,8 @@ async def get_application(session: AsyncSession, application_id: uuid.UUID, *, f
     return application
 
 
-async def load_snapshots(
-    session: AsyncSession, applications: Sequence[Application], *, with_engagement: bool = False
-) -> list[ApplicationSnapshot]:
-    """Three queries for any number of applications (five with engagement), instead of that many
-    per application."""
+async def load_snapshots(session: AsyncSession, applications: Sequence[Application]) -> list[ApplicationSnapshot]:
+    """Three queries for any number of applications, instead of that many per application."""
     ids = [application.id for application in applications]
     if not ids:
         return []
@@ -67,30 +62,12 @@ async def load_snapshots(
         session,
         select(Interview).where(Interview.application_id.in_(ids)).order_by(Interview.scheduled_at, Interview.id),
     )
-    sessions: dict[uuid.UUID, list] = defaultdict(list)
-    views: dict[uuid.UUID, list] = defaultdict(list)
-    if with_engagement:
-        sessions = await _grouped(
-            session,
-            select(PortalSession).where(PortalSession.application_id.in_(ids)).order_by(PortalSession.started_at),
-        )
-        views = await _grouped(
-            session,
-            select(CandidateEngagementEvent)
-            .where(
-                CandidateEngagementEvent.application_id.in_(ids),
-                CandidateEngagementEvent.event_type.in_([event.value for event in MEANINGFUL_VIEWS]),
-            )
-            .order_by(CandidateEngagementEvent.occurred_at),
-        )
     return [
         ApplicationSnapshot(
             application=application,
             activities=activities[application.id],
             messages=messages[application.id],
             interviews=interviews[application.id],
-            sessions=sessions[application.id],
-            engagement_events=views[application.id],
         )
         for application in applications
     ]
@@ -117,7 +94,6 @@ def to_list_item(snapshot: ApplicationSnapshot, now: datetime, rules: Rules) -> 
         updated_at=application.updated_at,
         archived_at=application.archived_at,
         last_activity=ActivityBrief.model_validate(snapshot.activities[0]) if snapshot.activities else None,
-        engagement=engagement_read(snapshot, application.candidate, now),
         communication=summary(assess(snapshot, rules, now), now),
         next_interview=InterviewBrief.model_validate(upcoming) if upcoming else None,
     )
@@ -128,6 +104,6 @@ async def build_list_items(
 ) -> list[CandidateListItem]:
     """Applications must have their candidate and job loaded."""
     now = now or utcnow()
-    snapshots = await load_snapshots(session, applications, with_engagement=True)
+    snapshots = await load_snapshots(session, applications)
     rules = await load_rules(session)
     return [to_list_item(snapshot, now, rules) for snapshot in snapshots]

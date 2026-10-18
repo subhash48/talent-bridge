@@ -50,8 +50,8 @@ from app.services.candidate_visibility import (
     present_job,
     present_message,
 )
-from app.services.engagement.snapshot import ApplicationSnapshot
 from app.services.pipeline_service import load_snapshots
+from app.services.snapshot import ApplicationSnapshot
 
 S = ApplicationStage
 B = ApplicationBucket
@@ -89,7 +89,9 @@ async def candidate_applications(session: AsyncSession, candidate_id: uuid.UUID)
     applications = await session.scalars(
         select(Application).where(Application.candidate_id == candidate_id).options(selectinload(Application.job))
     )
-    return sorted(applications, key=lambda item: (BUCKET_ORDER.index(status_of(item).bucket), -item.updated_at.timestamp()))
+    return sorted(
+        applications, key=lambda item: (BUCKET_ORDER.index(status_of(item).bucket), -item.updated_at.timestamp())
+    )
 
 
 def status_of(application: Application) -> PortalStatus:

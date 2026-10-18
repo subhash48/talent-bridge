@@ -317,10 +317,10 @@ async def test_interview_prep(client: AsyncClient) -> None:
     assert prep["company_info"][0] == settings.organization_overview
     assert FEEDBACK not in json.dumps(prep)
 
-    for _ in range(2):
-        assert (await client.post(f"{API}/candidate/prep/viewed")).status_code == 204
+    # Opening prep isn't recorded: the recruiter's timeline doesn't change.
     timeline = (await client.get(f"{API}/applications/{SOPHIA_APP}/activity")).json()
-    assert [entry["activity_type"] for entry in timeline[:2]] == ["prep_viewed", "interview_confirmed"]
+    assert timeline[0]["activity_type"] == "interview_confirmed"
+    assert (await client.post(f"{API}/candidate/prep/viewed")).status_code == 404
 
 
 async def test_llm_prompt_holds_only_candidate_safe_context(sessions: async_sessionmaker[AsyncSession]) -> None:

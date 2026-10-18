@@ -32,10 +32,7 @@ type CareerRunGreetingProps = {
  * right here. It has no frame of its own, so it reads as part of the page: the greeting, name and
  * status line sit top left, the score, bell and avatar top right, and the track runs underneath, as
  * wide as the cards below it. A click or tap on the track starts a run, and keys are only read while
- * the game has focus.
- *
- * The game is a break, not portal use: its score never leaves the browser, and its input is marked
- * so the portal's activity reporting (lib/engagement.ts) skips it.
+ * the game has focus. Its score never leaves the browser.
  */
 export function CareerRunGreeting({ greeting, name, status, actions }: CareerRunGreetingProps) {
   const [game] = useState(() => new CareerRun());
@@ -132,7 +129,6 @@ export function CareerRunGreeting({ greeting, name, status, actions }: CareerRun
         role="group"
         aria-label="Career Run, a small dinosaur game. Space or Arrow Up jumps, P pauses."
         tabIndex={0}
-        data-not-portal-activity
         onPointerDown={(event) => {
           setTabbedTo(false);
           // During a run a jump can't wait for the click; starting one does, so a scroll never starts it.

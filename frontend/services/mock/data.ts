@@ -1,4 +1,3 @@
-import type { EngagementLevel } from "@/types/event";
 import type { InterviewStatus } from "@/types/interview";
 import type { JobStatus } from "@/types/job";
 import type {
@@ -40,10 +39,10 @@ export type CandidateSeed = {
   lastActivityKind: ActivityKind;
   minutesAgo: number;
   addedDaysAgo: number;
-  engagement: EngagementLevel;
   skills: string[];
   pronouns?: string;
-  followUp?: string;
+  /** Why they're waiting on an update from us; makes their communication status "needs attention". */
+  needsUpdate?: string;
   /** Steps that aren't interviews; interview next steps come from the schedule. */
   nextStep?: { title: string; inDays: number; at: string };
   history?: { kind: ActivityKind; label: string; minutesAgo: number }[];
@@ -61,7 +60,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "interview",
     minutesAgo: 120,
     addedDaysAgo: 12,
-    engagement: "high",
     skills: ["Figma", "Design systems", "Prototyping", "User research"],
     history: [
       { kind: "document", label: "Viewed prep materials", minutesAgo: 1440 },
@@ -81,7 +79,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "message",
     minutesAgo: 300,
     addedDaysAgo: 9,
-    engagement: "high",
     skills: ["PyTorch", "Computer vision", "Distributed training", "MLOps"],
     history: [{ kind: "assessment", label: "Submitted take-home", minutesAgo: 2600 }],
   },
@@ -95,7 +92,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "document",
     minutesAgo: 1440,
     addedDaysAgo: 15,
-    engagement: "medium",
     skills: ["Roadmapping", "B2B SaaS", "ML products", "Analytics"],
     history: [
       { kind: "interview", label: "Product sense interview scheduled", minutesAgo: 2950 },
@@ -112,9 +108,8 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "sourced",
     minutesAgo: 1500,
     addedDaysAgo: 1,
-    engagement: "insufficient",
     skills: ["TypeScript", "Go", "Postgres", "Kubernetes"],
-    followUp: "No outreach sent yet",
+    needsUpdate: "No outreach sent yet",
   },
   {
     id: "olivia-chen",
@@ -126,7 +121,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "offer",
     minutesAgo: 2880,
     addedDaysAgo: 30,
-    engagement: "high",
     skills: ["Python", "Causal inference", "Experimentation", "SQL"],
     nextStep: { title: "Offer decision due", inDays: 5, at: "17:00" },
     history: [{ kind: "interview", label: "Final interview completed", minutesAgo: 7300 }],
@@ -142,7 +136,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "assessment",
     minutesAgo: 3000,
     addedDaysAgo: 8,
-    engagement: "medium",
     skills: ["Terraform", "AWS", "Kubernetes", "Observability"],
   },
   {
@@ -155,7 +148,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "question",
     minutesAgo: 4320,
     addedDaysAgo: 14,
-    engagement: "medium",
     skills: ["Interaction design", "Figma", "Motion design", "Accessibility"],
   },
   {
@@ -168,7 +160,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "document",
     minutesAgo: 4500,
     addedDaysAgo: 10,
-    engagement: "medium",
     skills: ["Rust", "Python", "Distributed systems", "gRPC"],
   },
   {
@@ -181,9 +172,8 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "interview",
     minutesAgo: 4700,
     addedDaysAgo: 22,
-    engagement: "medium",
     skills: ["Kubernetes", "Helm", "Prometheus", "SRE"],
-    followUp: "Interview feedback is overdue",
+    needsUpdate: "Interview feedback is overdue",
   },
   {
     id: "aisha-khan",
@@ -196,7 +186,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "interview",
     minutesAgo: 5100,
     addedDaysAgo: 18,
-    engagement: "high",
     skills: ["Multimodal models", "PyTorch", "Data curation", "CUDA"],
   },
   {
@@ -209,7 +198,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "message",
     minutesAgo: 5800,
     addedDaysAgo: 6,
-    engagement: "low",
     skills: ["React", "TypeScript", "WebGL", "Design systems"],
   },
   {
@@ -222,9 +210,8 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "assessment",
     minutesAgo: 6000,
     addedDaysAgo: 12,
-    engagement: "low",
     skills: ["Statistics", "Python", "Active learning", "Data labeling"],
-    followUp: "No reply in 4 days",
+    needsUpdate: "No reply in 4 days",
   },
   {
     id: "noah-williams",
@@ -236,7 +223,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "document",
     minutesAgo: 6500,
     addedDaysAgo: 7,
-    engagement: "insufficient",
     skills: ["GCP", "Terraform", "CI/CD", "Linux"],
   },
   {
@@ -249,7 +235,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "offer",
     minutesAgo: 6800,
     addedDaysAgo: 34,
-    engagement: "high",
     skills: ["Platform strategy", "Pricing", "Developer tools", "Discovery"],
     nextStep: { title: "Offer walkthrough call", inDays: 1, at: "17:30" },
   },
@@ -263,7 +248,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "offer",
     minutesAgo: 7400,
     addedDaysAgo: 45,
-    engagement: "high",
     skills: ["Go", "Kubernetes", "Postgres", "Event sourcing"],
     nextStep: { title: "First day", inDays: 18, at: "09:00" },
   },
@@ -277,7 +261,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "sourced",
     minutesAgo: 7900,
     addedDaysAgo: 5,
-    engagement: "insufficient",
     skills: ["Product design", "User research", "Figma", "Data visualization"],
   },
   {
@@ -290,7 +273,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "interview",
     minutesAgo: 8300,
     addedDaysAgo: 20,
-    engagement: "medium",
     skills: ["Vision transformers", "Segmentation", "PyTorch", "Research"],
   },
   {
@@ -303,7 +285,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "assessment",
     minutesAgo: 8600,
     addedDaysAgo: 11,
-    engagement: "high",
     skills: ["React", "Next.js", "Accessibility", "Testing"],
   },
   {
@@ -316,9 +297,8 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "assessment",
     minutesAgo: 8900,
     addedDaysAgo: 13,
-    engagement: "low",
     skills: ["Solutions architecture", "Python", "Pre-sales", "Cloud"],
-    followUp: "Assessment not started after 6 days",
+    needsUpdate: "Assessment not started after 6 days",
   },
   {
     id: "ravi-patel",
@@ -330,7 +310,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "stage",
     minutesAgo: 9200,
     addedDaysAgo: 60,
-    engagement: "high",
     skills: ["Python", "Forecasting", "MLOps", "SQL"],
   },
   {
@@ -343,7 +322,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "sourced",
     minutesAgo: 9800,
     addedDaysAgo: 7,
-    engagement: "insufficient",
     skills: ["Python", "APIs", "Customer success", "Computer vision"],
   },
   {
@@ -356,7 +334,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "interview",
     minutesAgo: 10200,
     addedDaysAgo: 16,
-    engagement: "medium",
     skills: ["Java", "Kotlin", "Distributed systems", "AWS"],
   },
   {
@@ -369,7 +346,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "offer",
     minutesAgo: 10800,
     addedDaysAgo: 52,
-    engagement: "high",
     skills: ["Design systems", "Figma", "Prototyping", "Branding"],
   },
   {
@@ -382,7 +358,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "message",
     minutesAgo: 11500,
     addedDaysAgo: 9,
-    engagement: "medium",
     skills: ["3D vision", "LiDAR", "PyTorch", "C++"],
   },
   {
@@ -395,9 +370,8 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "message",
     minutesAgo: 12000,
     addedDaysAgo: 9,
-    engagement: "low",
     skills: ["Data platforms", "AI products", "Analytics", "Strategy"],
-    followUp: "No reply to outreach in 8 days",
+    needsUpdate: "No reply to outreach in 8 days",
   },
   {
     id: "amara-nwosu",
@@ -409,7 +383,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "question",
     minutesAgo: 13200,
     addedDaysAgo: 38,
-    engagement: "high",
     skills: ["NLP", "Python", "Evaluation", "LLMs"],
   },
   {
@@ -422,7 +395,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "stage",
     minutesAgo: 14000,
     addedDaysAgo: 70,
-    engagement: "high",
     skills: ["Rust", "Systems", "Performance", "Linux"],
   },
   {
@@ -435,7 +407,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "interview",
     minutesAgo: 15000,
     addedDaysAgo: 19,
-    engagement: "high",
     skills: ["React", "TypeScript", "Canvas", "Performance"],
   },
   {
@@ -449,7 +420,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "sourced",
     minutesAgo: 16000,
     addedDaysAgo: 11,
-    engagement: "insufficient",
     skills: ["Robotics", "Reinforcement learning", "Simulation", "Python"],
   },
   {
@@ -462,7 +432,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "offer",
     minutesAgo: 17500,
     addedDaysAgo: 58,
-    engagement: "high",
     skills: ["Product design", "Research", "Figma", "Workshops"],
   },
   {
@@ -475,7 +444,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "sourced",
     minutesAgo: 19000,
     addedDaysAgo: 13,
-    engagement: "insufficient",
     skills: ["Python", "Data pipelines", "Spark", "Airflow"],
   },
   {
@@ -488,7 +456,6 @@ export const CANDIDATE_SEEDS: CandidateSeed[] = [
     lastActivityKind: "offer",
     minutesAgo: 21000,
     addedDaysAgo: 80,
-    engagement: "high",
     skills: ["Bayesian modeling", "Python", "Experimentation", "R"],
   },
 ];

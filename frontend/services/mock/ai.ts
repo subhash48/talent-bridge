@@ -27,7 +27,7 @@ export async function mockDraftMessage(candidateId: string, signal?: AbortSignal
       break;
     case "screening":
       subject = `Next steps for your ${candidate.role} application`;
-      body = candidate.followUp
+      body = candidate.communication.status === "needs_attention"
         ? "Just checking in on the assessment I sent over. No pressure at all; if you need more time, let me know and we can adjust the deadline."
         : "Thanks for your time so far. The team is reviewing your application, and I'll be in touch about next steps in the next few days.\n\nIn the meantime, let me know if you have any questions about the role or the team.";
       break;

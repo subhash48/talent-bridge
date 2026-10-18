@@ -1,5 +1,4 @@
 import type { CommunicationRule, CommunicationStatus, DraftReason, EmailStatus } from "@/types/communication";
-import type { EngagementLevel } from "@/types/event";
 import type { JobStatus } from "@/types/job";
 
 // The FastAPI wire format (backend/app/schemas). services/* map these into the view models in
@@ -61,15 +60,6 @@ export type ApiActivity = ApiActivityBrief & {
   metadata: Record<string, unknown> | null;
 };
 
-export type ApiEngagement = {
-  level: EngagementLevel;
-  /** 0-100, or null while there's too little data. Never a measure of candidate quality. */
-  score: number | null;
-  label: string;
-  last_active_at: string | null;
-  follow_up_reason: string | null;
-};
-
 export type ApiInterviewBrief = {
   id: string;
   title: string;
@@ -110,7 +100,6 @@ export type ApiCandidateListItem = {
   updated_at: string;
   archived_at: string | null;
   last_activity: ApiActivityBrief | null;
-  engagement: ApiEngagement;
   communication: ApiCommunicationSummary;
   next_interview: ApiInterviewBrief | null;
 };
@@ -150,7 +139,6 @@ export type ApiCandidateDetail = {
   application: ApiApplication | null;
   job: ApiJob | null;
   stage: ApiStage | null;
-  engagement: ApiEngagement | null;
   communication: ApiCommunicationHealth | null;
   next_interview: ApiInterview | null;
   activity: ApiActivity[];
@@ -308,57 +296,12 @@ export type ApiCandidatePrep = {
   model_name: string;
 };
 
-// Candidate engagement (GET /candidates/{id}/engagement): recruiter-only, informational. It never
-// ranks, advances or rejects anyone, and nothing in the candidate portal can read it.
-
+// Candidate portal access (POST /candidates/{id}/portal-invite): recruiter-only.
 export type ApiPortalAccess = {
   status: ApiPortalAccountStatus;
   invited_at: string | null;
   activated_at: string | null;
   problem: string | null;
-};
-
-export type ApiEngagementBreakdown = {
-  candidate_id: string;
-  application_id: string | null;
-  score: number | null;
-  label: string;
-  level: EngagementLevel;
-  sufficient_data: boolean;
-  portal_activity: {
-    score: number;
-    max: number;
-    neutral: boolean;
-    sessions: number;
-    active_minutes: number;
-    meaningful_views: number;
-    last_active_at: string | null;
-  };
-  responsiveness: {
-    score: number;
-    max: number;
-    neutral: boolean;
-    response_opportunities: number;
-    responses: number;
-    pending: number;
-    median_response_minutes: number | null;
-    last_response_minutes: number | null;
-  };
-  communication: {
-    score: number;
-    max: number;
-    initiated_messages: number;
-    confirmations: number;
-    confirmation_opportunities: number;
-    thank_you_notes: number;
-    follow_ups: number;
-  };
-  proactive_actions: number;
-  overall: { visits: number; active_minutes: number; last_active_at: string | null };
-  portal_access: ApiPortalAccess;
-  recent_portal_activity: { label: string; occurred_at: string; count: number }[];
-  formula_version: string;
-  note: string;
 };
 
 // Ashby integration health (GET /integrations/ashby/status). Never carries a key or a payload.

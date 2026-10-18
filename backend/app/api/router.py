@@ -12,18 +12,17 @@ from app.api import (
     assistant,
     auth,
     candidate,
-    candidate_engagement,
     candidates,
     communication,
     dashboard,
     demo_careers,
     demo_jobs,
     demo_resumes,
-    engagement,
     integrations,
     interviews,
     jobs,
     messages,
+    portal_access,
 )
 from app.core.dependencies import require_candidate, require_demo_enabled, require_recruiter
 
@@ -31,7 +30,7 @@ api_router = APIRouter()
 # The recruiter workspace: recruiters and admins.
 for module in (
     candidates,
-    engagement,
+    portal_access,
     applications,
     communication,
     activities,
@@ -44,7 +43,7 @@ for module in (
 ):
     api_router.include_router(module.router, dependencies=[Depends(require_recruiter)])
 # The candidate portal: the signed-in candidate, scoped to their own record.
-for module in (candidate, candidate_engagement):
+for module in (candidate,):
     api_router.include_router(module.router, dependencies=[Depends(require_candidate)])
 # Guarded route by route: /me is for anyone signed in; the Ashby webhook checks Ashby's signature
 # and the other Ashby routes require a recruiter.

@@ -89,7 +89,11 @@ export function JobPipeline({ job }: { job: JobOpening }) {
                             <span className="mt-0.5 block truncate text-xs text-stone">{candidate.lastActivity}</span>
                             <span className="mt-1 flex items-center gap-1.5 text-xs text-faint">
                               <RelativeTime iso={candidate.lastActivityAt} />
-                              {candidate.followUp && <span className="text-caution">· Follow up</span>}
+                              {candidate.communication.status === "needs_attention" && (
+                                <span className="text-caution" title={candidate.communication.reason}>
+                                  · Follow up
+                                </span>
+                              )}
                             </span>
                           </span>
                         </Link>

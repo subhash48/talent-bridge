@@ -34,7 +34,6 @@ from app.services.application_service import check_initial_stage, record_stage
 from app.services.communication.health import assess
 from app.services.communication.present import health_read
 from app.services.communication.rules import load_rules
-from app.services.engagement.service import engagement_read
 from app.services.pipeline_service import build_list_items, load_snapshots
 
 DETAIL_ACTIVITY_LIMIT = 100
@@ -143,7 +142,7 @@ async def get_candidate_detail(
     if focus is None:
         return CandidateDetail(candidate=candidate_read, applications=briefs)
 
-    [snapshot] = await load_snapshots(session, [focus], with_engagement=True)
+    [snapshot] = await load_snapshots(session, [focus])
     history = await session.scalars(
         select(CandidateStageHistory)
         .where(CandidateStageHistory.application_id == focus.id)
@@ -155,7 +154,6 @@ async def get_candidate_detail(
         application=ApplicationRead.model_validate(focus),
         job=JobRead.model_validate(focus.job),
         stage=focus.stage,
-        engagement=engagement_read(snapshot, candidate, now),
         communication=health_read(focus, assess(snapshot, await load_rules(session), now), now),
         next_interview=InterviewRead.model_validate(upcoming) if upcoming else None,
         activity=[ActivityRead.model_validate(row) for row in snapshot.activities[:DETAIL_ACTIVITY_LIMIT]],

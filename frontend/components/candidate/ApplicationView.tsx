@@ -17,7 +17,6 @@ import { buttonStyles } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useLiveQuery } from "@/hooks/useLiveQuery";
-import { engagement } from "@/lib/engagement";
 import { firstName, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { getCandidateApplication } from "@/services/portal";
@@ -27,14 +26,11 @@ type ApplicationViewProps = { applicationId: string; initialDetail?: CandidateAp
 
 /** One of the candidate's applications. Opening it makes it the one the whole portal shows. */
 export function ApplicationView({ applicationId, initialDetail }: ApplicationViewProps) {
-  const { applicationId: selected, selectApplication } = useCandidatePortal();
+  const { selectApplication } = useCandidatePortal();
   const load = useCallback(() => getCandidateApplication(applicationId), [applicationId]);
   const { data, error, refresh } = useLiveQuery(load, { initialData: initialDetail });
 
   useEffect(() => selectApplication(applicationId), [applicationId, selectApplication]);
-  useEffect(() => {
-    if (selected === applicationId) engagement.track({ type: "application_viewed" });
-  }, [selected, applicationId]);
 
   if (!data) {
     return (

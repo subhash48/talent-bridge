@@ -177,13 +177,9 @@ function fromListItem(item: ApiCandidateListItem): PipelineCandidate {
     stage: item.stage as CandidateStage,
     lastActivity: item.last_activity?.title ?? "No activity yet",
     lastActivityAt: item.last_activity?.created_at ?? item.applied_at,
-    engagement: item.engagement.level,
-    engagementScore: item.engagement.score,
-    portalLastActiveAt: item.engagement.last_active_at ?? undefined,
     portalStatus: item.candidate.portal_status,
     origin: item.origin,
     source: item.source ?? undefined,
-    followUp: item.engagement.follow_up_reason ? { reason: item.engagement.follow_up_reason } : undefined,
     communication: {
       status: item.communication.status,
       lastUpdateAt: item.communication.last_update_at ?? undefined,
@@ -197,8 +193,8 @@ function fromListItem(item: ApiCandidateListItem): PipelineCandidate {
 }
 
 function fromDetail(detail: ApiCandidateDetail): PipelineCandidate {
-  const { application, job, engagement, communication, stage } = detail;
-  if (!application || !job || !engagement || !communication || !stage) {
+  const { application, job, communication, stage } = detail;
+  if (!application || !job || !communication || !stage) {
     throw new Error("This candidate has no application yet.");
   }
   return fromListItem({
@@ -212,7 +208,6 @@ function fromDetail(detail: ApiCandidateDetail): PipelineCandidate {
     updated_at: application.updated_at,
     archived_at: application.archived_at,
     last_activity: detail.activity[0] ?? null,
-    engagement,
     communication: {
       status: communication.status,
       last_update_at: communication.last_update_at,

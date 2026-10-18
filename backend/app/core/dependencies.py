@@ -104,7 +104,6 @@ async def _signed_in_user(request: Request, session: AsyncSession, claims: Token
             code="account_mismatch",
         )
     # The Supabase Auth session the token belongs to, so a portal login is counted once per sign-in.
-    request.state.auth_session_id = claims.session_id
     return user
 
 

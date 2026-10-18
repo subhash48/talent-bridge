@@ -24,7 +24,7 @@ from app.core.enums import (
 )
 from app.models import Interview, Message
 from app.services.communication.rules import Rules
-from app.services.engagement.snapshot import ApplicationSnapshot
+from app.services.snapshot import ApplicationSnapshot
 
 K = CommunicationRuleKey
 S = ApplicationStage

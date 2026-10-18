@@ -1,6 +1,5 @@
 """The Company page's profile, and the candidate assistant answering company questions from it alone."""
 
-import uuid
 from datetime import UTC, datetime
 
 from httpx import AsyncClient
@@ -95,12 +94,3 @@ async def test_the_assistant_prompt_carries_the_profile() -> None:
     company_section = context.to_prompt().split("[company] approved facts you may share")[1].split("[application]")[0]
     assert all(f"- {fact}" in company_section for fact in facts)
     assert "Benefits for UK employees:" in company_section and "Typical interview process:" in company_section
-
-
-async def test_new_portal_pages_are_reported(client: AsyncClient) -> None:
-    visit = {"session_id": str(uuid.uuid4()), "application_id": SOPHIA_APP}
-    assert (await client.post(f"{API}/candidate/engagement/sessions", json=visit)).status_code in (200, 201, 204)
-    for page in ("applications", "company", "ai"):
-        event = {"type": "page_view", "application_id": SOPHIA_APP, "page": page, "session_id": visit["session_id"]}
-        response = await client.post(f"{API}/candidate/engagement/events", json={"events": [event]})
-        assert response.status_code == 204, (page, response.text)

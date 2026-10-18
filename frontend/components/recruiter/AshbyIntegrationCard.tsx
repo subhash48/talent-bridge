@@ -10,7 +10,7 @@ import { useToast } from "@/components/ui/Toaster";
 import { useLiveQuery } from "@/hooks/useLiveQuery";
 import { cn } from "@/lib/utils";
 import { errorMessage } from "@/services/api";
-import { getAshbyStatus, syncAshby, type AshbyStatus } from "@/services/engagement";
+import { getAshbyStatus, syncAshby, type AshbyStatus } from "@/services/portal-access";
 
 const STATE: Record<AshbyStatus["status"], { label: string; className: string }> = {
   connected: { label: "Connected", className: "bg-sage/10 text-sage ring-sage/20" },

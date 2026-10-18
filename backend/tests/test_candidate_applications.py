@@ -144,11 +144,7 @@ APPLICATION_ROUTES = [
     ("POST", "/candidate/messages", {"content": "Hello", "application_id": "{id}"}),
     ("POST", "/candidate/messages/read?application_id={id}", None),
     ("GET", "/candidate/prep?application_id={id}", None),
-    ("POST", "/candidate/prep/viewed?application_id={id}", None),
     ("POST", "/candidate/ai/ask", {"message": "What's next?", "application_id": "{id}"}),
-    ("POST", "/candidate/engagement/sessions", {"session_id": str(uuid.uuid4()), "application_id": "{id}"}),
-    ("POST", "/candidate/engagement/heartbeat", {"session_id": str(uuid.uuid4()), "application_id": "{id}"}),
-    ("POST", "/candidate/engagement/events", {"events": [{"type": "application_viewed", "application_id": "{id}"}]}),
 ]
 
 

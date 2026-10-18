@@ -60,7 +60,8 @@ S = AssistantActionStatus
 DELIVERY = "Candidate portal messages"
 # A request for an update with nothing more to say than that.
 BARE_UPDATE = re.compile(
-    r"\b(an? )?(quick )?(update|follow[- ]?up|check[- ]in|status update)\s*[.!]?\s*$|^\s*(remind|nudge)\b", re.IGNORECASE
+    r"\b(an? )?(quick )?(update|follow[- ]?up|check[- ]in|status update)\s*[.!]?\s*$|^\s*(remind|nudge)\b",
+    re.IGNORECASE,
 )
 HISTORY_STATUSES = (S.COMPLETED, S.FAILED)
 

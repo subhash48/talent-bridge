@@ -13,7 +13,7 @@ import {
   Target,
   type LucideIcon,
 } from "lucide-react";
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 
 import { AskAssistant } from "@/components/candidate/AskAssistant";
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
@@ -28,7 +28,7 @@ import { useConfirmInterview } from "@/hooks/useConfirmInterview";
 import { useLiveQuery } from "@/hooks/useLiveQuery";
 import { downloadInterviewIcs } from "@/lib/calendar";
 import { formatDayLabel, formatDuration, formatTime } from "@/lib/format";
-import { getCandidatePrep, recordPrepViewed } from "@/services/portal";
+import { getCandidatePrep } from "@/services/portal";
 import type { CandidateInterview, CandidatePrep } from "@/types/portal";
 
 const PREP_REFRESH_MS = 5 * 60_000;
@@ -53,11 +53,6 @@ export function InterviewPrep() {
 function PrepView({ applicationId }: { applicationId: string | null }) {
   const loadPrep = useCallback(() => getCandidatePrep(applicationId), [applicationId]);
   const { data: prep, error, loading, refresh, setData } = useLiveQuery(loadPrep, { intervalMs: PREP_REFRESH_MS });
-
-  // Opening prep is a signal the recruiter sees ("Viewed prep materials"); the API records it at most hourly.
-  useEffect(() => {
-    void recordPrepViewed(applicationId).catch(() => undefined);
-  }, [applicationId]);
 
   const subtitle = prep?.interview ? `Get ready for your ${prep.interview.title}` : prep ? `Stay ready for the ${prep.role} role` : undefined;
 

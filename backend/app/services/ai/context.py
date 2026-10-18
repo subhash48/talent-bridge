@@ -3,9 +3,7 @@
 Providers only ever see a CandidateContext, so the model's knowledge is explicit and every answer
 can cite its sources. Contact details are left out on purpose: no answer needs them.
 
-Candidate engagement (services/engagement) is deliberately not part of it: portal visits, time spent
-and response speed say nothing about whether someone can do the job, so they can never reach an
-analysis, a strength, a concern or anything else the AI writes.
+How a candidate uses the portal is not recorded at all, so it can never reach anything the AI writes.
 
 A draft to the candidate gets the candidate-safe version (to_prompt(for_candidate=True)): no
 interviewer feedback, no recruiter's free text on the timeline, and no internal activity, so a draft
@@ -98,7 +96,7 @@ class CandidateContext:
     stage: ApplicationStage
     source: str | None
     applied_at: datetime
-    follow_up_reason: str | None  # what the recruiter owes the candidate (next_actions), not engagement
+    follow_up_reason: str | None  # the update the candidate is owed (communication health)
     activities: tuple[ActivityFact, ...]  # newest first
     interviews: tuple[InterviewFact, ...]  # by scheduled time
     messages: tuple[MessageFact, ...]  # oldest first
@@ -272,7 +270,9 @@ async def build_candidate_context(
         stage=detail.stage,
         source=application.source,
         applied_at=application.applied_at,
-        follow_up_reason=detail.engagement.follow_up_reason if detail.engagement else None,
+        follow_up_reason=(
+            detail.communication.attention[0].title if detail.communication and detail.communication.attention else None
+        ),
         activities=tuple(ActivityFact(a.activity_type, a.title, a.description, a.created_at) for a in detail.activity),
         interviews=tuple(
             InterviewFact(

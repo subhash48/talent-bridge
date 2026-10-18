@@ -159,11 +159,6 @@ export async function getCandidatePrep(applicationId?: string | null, signal?: A
   };
 }
 
-/** Tells the recruiter the candidate opened their prep (once an hour at most, server-side). */
-export async function recordPrepViewed(applicationId?: string | null): Promise<void> {
-  await apiFetch<void>(`/candidate/prep/viewed${forApplication(applicationId)}`, { method: "POST", keepalive: true });
-}
-
 /** POST /candidate/ai/ask. The recruiter's timeline records the topic, never the question. */
 export async function askCandidateAssistant(message: string, applicationId?: string | null, signal?: AbortSignal): Promise<string> {
   const { answer } = await apiFetch<{ answer: string; model_name: string }>("/candidate/ai/ask", {

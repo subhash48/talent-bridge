@@ -9,7 +9,7 @@ from uuid import UUID
 
 from pydantic import EmailStr, Field, field_validator
 
-from app.core.enums import ApplicationStage, EngagementLevel, PortalAccountStatus
+from app.core.enums import ApplicationStage, PortalAccountStatus
 from app.schemas.activity import ActivityBrief, ActivityRead
 from app.schemas.application import ApplicationBrief, ApplicationRead, Origin, StageHistoryRead
 from app.schemas.common import APIModel, OptionalText, OptionalURL, Timestamp
@@ -70,15 +70,11 @@ class CandidateRead(APIModel):
     updated_at: Timestamp
 
 
-class EngagementRead(APIModel):
-    """How the candidate has engaged with our process, never a judgement of the candidate. The full
-    breakdown is GET /candidates/{id}/engagement. follow_up_reason is what the recruiter owes them."""
-
-    level: EngagementLevel
-    score: int | None = None  # null while there's too little data
-    label: str
-    last_active_at: Timestamp | None = None  # in the portal, for this application
-    follow_up_reason: str | None = None
+class PortalAccess(APIModel):
+    status: PortalAccountStatus
+    invited_at: Timestamp | None = None
+    activated_at: Timestamp | None = None
+    problem: str | None = None  # a safe summary when an invitation failed or is waiting
 
 
 class CandidateListItem(APIModel):
@@ -94,7 +90,6 @@ class CandidateListItem(APIModel):
     updated_at: Timestamp
     archived_at: Timestamp | None = None
     last_activity: ActivityBrief | None = None
-    engagement: EngagementRead
     communication: CommunicationSummary
     next_interview: InterviewBrief | None = None
 
@@ -106,7 +101,6 @@ class CandidateDetail(APIModel):
     application: ApplicationRead | None = None
     job: JobRead | None = None
     stage: ApplicationStage | None = None
-    engagement: EngagementRead | None = None
     communication: CommunicationHealthRead | None = None  # what they've heard from us; recruiter-only
     next_interview: InterviewRead | None = None
     activity: list[ActivityRead] = []  # newest first

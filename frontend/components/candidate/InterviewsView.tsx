@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarDays } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
 import { CandidateHeader } from "@/components/candidate/CandidateHeader";
@@ -12,7 +12,6 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/Tabs";
 import { useConfirmInterview } from "@/hooks/useConfirmInterview";
 import { useLiveQuery } from "@/hooks/useLiveQuery";
-import { engagement } from "@/lib/engagement";
 import { pluralize } from "@/lib/format";
 import { getCandidateInterviews } from "@/services/portal";
 import type { CandidateInterview } from "@/types/portal";
@@ -53,12 +52,6 @@ function InterviewsView({ applicationId, initialInterviews }: InterviewsViewProp
     setData((list) => list?.map((interview) => (interview.id === confirmed.id ? confirmed : interview))),
   );
   const [tab, setTab] = useState<Group>("upcoming");
-  const nextId = data?.find((interview) => groupOf(interview) === "upcoming")?.id;
-
-  // Opening the page shows the next interview's details: that is the one recorded as viewed.
-  useEffect(() => {
-    if (nextId) engagement.track({ type: "interview_viewed", interviewId: nextId });
-  }, [nextId]);
 
   const upcomingCount = data?.filter((interview) => groupOf(interview) === "upcoming").length ?? 0;
   const header = (

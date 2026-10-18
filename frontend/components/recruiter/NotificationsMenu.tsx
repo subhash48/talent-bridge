@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/DropdownMenu";
 
-/** Latest candidate activity, newest first. Follow-ups are flagged so they stand out. */
+/** Latest candidate activity, newest first. Anyone owed an update is flagged so they stand out. */
 export function NotificationsMenu() {
   const { candidates } = useWorkspace();
   const [seen, setSeen] = useState(false);
@@ -50,8 +50,8 @@ export function NotificationsMenu() {
                 </span>
                 <span className="mt-0.5 flex items-center gap-1.5 text-xs text-faint">
                   <RelativeTime iso={candidate.lastActivityAt} />
-                  {candidate.followUp && (
-                    <span className="inline-flex items-center gap-1 text-caution">
+                  {candidate.communication.status === "needs_attention" && (
+                    <span className="inline-flex items-center gap-1 text-caution" title={candidate.communication.reason}>
                       <CircleAlert className="size-3! text-caution!" aria-hidden /> Needs follow-up
                     </span>
                   )}

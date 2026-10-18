@@ -86,24 +86,6 @@ class ActivityType(StrEnum):
     PORTAL_INVITED = "portal_invited"  # internal: the candidate portal invitation went out
 
 
-# Things the candidate did themselves. Engagement is measured on these alone (services/engagement).
-CANDIDATE_ACTIONS: frozenset[str] = frozenset(
-    {
-        ActivityType.INTERVIEW_CONFIRMED,
-        ActivityType.INTERVIEW_RESCHEDULE_REQUESTED,
-        ActivityType.INTERVIEW_COMPLETED,
-        ActivityType.MESSAGE_RECEIVED,
-        ActivityType.DOCUMENT_SHARED,
-        ActivityType.PREP_VIEWED,
-        ActivityType.QUESTION_ASKED,
-        ActivityType.ASSESSMENT_COMPLETED,
-        ActivityType.OFFER_VIEWED,
-        ActivityType.OFFER_ACCEPTED,
-        ActivityType.PROFILE_UPDATED,
-    }
-)
-
-
 class ApplicationBucket(StrEnum):
     """Where an application sits in the candidate portal. Derived from the stage, never stored."""
 
@@ -129,79 +111,6 @@ class MessageKind(StrEnum):
     THANK_YOU = "thank_you"
     FOLLOW_UP = "follow_up"
     QUESTION = "question"
-
-
-class EngagementLevel(StrEnum):
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-    INSUFFICIENT = "insufficient"
-
-
-class EngagementEventType(StrEnum):
-    """First-party portal behaviour that no other table records. Stored as text (migration 012).
-
-    Actions with their own records (messages, interview confirmations, profile edits) are read from
-    those records instead, so there is one source of truth for each fact.
-    """
-
-    PORTAL_LOGIN = "portal_login"  # first portal visit in a new Supabase Auth session
-    PORTAL_SESSION_STARTED = "portal_session_started"
-    PAGE_VIEW = "page_view"
-    APPLICATION_VIEWED = "application_viewed"
-    INTERVIEW_VIEWED = "interview_viewed"
-    PREP_VIEWED = "prep_viewed"
-    MESSAGE_READ = "message_read"
-    # A section of the Company page read for a moment (metadata.target is a CompanySection).
-    COMPANY_SECTION_VIEWED = "company_section_viewed"
-    # The candidate asked the portal assistant something. Only its topic is kept (metadata.topic, a
-    # PortalTopic), never the question.
-    AI_QUESTION_ASKED = "ai_question_asked"
-
-
-# The only types the portal may send to POST /candidate/engagement/events. The rest are recorded by
-# the server as a side effect of the request that caused them.
-CLIENT_ENGAGEMENT_EVENTS: frozenset[EngagementEventType] = frozenset(
-    {
-        EngagementEventType.PAGE_VIEW,
-        EngagementEventType.APPLICATION_VIEWED,
-        EngagementEventType.INTERVIEW_VIEWED,
-        EngagementEventType.COMPANY_SECTION_VIEWED,
-    }
-)
-
-
-class CompanySection(StrEnum):
-    """The sections of the candidate portal's Company page."""
-
-    PRODUCTS = "products"
-    CULTURE = "culture"
-    BENEFITS = "benefits"
-    LOCATIONS = "locations"
-    HIRING = "hiring"
-
-
-class PortalTopic(StrEnum):
-    """What a portal interaction was about, for recruiter analytics (services/analytics/topics.py)."""
-
-    INTERVIEW_PREPARATION = "interview_preparation"
-    COMPANY_INFORMATION = "company_information"
-    APPLICATION_STATUS = "application_status"
-    COMPENSATION = "compensation"
-    BENEFITS = "benefits"
-    CULTURE_TEAM = "culture_team"
-
-
-class PortalPage(StrEnum):
-    DASHBOARD = "dashboard"
-    APPLICATIONS = "applications"  # the list of every application
-    APPLICATION = "application"  # one application
-    INTERVIEWS = "interviews"
-    MESSAGES = "messages"
-    COMPANY = "company"
-    AI = "ai"
-    PREP = "prep"
-    PROFILE = "profile"
 
 
 class DemoPostingStatus(StrEnum):

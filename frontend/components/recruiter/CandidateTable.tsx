@@ -63,7 +63,7 @@ export function CandidateTable({
               Stage
             </th>
             <th scope="col" className={headerCell}>
-              Last activity
+              Communication
             </th>
             <th scope="col" className={`${headerCell} w-10`}>
               <span className="sr-only">Actions</span>

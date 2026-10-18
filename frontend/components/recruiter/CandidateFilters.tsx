@@ -26,7 +26,7 @@ import {
 } from "@/lib/candidate-query";
 import { cn } from "@/lib/utils";
 import { STAGE_LABELS } from "@/types/application";
-import { ENGAGEMENT_LABELS, type EngagementLevel } from "@/types/event";
+import type { CommunicationStatus } from "@/types/communication";
 import { PIPELINE_STAGES } from "@/types/workspace";
 
 const STAGE_CHIPS: { value: StageFilter; label: string }[] = [
@@ -34,7 +34,11 @@ const STAGE_CHIPS: { value: StageFilter; label: string }[] = [
   ...PIPELINE_STAGES.map((stage) => ({ value: stage, label: STAGE_LABELS[stage] })),
 ];
 
-const ENGAGEMENT_LEVELS = Object.keys(ENGAGEMENT_LABELS) as EngagementLevel[];
+const COMMUNICATION_OPTIONS: { value: CommunicationStatus; label: string }[] = [
+  { value: "needs_attention", label: "Needs an update" },
+  { value: "due_soon", label: "Update due within a day" },
+  { value: "on_track", label: "On track" },
+];
 const PORTAL_OPTIONS: { value: PortalFilter; label: string }[] = [
   { value: "active", label: "Portal activated" },
   { value: "invited", label: "Invited, not signed in yet" },
@@ -109,20 +113,19 @@ export function CandidateFilters({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="max-h-[min(70vh,var(--radix-dropdown-menu-content-available-height))] w-[240px] overflow-y-auto">
-              <DropdownMenuCheckboxItem
-                checked={filters.followUpOnly}
-                onSelect={keepOpen}
-                onCheckedChange={(checked) => onFiltersChange({ ...filters, followUpOnly: checked === true })}
-              >
-                Needs follow-up only
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={filters.recentlyActive}
-                onSelect={keepOpen}
-                onCheckedChange={(checked) => onFiltersChange({ ...filters, recentlyActive: checked === true })}
-              >
-                Active in the portal this week
-              </DropdownMenuCheckboxItem>
+              <DropdownMenuLabel>Communication</DropdownMenuLabel>
+              {COMMUNICATION_OPTIONS.map((option) => (
+                <DropdownMenuCheckboxItem
+                  key={option.value}
+                  checked={filters.communication.includes(option.value)}
+                  onSelect={keepOpen}
+                  onCheckedChange={() =>
+                    onFiltersChange({ ...filters, communication: toggle(filters.communication, option.value) })
+                  }
+                >
+                  {option.label}
+                </DropdownMenuCheckboxItem>
+              ))}
               <DropdownMenuSeparator />
               <DropdownMenuLabel>Candidate portal</DropdownMenuLabel>
               {PORTAL_OPTIONS.map((option) => (
@@ -133,18 +136,6 @@ export function CandidateFilters({
                   onCheckedChange={() => onFiltersChange({ ...filters, portal: toggle(filters.portal, option.value) })}
                 >
                   {option.label}
-                </DropdownMenuCheckboxItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Engagement</DropdownMenuLabel>
-              {ENGAGEMENT_LEVELS.map((level) => (
-                <DropdownMenuCheckboxItem
-                  key={level}
-                  checked={filters.engagement.includes(level)}
-                  onSelect={keepOpen}
-                  onCheckedChange={() => onFiltersChange({ ...filters, engagement: toggle(filters.engagement, level) })}
-                >
-                  {ENGAGEMENT_LABELS[level]}
                 </DropdownMenuCheckboxItem>
               ))}
               <DropdownMenuSeparator />

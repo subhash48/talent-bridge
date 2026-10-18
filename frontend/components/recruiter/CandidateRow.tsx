@@ -2,6 +2,7 @@
 
 import { CandidateActionsMenu } from "@/components/recruiter/CandidateActionsMenu";
 import { Avatar } from "@/components/shared/Avatar";
+import { CommunicationBadge } from "@/components/recruiter/communication/CommunicationBadge";
 import { RelativeTime } from "@/components/shared/RelativeTime";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -57,19 +58,32 @@ export function CandidateRow({ candidate, selected, checked, onSelect, onChecked
         <StatusBadge stage={candidate.stage} className="min-w-[88px]" />
       </td>
       <td className={cell("pr-2 text-[13px] leading-[18px]")}>
-        <p className="flex items-center gap-1.5 text-sm leading-[18px] text-charcoal">
-          {candidate.followUp && (
-            <span className="size-1.5 shrink-0 rounded-full bg-caution" title={candidate.followUp.reason}>
-              <span className="sr-only">Needs follow-up:</span>
-            </span>
-          )}
-          <span className="line-clamp-1">{candidate.lastActivity}</span>
-        </p>
-        <RelativeTime iso={candidate.lastActivityAt} className="text-[13px] text-stone" />
+        <CommunicationCell candidate={candidate} />
       </td>
       <td className={cell("w-10 pr-2 text-right")}>
         <CandidateActionsMenu candidate={candidate} />
       </td>
     </tr>
+  );
+}
+
+/** Whether they're hearing from us on time, and when they last did. */
+export function CommunicationCell({ candidate }: { candidate: PipelineCandidate }) {
+  const { status, reason, lastUpdateAt } = candidate.communication;
+  return (
+    <div className="flex flex-col items-start gap-1">
+      <CommunicationBadge status={status} />
+      <p className="line-clamp-1 text-[13px] text-stone">
+        {reason ? (
+          <span className="text-caution">{reason}</span>
+        ) : lastUpdateAt ? (
+          <>
+            Last update <RelativeTime iso={lastUpdateAt} />
+          </>
+        ) : (
+          "No update yet"
+        )}
+      </p>
+    </div>
   );
 }

@@ -1,9 +1,8 @@
 "use client";
 
 import { CandidateActionsMenu } from "@/components/recruiter/CandidateActionsMenu";
-import type { CandidateSelectionProps } from "@/components/recruiter/CandidateRow";
+import { CommunicationCell, type CandidateSelectionProps } from "@/components/recruiter/CandidateRow";
 import { Avatar } from "@/components/shared/Avatar";
-import { RelativeTime } from "@/components/shared/RelativeTime";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Checkbox } from "@/components/ui/Checkbox";
 
@@ -32,10 +31,7 @@ export function CandidateCard({ candidate, selected, checked, onSelect, onChecke
           <span className="block truncate text-[13px] text-stone">{candidate.role}</span>
           <span className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
             <StatusBadge stage={candidate.stage} />
-            <span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-stone">
-              {candidate.followUp && <span aria-hidden className="size-1.5 rounded-full bg-caution" />}
-              {candidate.lastActivity} · <RelativeTime iso={candidate.lastActivityAt} />
-            </span>
+            <CommunicationCell candidate={candidate} />
           </span>
         </span>
       </button>

@@ -19,6 +19,7 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useStageCandidates } from "@/hooks/useStageCandidates";
 import {
   EMPTY_FILTERS,
+  NEEDS_UPDATE,
   activeFilterCount,
   countByStage,
   matchesFilters,
@@ -43,6 +44,10 @@ type CandidatesWorkspaceProps = {
   /** From ?candidate=, so notifications and other pages can deep-link a candidate. */
   initialCandidateId?: string;
 };
+
+function needsUpdateOnly(filters: Filters): boolean {
+  return filters.communication.length === 1 && filters.communication[0] === "needs_attention";
+}
 
 export function CandidatesWorkspace({ greeting, trends, initialCandidateId }: CandidatesWorkspaceProps) {
   const { user, candidates, jobs, revision, moveCandidate } = useWorkspace();
@@ -93,7 +98,7 @@ export function CandidatesWorkspace({ greeting, trends, initialCandidateId }: Ca
   const filtersActive = query.trim() !== "" || activeFilterCount(filters) > 0 || stage !== "all";
 
   const activeMetric: MetricKey | undefined =
-    filters.followUpOnly && stage === "all" ? "followUp" : stage === "interview" ? "interviews" : stage === "offer" ? "offers" : undefined;
+    needsUpdateOnly(filters) && stage === "all" ? "followUp" : stage === "interview" ? "interviews" : stage === "offer" ? "offers" : undefined;
 
   function changeView(update: () => void) {
     update();
@@ -104,10 +109,10 @@ export function CandidatesWorkspace({ greeting, trends, initialCandidateId }: Ca
     changeView(() => {
       if (metric === "followUp") {
         setStage("all");
-        setFilters((current) => ({ ...current, followUpOnly: activeMetric !== "followUp" }));
+        setFilters((current) => ({ ...current, communication: activeMetric !== "followUp" ? NEEDS_UPDATE : [] }));
         return;
       }
-      setFilters((current) => ({ ...current, followUpOnly: false }));
+      setFilters((current) => ({ ...current, communication: needsUpdateOnly(current) ? [] : current.communication }));
       const target: StageFilter = metric === "interviews" ? "interview" : metric === "offers" ? "offer" : "all";
       setStage(activeMetric === metric ? "all" : target);
     });

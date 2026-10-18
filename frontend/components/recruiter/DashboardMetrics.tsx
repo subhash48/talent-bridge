@@ -6,7 +6,7 @@ import type { MetricKey, PipelineCandidate } from "@/types/workspace";
 const METRICS = [
   { key: "total", label: "Total candidates", icon: UsersRound },
   { key: "interviews", label: "In interviews", icon: UserRound },
-  { key: "followUp", label: "Need follow-up", icon: Clock },
+  { key: "followUp", label: "Need an update", icon: Clock },
   { key: "offers", label: "Offers", icon: BriefcaseBusiness },
 ] as const;
 
@@ -22,7 +22,7 @@ export function DashboardMetrics({ candidates, trends, active, onSelect }: Dashb
   const values: Record<MetricKey, number> = {
     total: candidates.length,
     interviews: candidates.filter((candidate) => candidate.stage === "interview").length,
-    followUp: candidates.filter((candidate) => candidate.followUp).length,
+    followUp: candidates.filter((candidate) => candidate.communication.status === "needs_attention").length,
     offers: candidates.filter((candidate) => candidate.stage === "offer").length,
   };
 

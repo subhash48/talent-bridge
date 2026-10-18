@@ -33,13 +33,13 @@ export default async function WelcomePage() {
       title="Welcome to your candidate portal"
       description={
         <>
-          Choose a password for <strong className="font-medium text-charcoal">{user.email}</strong>. You’ll sign in
-          with it and this email.
+          You&rsquo;re signed in as <strong className="font-medium text-charcoal">{user.email}</strong>. Choose a
+          password if you&rsquo;d like one; you can always sign in with a link we email you instead.
         </>
       }
       footer={
-        <Link href="/login" className={authLinkStyles}>
-          Already set up? Sign in
+        <Link href="/candidate" className={authLinkStyles}>
+          Skip for now and open my portal
         </Link>
       }
     >

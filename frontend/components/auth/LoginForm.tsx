@@ -31,6 +31,9 @@ export function LoginForm({ next, reason }: { next: string | null; reason: strin
   // Set before the first await and cleared only by a failure, so the form is never sent twice at once.
   const submitting = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  // "Email me a sign-in link": sending, then sent (to this address).
+  const [linkState, setLinkState] = useState<"idle" | "sending" | "sent">("idle");
+  const [linkEmail, setLinkEmail] = useState("");
   const notice = reason ? LOGIN_NOTICES[reason] : undefined;
 
   useEffect(() => {
@@ -61,6 +64,30 @@ export function LoginForm({ next, reason }: { next: string | null; reason: strin
     }
   }
 
+  /** A one-time sign-in link by email, for anyone with an account: no password needed. */
+  async function emailLink() {
+    const address = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) {
+      setError("Enter your email address first, then we'll send the link there.");
+      return;
+    }
+    setError(null);
+    setLinkState("sending");
+    const target = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next ?? "/")}`;
+    const { error: linkError } = await createClient().auth.signInWithOtp({
+      email: address,
+      options: { shouldCreateUser: false, emailRedirectTo: target },
+    });
+    // An unknown address gets the same answer, so the form never says who has an account.
+    if (linkError && linkError.status !== 400 && linkError.status !== 422) {
+      setLinkState("idle");
+      setError(authErrorMessage(linkError));
+      return;
+    }
+    setLinkEmail(address);
+    setLinkState("sent");
+  }
+
   /** Back to the form, with what went wrong shown on it. */
   function fail(message: string) {
     setError(message);
@@ -79,7 +106,15 @@ export function LoginForm({ next, reason }: { next: string | null; reason: strin
 
   return (
     <form onSubmit={signIn} aria-busy={pending} className="flex flex-col gap-4.5">
-      {error ? <AuthAlert>{error}</AuthAlert> : notice && <AuthAlert tone="info">{notice}</AuthAlert>}
+      {error ? (
+        <AuthAlert>{error}</AuthAlert>
+      ) : linkState === "sent" ? (
+        <AuthAlert tone="info">
+          If {linkEmail} has an account, a sign-in link is on its way. Open it on this device to sign in.
+        </AuthAlert>
+      ) : (
+        notice && <AuthAlert tone="info">{notice}</AuthAlert>
+      )}
       <div className="flex flex-col gap-1.5">
         <label htmlFor="email" className={labelStyles}>
           Email
@@ -136,6 +171,15 @@ export function LoginForm({ next, reason }: { next: string | null; reason: strin
         className="h-11 w-full rounded-[10px] text-base font-semibold"
       >
         {pending ? "Signing in…" : "Sign in"}
+      </Button>
+      <Button
+        variant="secondary"
+        size="lg"
+        disabled={pending || linkState === "sending"}
+        onClick={() => void emailLink()}
+        className="h-11 w-full rounded-[10px] text-[15px]"
+      >
+        {linkState === "sending" ? "Sending…" : "Email me a sign-in link"}
       </Button>
       <SignInLoading active={pending} />
     </form>

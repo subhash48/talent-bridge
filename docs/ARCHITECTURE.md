@@ -2,7 +2,9 @@
 
 > One recruiting system, two experiences.
 >
-> **Status:** Draft v1 · 2026-10-02 · Architecture and two-day prototype plan. No production code yet.
+> **Status:** v2 · 2026-10-18 · Refocused on one problem: candidates never get forgotten during hiring
+> (section 24). Sections 0–23 describe the platform as first built; where they disagree with section 24,
+> section 24 is how it works now.
 
 ---
 
@@ -32,6 +34,7 @@
 21. [Demo careers site (development only)](#21-demo-careers-site-development-only)
 22. [Candidate portal analytics and voluntary demographics](#22-candidate-portal-analytics-and-voluntary-demographics)
 23. [Recruiter AI Assistant: one action engine for text and voice](#23-recruiter-ai-assistant-one-action-engine-for-text-and-voice)
+24. [Candidate communication (the TalentBridge refocus)](#24-candidate-communication-the-talentbridge-refocus)
 
 Appendices: [A. Seed data](#appendix-a-seed-data) · [B. Demo script](#appendix-b-demo-script) · [C. Decisions to confirm](#appendix-c-decisions-to-confirm)
 
@@ -1798,6 +1801,10 @@ It never raises. A failed delivery gives its lease back and is retried on the ne
 
 ## 22. Candidate portal analytics and voluntary demographics
 
+> **Removed in the refocus (section 24).** Portal activity is no longer recorded, portal analytics, AI insights
+> and the demographics aggregate are gone, and no form collects demographic answers. The tables keep the rows
+> written before; nothing writes or reads them. Kept here as a record of what existed.
+
 Recruiters see how candidates use the Candidate Portal, in aggregate, to improve the experience (`/recruiter/analytics`). It measures the experience, never the candidate: the responses carry no candidate ids, names or emails, and nothing here feeds ranking, search order, AI evaluation or any stage change.
 
 ```
@@ -1831,6 +1838,9 @@ No other model, schema, context builder (`services/ai/context.py`, `portal_conte
 
 ## 23. Recruiter AI Assistant: one action engine for text and voice
 
+> **Updated in the refocus (section 24).** The same engine now answers communication questions and drafts
+> updates through the drafts ledger; the job and analytics actions are gone.
+
 `/recruiter/ai` replaces the per-candidate Copilot page with an operating assistant. Typed text and transcribed speech take exactly the same path; the only difference is `input_type`.
 
 ```
@@ -1860,6 +1870,96 @@ POST /assistant/actions/{id}/confirm ─▶ status proposed ─▶ executing (co
 **Voice UI.** `lib/voice.ts` is the state machine (Listening, Understanding, Preparing action, Ready, Executing, Complete), with a session number per recording so results from a cancelled one are dropped and presses during a step are ignored. `hooks/useVoiceInput.ts` records with MediaRecorder, draws the waveform from an `AnalyserNode` and stops after 1.8 s of silence (or 45 s). The panel floats on wide screens and is a bottom sheet on phones; the top bar's microphone opens `/recruiter/ai?voice=1`, the same panel.
 
 ---
+
+## 24. Candidate communication (the TalentBridge refocus)
+
+TalentBridge makes sure candidates never get forgotten during hiring. Everything that doesn't strengthen
+candidate communication, next-step clarity or interview preparation was removed: AI evaluation (analyses,
+strengths and concerns, rankings), the engagement score and portal activity tracking, portal analytics and
+demographics, job and analytics actions in the assistant, the top-bar voice button and the Career Run game.
+ATS integrations are not developed in this phase; the Ashby integration still works and stays optional.
+
+### 24.1 The loop
+
+```
+Recruiter creates a job ─▶ /careers ─▶ candidate applies (name, email, résumé; no account)
+   ─▶ application created at once ─▶ portal link emailed (Supabase invitation or sign-in link)
+   ─▶ recruiter reviews, moves the stage ─▶ health.assess flags "status changed, not told"
+   ─▶ Today lists it ─▶ Draft update (AI, candidate-safe context) ─▶ recruiter edits ─▶ Approve and send
+   ─▶ message_service.send_message: portal message + timeline entry + delivery record ─▶ Resend email
+   ─▶ rule cleared · communication analytics updated
+Interview scheduled ─▶ prep opens (résumé, stage, role, company) ─▶ mock interview
+Interview tomorrow, unconfirmed ─▶ reminder flagged ─▶ draft ─▶ approve ─▶ sent
+Interview over, no message for 72 h ─▶ follow-up flagged ─▶ …
+```
+
+### 24.2 Communication health (`services/communication/health.py`)
+
+A pure function of an application snapshot (`services/snapshot.py`: the application, its timeline, messages
+and interviews), the rules and `now`. An *update* is any message the candidate received from the hiring team
+(recruiter or system). Five rules, in this order, each with a recruiter-editable threshold
+(`communication_rules`, migration 015; defaults in `rules.py`):
+
+| Rule | Default | Applies to | Clears when |
+|---|---|---|---|
+| `stage_update` | 0 h after the change | every non-archived application | an update after the change |
+| `unanswered_question` | 24 h after their first unanswered message (not a thank-you note) | every non-archived application | an update after it |
+| `post_interview` | 72 h after the latest ended interview (not cancelled) | active stages | an update after it ended |
+| `interview_unconfirmed` | 24 h before the next interview | active stages | confirmation, or an update inside that window |
+| `no_recent_update` | 120 h since the last update (or applying) | active stages with no interview booked | an update |
+
+Hired and rejected applications are only flagged for events in the last 30 days; archived ones never. The
+result is a status (needs attention, due soon within 24 h, on track, closed), the facts (last update, open
+question, next interview and its confirmation, last interview and its follow-up, last stage change) and the
+attention items. It feeds Today (`GET /communication/attention`), each pipeline row's summary, the candidate
+page's Communication card (`GET /applications/{id}/communication`, also in the candidate detail) and the
+assistant's answers.
+
+### 24.3 Drafts and sending
+
+`communication_drafts` (migration 015) is the ledger: `drafted` → `sent` or `discarded`, with what the AI wrote
+kept next to what was sent, so analytics can tell edited drafts apart. `drafts.brief` turns the reason into a
+purpose and guidance (a stage update, and for a rejection a kind note with no reason; a reply to their latest
+message; a post-interview update; a reminder to confirm; a status update; or exactly what the recruiter asked
+for). The draft prompt gets `CandidateContext.to_prompt(for_candidate=True)`: no interviewer feedback, no
+recruiter's free text from the timeline, no internal activity types. An application has at most one open draft.
+
+Sending a draft is the recruiter's approval: an `UPDATE … WHERE status = 'drafted'` claims it in the same
+transaction as the message, so a second send is a 409 and a refused send (an archived candidate) leaves it a
+draft. Every recruiter message, from any surface, goes through `message_service.send_message`: the portal
+message and the timeline entry (`message_sent`, with who sent it and the draft) commit first, with a
+`message_deliveries` row; then, if an email provider is configured, `integrations/email.py` sends it (Resend,
+with the message id as the idempotency key) and the row records `sent`, `failed` (a safe reason) or
+`not_configured`. A failed email never unsends the portal message.
+
+### 24.4 Careers site and résumés
+
+`/careers` (`api/careers.py`, public) lists open jobs made in TalentBridge (`external_id` null). Applying
+creates or reuses the candidate by email, creates the application (Applied, source "Careers site") with its
+stage history and timeline entry, and stores the résumé (`candidate_resumes`, migration 016; checked like the
+demo site's, by content). Its text is read from PDF (pypdf) and DOCX for the candidate's own preparation. Then
+the portal link: a Supabase invitation for a new account (`account_provisioning`), or a sign-in link
+(`/auth/v1/otp`, never creating an account) for an existing one. Staff emails are refused.
+
+### 24.5 Candidate portal and preparation
+
+The home answers where am I, what happens next, do I need to do anything, how should I prepare, from the
+portal's candidate-safe record (`candidate_visibility.py`). Prep (`candidate_ai_service.prepare`) follows the
+next interview, or the stage when none is booked, and its `PortalContext` now carries the candidate's own
+résumé text, which no recruiter context ever does. `POST /candidate/prep/mock` coaches one practice answer;
+nothing is stored and it never scores. How candidates use the portal is not recorded.
+
+### 24.6 Analytics (`services/communication/analytics.py`)
+
+Obligations (an update after a stage change, a reply, a post-interview follow-up) are met if an update reached
+the candidate within the rule's threshold and at least within a day; ones still inside their window aren't
+counted. Gaps between updates include the silence an active application is in now. Time saved is a stated
+estimate: 5 minutes per AI draft a recruiter sent.
+
+### 24.7 Migrations
+
+`015_communication.sql` (rules, drafts, deliveries) and `016_native_careers.sql` (résumés) only add tables, so
+code that doesn't use them works on a database without them. Both are checked to apply in order on PostgreSQL 16.
 
 ## Appendix A. Seed data
 

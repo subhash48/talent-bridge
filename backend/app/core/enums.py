@@ -317,6 +317,7 @@ class DraftStatus(StrEnum):
 class EmailStatus(StrEnum):
     """How a recruiter's message went out by email. The candidate portal always gets it."""
 
+    PENDING = "pending"  # in the portal; the email is on its way
     SENT = "sent"  # the email provider accepted it
     FAILED = "failed"
     NOT_CONFIGURED = "not_configured"  # no email provider: portal only

@@ -10,6 +10,14 @@ from app.schemas.common import APIModel, CandidateRef, Timestamp
 from app.services.communication.rules import MAX_THRESHOLD_HOURS
 
 
+class EmailDeliveryRead(APIModel):
+    """Whether recruiter messages are also emailed. Without a provider they reach the portal only."""
+
+    configured: bool
+    provider: str | None = None
+    sender: str | None = None  # the From address candidates see
+
+
 class CommunicationRuleRead(APIModel):
     key: CommunicationRuleKey
     title: str

@@ -48,7 +48,7 @@ class CommunicationDraft(UUIDPrimaryKey, Timestamps, Base):
 
 class MessageDelivery(Base):
     """How a recruiter's message reached the candidate (migration 015). The message row is the portal
-    delivery; this is the email: sent, failed, or not configured (portal only)."""
+    delivery; this is the email: pending, sent, failed, or not configured (portal only)."""
 
     __tablename__ = "message_deliveries"
     __table_args__ = (Index("message_deliveries_draft_idx", "draft_id"),)

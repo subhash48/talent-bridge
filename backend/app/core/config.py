@@ -72,6 +72,13 @@ class Settings(BaseSettings):
     groq_transcription_model: str = "whisper-large-v3-turbo"
     ai_timeout_seconds: float = 30.0
 
+    # Email to candidates (Resend). Recruiter-approved messages always reach the candidate portal; with
+    # both of these set they're also emailed. EMAIL_FROM is a sender on a domain verified in Resend,
+    # e.g. "TalentBridge <updates@yourcompany.com>".
+    resend_api_key: SecretStr | None = None
+    email_from: str | None = None
+    email_timeout_seconds: float = 10.0
+
     # Supabase Auth admin access, for candidate portal invitations only. Server-side; never sent to
     # the browser. Either name works (the dashboard calls it the secret or the service role key).
     supabase_secret_key: SecretStr | None = Field(

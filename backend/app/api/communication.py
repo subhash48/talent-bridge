@@ -5,13 +5,14 @@ from uuid import UUID
 
 from fastapi import APIRouter
 
-from app.core.dependencies import RecruiterDep, SessionDep
+from app.core.dependencies import EmailProviderDep, RecruiterDep, SessionDep
 from app.core.enums import CommunicationRuleKey
 from app.schemas.communication import (
     AttentionList,
     CommunicationHealthRead,
     CommunicationRuleRead,
     CommunicationRuleUpdate,
+    EmailDeliveryRead,
 )
 from app.services.communication import service
 
@@ -31,6 +32,13 @@ async def attention(session: SessionDep) -> AttentionList:
 )
 async def application_communication(application_id: UUID, session: SessionDep) -> CommunicationHealthRead:
     return await service.application_health(session, application_id)
+
+
+@router.get("/communication/email", response_model=EmailDeliveryRead, summary="Email delivery status")
+async def email_delivery(email: EmailProviderDep) -> EmailDeliveryRead:
+    if not email.configured:
+        return EmailDeliveryRead(configured=False)
+    return EmailDeliveryRead(configured=True, provider=email.name, sender=email.sender)
 
 
 @router.get("/communication/rules", response_model=list[CommunicationRuleRead], summary="SLA rules")

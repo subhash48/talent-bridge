@@ -38,6 +38,7 @@ from app.core.security import JWKSCache, TokenVerifier, get_token_verifier
 from app.db.seed import load_seed, seed_id
 from app.db.seed_data import RECRUITER
 from app.integrations.ashby.client import get_ashby_client
+from app.integrations.email import DisabledEmail, get_email_provider
 from app.integrations.supabase_admin import get_supabase_admin
 from app.main import app
 from app.models import Base, User
@@ -213,6 +214,7 @@ async def anonymous(sessions: async_sessionmaker[AsyncSession]) -> AsyncIterator
     # Never the real Ashby or Supabase: tests that need them install fakes.
     app.dependency_overrides[get_ashby_client] = lambda: None
     app.dependency_overrides[get_supabase_admin] = lambda: None
+    app.dependency_overrides[get_email_provider] = DisabledEmail  # never real email; tests that send install a fake
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as http:
         yield http
     app.dependency_overrides.clear()

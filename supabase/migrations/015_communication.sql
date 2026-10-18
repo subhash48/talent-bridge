@@ -54,12 +54,12 @@ create trigger communication_drafts_set_updated_at
   for each row execute function public.set_updated_at();
 
 -- How a recruiter's message reached the candidate. The message itself (in messages) is the portal
--- delivery and always happens; this row records the email: sent (the provider accepted it), failed
--- (with a safe error), or not_configured (no email provider, so portal only).
+-- delivery and always happens; this row records the email: pending (on its way), sent (the provider
+-- accepted it), failed (with a safe error), or not_configured (no email provider, so portal only).
 create table public.message_deliveries (
   message_id          uuid primary key references public.messages (id) on delete cascade,
   subject             text not null,
-  email_status        text not null check (email_status in ('sent', 'failed', 'not_configured')),
+  email_status        text not null check (email_status in ('pending', 'sent', 'failed', 'not_configured')),
   provider            text,
   provider_message_id text,
   error               text,

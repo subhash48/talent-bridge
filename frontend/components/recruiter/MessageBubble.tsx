@@ -1,8 +1,9 @@
+import { DeliveryNote } from "@/components/recruiter/communication/DeliveryNote";
 import { RelativeTime } from "@/components/shared/RelativeTime";
 import { cn } from "@/lib/utils";
 import type { ThreadMessage } from "@/types/workspace";
 
-/** Recruiter messages sit on the right, candidate messages on the left. */
+/** Recruiter messages sit on the right, with how they were delivered; candidate messages on the left. */
 export function MessageBubble({ message, authorName }: { message: ThreadMessage; authorName: string }) {
   const outgoing = message.author === "recruiter";
   return (
@@ -17,6 +18,7 @@ export function MessageBubble({ message, authorName }: { message: ThreadMessage;
         {message.body}
       </p>
       <RelativeTime iso={message.sentAt} className="px-1 text-xs text-faint" />
+      {outgoing && <DeliveryNote delivery={message.delivery} className="max-w-[85%] px-1" />}
     </div>
   );
 }

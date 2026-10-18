@@ -174,7 +174,7 @@ type ThreadProps = {
 };
 
 function Thread({ conversation, onBack, onSent, draftOnOpen, onDraftStarted }: ThreadProps) {
-  const { candidates, refresh } = useWorkspace();
+  const { candidates, refresh, emailConfigured } = useWorkspace();
   const toast = useToast();
   const composerId = useId();
   const [draft, setDraft] = useState("");
@@ -293,7 +293,8 @@ function Thread({ conversation, onBack, onSent, draftOnOpen, onDraftStarted }: T
             {drafting ? "Drafting…" : "Draft with AI"}
           </Button>
           <p id={`${composerId}-hint`} className="hidden flex-1 text-xs text-faint sm:block">
-            AI only drafts. Nothing is sent until you press Send (Ctrl/⌘ + Enter).
+            AI only drafts. Nothing is sent until you press Send (Ctrl/⌘ + Enter).{" "}
+            {emailConfigured ? "It goes to their portal and by email." : "It goes to their portal; email isn't set up."}
           </p>
           <Button type="submit" size="sm" className="ml-auto" disabled={!draft.trim() || sending || drafting}>
             {sending ? <LoaderCircle className="animate-spin" /> : <SendHorizontal />}

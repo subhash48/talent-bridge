@@ -8,9 +8,9 @@ import { pluralize } from "@/lib/format";
 import type { CareerJob } from "@/types/careers";
 
 /** The published roles, one card each; the whole card opens the role. */
-export function CareerJobList({ jobs }: { jobs: CareerJob[] }) {
+export function CareerJobList({ jobs, basePath = "/demo/careers" }: { jobs: CareerJob[]; basePath?: string }) {
   if (jobs.length === 0) {
-    return <EmptyState icon={BriefcaseBusiness} title="No open roles right now." description="Roles the hiring team publishes show up here." />;
+    return <EmptyState icon={BriefcaseBusiness} title="No open roles right now." description="Roles the hiring team opens show up here." />;
   }
 
   return (
@@ -20,7 +20,7 @@ export function CareerJobList({ jobs }: { jobs: CareerJob[] }) {
         {jobs.map((job) => (
           <li key={job.id}>
             <Link
-              href={`/demo/careers/${job.id}`}
+              href={`${basePath}/${job.id}`}
               className="glass group flex flex-col gap-4 rounded-[14px] border border-border p-5 transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-border-strong sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:p-6"
             >
               <div className="min-w-0">

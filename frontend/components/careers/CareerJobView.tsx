@@ -5,16 +5,16 @@ import { RoleHeading } from "@/components/careers/RoleHeading";
 import { RelativeTime } from "@/components/shared/RelativeTime";
 import { buttonStyles } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import type { CareerJobDetail } from "@/types/careers";
+import { CAREERS_PATHS, type CareerJobDetail, type CareersSite } from "@/types/careers";
 
 /** A published role in full, with the way to apply: beside it on wide screens, above and below it on phones. */
-export function CareerJobView({ job }: { job: CareerJobDetail }) {
-  const applyPath = `/demo/careers/${job.id}/apply`;
+export function CareerJobView({ job, site = "demo" }: { job: CareerJobDetail; site?: CareersSite }) {
+  const applyPath = `${CAREERS_PATHS[site]}/${job.id}/apply`;
 
   return (
     <div className="grid grid-cols-1 gap-6 pt-6 sm:pt-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-10">
       <div className="min-w-0">
-        <RoleHeading job={job} back={{ href: "/demo/careers", label: "All roles" }} eyebrow={job.department}>
+        <RoleHeading job={job} back={{ href: CAREERS_PATHS[site], label: "All roles" }} eyebrow={job.department}>
           {job.summary && <p className="mt-5 max-w-2xl text-[17px] leading-relaxed text-charcoal">{job.summary}</p>}
           <Link href={applyPath} className={buttonStyles({ size: "lg", className: "mt-6 w-full sm:w-auto lg:hidden" })}>
             Apply for this role

@@ -1,5 +1,6 @@
 
-// The public demo careers site (/demo/careers, development only). The wire format mirrors
+// The careers sites: TalentBridge's own (/careers) and the development-only demo (/demo/careers),
+// which show jobs the same way. The wire format mirrors
 // backend/app/schemas/demo.py; services/careers.ts maps it into the view models below, so components
 // never depend on it directly.
 
@@ -46,7 +47,27 @@ export type ApiCareerApplicationCreate = {
  * (the email already has a portal account), already submitted, or saved but the activation email
  * couldn't be sent (applying again retries it).
  */
-export type ApplyOutcome = "invitation_sent" | "sign_in_required" | "already_applied" | "invitation_failed";
+export type ApplyOutcome =
+  | "invitation_sent"
+  | "sign_in_required"
+  | "already_applied"
+  | "invitation_failed"
+  // TalentBridge's own site: the application is in, and the portal link was emailed (or couldn't be).
+  | "submitted"
+  | "link_unavailable";
+
+/** Which careers site: TalentBridge's own, or the development-only demo through the Ashby simulator. */
+export type CareersSite = "native" | "demo";
+
+export const CAREERS_PATHS: Record<CareersSite, string> = { native: "/careers", demo: "/demo/careers" };
+
+/** POST /careers/jobs/{id}/apply: created at once; how the portal link reached them. */
+export type ApiNativeApplicationResult = {
+  status: "submitted" | "already_applied";
+  portal_link: "invitation_sent" | "sign_in_link_sent" | "unavailable";
+  email: string;
+  job_title: string;
+};
 
 export type ApiCareerApplicationResult = { status: ApplyOutcome; email: string; job_title: string };
 
@@ -93,7 +114,9 @@ export type ApplyInput = {
   resume: ResumeUpload;
 };
 
-export type ApplyResult = { status: ApplyOutcome; email: string; jobTitle: string };
+export type ApplyResult = {
+  /** TalentBridge's own site: how the portal link reached them. */
+  portalLink?: ApiNativeApplicationResult["portal_link"]; status: ApplyOutcome; email: string; jobTitle: string };
 
 /** The largest résumé the API accepts (backend MAX_RESUME_BYTES). */
 export const MAX_RESUME_BYTES = 5 * 1024 * 1024;

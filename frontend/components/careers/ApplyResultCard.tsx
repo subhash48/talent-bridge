@@ -11,7 +11,7 @@ import { Button, buttonStyles } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { SUPABASE_CONFIGURED, createClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import type { ApplyOutcome, ApplyResult } from "@/types/careers";
+import { CAREERS_PATHS, type ApplyOutcome, type ApplyResult, type CareersSite } from "@/types/careers";
 
 // Opening either one submits the pending application. /login sends someone already signed in as a
 // candidate straight on to `next`; it and the portal both ask GET /me first, and that call is what
@@ -30,9 +30,12 @@ const VIEWS: Record<ApplyOutcome, { title: string; icon: LucideIcon; tone: keyof
   sign_in_required: { title: "Sign in to submit your application", icon: LogIn, tone: "ai" },
   already_applied: { title: "You've already applied", icon: CircleCheck, tone: "positive" },
   invitation_failed: { title: "Your application is saved", icon: MailWarning, tone: "attention" },
+  submitted: { title: "Application sent", icon: MailCheck, tone: "positive" },
+  link_unavailable: { title: "Application sent", icon: MailWarning, tone: "attention" },
 };
 
 type ApplyResultCardProps = {
+  site?: CareersSite;
   result: ApplyResult;
   /** Why the last "Try again" failed. */
   problem: ApplyProblem | null;
@@ -43,12 +46,13 @@ type ApplyResultCardProps = {
 };
 
 /** What happened to the application, in place of the form, and the one thing to do next. */
-export function ApplyResultCard({ result, problem, retrying, stillFailing, onRetry }: ApplyResultCardProps) {
+export function ApplyResultCard({ site = "demo", result, problem, retrying, stillFailing, onRetry }: ApplyResultCardProps) {
+  const native = site === "native";
   const heading = useRef<HTMLHeadingElement>(null);
   const retryButton = useRef<HTMLButtonElement>(null);
   const signedInAs = useSignedInEmail();
   const { title, icon: Icon, tone } = VIEWS[result.status];
-  const needsAccount = result.status === "sign_in_required" || result.status === "already_applied";
+  const needsAccount = !native && (result.status === "sign_in_required" || result.status === "already_applied");
   const otherAccount = needsAccount && signedInAs && signedInAs !== result.email.toLowerCase() ? signedInAs : null;
   const email = <strong className="font-medium text-ink">{result.email}</strong>;
   const job = <strong className="font-medium text-ink">{result.jobTitle}</strong>;
@@ -88,7 +92,33 @@ export function ApplyResultCard({ result, problem, retrying, stillFailing, onRet
             {email} already has a candidate portal account. Sign in with it to submit your application for {job}.
           </p>
         )}
-        {result.status === "already_applied" && <p>Your application for {job} is in your candidate portal.</p>}
+        {result.status === "submitted" && (
+          <>
+            <p>
+              Your application for {job} is with the hiring team. We&apos;ve emailed {email} a secure link to your
+              candidate portal, where you&apos;ll see where your application stands, what happens next and how to prepare.
+            </p>
+            <p className="text-sm text-stone">
+              {result.portalLink === "sign_in_link_sent" ? "Use the sign-in link in that email." : "No password needed: the link signs you in."}{" "}
+              Didn&apos;t get it? Check your spam folder.
+            </p>
+          </>
+        )}
+        {result.status === "link_unavailable" && (
+          <p>
+            Your application for {job} is with the hiring team. We couldn&apos;t email your candidate portal link just now;
+            the team will be in touch at {email}.
+          </p>
+        )}
+        {result.status === "already_applied" &&
+          (native ? (
+            <p>
+              You&apos;ve applied for {job} already, so nothing new was added. We&apos;ve emailed {email} a link to your
+              candidate portal.
+            </p>
+          ) : (
+            <p>Your application for {job} is in your candidate portal.</p>
+          ))}
         {result.status === "invitation_failed" && (
           <p>We couldn&apos;t send the activation email to {email} just now. Try again in a few minutes.</p>
         )}
@@ -115,7 +145,7 @@ export function ApplyResultCard({ result, problem, retrying, stillFailing, onRet
             Sign in to submit
           </Continue>
         )}
-        {result.status === "already_applied" && (
+        {result.status === "already_applied" && !native && (
           <Continue href={PORTAL_PATH} signOutFirst={Boolean(otherAccount)}>
             Open your candidate portal
           </Continue>
@@ -126,7 +156,7 @@ export function ApplyResultCard({ result, problem, retrying, stillFailing, onRet
             {retrying ? "Trying again…" : "Try again"}
           </Button>
         )}
-        <Link href="/demo/careers" className={cn(authLinkStyles, "text-sm")}>
+        <Link href={CAREERS_PATHS[site]} className={cn(authLinkStyles, "text-sm")}>
           See other open roles
         </Link>
       </div>

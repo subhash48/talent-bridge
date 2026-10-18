@@ -12,7 +12,7 @@ import { Field, fieldErrorId } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { ApiError, errorMessage } from "@/services/api";
 import { applyToJob } from "@/services/careers";
-import type { ApplyInput, ApplyResult } from "@/types/careers";
+import type { ApplyInput, ApplyResult, CareersSite } from "@/types/careers";
 
 type Values = { firstName: string; lastName: string; email: string; phone: string; linkedinUrl: string };
 type FieldName = keyof Values | "resume";
@@ -46,7 +46,7 @@ const PHONE_PATTERN = /^\+?[0-9 ().\-/]+$/;
 // 16px on phones, so iOS doesn't zoom into a field when it's focused.
 const NO_ZOOM = "text-base sm:text-sm";
 
-function validate(values: Values, resume: File | null): Errors {
+function validate(values: Values, resume: File | null, phoneRequired: boolean): Errors {
   const errors: Errors = {};
   if (!values.firstName.trim()) errors.firstName = "Enter your first name.";
   if (!values.lastName.trim()) errors.lastName = "Enter your last name.";
@@ -55,8 +55,8 @@ function validate(values: Values, resume: File | null): Errors {
   else if (!EMAIL_PATTERN.test(email)) errors.email = "Enter a valid email address, like name@example.com.";
   const phone = values.phone.trim();
   const digits = phone.replace(/\D/g, "").length;
-  if (!phone) errors.phone = "Enter your phone number.";
-  else if (!PHONE_PATTERN.test(phone) || digits < 7 || digits > 15) errors.phone = "Enter a phone number, like +1 415 555 0100.";
+  if (!phone && phoneRequired) errors.phone = "Enter your phone number.";
+  else if (phone && (!PHONE_PATTERN.test(phone) || digits < 7 || digits > 15)) errors.phone = "Enter a phone number, like +1 415 555 0100.";
   if (values.linkedinUrl.trim() && !linkedInUrl(values.linkedinUrl)) {
     errors.linkedinUrl = "Enter a linkedin.com link, like linkedin.com/in/your-name.";
   }
@@ -82,7 +82,8 @@ function linkedInUrl(value: string): string | null {
  * keeps the application pending until the applicant activates their candidate portal account or signs
  * in, and the result says which of those to do.
  */
-export function ApplyForm({ jobId }: { jobId: string }) {
+export function ApplyForm({ jobId, site = "demo" }: { jobId: string; site?: CareersSite }) {
+  const native = site === "native";
   const formRef = useRef<HTMLFormElement>(null);
   // What was sent last, so "Try again" can send exactly the same.
   const sent = useRef<ApplyInput | null>(null);
@@ -99,7 +100,7 @@ export function ApplyForm({ jobId }: { jobId: string }) {
   const [attempts, setAttempts] = useState(0);
   const [focusRequest, setFocusRequest] = useState<{ target: "invalid" | "submit" } | null>(null);
 
-  const problems = validate(values, resume);
+  const problems = validate(values, resume, !native);
   const errors: Errors = { ...submitErrors };
   for (const [field, message] of Object.entries(problems) as [FieldName, string][]) {
     if (checkAll || (field === "resume" && resumeChosen)) errors[field] = message;
@@ -168,7 +169,7 @@ export function ApplyForm({ jobId }: { jobId: string }) {
     setPending(true);
     setProblem(null);
     try {
-      const outcome = await applyToJob(jobId, input);
+      const outcome = await applyToJob(jobId, input, site);
       sent.current = input;
       setSubmitErrors({});
       setAttempts((count) => count + 1);
@@ -195,6 +196,7 @@ export function ApplyForm({ jobId }: { jobId: string }) {
   if (result) {
     return (
       <ApplyResultCard
+        site={site}
         result={result}
         problem={problem}
         retrying={pending}
@@ -228,12 +230,13 @@ export function ApplyForm({ jobId }: { jobId: string }) {
               className={NO_ZOOM}
             />
             <p id={EMAIL_HINT_ID} className="text-xs text-faint">
-              Your activation link is sent here.
+              {native ? "Your candidate portal link is sent here." : "Your activation link is sent here."}
             </p>
           </Field>
-          <Field label="Phone number" htmlFor={IDS.phone} error={errors.phone} required>
-            <Input {...control("phone")} type="tel" required autoComplete="tel" maxLength={40} placeholder="+1 415 555 0100" className={NO_ZOOM} />
+          <Field label={native ? "Phone number (optional)" : "Phone number"} htmlFor={IDS.phone} error={errors.phone} required={!native}>
+            <Input {...control("phone")} type="tel" required={!native} autoComplete="tel" maxLength={40} placeholder="+1 415 555 0100" className={NO_ZOOM} />
           </Field>
+          {!native && (
           <Field label="LinkedIn URL (optional)" htmlFor={IDS.linkedinUrl} error={errors.linkedinUrl} className="sm:col-span-2">
             <Input
               {...control("linkedinUrl")}
@@ -245,6 +248,7 @@ export function ApplyForm({ jobId }: { jobId: string }) {
               className={NO_ZOOM}
             />
           </Field>
+          )}
         </div>
 
         <div className="mt-6 border-t border-border pt-6">

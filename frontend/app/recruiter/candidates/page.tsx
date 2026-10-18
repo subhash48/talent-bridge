@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 
 import { CandidatesWorkspace } from "@/components/recruiter/CandidatesWorkspace";
 import { greetingFor } from "@/lib/format";
-import { getDashboardSummary } from "@/services/candidates";
 
 export const metadata: Metadata = { title: "Candidates" };
 
@@ -11,11 +10,10 @@ type CandidatesPageProps = {
 };
 
 export default async function CandidatesPage({ searchParams }: CandidatesPageProps) {
-  const [{ candidate }, summary] = await Promise.all([searchParams, getDashboardSummary()]);
+  const { candidate } = await searchParams;
   return (
     <CandidatesWorkspace
       greeting={greetingFor()}
-      trends={summary.trends}
       initialCandidateId={typeof candidate === "string" ? candidate : undefined}
     />
   );

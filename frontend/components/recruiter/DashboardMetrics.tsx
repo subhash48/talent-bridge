@@ -12,13 +12,12 @@ const METRICS = [
 
 type DashboardMetricsProps = {
   candidates: PipelineCandidate[];
-  trends: Record<MetricKey, number | null>;
   active?: MetricKey;
   onSelect: (metric: MetricKey) => void;
 };
 
-/** Values are derived from the live candidate list; trends come from the dashboard summary. */
-export function DashboardMetrics({ candidates, trends, active, onSelect }: DashboardMetricsProps) {
+/** Values are derived from the live candidate list. */
+export function DashboardMetrics({ candidates, active, onSelect }: DashboardMetricsProps) {
   const values: Record<MetricKey, number> = {
     total: candidates.length,
     interviews: candidates.filter((candidate) => candidate.stage === "interview").length,
@@ -35,7 +34,6 @@ export function DashboardMetrics({ candidates, trends, active, onSelect }: Dashb
             label={metric.label}
             icon={metric.icon}
             value={values[metric.key]}
-            trend={trends[metric.key]}
             active={active === metric.key}
             onSelect={() => onSelect(metric.key)}
           />

@@ -135,11 +135,6 @@ export type JobOpening = {
 
 export type MetricKey = "total" | "interviews" | "followUp" | "offers";
 
-export type DashboardSummary = {
-  /** Percentage change against the previous 30 days, per metric; null when it can't be measured. */
-  trends: Record<MetricKey, number | null>;
-};
-
 export type CurrentUser = {
   id: string;
   name: string;

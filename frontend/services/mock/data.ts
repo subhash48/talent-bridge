@@ -6,7 +6,6 @@ import type {
   CurrentUser,
   InterviewFormat,
   MessageAuthor,
-  MetricKey,
 } from "@/types/workspace";
 
 // Seed data for mock mode. Times are relative ("minutes ago", "days from today") and become
@@ -20,13 +19,6 @@ export const SEED_USER: CurrentUser = {
   organization: "Encord",
   role: "recruiter",
   candidateId: null,
-};
-
-export const SEED_TRENDS: Record<MetricKey, number> = {
-  total: 12,
-  interviews: 33,
-  followUp: -20,
-  offers: 50,
 };
 
 export type CandidateSeed = {

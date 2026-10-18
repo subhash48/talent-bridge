@@ -49,10 +49,6 @@ export const mockApi = {
     return clone(getMockDb().user);
   },
 
-  async getDashboardSummary() {
-    return { trends: clone(getMockDb().trends) };
-  },
-
   async getCandidates(query: CandidateQuery = {}) {
     return clone(
       getMockDb().candidates.filter(

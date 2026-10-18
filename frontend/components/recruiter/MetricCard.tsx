@@ -1,20 +1,17 @@
-import { ArrowDown, ArrowUp, type LucideIcon } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 type MetricCardProps = {
   label: string;
   value: number;
-  /** Percentage change against the previous period; hidden when it can't be measured. */
-  trend: number | null;
   icon: LucideIcon;
   active?: boolean;
   onSelect?: () => void;
 };
 
 /** A pipeline metric that doubles as a shortcut to filter the table. */
-export function MetricCard({ label, value, trend, icon: Icon, active, onSelect }: MetricCardProps) {
-  const TrendIcon = trend !== null && trend < 0 ? ArrowDown : ArrowUp;
+export function MetricCard({ label, value, icon: Icon, active, onSelect }: MetricCardProps) {
   return (
     <button
       type="button"
@@ -29,21 +26,7 @@ export function MetricCard({ label, value, trend, icon: Icon, active, onSelect }
         <Icon aria-hidden strokeWidth={1.75} className="size-4 text-charcoal" />
       </span>
       <span className="min-w-0">
-        <span className="flex items-baseline gap-2">
-          <span className="text-2xl leading-none font-semibold tracking-tight text-ink tabular-nums">{value}</span>
-          {trend !== null && (
-            <span
-              className={cn(
-                "inline-flex items-center gap-0.5 text-xs font-medium tabular-nums",
-                trend < 0 ? "text-danger" : "text-sage",
-              )}
-            >
-              <TrendIcon aria-hidden className="size-3" strokeWidth={2.5} />
-              <span className="sr-only">{trend < 0 ? "down" : "up"}</span>
-              {Math.abs(trend)}%
-            </span>
-          )}
-        </span>
+        <span className="block text-2xl leading-none font-semibold tracking-tight text-ink tabular-nums">{value}</span>
         <span className="mt-1.5 block truncate text-xs leading-snug text-stone">{label}</span>
       </span>
     </button>

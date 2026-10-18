@@ -16,7 +16,6 @@ import {
   type CandidateActivity,
   type CandidateDetail,
   type CandidateStage,
-  type DashboardSummary,
   type NewCandidateInput,
   type PipelineCandidate,
   type ScheduledInterview,
@@ -32,12 +31,6 @@ export type CandidateQuery = {
   limit?: number;
   offset?: number;
 };
-
-export async function getDashboardSummary(): Promise<DashboardSummary> {
-  if (USE_MOCK_API) return mockApi.getDashboardSummary();
-  const { trends } = await apiFetch<{ trends: { total: number | null; interviews: number | null; follow_up: number | null; offers: number | null } }>("/dashboard/summary");
-  return { trends: { total: trends.total, interviews: trends.interviews, followUp: trends.follow_up, offers: trends.offers } };
-}
 
 /** GET /candidates: the pipeline, most recent activity first, filtered on the server. */
 export async function getCandidates(query: CandidateQuery = {}): Promise<PipelineCandidate[]> {

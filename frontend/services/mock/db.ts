@@ -1,5 +1,4 @@
 import { STAGE_LABELS } from "@/types/application";
-import type { MetricKey } from "@/types/workspace";
 import {
   PIPELINE_STAGES,
   type CandidateActivity,
@@ -16,7 +15,6 @@ import {
   CONVERSATION_SEEDS,
   INTERVIEW_SEEDS,
   JOB_SEEDS,
-  SEED_TRENDS,
   SEED_USER,
   type CandidateSeed,
 } from "./data";
@@ -26,7 +24,6 @@ const DAY = 24 * 60 * MINUTE;
 
 export type MockDb = {
   user: CurrentUser;
-  trends: Record<MetricKey, number>;
   candidates: PipelineCandidate[];
   archived: PipelineCandidate[];
   activities: CandidateActivity[];
@@ -148,7 +145,6 @@ function createMockDb(now: number): MockDb {
 
   return {
     user: SEED_USER,
-    trends: SEED_TRENDS,
     candidates,
     archived: [],
     activities,

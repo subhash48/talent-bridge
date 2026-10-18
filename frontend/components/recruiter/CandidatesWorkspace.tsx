@@ -40,7 +40,6 @@ const PANEL_QUERY = "(min-width: 1280px)";
 
 type CandidatesWorkspaceProps = {
   greeting: string;
-  trends: Record<MetricKey, number | null>;
   /** From ?candidate=, so notifications and other pages can deep-link a candidate. */
   initialCandidateId?: string;
 };
@@ -49,7 +48,7 @@ function needsUpdateOnly(filters: Filters): boolean {
   return filters.communication.length === 1 && filters.communication[0] === "needs_attention";
 }
 
-export function CandidatesWorkspace({ greeting, trends, initialCandidateId }: CandidatesWorkspaceProps) {
+export function CandidatesWorkspace({ greeting, initialCandidateId }: CandidatesWorkspaceProps) {
   const { user, candidates, jobs, revision, moveCandidate } = useWorkspace();
   const toast = useToast();
   const panelInline = useMediaQuery(PANEL_QUERY);
@@ -193,7 +192,7 @@ export function CandidatesWorkspace({ greeting, trends, initialCandidateId }: Ca
 
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_420px]">
         <div className="flex min-w-0 flex-col gap-4">
-          <DashboardMetrics candidates={candidates} trends={trends} active={activeMetric} onSelect={selectMetric} />
+          <DashboardMetrics candidates={candidates} active={activeMetric} onSelect={selectMetric} />
 
           <section aria-labelledby="candidates-heading" className="glass rounded-[16px] border border-border">
             <CandidateFilters

@@ -18,7 +18,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
-from app.core.enums import STAFF_ROLES, ActivityType, ApplicationBucket, ApplicationStage, SenderType, UserRole
+from app.core.enums import (
+    STAFF_ROLES,
+    ActivityType,
+    ApplicationBucket,
+    ApplicationStage,
+    InterviewStatus,
+    SenderType,
+    UserRole,
+)
 from app.core.errors import NotFoundError
 from app.models import Application, Candidate, CandidateStageHistory, User
 from app.models.base import utcnow
@@ -160,6 +168,7 @@ async def load_record(
     activity = [entry for row in snapshot.activities if (entry := present_activity(row, titles)) is not None]
     unread = sum(1 for message in snapshot.messages if is_unread_for_candidate(message))
     next_interview = next((interview for interview in interviews if interview.upcoming), None)
+    interviewed = any(not i.upcoming and i.status != InterviewStatus.CANCELLED for i in interviews)
     status = status_of(application)
 
     return PortalRecord(
@@ -173,7 +182,7 @@ async def load_record(
             applied_at=application.applied_at,
             updated_at=application.updated_at,
             steps=build_steps(application, history, status.bucket),
-            next_step=next_step(application.stage, status, next_interview, unread, recruiter, company),
+            next_step=next_step(application.stage, status, next_interview, unread, recruiter, company, interviewed),
         ),
         job=present_job(application.job, company),
         recruiter=recruiter,
@@ -219,8 +228,9 @@ def next_step(
     unread: int,
     recruiter: PortalRecruiter | None,
     company: str,
+    interviewed: bool = False,
 ) -> str:
-    """One sentence on what happens next, in the candidate's words."""
+    """One sentence on what happens next, in the candidate's words. `interviewed`: they've had an interview."""
     who = recruiter.name.split()[0] if recruiter else "Your recruiter"
     if status.bucket == B.NO_LONGER_CONSIDERED:
         return f"This application is {NO_LONGER_CONSIDERED.lower()}. Thank you for the time you spent with {company}."
@@ -236,6 +246,8 @@ def next_step(
         return f"Prepare for your {interview.title}. Your interview prep is ready."
     if unread:
         return f"Read {who}'s latest message."
+    if stage == S.INTERVIEW and not interviewed:
+        return f"{who} will be in touch to schedule your interview. Your interview prep is ready now."
     return {
         S.SOURCED: f"The team is reviewing your profile. {who} will be in touch about next steps.",
         S.SCREENING: f"The team is reviewing your application. {who} will be in touch about next steps.",

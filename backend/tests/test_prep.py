@@ -8,12 +8,15 @@ from typing import Any
 import httpx
 from httpx import AsyncClient
 
+from app.core.enums import ApplicationBucket, ApplicationStage
 from app.integrations.supabase_admin import get_supabase_admin
 from app.main import app
 from app.services.ai.client import get_ai_provider
 from app.services.ai.groq import GroqProvider
 from app.services.ai.portal_context import PortalContext
 from app.services.ai.portal_fallback import PRACTICE, prepare, resume_talking_points
+from app.services.candidate_portal_service import next_step
+from app.services.candidate_visibility import PortalStatus
 from tests.ashby_support import FakeSupabaseAdmin
 from tests.conftest import API, bearer, job_id
 from tests.test_careers import EMAIL, application
@@ -63,6 +66,14 @@ def test_prep_without_an_interview_follows_the_stage() -> None:
     assert screening.practice_questions[0] in PRACTICE["screen"]
     assert offer.what_to_expect != applied.what_to_expect  # the offer stage, not interview prep
     assert applied.practice_questions[0] in PRACTICE["general"]
+
+
+def test_just_moved_to_interview_isnt_told_feedback_is_being_gathered() -> None:
+    status = PortalStatus(bucket=ApplicationBucket.ACTIVE, label="Interview")
+    before = next_step(ApplicationStage.INTERVIEW, status, None, 0, None, "Encord")
+    after = next_step(ApplicationStage.INTERVIEW, status, None, 0, None, "Encord", interviewed=True)
+    assert "schedule your interview" in before and "feedback" not in before
+    assert "feedback from your interviews" in after
 
 
 async def test_sophias_prep_is_for_her_booked_interview(client: AsyncClient) -> None:

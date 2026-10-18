@@ -1,7 +1,6 @@
 "use client";
 
 import { BarChart3, BriefcaseBusiness, CalendarClock, History, Mic, MicOff, ShieldCheck, Sparkles, UsersRound, X } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AIComposer, suggestionChipStyles } from "@/components/ai/AIComposer";
@@ -31,8 +30,8 @@ const STARTERS = ["Show my open jobs", "What were candidates looking for this we
 /**
  * The recruiter AI Assistant: one conversation for typed and spoken requests, run by the same action
  * engine (/assistant/requests). It answers, drafts and prepares; sending a message or publishing a job
- * always waits for the recruiter's confirmation. ?candidate= focuses it on one application, ?voice=1
- * (the top bar's microphone) starts listening.
+ * always waits for the recruiter's confirmation. ?candidate= focuses it on one application. Voice is a
+ * secondary way in: the microphone beside Send.
  */
 export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: string }) {
   const { candidates } = useWorkspace();
@@ -40,9 +39,6 @@ export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: strin
   const [status, setStatus] = useState<AssistantStatus | null>(null);
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [voiceAnswer, setVoiceAnswer] = useState<{ session: number; id: string } | null>(null);
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
     getAssistantStatus().then(setStatus, () => setStatus(null));
@@ -66,18 +62,6 @@ export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: strin
     setVoiceOpen(true);
     press();
   }, [press]);
-
-  // The top bar's microphone opens this page with ?voice=1: start listening, then tidy the address.
-  const wantsVoice = searchParams.get("voice") === "1";
-  const started = useRef(false);
-  useEffect(() => {
-    if (!wantsVoice || started.current) return;
-    started.current = true;
-    openVoice();
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("voice");
-    router.replace(params.size ? `${pathname}?${params}` : pathname, { scroll: false });
-  }, [wantsVoice, openVoice, pathname, router, searchParams]);
 
   const focused = useMemo(
     () => candidates.find((candidate) => candidate.id === assistant.context.application_id) ?? null,

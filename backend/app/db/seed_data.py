@@ -21,6 +21,156 @@ RECRUITER = {"email": "alex.chen@encord.example", "full_name": "Alex Chen"}
 
 
 @dataclass(frozen=True)
+class CompanySeed:
+    """An employer and the profile it approved for candidates (models/company.py). The oldest one is
+    the workspace's own company: jobs created in the workspace belong to it."""
+
+    key: str  # the slug
+    name: str
+    created_days_ago: int
+    logo_url: str | None
+    website: str | None
+    overview: str
+    mission: str
+    highlights: tuple[tuple[str, str], ...]  # (figure, what it counts)
+    products: tuple[tuple[str, str], ...]  # (name, description)
+    values: tuple[tuple[str, str], ...]  # (name, description)
+    benefits: tuple[str, ...]
+    benefits_scope: str
+    benefits_note: str
+    locations: tuple[str, ...]
+    locations_note: str
+    hiring_process: tuple[str, ...]
+    hiring_note: str
+    links: tuple[tuple[str, str], ...]  # (label, url)
+    source: str
+
+
+COMPANIES: tuple[CompanySeed, ...] = (
+    # Every statement is one Encord makes publicly, taken from encord.com (the home page and /careers)
+    # on 3 October 2026. Re-check it against encord.com before relying on it.
+    CompanySeed(
+        "encord",
+        "Encord",
+        400,
+        "/logos/encord.svg",
+        "https://encord.com/",
+        overview=(
+            "Encord builds the data development platform AI teams use to curate, annotate and evaluate "
+            "multimodal training data, from images and video to documents and 3D sensor data."
+        ),
+        mission=(
+            "AI alignment starts with Encord: the quality of AI is only as good as the data behind it. Encord builds the "
+            "infrastructure to build, curate and validate training data, helping the world's best AI teams move faster, "
+            "label smarter and ship models that work in production, from autonomous vehicles to surgical robotics."
+        ),
+        highlights=(
+            ("300+", "leading AI teams build with Encord, including Woven by Toyota, AXA, UiPath and Zipline"),
+            (
+                "$110M",
+                "total funding raised, from investors including Wellington Management, Y Combinator, CRV and N47",
+            ),
+            ("45+", "nationalities represented on the team"),
+        ),
+        products=(
+            (
+                "Label and annotate",
+                (
+                    "Video, LiDAR, audio, text and sensor-fusion annotation in one workflow, with label lineage and quality "
+                    "controls built in for production scale."
+                ),
+            ),
+            (
+                "Curate and collect",
+                (
+                    "Collect data from dedicated facilities or a fleet, then use embedding-based search and model-in-the-loop "
+                    "curation to find rare edge cases and close distribution gaps."
+                ),
+            ),
+            (
+                "Align and evaluate",
+                (
+                    "RLHF, rubric-based evaluation and pairwise comparison for models in production, to find where AI fails "
+                    "and route it back into training."
+                ),
+            ),
+            (
+                "Data-as-a-Service",
+                (
+                    "Expert annotators, domain specialists and managed data collection, including teleoperation facilities "
+                    "for physical AI, integrated with the platform."
+                ),
+            ),
+        ),
+        values=(
+            (
+                "High agency",
+                (
+                    "You see something broken, you fix it or find the person who can. Encord celebrates the people who solve "
+                    "90% of a problem before anyone asks."
+                ),
+            ),
+            (
+                "Builds with care and urgency",
+                (
+                    "Encord bear-hugs the customer. Former founders and people from fast-moving, high-stakes environments "
+                    "thrive here."
+                ),
+            ),
+            (
+                "Self-aware and hungry",
+                "The team stays warm, self-aware and genuinely hungry. People elevate their peers, and ego doesn't last long.",
+            ),
+            (
+                "Invents in real time",
+                "The team moves toward ambiguity: pragmatic, resourceful and energised by the fact that there's no playbook.",
+            ),
+        ),
+        benefits=(
+            "Equity in a hyper-growth startup",
+            "25 days paid time off",
+            "Private health insurance",
+            "Annual learning and development stipend",
+            "Monthly team events and bi-annual offsites",
+            "Team lunch twice a week",
+            "Visa sponsorship, considered case by case for the role, level and location",
+            "Payroll giving scheme",
+            "Cycle to work scheme",
+            "Home and tech scheme",
+            "A strong in-person culture",
+        ),
+        benefits_scope="UK employees",
+        benefits_note=(
+            "These are the benefits Encord lists for UK employees. Benefits in the US differ; your recruiter can walk "
+            "you through the package for your location."
+        ),
+        locations=("London", "San Francisco", "New York"),
+        locations_note=(
+            "Encord describes a strong in-person culture. Each job posting lists its own location and work arrangement."
+        ),
+        hiring_process=(
+            "Recruiter screen",
+            "Hiring manager conversation",
+            "Skills-based interview or take-home",
+            "Final panel",
+        ),
+        hiring_note=(
+            "The process varies by role and team, and is usually four or five stages in total. Your recruiter walks you "
+            "through the specific steps at the start, so there are no surprises."
+        ),
+        links=(
+            ("Encord website", "https://encord.com/"),
+            ("Explore the product", "https://encord.com/explore-product/"),
+            ("Careers and open roles", "https://encord.com/careers/"),
+            ("Encord blog", "https://encord.com/blog/"),
+            ("Trust center", "https://trust.encord.com/"),
+        ),
+        source="From encord.com, October 2026.",
+    ),
+)
+
+
+@dataclass(frozen=True)
 class JobSeed:
     title: str
     department: str
@@ -30,6 +180,7 @@ class JobSeed:
     summary: str
     requirements: tuple[str, ...]
     status: JobStatus = JobStatus.OPEN
+    company: str = "encord"  # a CompanySeed key
 
     @property
     def description(self) -> str:

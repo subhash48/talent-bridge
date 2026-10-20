@@ -43,6 +43,7 @@ from app.models import Application, Candidate, Interview, Job
 from app.models.base import utcnow
 from app.services.activity_service import record_activity
 from app.services.application_service import record_stage
+from app.services.company_profile import workspace_company_id
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +100,16 @@ class AshbyImporter:
             values["location"] = data.location.name
         job = await self._job(data.id)
         if job is None:
-            await insert_if_absent(self.session, Job.__table__, {"id": uuid.uuid4(), "external_id": data.id, **values})
+            await insert_if_absent(
+                self.session,
+                Job.__table__,
+                {
+                    "id": uuid.uuid4(),
+                    "external_id": data.id,
+                    "company_id": await workspace_company_id(self.session),
+                    **values,
+                },
+            )
             job = await self._job(data.id)
             assert job is not None
             return job
@@ -128,6 +138,7 @@ class AshbyImporter:
             {
                 "id": uuid.uuid4(),
                 "external_id": ref.id,
+                "company_id": await workspace_company_id(self.session),
                 "title": ref.title or "Untitled role",
                 "status": JobStatus.OPEN,  # it's receiving applications
                 "employment_type": "Full-time",

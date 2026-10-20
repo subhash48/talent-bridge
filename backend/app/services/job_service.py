@@ -9,6 +9,7 @@ from app.core.enums import JobStatus
 from app.core.errors import ConflictError, NotFoundError
 from app.models import Job
 from app.schemas.job import JobCreate, JobRead, JobUpdate
+from app.services.company_profile import workspace_company_id
 
 
 async def list_jobs(session: AsyncSession, *, status: JobStatus | None = None) -> list[JobRead]:
@@ -29,7 +30,7 @@ async def get_job(session: AsyncSession, job_id: uuid.UUID) -> Job:
 async def create_job(session: AsyncSession, data: JobCreate) -> JobRead:
     if data.external_id and await session.scalar(select(Job.id).where(Job.external_id == data.external_id)):
         raise ConflictError("A job with this external id already exists.", code="job_exists")
-    job = Job(**data.model_dump())
+    job = Job(**data.model_dump(), company_id=await workspace_company_id(session))
     session.add(job)
     await session.commit()
     return JobRead.model_validate(job)

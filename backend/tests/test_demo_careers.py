@@ -56,6 +56,7 @@ from app.services import account_provisioning, demo_careers
 from app.services.account_service import AuthAccount
 from app.services.ai.client import get_ai_provider
 from app.services.ai.fallback import MockProvider
+from app.services.company_profile import workspace_company_id
 from app.services.demo_careers import DEMO_CAREERS_SOURCE
 from tests.ashby_support import FakeSupabaseAdmin
 from tests.conftest import (
@@ -147,6 +148,7 @@ async def demo_job(
             Job(
                 id=job_id,
                 external_id=demo_id("job", str(job_id)),
+                company_id=await workspace_company_id(session),
                 title=title,
                 department="Machine Learning",
                 location="London",

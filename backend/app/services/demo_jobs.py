@@ -27,6 +27,7 @@ from app.schemas.demo import DemoJobCreate, DemoJobRead, DemoJobUpdate, Generate
 from app.services.ai.client import AIProvider
 from app.services.ai.job_posting_policy import apply_policy
 from app.services.ai_service import with_fallback
+from app.services.company_profile import workspace_company_id
 from app.services.demo_careers import PENDING_TTL
 
 # The fields of DemoJobCreate and DemoJobUpdate that live on the job; the rest belong to the posting.
@@ -68,6 +69,7 @@ async def create_demo_job(session: AsyncSession, data: DemoJobCreate, actor: Use
     job = Job(
         id=job_id,
         external_id=demo_id("job", str(job_id)),
+        company_id=await workspace_company_id(session),
         status=JobStatus.DRAFT,
         **{field: values.pop(field) for field in JOB_FIELDS},
     )

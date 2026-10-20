@@ -9,9 +9,14 @@ overview is settings.organization_overview: its text is in backend/app/core/conf
 ORGANIZATION_OVERVIEW in backend/.env overrides it.
 """
 
+import uuid
 from dataclasses import dataclass
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.config import settings
+from app.models import Company
 
 
 @dataclass(frozen=True)
@@ -159,3 +164,15 @@ def company_profile() -> CompanyProfile:
         ),
         source="From encord.com, October 2026.",
     )
+
+
+async def workspace_company_id(session: AsyncSession) -> uuid.UUID:
+    """The employer that owns this workspace: jobs created here (by a recruiter, from Ashby, as demo
+    jobs) belong to it. It's the oldest company; an empty database gets one named ORGANIZATION_NAME."""
+    company_id = await session.scalar(select(Company.id).order_by(Company.created_at, Company.id).limit(1))
+    if company_id is not None:
+        return company_id
+    company = Company(slug="workspace", name=settings.organization_name, overview=settings.organization_overview)
+    session.add(company)
+    await session.flush()
+    return company.id

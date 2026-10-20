@@ -26,6 +26,7 @@ from app.db.seed_data import (
     APPLIED_UPDATE,
     CANDIDATES,
     CHECK_IN,
+    COMPANIES,
     DAY,
     INTERVIEWS,
     JOBS,
@@ -44,6 +45,7 @@ from app.models import (
     CandidateActivity,
     CandidateEngagementEvent,
     CandidateStageHistory,
+    Company,
     Interview,
     Job,
     Message,
@@ -63,6 +65,7 @@ PIPELINE = [
 ]
 TABLES: list[type[Base]] = [
     User,
+    Company,
     Job,
     Candidate,
     Application,
@@ -117,16 +120,44 @@ class Recorder:
 def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
     rows: dict[type[Base], list[dict[str, Any]]] = {table: [] for table in TABLES}
     recruiter_id = seed_id("user", RECRUITER["email"])
-    rows[User].append(
-        {
-            "id": recruiter_id,
-            "email": RECRUITER["email"],
-            "full_name": RECRUITER["full_name"],
-            "role": UserRole.RECRUITER,
-            "created_at": Ago(120 * DAY),
-            "updated_at": Ago(120 * DAY),
-        }
-    )
+    for person, days in ((RECRUITER, 120),):
+        rows[User].append(
+            {
+                "id": seed_id("user", person["email"]),
+                "email": person["email"],
+                "full_name": person["full_name"],
+                "role": UserRole.RECRUITER,
+                "created_at": Ago(days * DAY),
+                "updated_at": Ago(days * DAY),
+            }
+        )
+
+    for company in COMPANIES:
+        rows[Company].append(
+            {
+                "id": seed_id("company", company.key),
+                "slug": company.key,
+                "name": company.name,
+                "logo_url": company.logo_url,
+                "website": company.website,
+                "overview": company.overview,
+                "mission": company.mission,
+                "highlights": [{"title": title, "description": text} for title, text in company.highlights],
+                "products": [{"title": title, "description": text} for title, text in company.products],
+                "culture": [{"title": title, "description": text} for title, text in company.values],
+                "benefits": list(company.benefits),
+                "benefits_scope": company.benefits_scope,
+                "benefits_note": company.benefits_note,
+                "locations": list(company.locations),
+                "locations_note": company.locations_note,
+                "hiring_process": list(company.hiring_process),
+                "hiring_note": company.hiring_note,
+                "links": [{"label": label, "url": url} for label, url in company.links],
+                "source": company.source,
+                "created_at": Ago(company.created_days_ago * DAY),
+                "updated_at": Ago(company.created_days_ago * DAY),
+            }
+        )
 
     job_ids: dict[str, uuid.UUID] = {}
     for job in JOBS:
@@ -134,6 +165,7 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
         rows[Job].append(
             {
                 "id": job_ids[job.title],
+                "company_id": seed_id("company", job.company),
                 "external_id": None,
                 "title": job.title,
                 "department": job.department,
@@ -151,12 +183,7 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
     confirmations: dict[str, int] = {}
     for seed in CANDIDATES:
         candidate_id = seed_id("candidate", seed.key)
-        application_id = application_ids[seed.key] = seed_id("application", seed.key)
         added = seed.added_minutes_ago
-        latest = min((event.minutes_ago for event in seed.events), default=added)
-        confirmations[seed.key] = next(
-            (e.minutes_ago for e in seed.events if e.type == ActivityType.INTERVIEW_CONFIRMED), DAY
-        )
         rows[Candidate].append(
             {
                 "id": candidate_id,
@@ -175,34 +202,12 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
                 "updated_at": Ago(added),
             }
         )
-        rows[Application].append(
-            {
-                "id": application_id,
-                "candidate_id": candidate_id,
-                "job_id": job_ids[seed.job],
-                "stage": seed.stage,
-                "source": seed.source,
-                "applied_at": Ago(added),
-                "updated_at": Ago(latest),
-                "archived_at": None,
-            }
+        _add_application(rows, seed.key, candidate_id, job_ids[seed.job], seed, recruiter_id)
+    for seed in CANDIDATES:
+        application_ids[seed.key] = seed_id("application", seed.key)
+        confirmations[seed.key] = next(
+            (e.minutes_ago for e in seed.events if e.type == ActivityType.INTERVIEW_CONFIRMED), DAY
         )
-
-        history = Recorder(rows[CandidateStageHistory], "history", seed.key, application_id)
-        activity = Recorder(rows[CandidateActivity], "activity", seed.key, application_id)
-        history.add(
-            previous_stage=None, new_stage=ApplicationStage.SOURCED, changed_by=recruiter_id, changed_at=Ago(added)
-        )
-        activity.add_event(ActivityType.APPLICATION_CREATED, seed.created_title, added, {"source": seed.source})
-        previous = ApplicationStage.SOURCED
-        for stage, minutes in zip(PIPELINE[1 : PIPELINE.index(seed.stage) + 1], _moves(seed, latest), strict=True):
-            history.add(previous_stage=previous, new_stage=stage, changed_by=recruiter_id, changed_at=Ago(minutes))
-            activity.add_event(
-                ActivityType.STAGE_CHANGED, f"Moved to {stage.label}", minutes, {"from": previous, "to": stage}
-            )
-            previous = stage
-        for event in seed.events:
-            activity.add_event(event.type, event.title, event.minutes_ago)
 
     for interview in INTERVIEWS:
         past = interview.days < 0
@@ -216,7 +221,7 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
                 "duration_minutes": interview.duration_minutes,
                 "status": interview.status,
                 "meeting_url": (
-                    f"https://meet.example.com/{interview.candidate}"
+                    f"https://meet.example.com/{interview.candidate.replace('@', '-')}"
                     if interview.interview_type == InterviewType.VIDEO and interview.status != InterviewStatus.COMPLETED
                     else None
                 ),
@@ -271,6 +276,45 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
                 }
             )
     return rows
+
+
+def _add_application(
+    rows: dict[type[Base], list[dict[str, Any]]],
+    key: str,
+    candidate_id: uuid.UUID,
+    job_id: uuid.UUID,
+    seed: CandidateSeed,
+    recruiter_id: uuid.UUID,
+) -> None:
+    """One application with its stage history and its timeline."""
+    application_id = seed_id("application", key)
+    added = seed.added_minutes_ago
+    latest = min((event.minutes_ago for event in seed.events), default=added)
+    rows[Application].append(
+        {
+            "id": application_id,
+            "candidate_id": candidate_id,
+            "job_id": job_id,
+            "stage": seed.stage,
+            "source": seed.source,
+            "applied_at": Ago(added),
+            "updated_at": Ago(latest),
+            "archived_at": None,
+        }
+    )
+    history = Recorder(rows[CandidateStageHistory], "history", key, application_id)
+    activity = Recorder(rows[CandidateActivity], "activity", key, application_id)
+    history.add(previous_stage=None, new_stage=ApplicationStage.SOURCED, changed_by=recruiter_id, changed_at=Ago(added))
+    activity.add_event(ActivityType.APPLICATION_CREATED, seed.created_title, added, {"source": seed.source})
+    previous = ApplicationStage.SOURCED
+    for stage, minutes in zip(PIPELINE[1 : PIPELINE.index(seed.stage) + 1], _moves(seed, latest), strict=True):
+        history.add(previous_stage=previous, new_stage=stage, changed_by=recruiter_id, changed_at=Ago(minutes))
+        activity.add_event(
+            ActivityType.STAGE_CHANGED, f"Moved to {stage.label}", minutes, {"from": previous, "to": stage}
+        )
+        previous = stage
+    for event in seed.events:
+        activity.add_event(event.type, event.title, event.minutes_ago)
 
 
 def _updates(seed: CandidateSeed, *, has_interview_booked: bool) -> list[tuple[int, str]]:

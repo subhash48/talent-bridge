@@ -2,7 +2,6 @@
 text mock interview that never scores anyone."""
 
 import json
-from datetime import UTC, datetime
 from typing import Any
 
 import httpx
@@ -18,6 +17,7 @@ from app.services.ai.portal_fallback import PRACTICE, prepare, resume_talking_po
 from app.services.candidate_portal_service import next_step
 from app.services.candidate_visibility import PortalStatus
 from tests.ashby_support import FakeSupabaseAdmin
+from tests.companies import portal_context, seeded_profile
 from tests.conftest import API, bearer, job_id
 from tests.test_careers import EMAIL, application
 
@@ -52,13 +52,9 @@ async def test_prep_draws_on_the_candidates_own_resume(anonymous: AsyncClient) -
 
 
 def context_at(stage: str) -> PortalContext:
-    return PortalContext(
-        first_name="Ana", location=None, headline=None, skills=(), company="Encord", company_overview="Encord.",
-        company_profile=(), job_title="Product Designer", job_department=None, job_location=None,
-        employment_type="Full-time", hiring_manager=None, job_summary=None, job_requirements=("Figma",),
-        stage_label=stage, status="active", next_step="", interviews=(), activity=(), messages=(),
-        recruiter_name=None, now=datetime.now(UTC),
-    )  # fmt: skip
+    return portal_context(
+        seeded_profile("encord"), first_name="Ana", job_requirements=("Figma",), stage_label=stage, next_step=""
+    )
 
 
 def test_prep_without_an_interview_follows_the_stage() -> None:

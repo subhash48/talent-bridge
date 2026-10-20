@@ -46,6 +46,15 @@ class PortalJob(APIModel):
     hiring_manager: str | None = None
 
 
+class PortalEmployer(APIModel):
+    """The company behind one of the candidate's applications (application -> job -> company)."""
+
+    id: UUID
+    name: str
+    logo_url: str | None = None
+    website: str | None = None
+
+
 class PortalRecruiter(APIModel):
     name: str
     email: str
@@ -76,6 +85,7 @@ class PortalInterview(APIModel):
     """Logistics only. Interviewer feedback (interviews.notes) is never part of it."""
 
     id: UUID
+    application_id: UUID  # the application it belongs to; opening it makes that the portal's context
     title: str
     interview_type: InterviewType
     scheduled_at: Timestamp
@@ -113,6 +123,7 @@ class PortalApplicationSummary(APIModel):
     id: UUID
     job_title: str
     company: str
+    company_logo_url: str | None = None
     department: str | None = None
     location: str | None = None
     stage: ApplicationStage
@@ -136,10 +147,14 @@ class PortalCompanyLink(APIModel):
 
 
 class PortalCompany(APIModel):
-    """GET /candidate/company: the company-approved profile (services/company_profile.py). The candidate
-    assistant answers company questions from the same profile."""
+    """GET /candidate/company: the profile the employer of one of the candidate's applications approved
+    (services/company_profile.py). The candidate assistant answers company questions from the same one."""
 
+    id: UUID
+    application_id: UUID  # the application it was read through
     name: str
+    logo_url: str | None = None
+    website: str | None = None
     overview: str
     mission: str
     highlights: list[PortalCompanyItem]
@@ -159,9 +174,10 @@ class CandidateMe(APIModel):
     """GET /candidate/me: everything the portal home and its navigation need.
 
     application is the one the portal is showing: the one asked for, else the most recently updated
-    active one. applications lists all of them (active first)."""
+    active one. applications lists all of them (active first). company is the selected application's
+    employer, and None without an application: the portal itself is TalentBridge's."""
 
-    company: str
+    company: PortalEmployer | None = None
     candidate: PortalCandidate
     applications: list[PortalApplicationSummary] = []
     application: PortalApplication | None = None
@@ -229,7 +245,8 @@ class PrepContent(APIModel):
 class CandidatePrep(PrepContent):
     """GET /candidate/prep. company_info is always the company-approved facts, never model text."""
 
-    interview: PortalInterview | None = None
+    interview: PortalInterview | None = None  # the one asked for, else the next upcoming one
+    application_id: UUID  # the application it was prepared for
     role: str
     company: str
     model_name: str
@@ -244,6 +261,7 @@ class MockAnswer(APIModel):
     question: Annotated[str, Field(min_length=1, max_length=500)]
     answer: Annotated[str, Field(min_length=1, max_length=4000)]
     application_id: UUID | None = None
+    interview_id: UUID | None = None  # the interview being practised for; it decides the application
 
 
 class MockFeedback(APIModel):

@@ -8,14 +8,12 @@ hiring decisions get the same boundary answer: the assistant can't see them, the
 import re
 from collections.abc import Callable
 
-from app.core.config import settings
 from app.schemas.portal import AssistContent, PrepContent
 from app.services.ai.context import people
 from app.services.ai.portal_context import PortalContext, PortalInterviewFact
-from app.services.company_profile import company_profile
 
-# The company as candidates name it in questions: "the company", or its name.
-_COMPANY = rf"(the company|{re.escape(settings.organization_name)})"
+# The company as candidates name it in questions. topic_of turns its name into "the company" first.
+_COMPANY = r"(the company)"
 
 # Checked in order, so the privacy boundary always wins.
 TOPICS: list[tuple[str, re.Pattern[str]]] = [
@@ -95,12 +93,15 @@ TOPIC_LABELS = {
 PROGRESS_LABELS = ("Applied", "Screening", "Interview", "Offer", "Hired")
 
 
-def topic_of(question: str) -> str:
+def topic_of(question: str, company: str | None = None) -> str:
+    """The topic of a question. company: the application's employer, which a candidate may name."""
+    if company:
+        question = re.sub(rf"\b{re.escape(company)}\b", "the company", question, flags=re.IGNORECASE)
     return next((name for name, pattern in TOPICS if pattern.search(question)), "general")
 
 
 def answer(context: PortalContext, question: str) -> AssistContent:
-    topic = topic_of(question)
+    topic = topic_of(question, context.company)
     if context.status == "closed" and topic not in ("private", "role", "company"):
         return AssistContent(answer=_closed_answer(context))
     if topic == "company":
@@ -109,7 +110,7 @@ def answer(context: PortalContext, question: str) -> AssistContent:
 
 
 def prepare(context: PortalContext) -> PrepContent:
-    interview = context.next_interview
+    interview = context.focus_interview
     # No interview booked yet: prepare for the stage they're at.
     stage_kind = {"screening": "screen", "offer": "offer"}.get(context.stage_label.lower(), "general")
     kind = interview_kind(interview.title) if interview else stage_kind
@@ -385,11 +386,15 @@ def _process_answer(context: PortalContext) -> str:
             f"Your next interview is the **{interview.title}** {context.when(interview.scheduled_at)}.",
             *_bullets(EXPECT[kind][:2]),
         ]
-    profile = company_profile()
+    profile = context.profile
     stages = ", then ".join(step.lower() for step in profile.hiring_process)
     lines += [
         "",
-        f"At {context.company} the interviews are usually: {stages}. {profile.hiring_note}",
+        (
+            f"At {context.company} the interviews are usually: {stages}. {profile.hiring_note}"
+            if stages
+            else profile.hiring_note
+        ),
         "",
         f"After each interview, {context.recruiter} will be in touch about next steps.",
     ]
@@ -470,8 +475,8 @@ COMPANY_SUBTOPICS: list[tuple[str, re.Pattern[str]]] = [
 
 
 def _company_answer(context: PortalContext, question: str) -> str:
-    """From the company-approved profile (services/company_profile.py) only."""
-    profile = company_profile()
+    """From the application's employer's approved profile (services/company_profile.py) only."""
+    profile = context.profile
     subtopic = next((name for name, pattern in COMPANY_SUBTOPICS if pattern.search(question)), "about")
     if subtopic == "benefits":
         lines = [f"**Benefits at {context.company}**", "", *_bullets(list(profile.benefits)), "", profile.benefits_note]

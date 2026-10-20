@@ -146,7 +146,7 @@ async def send_message(
 
 
 def default_subject(application: Application) -> str:
-    return f"Your {application.job.title} application at {settings.organization_name}"
+    return f"Your {application.job.title} application at {application.job.company.name}"
 
 
 def email_text(application: Application, content: str) -> str:
@@ -156,7 +156,7 @@ def email_text(application: Application, content: str) -> str:
         f"{content}\n\n"
         "--\n"
         f"To reply, or to see where your application stands, open your candidate portal: {portal}\n"
-        f"{settings.organization_name} · {application.job.title}"
+        f"{application.job.company.name} · {application.job.title}"
     )
 
 

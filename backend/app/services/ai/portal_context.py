@@ -3,6 +3,9 @@
 This is deliberately not the recruiter's CandidateContext. It is built from the portal
 projections (services/candidate_ai_service.py), so interviewer feedback, engagement, AI analysis,
 follow-up reasons, stage-change reasons and other candidates can't reach a prompt or an answer.
+
+It is about one application: its job, its interviews, its messages and its employer's approved
+profile. Another application's company, interviews or messages never reach it.
 """
 
 from dataclasses import dataclass
@@ -10,6 +13,7 @@ from datetime import datetime, timedelta
 
 from app.core.enums import InterviewStatus
 from app.services.ai.context import people
+from app.services.company_profile import CompanyProfile
 
 FORMATS = {"video": "video", "phone": "phone", "onsite": "on-site"}
 
@@ -43,9 +47,7 @@ class PortalContext:
     location: str | None
     headline: str | None
     skills: tuple[str, ...]
-    company: str
-    company_overview: str
-    company_profile: tuple[str, ...]  # services/company_profile.py: mission, products, culture, benefits...
+    profile: CompanyProfile  # the application's employer, as it approved for candidates
     job_title: str
     job_department: str | None
     job_location: str | None
@@ -63,10 +65,29 @@ class PortalContext:
     now: datetime
     utc_offset_minutes: int | None = None  # the candidate's time zone, when the browser sent it
     resume: str | None = None  # the candidate's own résumé, as text, from their application
+    selected_interview: PortalInterviewFact | None = None  # the interview the candidate opened, if any
+
+    @property
+    def company(self) -> str:
+        return self.profile.name
+
+    @property
+    def company_overview(self) -> str:
+        return self.profile.overview
+
+    @property
+    def company_profile(self) -> tuple[str, ...]:
+        """The employer's approved profile as statements: mission, products, culture, benefits..."""
+        return tuple(self.profile.facts())
 
     @property
     def next_interview(self) -> PortalInterviewFact | None:
         return next((i for i in self.interviews if i.upcoming), None)
+
+    @property
+    def focus_interview(self) -> PortalInterviewFact | None:
+        """The interview to prepare for: the one the candidate opened, else the next upcoming one."""
+        return self.selected_interview or self.next_interview
 
     @property
     def past_interviews(self) -> list[PortalInterviewFact]:
@@ -131,6 +152,7 @@ class PortalContext:
             "",
             "[interviews]",
             *(_interview_line(self, i) for i in self.interviews),
+            *([f"Preparing for: {self.selected_interview.title}."] if self.selected_interview else []),
             "",
             *(
                 ["[your résumé] the candidate's own, from their application", self.resume[:RESUME_CHARS], ""]

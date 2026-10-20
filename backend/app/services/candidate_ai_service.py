@@ -5,13 +5,16 @@ Separate from the recruiter AI by construction. Its context is assembled from th
 so internal notes, interviewer feedback, AI analysis, engagement and other candidates are out of
 reach. What a candidate asks it stays between them and the assistant: nothing is recorded for
 recruiters.
+
+Every call is about one of the candidate's applications (or one of its interviews, which decides the
+application), and the context holds that application only: its job, its employer's approved profile,
+its interviews and its messages. Another application, at the same company or another, never reaches it.
 """
 
 import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
 from app.core.enums import SenderType
 from app.models import Candidate
 from app.schemas.portal import CandidateAskResponse, CandidatePrep, MockFeedback
@@ -21,22 +24,37 @@ from app.services.ai.context import parse_requirements
 from app.services.ai.portal_context import PortalContext, PortalInterviewFact
 from app.services.ai_service import with_fallback
 from app.services.candidate_portal_service import PortalRecord, require_record
-from app.services.company_profile import company_profile
 
 
 def build_portal_context(
-    record: PortalRecord, *, utc_offset_minutes: int | None = None, resume: str | None = None
+    record: PortalRecord,
+    *,
+    utc_offset_minutes: int | None = None,
+    resume: str | None = None,
+    interview_id: uuid.UUID | None = None,
 ) -> PortalContext:
     candidate, job = record.candidate, record.job
     description = job.description or ""
+    interviews = {
+        interview.id: PortalInterviewFact(
+            title=interview.title,
+            interview_type=interview.interview_type.value,
+            scheduled_at=interview.scheduled_at,
+            duration_minutes=interview.duration_minutes,
+            interviewers=tuple(interview.interviewers),
+            status=interview.status,
+            upcoming=interview.upcoming,
+            confirmed=interview.confirmed_at is not None,
+            can_confirm=interview.can_confirm,
+        )
+        for interview in record.interviews
+    }
     return PortalContext(
         first_name=candidate.first_name,
         location=candidate.location,
         headline=candidate.headline,
         skills=tuple(candidate.skills),
-        company=record.company,
-        company_overview=settings.organization_overview,
-        company_profile=tuple(company_profile().facts()),
+        profile=record.profile,
         job_title=job.title,
         job_department=job.department,
         job_location=job.location,
@@ -47,20 +65,7 @@ def build_portal_context(
         stage_label=record.application.stage_label,
         status=record.application.status,
         next_step=record.application.next_step,
-        interviews=tuple(
-            PortalInterviewFact(
-                title=interview.title,
-                interview_type=interview.interview_type.value,
-                scheduled_at=interview.scheduled_at,
-                duration_minutes=interview.duration_minutes,
-                interviewers=tuple(interview.interviewers),
-                status=interview.status,
-                upcoming=interview.upcoming,
-                confirmed=interview.confirmed_at is not None,
-                can_confirm=interview.can_confirm,
-            )
-            for interview in record.interviews
-        ),
+        interviews=tuple(interviews.values()),
         activity=tuple(entry.title for entry in record.activity),
         messages=tuple(
             ("You" if message.sender_type == SenderType.CANDIDATE else message.sender_name, message.content)
@@ -70,6 +75,7 @@ def build_portal_context(
         now=record.now,
         utc_offset_minutes=utc_offset_minutes,
         resume=resume,
+        selected_interview=interviews.get(interview_id) if interview_id else None,
     )
 
 
@@ -83,7 +89,9 @@ async def ask(
     application_id: uuid.UUID | None = None,
 ) -> CandidateAskResponse:
     record = await require_record(session, candidate, application_id)
-    context = build_portal_context(record, utc_offset_minutes=utc_offset_minutes)
+    context = build_portal_context(
+        record, utc_offset_minutes=utc_offset_minutes, resume=await resumes.latest_text(session, candidate.id)
+    )
     content, model_name = await with_fallback(provider, lambda p: p.assist_candidate(context, question))
     return CandidateAskResponse(answer=content.answer, model_name=model_name)
 
@@ -95,17 +103,24 @@ async def prepare(
     *,
     utc_offset_minutes: int | None = None,
     application_id: uuid.UUID | None = None,
+    interview_id: uuid.UUID | None = None,
 ) -> CandidatePrep:
-    record = await require_record(session, candidate, application_id)
+    """Prep for one application: its company, its job, the interview asked for (which decides the
+    application) or else its next one, and the candidate's résumé."""
+    record = await require_record(session, candidate, application_id, interview_id=interview_id)
     context = build_portal_context(
-        record, utc_offset_minutes=utc_offset_minutes, resume=await resumes.latest_text(session, candidate.id)
+        record,
+        utc_offset_minutes=utc_offset_minutes,
+        resume=await resumes.latest_text(session, candidate.id),
+        interview_id=interview_id,
     )
     content, model_name = await with_fallback(provider, lambda p: p.prepare_candidate(context))
     return CandidatePrep(
         # Company information is always the approved facts, whatever a model wrote.
         **content.model_dump(exclude={"company_info"}),
         company_info=context.company_facts,
-        interview=record.next_interview,
+        interview=record.interview(interview_id),
+        application_id=record.application.id,
         role=record.job.title,
         company=record.company,
         model_name=model_name,
@@ -120,9 +135,12 @@ async def mock_feedback(
     provider: AIProvider,
     *,
     application_id: uuid.UUID | None = None,
+    interview_id: uuid.UUID | None = None,
 ) -> MockFeedback:
     """Coaching on one practice answer. Nothing is stored, and the hiring team never sees it."""
-    record = await require_record(session, candidate, application_id)
-    context = build_portal_context(record, resume=await resumes.latest_text(session, candidate.id))
+    record = await require_record(session, candidate, application_id, interview_id=interview_id)
+    context = build_portal_context(
+        record, resume=await resumes.latest_text(session, candidate.id), interview_id=interview_id
+    )
     content, model_name = await with_fallback(provider, lambda p: p.mock_interview_feedback(context, question, answer))
     return MockFeedback(feedback=content.answer, model_name=model_name)

@@ -44,7 +44,7 @@ async def portal_snapshot(client: AsyncClient) -> str:
     """Every candidate-facing read, as one string, for leak checks."""
     responses = [
         await client.get(f"{API}/candidate/{path}")
-        for path in ("me", "application", "activity", "interviews", "messages", "profile", "prep")
+        for path in ("me", "application", "activity", "interviews", "messages", "profile", "prep", "company")
     ]
     assert all(response.status_code == 200 for response in responses)
     return json.dumps([response.json() for response in responses])
@@ -57,7 +57,7 @@ async def test_me_is_sophias_application(client: AsyncClient) -> None:
     response = await client.get(f"{API}/candidate/me")
     assert response.status_code == 200
     me = response.json()
-    assert me["company"] == "Encord"
+    assert me["company"]["name"] == "Encord" and me["company"]["logo_url"] == "/logos/encord.svg"
     assert me["candidate"]["full_name"] == "Sophia Martinez"
     assert me["job"]["title"] == "Product Designer"
     assert me["job"]["department"] == "Design"

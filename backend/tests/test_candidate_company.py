@@ -1,25 +1,25 @@
-"""The Company page's profile, and the candidate assistant answering company questions from it alone."""
+"""The Company page's profile, and the candidate assistant answering company questions from it alone.
 
-from datetime import UTC, datetime
+The profile is the employer's behind the application: application -> job -> company. Sophia's default
+application is the Product Designer role at Encord (tests/test_candidate_context.py covers her Nova AI one).
+"""
 
 from httpx import AsyncClient
 
-from app.core.config import settings
-from app.services.ai.portal_context import PortalContext
 from app.services.ai.portal_fallback import topic_of
-from app.services.company_profile import company_profile
+from tests.companies import portal_context, seeded_profile
 from tests.conftest import ALEX_AUTH, API, SOPHIA_AUTH, application_id, bearer
 
 SOPHIA_APP = application_id("sophia-martinez")
 
 
-async def test_candidates_read_the_company_profile(anonymous: AsyncClient) -> None:
+async def test_candidates_read_their_employers_profile(anonymous: AsyncClient) -> None:
     response = await anonymous.get(f"{API}/candidate/company", headers=bearer(SOPHIA_AUTH))
     assert response.status_code == 200
     body = response.json()
-    profile = company_profile()
-    assert body["name"] == settings.organization_name
-    assert body["overview"] == settings.organization_overview  # one overview, configured once
+    profile = seeded_profile("encord")
+    assert body["name"] == "Encord" and body["application_id"] == SOPHIA_APP
+    assert body["overview"] == profile.overview and body["logo_url"] == "/logos/encord.svg"
     assert [item["title"] for item in body["products"]] == [item.title for item in profile.products]
     assert body["benefits"] == list(profile.benefits) and body["benefits_note"]
     assert body["locations"] == ["London", "San Francisco", "New York"]
@@ -32,7 +32,7 @@ async def test_candidates_read_the_company_profile(anonymous: AsyncClient) -> No
 
 
 async def test_the_assistant_answers_company_questions_from_the_profile(client: AsyncClient) -> None:
-    profile = company_profile()
+    profile = seeded_profile("encord")
 
     async def ask(question: str) -> str:
         response = await client.post(f"{API}/candidate/ai/ask", json={"message": question})
@@ -79,18 +79,28 @@ ROUTES = {
 
 
 def test_questions_reach_the_right_topic() -> None:
-    assert {question: topic_of(question) for question in ROUTES} == ROUTES
+    # The candidate names the employer of the application they're asking about.
+    assert {question: topic_of(question, "Encord") for question in ROUTES} == ROUTES
+    assert topic_of("Who are Nova AI's customers?", "Nova AI") == "company"
 
 
 async def test_the_assistant_prompt_carries_the_profile() -> None:
-    facts = company_profile().facts()
-    context = PortalContext(
-        first_name="Sophia", location=None, headline=None, skills=(), company="Encord",
-        company_overview=settings.organization_overview, company_profile=tuple(facts), job_title="Product Designer",
-        job_department=None, job_location=None, employment_type="Full-time", hiring_manager=None, job_summary=None,
-        job_requirements=(), stage_label="Interview", status="active", next_step="Prepare.", interviews=(),
-        activity=(), messages=(), recruiter_name=None, now=datetime.now(UTC),
-    )  # fmt: skip
+    profile = seeded_profile("encord")
+    facts = profile.facts()
+    context = portal_context(profile)
     company_section = context.to_prompt().split("[company] approved facts you may share")[1].split("[application]")[0]
     assert all(f"- {fact}" in company_section for fact in facts)
     assert "Benefits for UK employees:" in company_section and "Typical interview process:" in company_section
+
+
+def test_a_profile_with_little_shared_says_only_that() -> None:
+    """An employer that has only given its name and overview: no empty statements in the prompt."""
+    profile = seeded_profile("encord")
+    sparse = type(profile)(
+        id=profile.id, name="Acme", logo_url=None, website=None, overview="Acme makes anvils.", mission="",
+        highlights=(), products=(), values=(), benefits=(), benefits_scope="", benefits_note="", locations=(),
+        locations_note="", hiring_process=(), hiring_note="", links=(), source="",
+    )  # fmt: skip
+    assert sparse.facts() == []
+    section = portal_context(sparse).to_prompt().split("[company]")[1].split("[application]")[0]
+    assert "Acme makes anvils." in section and "Benefits" not in section and "Offices" not in section

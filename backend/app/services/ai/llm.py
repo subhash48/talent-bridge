@@ -279,7 +279,7 @@ class LLMProvider(AIProvider):
         return self._parse(await self._generate(_candidate_system(context), prompt), AssistContent)
 
     async def prepare_candidate(self, context: PortalContext) -> PrepContent:
-        interview = context.next_interview
+        interview = context.focus_interview
         prompt = CANDIDATE_PREP_PROMPT.format(
             context=context.to_prompt(),
             first_name=context.first_name,

@@ -1,16 +1,14 @@
-"""What candidates may learn about the company, in one place. The candidate portal's Company page shows
-it (GET /candidate/company), and the candidate assistant answers company questions from it and from
-nothing else (it is the [company] section of every assistant prompt).
+"""What candidates may learn about an employer, from its companies row (migration 017).
 
-Every statement is one the company makes publicly: taken from encord.com (the home page and
-/careers) on 3 October 2026. Candidates read it and the assistant repeats it, so the hiring team owns
-it. Edit the text here, keep each claim one Encord makes publicly, and update `source` when you do. The
-overview is settings.organization_overview: its text is in backend/app/core/config.py, and
-ORGANIZATION_OVERVIEW in backend/.env overrides it.
+A candidate only ever learns about the company behind one of their own applications: application ->
+job -> company. The portal's Company page shows that company's profile (GET /candidate/company), and
+the candidate assistant answers company questions from it and from nothing else (the [company]
+section of its prompt). The employer owns the text; nothing here is written by a model.
 """
 
 import uuid
 from dataclasses import dataclass
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,7 +31,10 @@ class Link:
 
 @dataclass(frozen=True)
 class CompanyProfile:
+    id: uuid.UUID
     name: str
+    logo_url: str | None
+    website: str | None
     overview: str
     mission: str
     highlights: tuple[Item, ...]  # title: the figure ("300+"), description: what it counts
@@ -50,120 +51,52 @@ class CompanyProfile:
     source: str
 
     def facts(self) -> list[str]:
-        """The profile as plain statements, for the assistant's [company] section."""
-        return [
-            f"Mission: {self.mission}",
+        """The profile as plain statements, for the assistant's [company] section. What the employer
+        hasn't shared is left out rather than guessed."""
+        benefits_for = f" for {self.benefits_scope}" if self.benefits_scope else ""
+        facts = [
+            f"Mission: {self.mission}" if self.mission else "",
             *(f"{item.title} {item.description}." for item in self.highlights),
             *(f"Product, {item.title}: {item.description}" for item in self.products),
             *(f"Value, {item.title}: {item.description}" for item in self.values),
-            f"Benefits for {self.benefits_scope}: {'; '.join(self.benefits)}. {self.benefits_note}",
-            f"Offices: {', '.join(self.locations)}. {self.locations_note}",
-            "Typical interview process: " + ", then ".join(step.lower() for step in self.hiring_process) + ".",
+            f"Benefits{benefits_for}: {'; '.join(self.benefits)}. {self.benefits_note}" if self.benefits else "",
+            f"Offices: {', '.join(self.locations)}. {self.locations_note}" if self.locations else "",
+            (
+                "Typical interview process: " + ", then ".join(step.lower() for step in self.hiring_process) + "."
+                if self.hiring_process
+                else ""
+            ),
             self.hiring_note,
             *(f"{link.label}: {link.url}" for link in self.links),
         ]
+        return [fact.strip() for fact in facts if fact.strip()]
 
 
-def company_profile() -> CompanyProfile:
+def profile_for(company: Company) -> CompanyProfile:
     return CompanyProfile(
-        name=settings.organization_name,
-        overview=settings.organization_overview,
-        mission=(
-            "AI alignment starts with Encord: the quality of AI is only as good as the data behind it. Encord builds the "
-            "infrastructure to build, curate and validate training data, helping the world's best AI teams move faster, "
-            "label smarter and ship models that work in production, from autonomous vehicles to surgical robotics."
-        ),
-        highlights=(
-            Item("300+", "leading AI teams build with Encord, including Woven by Toyota, AXA, UiPath and Zipline"),
-            Item(
-                "$110M",
-                "total funding raised, from investors including Wellington Management, Y Combinator, CRV and N47",
-            ),
-            Item("45+", "nationalities represented on the team"),
-        ),
-        products=(
-            Item(
-                "Label and annotate",
-                "Video, LiDAR, audio, text and sensor-fusion annotation in one workflow, with label lineage and quality "
-                "controls built in for production scale.",
-            ),
-            Item(
-                "Curate and collect",
-                "Collect data from dedicated facilities or a fleet, then use embedding-based search and model-in-the-loop "
-                "curation to find rare edge cases and close distribution gaps.",
-            ),
-            Item(
-                "Align and evaluate",
-                "RLHF, rubric-based evaluation and pairwise comparison for models in production, to find where AI fails "
-                "and route it back into training.",
-            ),
-            Item(
-                "Data-as-a-Service",
-                "Expert annotators, domain specialists and managed data collection, including teleoperation facilities "
-                "for physical AI, integrated with the platform.",
-            ),
-        ),
-        values=(
-            Item(
-                "High agency",
-                "You see something broken, you fix it or find the person who can. Encord celebrates the people who solve "
-                "90% of a problem before anyone asks.",
-            ),
-            Item(
-                "Builds with care and urgency",
-                "Encord bear-hugs the customer. Former founders and people from fast-moving, high-stakes environments "
-                "thrive here.",
-            ),
-            Item(
-                "Self-aware and hungry",
-                "The team stays warm, self-aware and genuinely hungry. People elevate their peers, and ego doesn't last long.",
-            ),
-            Item(
-                "Invents in real time",
-                "The team moves toward ambiguity: pragmatic, resourceful and energised by the fact that there's no playbook.",
-            ),
-        ),
-        benefits=(
-            "Equity in a hyper-growth startup",
-            "25 days paid time off",
-            "Private health insurance",
-            "Annual learning and development stipend",
-            "Monthly team events and bi-annual offsites",
-            "Team lunch twice a week",
-            "Visa sponsorship, considered case by case for the role, level and location",
-            "Payroll giving scheme",
-            "Cycle to work scheme",
-            "Home and tech scheme",
-            "A strong in-person culture",
-        ),
-        benefits_scope="UK employees",
-        benefits_note=(
-            "These are the benefits Encord lists for UK employees. Benefits in the US differ; your recruiter can walk "
-            "you through the package for your location."
-        ),
-        locations=("London", "San Francisco", "New York"),
-        locations_note=(
-            "Encord describes a strong in-person culture. Each job posting lists its own location and work arrangement."
-        ),
-        hiring_process=(
-            "Recruiter screen",
-            "Hiring manager conversation",
-            "Skills-based interview or take-home",
-            "Final panel",
-        ),
-        hiring_note=(
-            "The process varies by role and team, and is usually four or five stages in total. Your recruiter walks you "
-            "through the specific steps at the start, so there are no surprises."
-        ),
-        links=(
-            Link("Encord website", "https://encord.com/"),
-            Link("Explore the product", "https://encord.com/explore-product/"),
-            Link("Careers and open roles", "https://encord.com/careers/"),
-            Link("Encord blog", "https://encord.com/blog/"),
-            Link("Trust center", "https://trust.encord.com/"),
-        ),
-        source="From encord.com, October 2026.",
+        id=company.id,
+        name=company.name,
+        logo_url=company.logo_url,
+        website=company.website,
+        overview=company.overview or "",
+        mission=company.mission or "",
+        highlights=_items(company.highlights),
+        products=_items(company.products),
+        values=_items(company.culture),
+        benefits=tuple(company.benefits or ()),
+        benefits_scope=company.benefits_scope or "",
+        benefits_note=company.benefits_note or "",
+        locations=tuple(company.locations or ()),
+        locations_note=company.locations_note or "",
+        hiring_process=tuple(company.hiring_process or ()),
+        hiring_note=company.hiring_note or "",
+        links=tuple(Link(link["label"], link["url"]) for link in company.links or ()),
+        source=company.source or "",
     )
+
+
+def _items(rows: list[dict[str, Any]] | None) -> tuple[Item, ...]:
+    return tuple(Item(row["title"], row["description"]) for row in rows or ())
 
 
 async def workspace_company_id(session: AsyncSession) -> uuid.UUID:

@@ -11,7 +11,6 @@ import uuid
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
 from app.core.enums import ActivityType, MessageKind, SenderType
 from app.models import Candidate, Message
 from app.models.base import utcnow
@@ -67,10 +66,9 @@ async def send_message(
         metadata={"message_id": message.id, "kind": kind, "via": "candidate_portal"},
         at=now,
     )
+    company = application.job.company.name
     await session.commit()
-    presented = present_message(
-        message, candidate_name=candidate.full_name, recruiter_name=None, company=settings.organization_name
-    )
+    presented = present_message(message, candidate_name=candidate.full_name, recruiter_name=None, company=company)
     assert presented is not None  # candidate messages are always visible to the candidate
     return presented
 

@@ -4,9 +4,11 @@ It reads the same tables as the recruiter workspace, so a stage change, intervie
 on either side (or synced from Ashby) shows on the other straight away. Every response is built by
 candidate_visibility.
 
-A candidate can have several applications. Each portal request works on one of them: the one the
-request names, which must be the candidate's own (anyone else's is a 404, the same as one that
-doesn't exist), or by default the most recently updated active one.
+A candidate can have several applications, possibly at different companies. Each portal request
+works on one of them: the one the request names (directly, or through one of its interviews), which
+must be the candidate's own (anyone else's is a 404, the same as one that doesn't exist), or by
+default the most recently updated active one. Everything a response says about the employer is read
+through that application: application -> job -> company.
 """
 
 import uuid
@@ -17,7 +19,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.config import settings
 from app.core.enums import (
     STAFF_ROLES,
     ActivityType,
@@ -28,7 +29,7 @@ from app.core.enums import (
     UserRole,
 )
 from app.core.errors import NotFoundError
-from app.models import Application, Candidate, CandidateStageHistory, User
+from app.models import Application, Candidate, CandidateStageHistory, Interview, User
 from app.models.base import utcnow
 from app.schemas.portal import (
     CandidateApplicationDetail,
@@ -37,6 +38,7 @@ from app.schemas.portal import (
     PortalApplication,
     PortalApplicationSummary,
     PortalCandidate,
+    PortalEmployer,
     PortalInterview,
     PortalJob,
     PortalMessage,
@@ -58,6 +60,7 @@ from app.services.candidate_visibility import (
     present_job,
     present_message,
 )
+from app.services.company_profile import CompanyProfile, profile_for
 from app.services.pipeline_service import load_snapshots
 from app.services.snapshot import ApplicationSnapshot
 
@@ -73,7 +76,7 @@ class PortalRecord:
     """One application as the candidate may see it. Every portal response is built from this."""
 
     candidate: Candidate
-    company: str
+    profile: CompanyProfile  # the employer, read through the application: application -> job -> company
     application: PortalApplication
     job: PortalJob
     recruiter: PortalRecruiter | None
@@ -84,8 +87,18 @@ class PortalRecord:
     now: datetime
 
     @property
+    def company(self) -> str:
+        return self.profile.name
+
+    @property
     def next_interview(self) -> PortalInterview | None:
         return next((interview for interview in self.interviews if interview.upcoming), None)
+
+    def interview(self, interview_id: uuid.UUID | None) -> PortalInterview | None:
+        """The interview asked for, else the next upcoming one."""
+        if interview_id is not None:
+            return next((interview for interview in self.interviews if interview.id == interview_id), None)
+        return self.next_interview
 
 
 # Which application
@@ -128,6 +141,20 @@ async def owned_application(
     return application
 
 
+async def interview_application(session: AsyncSession, candidate: Candidate, interview_id: uuid.UUID) -> Application:
+    """The application an interview belongs to, if it's one of the candidate's own. Opening an interview
+    makes its application the context, whichever one the portal was showing."""
+    application = await session.scalar(
+        select(Application)
+        .join(Interview, Interview.application_id == Application.id)
+        .where(Interview.id == interview_id, Application.candidate_id == candidate.id)
+        .options(selectinload(Application.job))
+    )
+    if application is None:
+        raise NotFoundError("Interview not found.", code="interview_not_found")
+    return application
+
+
 async def current_application(session: AsyncSession, candidate_id: uuid.UUID) -> Application | None:
     """The application the portal opens on, or None when there is none."""
     applications = await candidate_applications(session, candidate_id)
@@ -148,7 +175,8 @@ async def load_record(
         )
     ).all()
     recruiter = await recruiter_for(session, application.id)
-    company = settings.organization_name
+    profile = profile_for(application.job.company)
+    company = profile.name
 
     interviews = [present_interview(interview, now) for interview in snapshot.interviews]
     titles = {str(interview.id): interview.title for interview in snapshot.interviews}
@@ -173,7 +201,7 @@ async def load_record(
 
     return PortalRecord(
         candidate=candidate,
-        company=company,
+        profile=profile,
         application=PortalApplication(
             id=application.id,
             stage=application.stage,
@@ -184,7 +212,7 @@ async def load_record(
             steps=build_steps(application, history, status.bucket),
             next_step=next_step(application.stage, status, next_interview, unread, recruiter, company, interviewed),
         ),
-        job=present_job(application.job, company),
+        job=present_job(application.job),
         recruiter=recruiter,
         interviews=interviews,
         messages=messages,
@@ -195,9 +223,18 @@ async def load_record(
 
 
 async def require_record(
-    session: AsyncSession, candidate: Candidate, application_id: uuid.UUID | None = None
+    session: AsyncSession,
+    candidate: Candidate,
+    application_id: uuid.UUID | None = None,
+    *,
+    interview_id: uuid.UUID | None = None,
 ) -> PortalRecord:
-    return await load_record(session, candidate, await owned_application(session, candidate, application_id))
+    """The record for one of the candidate's applications. An interview, when given, decides which."""
+    if interview_id is not None:
+        application = await interview_application(session, candidate, interview_id)
+    else:
+        application = await owned_application(session, candidate, application_id)
+    return await load_record(session, candidate, application)
 
 
 async def recruiter_for(session: AsyncSession, application_id: uuid.UUID) -> PortalRecruiter | None:
@@ -262,11 +299,12 @@ def next_step(
 async def list_applications(session: AsyncSession, candidate: Candidate) -> list[PortalApplicationSummary]:
     applications = await candidate_applications(session, candidate.id)
     snapshots = await load_snapshots(session, applications)
-    return [summarize(snapshot, settings.organization_name, utcnow()) for snapshot in snapshots]
+    return [summarize(snapshot, utcnow()) for snapshot in snapshots]
 
 
-def summarize(snapshot: ApplicationSnapshot, company: str, now: datetime) -> PortalApplicationSummary:
+def summarize(snapshot: ApplicationSnapshot, now: datetime) -> PortalApplicationSummary:
     application = snapshot.application
+    company = application.job.company
     status = status_of(application)
     upcoming = next(
         (interview for interview in snapshot.interviews if present_interview(interview, now).upcoming), None
@@ -274,7 +312,8 @@ def summarize(snapshot: ApplicationSnapshot, company: str, now: datetime) -> Por
     return PortalApplicationSummary(
         id=application.id,
         job_title=application.job.title,
-        company=company,
+        company=company.name,
+        company_logo_url=company.logo_url,
         department=application.job.department,
         location=application.job.location,
         stage=application.stage,
@@ -292,9 +331,8 @@ async def get_me(session: AsyncSession, candidate: Candidate, application_id: uu
     """The portal home. An application id that isn't the candidate's shows their default one instead
     (nothing about the other application is revealed either way)."""
     applications = await candidate_applications(session, candidate.id)
-    company = settings.organization_name
     if not applications:
-        return CandidateMe(company=company, candidate=present_candidate(candidate))
+        return CandidateMe(candidate=present_candidate(candidate))
     now = utcnow()
     snapshots = await load_snapshots(session, applications)
     focus = next((item for item in applications if item.id == application_id), applications[0])
@@ -302,10 +340,13 @@ async def get_me(session: AsyncSession, candidate: Candidate, application_id: uu
     latest = next(
         (message for message in reversed(record.messages) if message.sender_type != SenderType.CANDIDATE), None
     )
+    employer = focus.job.company
     return CandidateMe(
-        company=company,
+        company=PortalEmployer(
+            id=employer.id, name=employer.name, logo_url=employer.logo_url, website=employer.website
+        ),
         candidate=present_candidate(candidate),
-        applications=[summarize(snapshot, company, now) for snapshot in snapshots],
+        applications=[summarize(snapshot, now) for snapshot in snapshots],
         application=record.application,
         job=record.job,
         recruiter=record.recruiter,

@@ -89,11 +89,11 @@ def present_candidate(candidate: Candidate) -> PortalCandidate:
     return PortalCandidate.model_validate(candidate)
 
 
-def present_job(job: Job, company: str) -> PortalJob:
+def present_job(job: Job) -> PortalJob:
     return PortalJob(
         id=job.id,
         title=job.title,
-        company=company,
+        company=job.company.name,
         department=job.department,
         location=job.location,
         employment_type=job.employment_type,
@@ -164,6 +164,7 @@ def present_interview(interview: Interview, now: datetime) -> PortalInterview:
     upcoming = interview_is_upcoming(interview, now)
     return PortalInterview(
         id=interview.id,
+        application_id=interview.application_id,
         title=interview.title,
         interview_type=interview.interview_type,
         scheduled_at=interview.scheduled_at,

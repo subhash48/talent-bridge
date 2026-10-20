@@ -1,15 +1,18 @@
 """The candidate portal. Every route acts as the signed-in candidate and only ever sees their own
 applications, through candidate-safe projections (schemas/portal.py).
 
-A candidate can have several applications. Routes that work on one take an optional application_id
-(the query string, or the body for POSTs); it must be one of the candidate's own, or the answer is
-404. Without it they use the application the portal opens on: the most recently updated active one.
+A candidate can have several applications, possibly at different companies. Routes that work on one
+take an optional application_id (the query string, or the body for POSTs); it must be one of the
+candidate's own, or the answer is 404. Without it they use the application the portal opens on: the
+most recently updated active one. Prep also takes an interview_id, which decides the application.
+Whatever a route says about the employer comes from that application: application -> job -> company.
 
 Same tables as the recruiter workspace, so changes on either side show on the other at once. A
 candidate can confirm interviews, message the hiring team and edit their contact details; they
 can't change their stage, their job or anything a recruiter recorded.
 """
 
+from dataclasses import asdict
 from typing import Annotated
 from uuid import UUID
 
@@ -42,11 +45,12 @@ from app.services import (
     candidate_portal_service,
 )
 from app.services.candidate_visibility import present_candidate
-from app.services.company_profile import company_profile
+from app.services.company_profile import profile_for
 
 router = APIRouter(prefix="/candidate", tags=["candidate portal"])
 
 ApplicationParam = Annotated[UUID | None, Query(description="One of your applications; default: the latest active one")]
+InterviewParam = Annotated[UUID | None, Query(description="One of your interviews; it decides the application")]
 
 
 @router.get("/me", response_model=CandidateMe, summary="Portal home")
@@ -148,10 +152,15 @@ async def update_profile(body: ProfileUpdate, session: SessionDep, candidate: Cu
 
 
 @router.get("/company", response_model=PortalCompany, summary="About the company")
-async def company(_candidate: CurrentCandidateDep) -> PortalCompany:
-    """What the company shares with candidates: what it does, its mission, products, culture, benefits,
-    offices, how hiring works and useful links. The same profile the candidate assistant answers from."""
-    return PortalCompany.model_validate(company_profile())
+async def company(
+    session: SessionDep, candidate: CurrentCandidateDep, application_id: ApplicationParam = None
+) -> PortalCompany:
+    """What the employer behind one of the candidate's applications shares with candidates: what it does,
+    its mission, products, culture, benefits, offices, how hiring works and useful links. The same profile
+    the candidate assistant answers from for that application. 404 without an application."""
+    application = await candidate_portal_service.owned_application(session, candidate, application_id)
+    profile = profile_for(application.job.company)
+    return PortalCompany.model_validate({**asdict(profile), "application_id": application.id})
 
 
 @router.get("/prep", response_model=CandidatePrep, summary="Interview prep")
@@ -161,10 +170,18 @@ async def prep(
     provider: AIProviderDep,
     utc_offset_minutes: UTCOffset | None = None,
     application_id: ApplicationParam = None,
+    interview_id: InterviewParam = None,
 ) -> CandidatePrep:
-    """Preparation for the next interview from the candidate assistant, using candidate-safe context only."""
+    """Preparation for one interview (the one given, else the application's next one) from the candidate
+    assistant, using candidate-safe context only: that application's company, job and interviews, and the
+    candidate's résumé. application_id in the answer says which application it was for."""
     return await candidate_ai_service.prepare(
-        session, candidate, provider, utc_offset_minutes=utc_offset_minutes, application_id=application_id
+        session,
+        candidate,
+        provider,
+        utc_offset_minutes=utc_offset_minutes,
+        application_id=application_id,
+        interview_id=interview_id,
     )
 
 
@@ -174,7 +191,13 @@ async def practice(
 ) -> MockFeedback:
     """A text mock interview: coaching on one answer. Nothing is stored or shared with the hiring team."""
     return await candidate_ai_service.mock_feedback(
-        session, candidate, body.question, body.answer, provider, application_id=body.application_id
+        session,
+        candidate,
+        body.question,
+        body.answer,
+        provider,
+        application_id=body.application_id,
+        interview_id=body.interview_id,
     )
 
 

@@ -6,7 +6,6 @@ import uuid
 import pytest
 from httpx import AsyncClient
 
-from app.core.config import settings
 from tests.ashby_support import FakeSupabaseAdmin, ago, application_event, deliver, fixture, iso
 from tests.conftest import API, SOPHIA_EMAIL, application_id
 
@@ -180,4 +179,4 @@ async def test_a_candidate_whose_only_application_closed_still_sees_it(
     assert me["application"]["id"] == SOPHIA_APP and me["application"]["status"] == "no_longer_considered"
     assert [item["status"] for item in me["applications"]] == ["no_longer_considered"]
     assert REASON not in json.dumps(me)
-    assert settings.organization_name in me["application"]["next_step"]
+    assert "Encord" in me["application"]["next_step"]  # the employer of this application

@@ -9,6 +9,11 @@ import { firstName } from "@/lib/format";
 
 const FAQ = [
   {
+    question: "I applied to more than one company. How do I switch?",
+    answer:
+      "Choose an application at the top of your dashboard, or from the switcher in the sidebar. Interviews, messages, the company page, interview prep and Ask AI all follow the application you choose.",
+  },
+  {
     question: "How do I confirm an interview?",
     answer: "Open Interviews and press Confirm. Your recruiter sees it straight away.",
   },

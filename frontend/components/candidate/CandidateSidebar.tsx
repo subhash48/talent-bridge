@@ -7,6 +7,7 @@ import {
   ChevronsUpDown,
   LayoutDashboard,
   LifeBuoy,
+  LoaderCircle,
   LogOut,
   MessageSquareText,
   Sparkles,
@@ -121,9 +122,10 @@ export function CandidateSidebarContent({ onNavigate }: { onNavigate?: () => voi
 /**
  * The application the portal is showing, with its employer: one application is simply shown, several get a
  * switcher ("Company — Job Title"). Every page (company, interviews, messages, prep, Ask AI) follows it.
+ * The summary names the application on screen; the menu marks the one chosen, which may still be loading.
  */
 function ApplicationContext({ onNavigate }: { onNavigate?: () => void }) {
-  const { me, applicationId, selectApplication } = useCandidatePortal();
+  const { me, applicationId, selectedId, switching, selectApplication } = useCandidatePortal();
   const pathname = usePathname();
   const router = useRouter();
   const current = me.applications.find((application) => application.id === applicationId);
@@ -156,14 +158,19 @@ function ApplicationContext({ onNavigate }: { onNavigate?: () => void }) {
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={`Viewing ${current.company} — ${current.jobTitle}. Switch application`}
+        aria-busy={switching || undefined}
         className="mb-4 flex w-full items-center gap-2.5 rounded-[8px] bg-ink/[0.04] px-2.5 py-2 text-left ring-1 ring-ink/[0.08] transition-colors hover:bg-ink/[0.07]"
       >
         {summary("Viewing application")}
-        <ChevronsUpDown aria-hidden className="size-4 shrink-0 text-stone" />
+        {switching ? (
+          <LoaderCircle aria-hidden className="size-4 shrink-0 animate-spin text-stone" />
+        ) : (
+          <ChevronsUpDown aria-hidden className="size-4 shrink-0 text-stone" />
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-[280px]">
         <DropdownMenuLabel>Your applications</DropdownMenuLabel>
-        <DropdownMenuRadioGroup value={applicationId ?? ""} onValueChange={choose}>
+        <DropdownMenuRadioGroup value={selectedId ?? ""} onValueChange={choose}>
           {me.applications.map((application) => (
             <DropdownMenuRadioItem key={application.id} value={application.id} className="h-auto items-start py-2">
               <span className="min-w-0">

@@ -58,7 +58,7 @@ Pages: `/login`, `/signup` (candidates), `/forgot-password`, `/reset-password`, 
 - `frontend/.env.local`: `NEXT_PUBLIC_SUPABASE_URL` (the same URL) and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (`sb_publishable_...`). Never put a secret or service role key in a `NEXT_PUBLIC_` variable.
 - In the dashboard, under Authentication > URL Configuration, set the Site URL to `http://localhost:3000` and add `http://localhost:3000/**` to the Redirect URLs, so confirmation and reset links can return to `/auth/confirm` and invitations to `/auth/callback`. Keep **Confirm email** on (the default).
 
-**Demo accounts.** The demo data has Alex Chen (recruiter), Sophia Martinez (candidate, one application at Encord) and Rosa Navarro (candidate, applications at Encord and at Nova AI, a fictional second employer, so the portal shows its application switcher) but no sign-ins. To give each one:
+**Demo accounts.** The demo data has Alex Chen (recruiter), Sophia Martinez (candidate, one application at Encord) and Rosa Navarro (candidate, applications at three companies: Encord, and the fictional Nova AI and Harbor Robotics, so the portal shows its application selector) but no sign-ins. To give each one:
 
 1. In the Supabase dashboard, open Authentication > Users > Add user > Create new user. Enter `alex.chen@encord.example` and a password of your choice, and tick **Auto Confirm User**. Do the same for `sophia.martinez@example.com` and `rosa.navarro@example.com`. Keep the passwords out of git.
 2. Link each account to its person (from `backend/`):
@@ -66,7 +66,7 @@ Pages: `/login`, `/signup` (candidates), `/forgot-password`, `/reset-password`, 
    ```bash
    python -m app.db.accounts link alex.chen@encord.example      # Alex Chen, recruiter
    python -m app.db.accounts link sophia.martinez@example.com   # Sophia Martinez, candidate
-   python -m app.db.accounts link rosa.navarro@example.com      # Rosa Navarro, candidate at two companies
+   python -m app.db.accounts link rosa.navarro@example.com      # Rosa Navarro, candidate at three companies
    python -m app.db.accounts list                               # who can sign in
    ```
 
@@ -183,7 +183,7 @@ An update is any message the candidate received from the hiring team. Archived a
 
 ## Candidate portal and preparation
 
-The portal home answers four questions from the portal's candidate-safe record: **Where am I** (the plain status), **What happens next**, **Do I need to do anything** (confirm an interview, read new messages, review an offer, or nothing) and **How should I prepare**, with the last update from the hiring team. Candidate responses are built in `backend/app/services/candidate_visibility.py`, which never returns internal notes, interviewer feedback, scores, rejection reasons or the hiring team's internal stage names.
+The portal home opens on **My applications**: one card per application (the employer's logo and name, the role and the candidate-safe stage), in a row that scrolls sideways, with arrows on wider screens, touch on phones and a search by company or role. The chosen card is the application the whole portal shows (dashboard, applications, interviews, messages, company, Ask AI and preparation), read through application → job → company; the sidebar's switcher and opening another application's interview change it too, and it's remembered while the candidate moves around. Below the cards, the home answers four questions about that application from the portal's candidate-safe record: **Where am I** (the plain status), **What happens next**, **Do I need to do anything** (confirm an interview, read new messages, review an offer, or nothing) and **How should I prepare**, with the last update from the hiring team. Candidate responses are built in `backend/app/services/candidate_visibility.py`, which never returns internal notes, interviewer feedback, scores, rejection reasons or the hiring team's internal stage names.
 
 Preparation (`/candidate/prep`) opens once the candidate is invited to interview and draws on the job posting, the profile that application's employer approved (the `companies` table, read through application → job → company; `services/company_profile.py`), the interview being prepared for (`?interview=` makes its application the portal's context) and the candidate's own résumé (its text is read from PDF and DOCX at upload): what to expect, role focus, topics, questions to ask, practice questions and **From your résumé**, the experiences worth having a story ready about. The **mock interview** asks one practice question at a time and gives a few coaching points on the typed answer; nothing is stored or shared, and it never scores. Ask AI answers from the same candidate-safe record and nothing else. How candidates use the portal isn't recorded.
 

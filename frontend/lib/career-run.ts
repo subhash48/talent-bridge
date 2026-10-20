@@ -93,7 +93,7 @@ export class CareerRun {
   private scale = 1;
   private width = 800;
   private font = "sans-serif";
-  private colors = { ink: "#e8e4d3", charcoal: "rgb(232 228 211 / 0.85)", stone: "rgb(232 228 211 / 0.7)" };
+  private colors = { ink: "#1c1b18", charcoal: "#31302c", stone: "#58564f" };
 
   private frame = 0;
   private last = 0;

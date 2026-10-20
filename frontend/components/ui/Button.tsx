@@ -3,11 +3,11 @@ import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
 const VARIANTS = {
-  primary: "bg-ink text-canvas hover:bg-ink-bright",
+  primary: "bg-brand text-on-brand hover:bg-brand-hover",
   secondary: "border border-border bg-ink/[0.04] text-ink hover:border-border-strong hover:bg-ink/[0.07]",
   ghost: "text-stone hover:bg-muted hover:text-ink",
-  ai: "border border-ink/20 bg-ink/[0.08] text-ink hover:border-ink/35 hover:bg-ink/[0.13]",
-  danger: "border border-danger/25 bg-danger/12 text-danger hover:bg-danger/20",
+  ai: "border border-brand-ink/30 bg-brand-soft text-brand-ink hover:border-brand-ink/45 hover:bg-brand/35",
+  danger: "border border-danger/25 bg-danger/[0.08] text-danger hover:bg-danger/[0.14]",
 } as const;
 
 const SIZES = {

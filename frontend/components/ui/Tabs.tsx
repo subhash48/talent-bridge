@@ -24,14 +24,14 @@ export function TabsList({ tabs, value, label, className }: TabsListProps) {
         <TabsPrimitive.Trigger
           key={tab.value}
           value={tab.value}
-          className="relative shrink-0 rounded-sm pt-1 pb-2.5 text-sm text-stone transition-colors duration-200 outline-none hover:text-charcoal focus-visible:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 data-[state=active]:text-ink"
+          className="relative shrink-0 rounded-sm pt-1 pb-2.5 text-sm text-stone transition-colors duration-200 outline-none hover:text-ink focus-visible:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 data-[state=active]:text-ink"
         >
           {tab.label}
           {value === tab.value && (
             <motion.span
               layoutId={indicatorId}
               aria-hidden
-              className="absolute inset-x-0 -bottom-px h-[2px] rounded-full bg-ai"
+              className="absolute inset-x-0 -bottom-px h-[2px] rounded-full bg-brand"
               transition={{ type: "spring", stiffness: 520, damping: 42 }}
             />
           )}

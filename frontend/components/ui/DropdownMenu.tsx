@@ -15,10 +15,10 @@ export const DropdownMenuSub = Menu.Sub;
 export const DropdownMenuRadioGroup = Menu.RadioGroup;
 
 const surface =
-  "z-50 min-w-[190px] overflow-hidden rounded-[10px] border border-border bg-overlay/95 p-1 text-[13px] text-charcoal shadow-[0_24px_48px_-12px_rgb(0_0_0/0.8)] backdrop-blur-xl data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in";
+  "z-50 min-w-[190px] overflow-hidden rounded-[10px] border border-border bg-overlay p-1 text-[13px] text-charcoal shadow-raised data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in";
 
 const item =
-  "relative flex h-8 cursor-default items-center gap-2 rounded-[6px] px-2 outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-ink/[0.07] data-[highlighted]:text-ink [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-stone";
+  "relative flex h-8 cursor-default items-center gap-2 rounded-[6px] px-2 outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-ink/[0.05] data-[highlighted]:text-ink [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-stone";
 
 export function DropdownMenuContent({ className, sideOffset = 6, align = "end", ...props }: ComponentProps<typeof Menu.Content>) {
   return (
@@ -50,7 +50,7 @@ export function DropdownMenuCheckboxItem({ className, children, ...props }: Comp
     <Menu.CheckboxItem className={cn(item, "pr-8", className)} {...props}>
       {children}
       <Menu.ItemIndicator className="absolute right-2.5">
-        <Check className="text-ink!" />
+        <Check className="text-brand-ink!" />
       </Menu.ItemIndicator>
     </Menu.CheckboxItem>
   );
@@ -61,7 +61,7 @@ export function DropdownMenuRadioItem({ className, children, ...props }: Compone
     <Menu.RadioItem className={cn(item, "pr-8", className)} {...props}>
       {children}
       <Menu.ItemIndicator className="absolute right-2.5">
-        <Check className="text-ink!" />
+        <Check className="text-brand-ink!" />
       </Menu.ItemIndicator>
     </Menu.RadioItem>
   );
@@ -69,7 +69,7 @@ export function DropdownMenuRadioItem({ className, children, ...props }: Compone
 
 export function DropdownMenuSubTrigger({ className, children, ...props }: ComponentProps<typeof Menu.SubTrigger>) {
   return (
-    <Menu.SubTrigger className={cn(item, "data-[state=open]:bg-ink/[0.07]", className)} {...props}>
+    <Menu.SubTrigger className={cn(item, "data-[state=open]:bg-ink/[0.05]", className)} {...props}>
       {children}
       <ChevronRight className="ml-auto" />
     </Menu.SubTrigger>

@@ -28,7 +28,7 @@ export function TalentBridgeMark({ className, ...props }: ComponentProps<"svg">)
 export function TalentBridgeLogo({ className }: { className?: string }) {
   return (
     <span className={cn("inline-flex items-center gap-2 text-ink", className)}>
-      <TalentBridgeMark className="h-5 w-auto" />
+      <TalentBridgeMark className="h-5 w-auto text-brand-ink" />
       <span className="text-[15px] font-semibold tracking-[-0.01em]">TalentBridge</span>
     </span>
   );

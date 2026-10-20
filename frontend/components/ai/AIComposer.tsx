@@ -23,7 +23,7 @@ type AIComposerProps = {
 
 /** A suggested prompt. Also used for shortcuts into Ask AI, so they look the same everywhere. */
 export const suggestionChipStyles =
-  "inline-flex h-7 items-center rounded-full border border-border bg-ink/[0.05] px-3 text-xs text-charcoal transition-[background-color,border-color,color] duration-200 hover:border-ink/35 hover:bg-ink/10 hover:text-ink disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex h-7 items-center rounded-full border border-border bg-ink/[0.05] px-3 text-xs text-charcoal transition-[background-color,border-color,color] duration-200 hover:border-brand-ink/35 hover:bg-brand-soft hover:text-brand-ink disabled:pointer-events-none disabled:opacity-50";
 
 /** Prompt box with quick actions. Enter sends, Shift+Enter adds a line, quick actions send at once. */
 export function AIComposer({ id, label, placeholder, suggestions, pending, onSend, onStop, textareaRef, extraActions, className }: AIComposerProps) {
@@ -87,8 +87,8 @@ export function AIComposer({ id, label, placeholder, suggestions, pending, onSen
           disabled={pending ? !onStop : !value.trim()}
           aria-label={pending ? (onStop ? "Stop generating" : "Working…") : "Send"}
           className={cn(
-            "flex size-9 shrink-0 items-center justify-center rounded-[8px] border border-ink/20 bg-ink/[0.08] text-ink transition-[border-color,background-color,opacity,transform] duration-200 hover:border-ink/35 hover:bg-ink/[0.13] active:scale-95 disabled:opacity-40",
-            pending && "border-ink/40",
+            "flex size-9 shrink-0 items-center justify-center rounded-[8px] border border-brand bg-brand text-on-brand transition-[border-color,background-color,opacity,transform] duration-200 hover:border-brand-hover hover:bg-brand-hover active:scale-95 disabled:opacity-40",
+            pending && "border-brand-hover bg-brand-hover",
           )}
         >
           {pending ? (

@@ -21,12 +21,12 @@ export function Modal({ open, onClose, title, description, children, className }
   return (
     <Dialog.Root open={open} onOpenChange={(next) => !next && onClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-ink/30 backdrop-blur-[2px] data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in" />
         <Dialog.Content
           // Without a description, opt out explicitly so Radix doesn't point at a missing element.
           {...(description ? {} : { "aria-describedby": undefined })}
           className={cn(
-            "fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[14px] border border-border bg-overlay p-5 shadow-[0_40px_80px_-20px_rgb(0_0_0/0.8)] focus:outline-none data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in",
+            "fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[14px] border border-border bg-overlay p-5 shadow-raised focus:outline-none data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in",
             className,
           )}
         >

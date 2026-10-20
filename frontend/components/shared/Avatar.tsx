@@ -12,12 +12,12 @@ type AvatarProps = {
   className?: string;
 };
 
-// Ivory at a few strengths: initials avatars stay distinguishable without adding colour to the table.
+// Two neutral and two soft brand tints: initials avatars stay distinguishable without adding new colours.
 const TINTS = [
-  "from-ink/30 to-ink/[0.08]",
-  "from-ink/[0.22] to-ink/[0.04]",
-  "from-ink/[0.16] to-ink/[0.06]",
-  "from-ink/[0.26] to-ink/[0.03]",
+  "bg-ink/[0.08] text-ink",
+  "bg-brand-ink/40 text-brand-ink",
+  "bg-ink/[0.12] text-ink",
+  "bg-brand/40 text-brand-ink",
 ];
 
 function tintFor(name: string) {
@@ -36,7 +36,7 @@ export function Avatar({ name, src, size = 32, online, className }: AvatarProps)
         <span
           aria-hidden
           className={cn(
-            "flex size-full items-center justify-center rounded-full bg-linear-to-br font-medium tracking-tight text-ink ring-1 ring-ink/10 ring-inset",
+            "flex size-full items-center justify-center rounded-full font-medium tracking-tight ring-1 ring-ink/10 ring-inset",
             tintFor(name),
           )}
           style={{ fontSize: Math.max(11, Math.round(size * 0.36)) }}

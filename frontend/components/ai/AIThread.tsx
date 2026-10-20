@@ -38,7 +38,7 @@ export function AIThread({ messages, className }: { messages: AIMessage[]; class
         message.role === "user" ? (
           <p
             key={message.id}
-            className="max-w-[85%] animate-rise self-end rounded-[12px] rounded-br-[4px] bg-ink/[0.1] px-3.5 py-2 text-sm text-ink"
+            className="max-w-[85%] animate-rise self-end rounded-[12px] rounded-br-[4px] bg-brand-soft px-3.5 py-2 text-sm text-ink ring-1 ring-brand-ink/15"
           >
             {message.content}
           </p>
@@ -65,8 +65,8 @@ function AssistantMessage({ message }: { message: AIMessage }) {
 
   return (
     <div className="flex animate-rise gap-2.5">
-      <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-ink/[0.05] ring-1 ring-ink/10">
-        <Sparkles aria-hidden className="size-3.5 text-ink" />
+      <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-brand-soft ring-1 ring-brand-ink/20">
+        <Sparkles aria-hidden className="size-3.5 text-brand-ink" />
       </span>
       <div className="min-w-0 flex-1 text-sm leading-relaxed text-charcoal">
         {message.status === "thinking" ? (
@@ -76,7 +76,7 @@ function AssistantMessage({ message }: { message: AIMessage }) {
               <span
                 key={delay}
                 aria-hidden
-                className="size-1.5 animate-pulse rounded-full bg-ink/70"
+                className="size-1.5 animate-pulse rounded-full bg-brand-ink/60"
                 style={{ animationDelay: `${delay}ms` }}
               />
             ))}

@@ -85,20 +85,22 @@ function MessagesView({ applicationId, initialThread }: { applicationId: string 
 
   const recruiter = thread.recruiter;
   const recruiterFirst = recruiter ? firstName(recruiter.name) : "the hiring team";
+  // The selected application's employer: this thread is about that application only.
+  const company = me.company?.name ?? "Hiring";
 
   return (
     <>
-      <CandidateHeader title="Messages" subtitle={`Your conversation with ${recruiter ? recruiter.name : `the ${me.company} hiring team`}`} />
+      <CandidateHeader title="Messages" subtitle={`Your conversation with ${recruiter ? recruiter.name : `the ${company} hiring team`}${me.job ? ` about your ${me.job.title} application` : ""}`} />
       <section
         aria-label="Conversation"
         className="glass flex min-h-[460px] flex-col overflow-hidden rounded-[16px] border border-border lg:h-[calc(100dvh-12.5rem)]"
       >
         <header className="flex items-center gap-3 border-b border-border px-4 py-3 sm:px-5">
-          <Avatar name={recruiter?.name ?? me.company} size={32} />
+          <Avatar name={recruiter?.name ?? company} size={32} />
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-[15px] leading-5 font-medium text-ink">{recruiter?.name ?? `${me.company} hiring team`}</h2>
+            <h2 className="truncate text-[15px] leading-5 font-medium text-ink">{recruiter?.name ?? `${company} hiring team`}</h2>
             <p className="truncate text-[13px] text-stone">
-              {recruiter ? `${recruiter.title} · ${me.company}` : "Recruiting"}
+              {recruiter ? `${recruiter.title} · ${company}` : "Recruiting"}
               {me.job && ` · ${me.job.title}`}
             </p>
           </div>
@@ -159,8 +161,8 @@ function MessageList({ messages, firstUnreadId, recruiterFirst }: { messages: Ca
               </p>
             )}
             {message.id === firstUnreadId && (
-              <p className="my-3 flex items-center gap-3 text-xs font-medium text-ink">
-                <span aria-hidden className="h-px flex-1 bg-ink/20" /> New <span aria-hidden className="h-px flex-1 bg-ink/20" />
+              <p className="my-3 flex items-center gap-3 text-xs font-medium text-brand-ink">
+                <span aria-hidden className="h-px flex-1 bg-brand-ink/40" /> New <span aria-hidden className="h-px flex-1 bg-brand-ink/40" />
               </p>
             )}
             <MessageItem message={message} grouped={grouped} receipt={message.id === lastOwnId} />
@@ -213,7 +215,7 @@ function Composer({ applicationId, recruiterFirst, onSent }: ComposerProps) {
             onClick={() => setKind(option.value)}
             className={cn(
               "h-7 rounded-full px-3 text-xs font-medium ring-1 transition-colors",
-              kind === option.value ? "bg-ink/[0.1] text-ink ring-ink/20" : "text-stone ring-ink/[0.08] hover:text-ink",
+              kind === option.value ? "bg-brand-soft text-brand-ink ring-brand-ink/35" : "text-stone ring-ink/[0.12] hover:text-ink",
             )}
           >
             {option.label}
@@ -237,7 +239,7 @@ function Composer({ applicationId, recruiterFirst, onSent }: ComposerProps) {
         }}
         placeholder={`Write to ${recruiterFirst}…`}
         aria-describedby={`${composerId}-hint`}
-        className="field-sizing-content max-h-48 min-h-[56px] bg-black/20"
+        className="field-sizing-content max-h-48 min-h-[56px] bg-overlay"
       />
       <div className="mt-3 flex items-center gap-3">
         <p id={`${composerId}-hint`} className="hidden flex-1 text-xs text-faint sm:block">

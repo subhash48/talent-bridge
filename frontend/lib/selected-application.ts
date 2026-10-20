@@ -6,9 +6,11 @@ export const APPLICATION_COOKIE = "tb_application";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export function isApplicationId(value: string | undefined | null): value is string {
+export function isUuid(value: string | undefined | null): value is string {
   return Boolean(value && UUID.test(value));
 }
+
+export const isApplicationId = isUuid;
 
 /** Remember the selection (browser only). */
 export function rememberApplication(applicationId: string): void {

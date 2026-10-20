@@ -14,7 +14,14 @@ import { getMockFeedback } from "@/services/portal";
  * A text mock interview: one practice question at a time, an answer typed in, and coaching on it.
  * Nothing is stored and the hiring team never sees it; the feedback never scores the answer.
  */
-export function MockInterview({ questions, applicationId }: { questions: string[]; applicationId: string | null }) {
+type MockInterviewProps = {
+  questions: string[];
+  /** The application being prepared for, and the interview when one was opened. */
+  applicationId: string | null;
+  interviewId?: string | null;
+};
+
+export function MockInterview({ questions, applicationId, interviewId }: MockInterviewProps) {
   const id = useId();
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState("");
@@ -29,7 +36,7 @@ export function MockInterview({ questions, applicationId }: { questions: string[
     setPending(true);
     setProblem(undefined);
     try {
-      setFeedback(await getMockFeedback(question, answer.trim(), applicationId));
+      setFeedback(await getMockFeedback(question, answer.trim(), { applicationId, interviewId }));
     } catch (caught) {
       setProblem(errorMessage(caught, "Feedback isn't available right now. Try again in a moment."));
     } finally {

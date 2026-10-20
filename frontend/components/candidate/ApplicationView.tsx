@@ -150,7 +150,7 @@ export function ApplicationView({ applicationId, initialDetail }: ApplicationVie
                     </p>
                   </div>
                 </div>
-                <a href={`mailto:${recruiter.email}`} className="mt-3 inline-flex items-center gap-2 text-sm text-charcoal hover:text-ink">
+                <a href={`mailto:${recruiter.email}`} className="mt-3 inline-flex items-center gap-2 text-sm text-brand-ink hover:text-ink">
                   <Mail aria-hidden className="size-4 text-stone" /> {recruiter.email}
                 </a>
                 <Link href="/candidate/messages" className={buttonStyles({ variant: "secondary", size: "sm", className: "mt-3 w-full" })}>
@@ -165,14 +165,14 @@ export function ApplicationView({ applicationId, initialDetail }: ApplicationVie
   );
 }
 
-export function NoApplication({ company }: { company: string }) {
+export function NoApplication() {
   return (
     <>
       <CandidateHeader title="My Application" />
       <EmptyState
         icon={BriefcaseBusiness}
         title="No application yet"
-        description={`When you apply for a role at ${company}, its progress, interviews and messages appear here.`}
+        description="When you apply for a role, its progress, interviews and messages appear here."
       />
     </>
   );

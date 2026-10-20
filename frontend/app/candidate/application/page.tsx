@@ -12,5 +12,5 @@ export const metadata: Metadata = { title: "My Application" };
 export default async function MyApplicationPage() {
   const me = await getCandidateMe(await selectedApplicationId()).catch(() => undefined);
   if (me?.application) redirect(`/candidate/application/${me.application.id}`);
-  return <NoApplication company={me?.company ?? "the company"} />;
+  return <NoApplication />;
 }

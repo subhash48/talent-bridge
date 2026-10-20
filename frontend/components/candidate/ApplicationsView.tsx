@@ -43,7 +43,7 @@ export function ApplicationsView() {
         <EmptyState
           icon={BriefcaseBusiness}
           title="No application yet"
-          description={`When you apply for a role at ${me.company}, it appears here.`}
+          description="When you apply for a role, it appears here."
         />
       </>
     );
@@ -51,7 +51,7 @@ export function ApplicationsView() {
 
   return (
     <>
-      <CandidateHeader title="Applications" subtitle={`Every role you’ve applied for at ${me.company}.`} />
+      <CandidateHeader title="Applications" subtitle="Every role you’ve applied for, at every company." />
       <div className="flex flex-col gap-4">
         {GROUPS.map(({ group, title, empty }) => {
           const items = me.applications.filter((application) => groupOf(application) === group);
@@ -88,7 +88,7 @@ function ApplicationRow({ application, selected }: { application: CandidateAppli
         aria-current={selected ? "true" : undefined}
         className={cn(
           "flex items-center gap-3 rounded-[10px] px-3 py-2.5 ring-1 transition-colors",
-          selected ? "bg-ink/[0.06] ring-ink/10" : "ring-transparent hover:bg-ink/[0.04]",
+          selected ? "bg-brand-soft ring-brand-ink/20" : "ring-transparent hover:bg-ink/[0.04]",
         )}
       >
         <span className="min-w-0 flex-1">
@@ -103,7 +103,7 @@ function ApplicationRow({ application, selected }: { application: CandidateAppli
           )}
         </span>
         {application.unreadMessages > 0 && (
-          <span className="rounded-full bg-ink/[0.1] px-2 py-0.5 text-[11px] font-medium text-ink">
+          <span className="rounded-full bg-brand px-2 py-0.5 text-[11px] font-medium text-on-brand">
             {application.unreadMessages} new
           </span>
         )}

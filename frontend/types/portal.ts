@@ -63,6 +63,8 @@ export type CandidateApplication = {
 
 export type CandidateInterview = {
   id: string;
+  /** The application it belongs to; opening it makes that application the portal's context. */
+  applicationId: string;
   title: string;
   format: InterviewFormat;
   scheduledAt: string;
@@ -101,6 +103,7 @@ export type CandidateApplicationSummary = {
   id: string;
   jobTitle: string;
   company: string;
+  companyLogoUrl: string | null;
   department: string | null;
   location: string | null;
   stage: ApiStage;
@@ -116,9 +119,13 @@ export type CandidateApplicationSummary = {
 
 export type CompanyItem = { title: string; description: string };
 
-/** What the company shares with candidates. The candidate assistant answers from the same profile. */
-export type CandidateCompany = {
-  name: string;
+/** The employer behind one of the candidate's applications: application -> job -> company. */
+export type PortalEmployer = { id: string; name: string; logoUrl: string | null; website: string | null };
+
+/** What one application's employer shares with candidates. The assistant answers from the same profile. */
+export type CandidateCompany = PortalEmployer & {
+  /** The application it was read through. */
+  applicationId: string;
   overview: string;
   mission: string;
   /** title is the figure ("300+"), description what it counts. */
@@ -137,7 +144,8 @@ export type CandidateCompany = {
 };
 
 export type CandidateMeResponse = {
-  company: string;
+  /** The selected application's employer. Null without an application: the portal is TalentBridge's. */
+  company: PortalEmployer | null;
   candidate: CandidateProfile;
   /** Every application, active first. */
   applications: CandidateApplicationSummary[];
@@ -169,7 +177,10 @@ export type CandidateMessageThread = {
 };
 
 export type CandidatePrep = {
+  /** The interview asked for, else the application's next one. */
   interview: CandidateInterview | null;
+  /** The application it was prepared for. */
+  applicationId: string;
   role: string;
   company: string;
   interviewFormat: string;

@@ -80,12 +80,12 @@ export function FourQuestions({ me, application }: { me: CandidateMeResponse; ap
             question="How should I prepare?"
             control={
               preparing ? (
-                <Link href="/candidate/prep" className={buttonStyles({ variant: "ai", size: "sm" })}>
+                <Link href={interview ? `/candidate/prep?interview=${interview.id}` : "/candidate/prep"} className={buttonStyles({ variant: "ai", size: "sm" })}>
                   <BookOpenCheck /> Prepare
                 </Link>
               ) : (
                 <Link href="/candidate/company" className={buttonStyles({ variant: "secondary", size: "sm" })}>
-                  About {me.company}
+                  About {me.company?.name ?? "the company"}
                 </Link>
               )
             }

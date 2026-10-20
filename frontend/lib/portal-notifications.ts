@@ -46,7 +46,7 @@ export function portalNotifications(me: CandidateMeResponse, now = Date.now()): 
       kind: "interview",
       title: `${interview.title}: ${formatSchedule(interview.scheduledAt)}`,
       description: interview.confirmedAt ? "Confirmed. Your prep is ready." : undefined,
-      href: "/candidate/prep",
+      href: `/candidate/prep?interview=${interview.id}`,
       attention: false,
     });
   }

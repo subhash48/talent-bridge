@@ -14,7 +14,7 @@ import {
   Target,
   type LucideIcon,
 } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 
 import { AskAssistant } from "@/components/candidate/AskAssistant";
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
@@ -54,17 +54,39 @@ const SECTIONS: { field: PrepList; title: string; icon: LucideIcon; hint?: strin
   { field: "practiceQuestions", title: "Practice questions", icon: Lightbulb },
 ];
 
-/** Prep for the application the portal is showing. */
-export function InterviewPrep() {
+/**
+ * Prep for the application the portal is showing, or for one interview (/candidate/prep?interview=...).
+ * An interview decides the application: opening one makes its application the portal's context.
+ */
+export function InterviewPrep({ interviewId }: { interviewId?: string }) {
   const { applicationId } = useCandidatePortal();
-  return <PrepView key={applicationId ?? "none"} applicationId={applicationId} />;
+  // Keyed by the interview when there is one, so the selection following it doesn't restart the prep.
+  return (
+    <PrepView key={interviewId ? `interview:${interviewId}` : (applicationId ?? "none")} applicationId={applicationId} interviewId={interviewId ?? null} />
+  );
 }
 
-function PrepView({ applicationId }: { applicationId: string | null }) {
-  const loadPrep = useCallback(() => getCandidatePrep(applicationId), [applicationId]);
+function PrepView({ applicationId, interviewId }: { applicationId: string | null; interviewId: string | null }) {
+  const { selectApplication } = useCandidatePortal();
+  // With an interview, the API ignores the selected application, so the request doesn't depend on it.
+  const requestedApplication = interviewId ? null : applicationId;
+  const loadPrep = useCallback(
+    () => getCandidatePrep(requestedApplication, { interviewId }),
+    [requestedApplication, interviewId],
+  );
   const { data: prep, error, loading, refresh, setData } = useLiveQuery(loadPrep, { intervalMs: PREP_REFRESH_MS });
 
-  const subtitle = prep?.interview ? `Get ready for your ${prep.interview.title}` : prep ? `Stay ready for the ${prep.role} role` : undefined;
+  // The whole portal follows the application this prep is for (the opened interview's).
+  const preparedFor = prep?.applicationId;
+  useEffect(() => {
+    if (preparedFor) selectApplication(preparedFor);
+  }, [preparedFor, selectApplication]);
+
+  const subtitle = prep?.interview
+    ? `${prep.interview.title} · ${prep.role} at ${prep.company}`
+    : prep
+      ? `Stay ready for the ${prep.role} role at ${prep.company}`
+      : undefined;
 
   return (
     <>
@@ -72,7 +94,8 @@ function PrepView({ applicationId }: { applicationId: string | null }) {
       <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="flex flex-col gap-4">
           {loading && <PrepSkeleton />}
-          {!prep && error && (
+          {!prep && error && interviewId && <LoadError title="This interview couldn't be opened." message={error} onRetry={() => void refresh()} />}
+          {!prep && error && !interviewId && (
             <LoadError title="AI preparation is temporarily unavailable." message="Please try again in a moment." onRetry={() => void refresh()} />
           )}
           {prep && (
@@ -86,7 +109,7 @@ function PrepView({ applicationId }: { applicationId: string | null }) {
                   <PrepSection key={section.field} title={section.title} icon={section.icon} hint={section.hint} items={prep[section.field]} />
                 ))}
               </div>
-              <MockInterview questions={prep.practiceQuestions} applicationId={applicationId} />
+              <MockInterview questions={prep.practiceQuestions} applicationId={prep.applicationId} interviewId={interviewId} />
               <p className="flex items-start gap-2 text-xs leading-relaxed text-faint">
                 <ShieldCheck aria-hidden className="mt-px size-3.5 shrink-0" />
                 Prepared by AI from your application, your résumé and the job posting. It never sees the hiring team’s internal notes or feedback.
@@ -94,14 +117,14 @@ function PrepView({ applicationId }: { applicationId: string | null }) {
             </>
           )}
         </div>
-        <AskAssistant className="xl:sticky xl:top-6" />
+        {/* A conversation is about one application: a new one when the application changes. */}
+        <AskAssistant key={applicationId ?? "none"} className="xl:sticky xl:top-6" />
       </div>
     </>
   );
 }
 
 function InterviewSummary({ prep, onConfirmed }: { prep: CandidatePrep; onConfirmed: (interview: CandidateInterview) => void }) {
-  const { me } = useCandidatePortal();
   const { confirm, pendingId } = useConfirmInterview(onConfirmed);
   const interview = prep.interview;
 
@@ -118,7 +141,7 @@ function InterviewSummary({ prep, onConfirmed }: { prep: CandidatePrep; onConfir
   return (
     <Card className="p-5 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs font-medium text-stone">Upcoming interview</p>
+        <p className="text-xs font-medium text-stone">{interview.upcoming ? "Upcoming interview" : "Interview"}</p>
         <InterviewStatus interview={interview} />
       </div>
       <h2 className="mt-2 text-xl font-semibold tracking-tight text-ink sm:text-2xl">{interview.title}</h2>
@@ -155,7 +178,7 @@ function InterviewSummary({ prep, onConfirmed }: { prep: CandidatePrep; onConfir
             Confirm interview
           </Button>
         )}
-        <Button variant="secondary" size="sm" onClick={() => downloadInterviewIcs(interview, me.company)}>
+        <Button variant="secondary" size="sm" onClick={() => downloadInterviewIcs(interview, prep.company)}>
           <CalendarPlus /> Add to calendar
         </Button>
       </div>

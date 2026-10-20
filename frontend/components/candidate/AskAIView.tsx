@@ -8,7 +8,6 @@ import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvid
 import { CandidateHeader } from "@/components/candidate/CandidateHeader";
 import { authLinkStyles } from "@/components/auth/AuthCard";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { buttonStyles } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ASK_AI_PROMPTS } from "@/lib/ask-ai";
 
@@ -23,26 +22,24 @@ const TOPICS: { icon: LucideIcon; title: string; description: string }[] = [
 /** The full candidate assistant, with what it can help with alongside. */
 export function AskAIView() {
   const { me, applicationId } = useCandidatePortal();
-  const subtitle = `Ask about ${me.company}, the role, culture, benefits, the interview process or your application.`;
+  const company = me.company?.name;
+  const job = me.job?.title;
 
-  // The assistant works from an application; without one, the Company page has what candidates can read.
-  if (!applicationId) {
+  // The assistant works from one application: its company, its role and its interviews.
+  if (!applicationId || !company) {
     return (
       <>
-        <CandidateHeader title="Ask AI" subtitle={subtitle} />
+        <CandidateHeader title="Ask AI" subtitle="Ask about a company, its role, culture, benefits, the interview process or your application." />
         <EmptyState
           icon={Sparkles}
           title="Ask AI opens once you have an application"
-          description={`In the meantime, the Company page has what ${me.company} shares with candidates.`}
-          action={
-            <Link href="/candidate/company" className={buttonStyles({ variant: "secondary" })}>
-              About {me.company}
-            </Link>
-          }
+          description="It answers about the company and role you applied for, from what that company shares with candidates."
         />
       </>
     );
   }
+
+  const subtitle = `About your ${job ? `${job} application at ` : "application at "}${company}: the company, the role, culture, benefits, the interview process or where things stand.`;
 
   return (
     <>
@@ -51,7 +48,7 @@ export function AskAIView() {
         {/* A conversation is about one application: switching applications starts a new one. */}
         <AskAssistant
           key={applicationId}
-          description={`Answers from your application and what ${me.company} shares with candidates`}
+          description={`Answers from your ${company} application and what ${company} shares with candidates`}
           prompts={ASK_AI_PROMPTS}
           threadClassName="max-h-[60vh] min-h-[160px]"
           askShortcut
@@ -72,7 +69,7 @@ export function AskAIView() {
             ))}
           </ul>
           <p className="mt-4 border-t border-border pt-3.5 text-[13px] text-stone">
-            More about {me.company} is on the{" "}
+            More about {company} is on the{" "}
             <Link href="/candidate/company" className={authLinkStyles}>
               Company
             </Link>{" "}

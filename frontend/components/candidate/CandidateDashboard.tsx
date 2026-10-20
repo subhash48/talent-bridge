@@ -41,7 +41,7 @@ export function CandidateDashboard({ greeting }: { greeting: string }) {
             <CandidateTopActions />
           </div>
         </div>
-        <p className="mt-1 max-w-[62ch] text-sm text-stone">{statusSentence(application, job, me.company)}</p>
+        <p className="mt-1 max-w-[62ch] text-sm text-stone">{statusSentence(application, job, me.company?.name)}</p>
       </section>
 
       {application && job ? (
@@ -51,7 +51,7 @@ export function CandidateDashboard({ greeting }: { greeting: string }) {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <LastUpdateCard me={me} />
             <AskAIEntry
-              description={`Questions about ${me.company}, the role, benefits or your application?`}
+              description={`Questions about ${me.company?.name ?? "the company"}, the role, benefits or your application?`}
               prompts={ASK_AI_PROMPTS.slice(0, 2)}
             />
           </div>
@@ -60,7 +60,7 @@ export function CandidateDashboard({ greeting }: { greeting: string }) {
         <EmptyState
           icon={BriefcaseBusiness}
           title="No application yet"
-          description={`When you apply for a role at ${me.company}, its progress, interviews and messages appear here.`}
+          description="When you apply for a role, its progress, interviews and messages appear here."
         />
       )}
     </div>
@@ -73,8 +73,8 @@ function everyMinute(onChange: () => void) {
 }
 
 /** One short sentence on where the current application stands. */
-function statusSentence(application: CandidateApplication | null, job: PortalJob | null, company: string): string {
-  if (!application || !job) return `When you apply for a role at ${company}, you can follow it here.`;
+function statusSentence(application: CandidateApplication | null, job: PortalJob | null, company?: string): string {
+  if (!application || !job || !company) return "When you apply for a role, you can follow it here.";
   const role = job.title;
   if (application.status === "no_longer_considered") return `Your application for ${role} is no longer under consideration.`;
   if (application.stage === "hired") return `Congratulations, you’ve been hired as ${role}.`;

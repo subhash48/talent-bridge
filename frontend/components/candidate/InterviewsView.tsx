@@ -103,7 +103,7 @@ function InterviewsView({ applicationId, initialInterviews }: InterviewsViewProp
                 <InterviewCard
                   key={interview.id}
                   interview={interview}
-                  company={me.company}
+                  company={me.company?.name ?? ""}
                   onConfirm={(item) => void confirm(item)}
                   confirming={pendingId === interview.id}
                 />

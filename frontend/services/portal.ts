@@ -9,6 +9,7 @@ import type {
   ApiPortalApplicationSummary,
   ApiPortalCandidate,
   ApiPortalCompany,
+  ApiPortalEmployer,
   ApiPortalInterview,
   ApiPortalJob,
   ApiPortalMessage,
@@ -27,6 +28,7 @@ import type {
   CandidatePrep,
   CandidateProfile,
   MessageKind,
+  PortalEmployer,
   PortalJob,
   ProfileUpdateInput,
 } from "@/types/portal";
@@ -35,8 +37,9 @@ import type {
 // server resolves who is signed in from their access token, and every response is a candidate-safe
 // projection of the records the recruiter workspace uses.
 //
-// A candidate can have several applications. Calls about one take its id (the selected application);
-// the API checks it is the candidate's own, and without one uses their latest active application.
+// A candidate can have several applications, possibly at different companies. Calls about one take
+// its id (the selected application); the API checks it is the candidate's own, and without one uses their
+// latest active application. Everything about an employer comes through that application.
 
 /** "?application_id=..." when an application is given, else "". */
 function forApplication(applicationId?: string | null, extra?: Record<string, string>): string {
@@ -50,7 +53,7 @@ function forApplication(applicationId?: string | null, extra?: Record<string, st
 export async function getCandidateMe(applicationId?: string | null): Promise<CandidateMeResponse> {
   const me = await apiFetch<ApiCandidateMe>(`/candidate/me${forApplication(applicationId)}`);
   return {
-    company: me.company,
+    company: me.company && fromEmployer(me.company),
     candidate: fromCandidate(me.candidate),
     applications: me.applications.map(fromSummary),
     application: me.application && fromApplication(me.application),
@@ -119,11 +122,13 @@ export async function updateCandidateProfile(input: ProfileUpdateInput): Promise
   return fromCandidate(profile);
 }
 
-/** GET /candidate/company: the company-approved profile the Company page shows and the assistant answers from. */
-export async function getCandidateCompany(): Promise<CandidateCompany> {
-  const company = await apiFetch<ApiPortalCompany>("/candidate/company");
+/** GET /candidate/company: the profile one application's employer approved, which the Company page shows
+ * and the assistant answers from for that application. */
+export async function getCandidateCompany(applicationId?: string | null): Promise<CandidateCompany> {
+  const company = await apiFetch<ApiPortalCompany>(`/candidate/company${forApplication(applicationId)}`);
   return {
-    name: company.name,
+    ...fromEmployer(company),
+    applicationId: company.application_id,
     overview: company.overview,
     mission: company.mission,
     highlights: company.highlights,
@@ -140,12 +145,20 @@ export async function getCandidateCompany(): Promise<CandidateCompany> {
   };
 }
 
-/** GET /candidate/prep: AI interview prep built from candidate-safe context only. */
-export async function getCandidatePrep(applicationId?: string | null, signal?: AbortSignal): Promise<CandidatePrep> {
-  const query = forApplication(applicationId, { utc_offset_minutes: String(utcOffsetMinutes()) });
-  const prep = await apiFetch<ApiCandidatePrep>(`/candidate/prep${query}`, { signal });
+/**
+ * GET /candidate/prep: AI interview prep built from candidate-safe context only. With an interview, prep is
+ * for that interview and its application (whatever applicationId says); the answer names the application.
+ */
+export async function getCandidatePrep(
+  applicationId?: string | null,
+  { interviewId, signal }: { interviewId?: string | null; signal?: AbortSignal } = {},
+): Promise<CandidatePrep> {
+  const extra: Record<string, string> = { utc_offset_minutes: String(utcOffsetMinutes()) };
+  if (interviewId) extra.interview_id = interviewId;
+  const prep = await apiFetch<ApiCandidatePrep>(`/candidate/prep${forApplication(interviewId ? null : applicationId, extra)}`, { signal });
   return {
     interview: prep.interview && fromInterview(prep.interview),
+    applicationId: prep.application_id,
     role: prep.role,
     company: prep.company,
     interviewFormat: prep.interview_format,
@@ -160,11 +173,16 @@ export async function getCandidatePrep(applicationId?: string | null, signal?: A
   };
 }
 
-/** POST /candidate/prep/mock: coaching on one practice answer. Nothing is stored. */
-export async function getMockFeedback(question: string, answer: string, applicationId?: string | null): Promise<string> {
+/** POST /candidate/prep/mock: coaching on one practice answer, for one application (or one of its
+ * interviews). Nothing is stored. */
+export async function getMockFeedback(
+  question: string,
+  answer: string,
+  { applicationId, interviewId }: { applicationId?: string | null; interviewId?: string | null } = {},
+): Promise<string> {
   const { feedback } = await apiFetch<{ feedback: string; model_name: string }>("/candidate/prep/mock", {
     method: "POST",
-    body: JSON.stringify({ question, answer, application_id: applicationId ?? null }),
+    body: JSON.stringify({ question, answer, application_id: applicationId ?? null, interview_id: interviewId ?? null }),
   });
   return feedback;
 }
@@ -208,11 +226,16 @@ function fromCandidate(candidate: ApiPortalCandidate): CandidateProfile {
   };
 }
 
+function fromEmployer(employer: ApiPortalEmployer): PortalEmployer {
+  return { id: employer.id, name: employer.name, logoUrl: employer.logo_url, website: employer.website };
+}
+
 function fromSummary(summary: ApiPortalApplicationSummary): CandidateApplicationSummary {
   return {
     id: summary.id,
     jobTitle: summary.job_title,
     company: summary.company,
+    companyLogoUrl: summary.company_logo_url,
     department: summary.department,
     location: summary.location,
     stage: summary.stage,
@@ -261,6 +284,7 @@ function fromJob(job: ApiPortalJob): PortalJob {
 function fromInterview(interview: ApiPortalInterview): CandidateInterview {
   return {
     id: interview.id,
+    applicationId: interview.application_id,
     title: interview.title,
     format: interview.interview_type,
     scheduledAt: interview.scheduled_at,

@@ -8,8 +8,8 @@ import { useState, type ReactNode } from "react";
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
 import { CandidateSidebarContent } from "@/components/candidate/CandidateSidebar";
 import { CandidateTopActions } from "@/components/candidate/CandidateTopActions";
-import { EncordLogo } from "@/components/shared/EncordLogo";
 import { NightSky } from "@/components/shared/NightSky";
+import { TalentBridgeLogo } from "@/components/shared/TalentBridgeLogo";
 import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { ToastProvider } from "@/components/ui/Toaster";
@@ -27,13 +27,13 @@ export function CandidateShell({ children }: { children: ReactNode }) {
     <ToastProvider>
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:rounded-[8px] focus:bg-ink focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-canvas"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:rounded-[8px] focus:bg-brand focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-on-brand"
       >
         Skip to content
       </a>
       <div className="relative isolate flex min-h-dvh">
         {/* The sign-in page's sky, fainter and fixed behind the portal. */}
-        <NightSky className="fixed opacity-50" />
+        <NightSky className="fixed opacity-30" />
         <aside className="sticky top-0 hidden h-dvh w-[216px] shrink-0 overflow-y-auto border-r border-border bg-surface/85 lg:block">
           <CandidateSidebarContent />
         </aside>
@@ -54,7 +54,7 @@ export function CandidateShell({ children }: { children: ReactNode }) {
                 <Menu />
               </Button>
               <Link href="/candidate" aria-label="Candidate portal home" className="rounded-md px-1">
-                <EncordLogo />
+                <TalentBridgeLogo />
               </Link>
             </div>
             {!dashboard && <CandidateTopActions />}
@@ -63,7 +63,7 @@ export function CandidateShell({ children }: { children: ReactNode }) {
             <p
               role="status"
               className={cn(
-                "relative mx-4 mb-2 flex items-center gap-2 rounded-[10px] border border-caution/20 bg-caution/10 px-3 py-2 text-[13px] text-caution sm:mx-6 lg:mx-8",
+                "relative mx-4 mb-2 flex items-center gap-2 rounded-[10px] border border-caution/30 bg-caution/10 px-3 py-2 text-[13px] text-caution sm:mx-6 lg:mx-8",
                 dashboard && "lg:mt-3",
               )}
             >

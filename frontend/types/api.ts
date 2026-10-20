@@ -203,6 +203,8 @@ export type ApiPortalApplication = {
 };
 
 export type ApiPortalInterview = ApiInterviewBrief & {
+  /** The application it belongs to. */
+  application_id: string;
   meeting_url: string | null;
   interviewers: string[];
   confirmed_at: string | null;
@@ -228,6 +230,7 @@ export type ApiPortalApplicationSummary = {
   id: string;
   job_title: string;
   company: string;
+  company_logo_url: string | null;
   department: string | null;
   location: string | null;
   stage: ApiStage;
@@ -242,9 +245,13 @@ export type ApiPortalApplicationSummary = {
 
 export type ApiPortalCompanyItem = { title: string; description: string };
 
-/** GET /candidate/company (backend services/company_profile.py). */
-export type ApiPortalCompany = {
-  name: string;
+/** The employer behind one of the candidate's applications (application -> job -> company). */
+export type ApiPortalEmployer = { id: string; name: string; logo_url: string | null; website: string | null };
+
+/** GET /candidate/company?application_id= (backend services/company_profile.py). */
+export type ApiPortalCompany = ApiPortalEmployer & {
+  /** The application it was read through. */
+  application_id: string;
   overview: string;
   mission: string;
   highlights: ApiPortalCompanyItem[];
@@ -261,7 +268,8 @@ export type ApiPortalCompany = {
 };
 
 export type ApiCandidateMe = {
-  company: string;
+  /** The selected application's employer; null without an application. */
+  company: ApiPortalEmployer | null;
   candidate: ApiPortalCandidate;
   applications: ApiPortalApplicationSummary[];
   application: ApiPortalApplication | null;
@@ -284,6 +292,8 @@ export type ApiMessageThread = { recruiter: ApiPortalRecruiter | null; unread: n
 
 export type ApiCandidatePrep = {
   interview: ApiPortalInterview | null;
+  /** The application it was prepared for (an interview decides it). */
+  application_id: string;
   role: string;
   company: string;
   interview_format: string;

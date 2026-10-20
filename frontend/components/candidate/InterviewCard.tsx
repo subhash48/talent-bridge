@@ -88,7 +88,7 @@ export function InterviewCard({ interview, company, onConfirm, confirming }: Int
             <Button variant="secondary" size="sm" onClick={() => downloadInterviewIcs(interview, company)}>
               <CalendarPlus /> Add to calendar
             </Button>
-            <Link href="/candidate/prep" className={buttonStyles({ variant: "ai", size: "sm" })}>
+            <Link href={`/candidate/prep?interview=${interview.id}`} className={buttonStyles({ variant: "ai", size: "sm" })}>
               <BookOpenCheck /> View preparation
             </Link>
           </div>

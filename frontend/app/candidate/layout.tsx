@@ -13,8 +13,8 @@ import { errorMessage, isServerUnavailable } from "@/services/api";
 import { getCandidateMe } from "@/services/portal";
 
 export const metadata: Metadata = {
-  title: { default: "Candidate portal", template: "%s · Encord Candidate Portal" },
-  description: "Follow your application, interviews and messages with the Encord hiring team.",
+  title: { default: "Candidate portal", template: "%s · TalentBridge Candidate Portal" },
+  description: "Follow your applications, interviews and messages with each company's hiring team.",
 };
 
 // The Candidate Portal. It reads the same records as the recruiter workspace through /candidate/*,

@@ -1,11 +1,14 @@
 "use client";
 
-import { Boxes, ExternalLink, Gift, MapPin, Route, UsersRound, type LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import { Boxes, Building2, ExternalLink, Gift, MapPin, Route, UsersRound, type LucideIcon } from "lucide-react";
+import { useCallback, type ReactNode } from "react";
 
 import { AskAIEntry } from "@/components/candidate/AskAIEntry";
+import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
 import { CandidateHeader } from "@/components/candidate/CandidateHeader";
+import { EmployerLogo } from "@/components/candidate/EmployerLogo";
 import { LoadError } from "@/components/candidate/LoadError";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useLiveQuery } from "@/hooks/useLiveQuery";
@@ -16,9 +19,38 @@ import type { CandidateCompany } from "@/types/portal";
 // The profile changes when the hiring team edits it, not while someone is reading.
 const REFRESH_MS = 30 * 60_000;
 
-/** About the company, from the profile it approved (the assistant answers from the same one). */
+/**
+ * About the employer of the application the portal is showing (application -> job -> company), from the
+ * profile it approved; the assistant answers from the same one. Switching applications switches company.
+ * The server-rendered profile is only used when it was read through that same application.
+ */
 export function CompanyView({ initialCompany }: { initialCompany?: CandidateCompany }) {
-  const { data: company, error, refresh } = useLiveQuery(getCandidateCompany, { initialData: initialCompany, intervalMs: REFRESH_MS });
+  const { applicationId } = useCandidatePortal();
+  if (!applicationId) {
+    return (
+      <>
+        <CandidateHeader title="Company" />
+        <EmptyState
+          icon={Building2}
+          title="No company to show yet"
+          description="When you apply for a role, what that company shares with candidates appears here."
+        />
+      </>
+    );
+  }
+  return (
+    <CompanyProfile
+      key={applicationId}
+      applicationId={applicationId}
+      initialCompany={initialCompany?.applicationId === applicationId ? initialCompany : undefined}
+    />
+  );
+}
+
+function CompanyProfile({ applicationId, initialCompany }: { applicationId: string; initialCompany?: CandidateCompany }) {
+  const { me } = useCandidatePortal();
+  const load = useCallback(() => getCandidateCompany(applicationId), [applicationId]);
+  const { data: company, error, refresh } = useLiveQuery(load, { initialData: initialCompany, intervalMs: REFRESH_MS });
 
   if (!company) {
     return (
@@ -35,13 +67,20 @@ export function CompanyView({ initialCompany }: { initialCompany?: CandidateComp
 
   return (
     <>
-      <CandidateHeader title="Company" subtitle={`About ${company.name}`} />
+      <CandidateHeader title="Company" subtitle={me.job ? `About ${company.name}, for your ${me.job.title} application` : `About ${company.name}`} />
       <div className="flex flex-col gap-4">
         <Card className="p-5 sm:p-5">
-          <h2 className="text-base font-semibold tracking-tight text-ink">What {company.name} does</h2>
-          <p className="mt-3 text-sm leading-relaxed text-charcoal">{company.overview}</p>
-          <h3 className="mt-5 text-xs font-medium text-stone">Mission</h3>
-          <p className="mt-1.5 text-sm leading-relaxed text-charcoal">{company.mission}</p>
+          <div className="flex items-center gap-3">
+            <EmployerLogo name={company.name} logoUrl={company.logoUrl} size={40} />
+            <h2 className="text-base font-semibold tracking-tight text-ink">What {company.name} does</h2>
+          </div>
+          {company.overview && <p className="mt-3 text-sm leading-relaxed text-charcoal">{company.overview}</p>}
+          {company.mission && (
+            <>
+              <h3 className="mt-5 text-xs font-medium text-stone">Mission</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-charcoal">{company.mission}</p>
+            </>
+          )}
           {company.highlights.length > 0 && (
             <ul className="mt-5 grid grid-cols-1 gap-4 border-t border-border pt-4 sm:grid-cols-3">
               {company.highlights.map((item) => (
@@ -54,70 +93,83 @@ export function CompanyView({ initialCompany }: { initialCompany?: CandidateComp
           )}
         </Card>
 
+        {/* Only what the employer has shared: a section it left empty isn't shown. */}
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-          <Section title="Products" icon={Boxes}>
-            <ItemList items={company.products} />
-          </Section>
-          <Section title="Culture" icon={UsersRound} hint="What the team looks for, in its own words">
-            <ItemList items={company.values} />
-          </Section>
+          {company.products.length > 0 && (
+            <Section title="Products" icon={Boxes}>
+              <ItemList items={company.products} />
+            </Section>
+          )}
+          {company.values.length > 0 && (
+            <Section title="Culture" icon={UsersRound} hint="What the team looks for, in its own words">
+              <ItemList items={company.values} />
+            </Section>
+          )}
         </div>
 
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-          <Section title="Benefits" icon={Gift}>
-            <Bullets items={company.benefits} />
-            <p className="mt-3.5 text-xs leading-relaxed text-faint">{company.benefitsNote}</p>
-          </Section>
+          {company.benefits.length > 0 && (
+            <Section title="Benefits" icon={Gift}>
+              <Bullets items={company.benefits} />
+              {company.benefitsNote && <p className="mt-3.5 text-xs leading-relaxed text-faint">{company.benefitsNote}</p>}
+            </Section>
+          )}
           <div className="flex flex-col gap-4">
-            <Section title="Locations" icon={MapPin}>
-              <ul className="flex flex-wrap gap-2" aria-label="Offices">
-                {company.locations.map((city) => (
-                  <li key={city} className="flex h-6 items-center rounded-full bg-ink/[0.05] px-2.5 text-xs text-charcoal ring-1 ring-ink/10">
-                    {city}
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-3.5 text-sm text-stone">{company.locationsNote}</p>
-            </Section>
-            <Section title="How hiring works" icon={Route}>
-              <ol className="flex flex-col gap-2.5 text-sm text-charcoal">
-                {company.hiringProcess.map((step, index) => (
-                  <li key={step} className="flex gap-3">
-                    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-ink/[0.05] text-[11px] text-stone ring-1 ring-ink/10">
-                      {index + 1}
-                    </span>
-                    {step}
-                  </li>
-                ))}
-              </ol>
-              <p className="mt-3.5 text-sm text-stone">{company.hiringNote}</p>
-            </Section>
+            {company.locations.length > 0 && (
+              <Section title="Locations" icon={MapPin}>
+                <ul className="flex flex-wrap gap-2" aria-label="Offices">
+                  {company.locations.map((city) => (
+                    <li key={city} className="flex h-6 items-center rounded-full bg-ink/[0.05] px-2.5 text-xs text-charcoal ring-1 ring-ink/10">
+                      {city}
+                    </li>
+                  ))}
+                </ul>
+                {company.locationsNote && <p className="mt-3.5 text-sm text-stone">{company.locationsNote}</p>}
+              </Section>
+            )}
+            {company.hiringProcess.length > 0 && (
+              <Section title="How hiring works" icon={Route}>
+                <ol className="flex flex-col gap-2.5 text-sm text-charcoal">
+                  {company.hiringProcess.map((step, index) => (
+                    <li key={step} className="flex gap-3">
+                      <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-ink/[0.05] text-[11px] text-stone ring-1 ring-ink/10">
+                        {index + 1}
+                      </span>
+                      {step}
+                    </li>
+                  ))}
+                </ol>
+                {company.hiringNote && <p className="mt-3.5 text-sm text-stone">{company.hiringNote}</p>}
+              </Section>
+            )}
           </div>
         </div>
 
-        <Section title="Useful links" icon={ExternalLink}>
-          <ul className="grid grid-cols-1 gap-x-5 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3">
-            {company.links.map((link) => (
-              <li key={link.url}>
-                <a
-                  href={link.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 text-sm text-charcoal transition-colors hover:text-ink"
-                >
-                  <ExternalLink aria-hidden className="size-3.5 text-stone" /> {link.label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </Section>
+        {company.links.length > 0 && (
+          <Section title="Useful links" icon={ExternalLink}>
+            <ul className="grid grid-cols-1 gap-x-5 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3">
+              {company.links.map((link) => (
+                <li key={link.url}>
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 text-sm text-brand-ink transition-colors hover:text-ink"
+                  >
+                    <ExternalLink aria-hidden className="size-3.5 text-stone" /> {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Section>
+        )}
 
         <AskAIEntry
           title={`Questions about ${company.name}?`}
           description="Ask AI about the company, the role, the culture or benefits."
           prompts={ASK_AI_PROMPTS.slice(1, 3)}
         />
-        <p className="text-xs text-faint">{company.source}</p>
+        {company.source && <p className="text-xs text-faint">{company.source}</p>}
       </div>
     </>
   );

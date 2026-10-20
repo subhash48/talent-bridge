@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { useLiveQuery } from "@/hooks/useLiveQuery";
 import { rememberApplication } from "@/lib/selected-application";
@@ -9,8 +9,12 @@ import type { CandidateMeResponse } from "@/types/portal";
 
 type CandidatePortalValue = {
   me: CandidateMeResponse;
-  /** The application the portal is showing, or null when the candidate has none. */
+  /** The application `me` describes, or null when the candidate has none. Pages show this one. */
   applicationId: string | null;
+  /** The application the candidate chose. It differs from applicationId while that one loads. */
+  selectedId: string | null;
+  /** Another application was chosen and hasn't loaded yet: what's on screen is still the previous one's. */
+  switching: boolean;
   /** Show another of the candidate's applications across the portal. */
   selectApplication: (applicationId: string) => void;
   /**
@@ -21,7 +25,7 @@ type CandidatePortalValue = {
   offline: boolean;
   /** Re-read /candidate/me, e.g. after confirming an interview or sending a message. */
   refresh: () => Promise<void>;
-  /** Apply a change straight away, before the next refresh confirms it. */
+  /** Apply a change straight away, before the next refresh confirms it. Ignored while switching. */
   update: (change: (me: CandidateMeResponse) => CandidateMeResponse) => void;
 };
 
@@ -30,17 +34,38 @@ const CandidatePortalContext = createContext<CandidatePortalValue | null>(null);
 /**
  * The signed-in candidate's portal state, seeded by the server layout and kept current: it refetches
  * on focus and every few seconds, so the recruiter's changes (a new interview, a message, a stage
- * move) appear without a reload.
+ * move) appear without a reload. Everything in it describes one application at a time.
  */
 export function CandidatePortalProvider({ initialMe, children }: { initialMe: CandidateMeResponse; children: ReactNode }) {
-  const selected = useRef(initialMe.application?.id ?? null);
-  const fetchMe = useCallback(() => getCandidateMe(selected.current), []);
+  const [selectedId, setSelectedId] = useState(initialMe.application?.id ?? null);
+  const selected = useRef(selectedId);
+  const fetchMe = useCallback(async () => {
+    const requested = selected.current;
+    const me = await getCandidateMe(requested);
+    // The server shows the candidate's default application when the one asked for isn't theirs any more.
+    const shown = me.application?.id ?? null;
+    if (requested === selected.current && shown !== requested) {
+      selected.current = shown;
+      setSelectedId(shown);
+    }
+    return me;
+  }, []);
   const { data, offline, refresh, setData } = useLiveQuery(fetchMe, { initialData: initialMe });
   const me = data ?? initialMe;
   const applicationId = me.application?.id ?? null;
+  const loaded = useRef(applicationId);
 
+  useEffect(() => {
+    loaded.current = applicationId;
+    if (applicationId) rememberApplication(applicationId);
+  }, [applicationId]);
+
+  // A change to the application on screen. While another one loads, it would only cancel that load.
   const update = useCallback(
-    (change: (current: CandidateMeResponse) => CandidateMeResponse) => setData((current) => change(current ?? initialMe)),
+    (change: (current: CandidateMeResponse) => CandidateMeResponse) => {
+      if (loaded.current !== selected.current) return;
+      setData((current) => change(current ?? initialMe));
+    },
     [setData, initialMe],
   );
 
@@ -48,22 +73,17 @@ export function CandidatePortalProvider({ initialMe, children }: { initialMe: Ca
     (id: string) => {
       if (id === selected.current) return;
       selected.current = id;
+      setSelectedId(id);
       rememberApplication(id);
       void refresh();
     },
     [refresh],
   );
 
-  // The server may have picked another application (the remembered one isn't the candidate's any more).
-  useEffect(() => {
-    if (!applicationId) return;
-    selected.current = applicationId;
-    rememberApplication(applicationId);
-  }, [applicationId]);
-
+  const switching = selectedId !== applicationId;
   const value = useMemo(
-    () => ({ me, applicationId, selectApplication, offline, refresh, update }),
-    [me, applicationId, selectApplication, offline, refresh, update],
+    () => ({ me, applicationId, selectedId, switching, selectApplication, offline, refresh, update }),
+    [me, applicationId, selectedId, switching, selectApplication, offline, refresh, update],
   );
   return <CandidatePortalContext value={value}>{children}</CandidatePortalContext>;
 }

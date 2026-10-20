@@ -72,11 +72,23 @@ export function InterviewPrep({ interviewId, interviewApplicationId }: Interview
   }, [interviewApplicationId, selectApplication]);
   // Keyed by the interview when there is one, so the selection following it doesn't restart the prep.
   return (
-    <PrepView key={interviewId ? `interview:${interviewId}` : (applicationId ?? "none")} applicationId={applicationId} interviewId={interviewId ?? null} />
+    <PrepView
+      key={interviewId ? `interview:${interviewId}` : (applicationId ?? "none")}
+      applicationId={applicationId}
+      interviewId={interviewId ?? null}
+      followPrep={Boolean(interviewId && !interviewApplicationId)}
+    />
   );
 }
 
-function PrepView({ applicationId, interviewId }: { applicationId: string | null; interviewId: string | null }) {
+type PrepViewProps = {
+  applicationId: string | null;
+  interviewId: string | null;
+  /** The interview's application isn't known yet: switch to the one the prep names when it arrives. */
+  followPrep: boolean;
+};
+
+function PrepView({ applicationId, interviewId, followPrep }: PrepViewProps) {
   const { selectApplication } = useCandidatePortal();
   // With an interview, the API ignores the selected application, so the request doesn't depend on it.
   const requestedApplication = interviewId ? null : applicationId;
@@ -86,8 +98,9 @@ function PrepView({ applicationId, interviewId }: { applicationId: string | null
   );
   const { data: prep, error, loading, refresh, setData } = useLiveQuery(loadPrep, { intervalMs: PREP_REFRESH_MS });
 
-  // The whole portal follows the application this prep is for (the opened interview's).
-  const preparedFor = prep?.applicationId;
+  // The whole portal follows the application this prep is for (the opened interview's), when the page
+  // couldn't tell. Only then: a prep arriving after the candidate switched elsewhere mustn't pull them back.
+  const preparedFor = followPrep ? prep?.applicationId : undefined;
   useEffect(() => {
     if (preparedFor) selectApplication(preparedFor);
   }, [preparedFor, selectApplication]);

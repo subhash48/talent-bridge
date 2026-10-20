@@ -42,7 +42,7 @@ export function CandidateMessages({ renderedFor, initialThread }: { renderedFor:
 }
 
 function MessagesView({ applicationId, initialThread }: { applicationId: string | null; initialThread?: CandidateMessageThread }) {
-  const { me, update, refresh: refreshPortal } = useCandidatePortal();
+  const { me, switching, update, refresh: refreshPortal } = useCandidatePortal();
   const load = useCallback(() => getMessageThread(applicationId), [applicationId]);
   const { data: thread, error, refresh, setData } = useLiveQuery(load, {
     initialData: initialThread,
@@ -52,9 +52,10 @@ function MessagesView({ applicationId, initialThread }: { applicationId: string 
   const [firstUnreadId] = useState(() => initialThread?.messages.find(isIncomingUnread)?.id);
   const unread = thread?.unread ?? 0;
 
-  // Reading the thread marks it read, for the badge here and for the read state the recruiter sees.
+  // Reading the thread marks it read, for the badge here and for the read state the recruiter sees. Not
+  // while another application is loading: this thread is on its way out, not being read.
   useEffect(() => {
-    if (unread === 0 || document.visibilityState !== "visible") return;
+    if (unread === 0 || switching || document.visibilityState !== "visible") return;
     let cancelled = false;
     markMessagesRead(applicationId).then(
       () => {
@@ -68,7 +69,7 @@ function MessagesView({ applicationId, initialThread }: { applicationId: string 
     return () => {
       cancelled = true;
     };
-  }, [unread, applicationId, setData, update]);
+  }, [unread, applicationId, switching, setData, update]);
 
   if (!thread) {
     return (

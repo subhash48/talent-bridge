@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import ActivityType, ApplicationStage, InterviewStatus, InterviewType, SenderType, UserRole
 from app.db.seed_data import (
+    APPLICATIONS,
     APPLIED_UPDATE,
     CANDIDATES,
     CHECK_IN,
@@ -31,10 +32,12 @@ from app.db.seed_data import (
     INTERVIEWS,
     JOBS,
     NO_FOLLOW_UP,
+    NOVA_RECRUITER,
     RECRUITER,
     STAGE_UPDATES,
     THREADS,
     WAITING,
+    ApplicationSeed,
     CandidateSeed,
 )
 from app.models import (
@@ -120,7 +123,7 @@ class Recorder:
 def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
     rows: dict[type[Base], list[dict[str, Any]]] = {table: [] for table in TABLES}
     recruiter_id = seed_id("user", RECRUITER["email"])
-    for person, days in ((RECRUITER, 120),):
+    for person, days in ((RECRUITER, 120), (NOVA_RECRUITER, 90)):
         rows[User].append(
             {
                 "id": seed_id("user", person["email"]),
@@ -203,7 +206,10 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
             }
         )
         _add_application(rows, seed.key, candidate_id, job_ids[seed.job], seed, recruiter_id)
-    for seed in CANDIDATES:
+    for extra in APPLICATIONS:
+        candidate_id = seed_id("candidate", extra.candidate)
+        _add_application(rows, extra.key, candidate_id, job_ids[extra.job], extra, seed_id("user", extra.recruiter))
+    for seed in (*CANDIDATES, *APPLICATIONS):
         application_ids[seed.key] = seed_id("application", seed.key)
         confirmations[seed.key] = next(
             (e.minutes_ago for e in seed.events if e.type == ActivityType.INTERVIEW_CONFIRMED), DAY
@@ -283,7 +289,7 @@ def _add_application(
     key: str,
     candidate_id: uuid.UUID,
     job_id: uuid.UUID,
-    seed: CandidateSeed,
+    seed: CandidateSeed | ApplicationSeed,
     recruiter_id: uuid.UUID,
 ) -> None:
     """One application with its stage history and its timeline."""
@@ -340,7 +346,7 @@ def _updates(seed: CandidateSeed, *, has_interview_booked: bool) -> list[tuple[i
     return sorted(updates, reverse=True)
 
 
-def _moves(seed: CandidateSeed, latest: int) -> list[int]:
+def _moves(seed: CandidateSeed | ApplicationSeed, latest: int) -> list[int]:
     """Minutes ago for each stage move: as given, or spread between joining and the latest event."""
     count = PIPELINE.index(seed.stage)
     if seed.moves is not None:

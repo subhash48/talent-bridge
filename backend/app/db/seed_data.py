@@ -18,6 +18,8 @@ from app.core.enums import (
 DAY = 24 * 60
 
 RECRUITER = {"email": "alex.chen@encord.example", "full_name": "Alex Chen"}
+# Nova AI's recruiter, so a Nova AI application is never answered in an Encord recruiter's name.
+NOVA_RECRUITER = {"email": "mira.hoffmann@nova-ai.example", "full_name": "Mira Hoffmann"}
 
 
 @dataclass(frozen=True)
@@ -167,6 +169,64 @@ COMPANIES: tuple[CompanySeed, ...] = (
         ),
         source="From encord.com, October 2026.",
     ),
+    # Fictional: a second employer, so the portal can be seen (and tested) with applications at two
+    # companies. Its links use the reserved .example domain.
+    CompanySeed(
+        "nova-ai",
+        "Nova AI",
+        200,
+        "/logos/nova-ai.svg",
+        "https://nova-ai.example/",
+        overview=(
+            "Nova AI builds speech and language models that let customer support teams answer people in more than 40 "
+            "languages, in real time."
+        ),
+        mission="Make every conversation understood: an answer in your own language, without the wait.",
+        highlights=(
+            ("40+", "languages supported in production"),
+            ("120", "people across Berlin and Lisbon"),
+            ("$62M", "raised to date, most recently a Series B led by Northlight Ventures"),
+        ),
+        products=(
+            ("Nova Voice", "Real-time speech recognition and synthesis, tuned for contact centres and noisy lines."),
+            (
+                "Nova Translate",
+                "Streaming translation between 40+ languages, with glossaries for each customer's domain.",
+            ),
+            (
+                "Nova Evaluate",
+                "An evaluation suite that checks model answers for accuracy, tone and policy compliance.",
+            ),
+        ),
+        values=(
+            (
+                "Customers first",
+                "Every team spends time on real support calls, so decisions start from what customers hear.",
+            ),
+            ("Ship small, ship often", "Small releases, measured carefully, beat big launches."),
+            ("Say it plainly", "Clear writing and direct feedback, given kindly."),
+            ("Grow together", "Senior people mentor, and everyone gets time to learn."),
+        ),
+        benefits=(
+            "30 days paid holiday",
+            "Hybrid working, two office days a week",
+            "€2,000 annual learning budget",
+            "Mental health support through a wellbeing platform",
+            "Relocation support to Berlin or Lisbon",
+            "Company-paid public transport ticket",
+        ),
+        benefits_scope="all employees",
+        benefits_note="Benefits are the same in Berlin and Lisbon. Your recruiter can share the details for your contract.",
+        locations=("Berlin", "Lisbon"),
+        locations_note="Most teams work hybrid, with two days a week in the office.",
+        hiring_process=("Recruiter screen", "Technical interview", "Team conversation", "Founder chat"),
+        hiring_note="Most processes take three to four weeks, and your recruiter shares feedback after every stage.",
+        links=(
+            ("Nova AI website", "https://nova-ai.example/"),
+            ("Engineering blog", "https://nova-ai.example/blog/"),
+        ),
+        source="Fictional demo employer in TalentBridge's seed data.",
+    ),
 )
 
 
@@ -212,6 +272,23 @@ class CandidateSeed:
     phone: str | None = None
     # Minutes ago for each stage move after sourced; spread evenly when not given.
     moves: tuple[int, ...] | None = None
+
+
+@dataclass(frozen=True)
+class ApplicationSeed:
+    """A further application by a candidate from CANDIDATES, to another job. Its key stands in for the
+    candidate's in INTERVIEWS and THREADS."""
+
+    key: str
+    candidate: str  # a CandidateSeed key
+    job: str
+    stage: ApplicationStage
+    added_minutes_ago: int
+    events: tuple[Event, ...] = ()
+    created_title: str = "Applied"
+    source: str = "Careers site"
+    moves: tuple[int, ...] | None = None
+    recruiter: str = RECRUITER["email"]  # who moved it through the pipeline
 
 
 @dataclass(frozen=True)
@@ -325,6 +402,16 @@ JOBS: tuple[JobSeed, ...] = (
         "Research label-efficient learning methods and bring them into the product.",
         ("PyTorch", "Segmentation", "Research", "Active learning", "Vision transformers"),
         status=JobStatus.DRAFT,
+    ),
+    JobSeed(
+        "Applied AI Engineer",
+        "Applied AI",
+        "Berlin, Germany · Hybrid",
+        "Lena Vogel",
+        30,
+        "Turn Nova AI's speech and translation research into features customers use on live support calls.",
+        ("Python", "LLM evaluation", "Speech recognition", "PyTorch", "APIs"),
+        company="nova-ai",
     ),
 )
 
@@ -739,6 +826,44 @@ CANDIDATES: tuple[CandidateSeed, ...] = (
         ("Bayesian modeling", "Python", "Experimentation", "R"),
         events=(Event(A.OFFER_ACCEPTED, "Accepted offer", 21000),),
     ),
+    # Rosa applied to two employers: this Encord role, and Nova AI's (APPLICATIONS). Her portal opens on
+    # this one, the more recently updated.
+    CandidateSeed(
+        "rosa-navarro",
+        "Rosa",
+        "Navarro",
+        "Software Engineer",
+        "Madrid, Spain",
+        S.INTERVIEW,
+        14 * DAY,
+        ("Python", "Go", "Distributed systems", "Kubernetes", "PyTorch"),
+        events=(
+            Event(A.INTERVIEW_COMPLETED, "Recruiter screen completed", 9000),
+            Event(A.INTERVIEW_SCHEDULED, "Systems design interview scheduled", 2000),
+        ),
+        created_title="Applied on the careers site",
+        source="Careers site",
+        headline="Backend engineer moving into applied machine learning",
+        moves=(16000, 8800),
+    ),
+)
+
+ROSA_NOVA = "rosa-navarro@nova-ai"
+APPLICATIONS: tuple[ApplicationSeed, ...] = (
+    ApplicationSeed(
+        ROSA_NOVA,
+        "rosa-navarro",
+        "Applied AI Engineer",
+        S.INTERVIEW,
+        16 * DAY,
+        events=(
+            Event(A.INTERVIEW_COMPLETED, "Recruiter screen completed", 12900),
+            Event(A.INTERVIEW_SCHEDULED, "Technical interview scheduled", 4300),
+        ),
+        created_title="Applied on the Nova AI careers site",
+        moves=(15000, 8800),
+        recruiter=NOVA_RECRUITER["email"],
+    ),
 )
 
 V, P, O = InterviewType.VIDEO, InterviewType.PHONE, InterviewType.ONSITE
@@ -799,6 +924,32 @@ INTERVIEWS: tuple[InterviewSeed, ...] = (
         DONE,
         True,
         "Clear product thinking on ML tooling and a strong B2B SaaS background. Motivated by the data-curation problem space.",
+    ),
+    InterviewSeed("rosa-navarro", "Systems design interview", 2, "15:00", 60, V, ("Ian Park",)),
+    InterviewSeed(
+        "rosa-navarro",
+        "Recruiter screen",
+        -6,
+        "11:00",
+        30,
+        P,
+        ("Alex Chen",),
+        DONE,
+        True,
+        "Strong distributed systems background; check depth on Kubernetes operations.",
+    ),
+    InterviewSeed(ROSA_NOVA, "Technical interview", 4, "13:00", 60, V, ("Lena Vogel", "Tariq Aziz")),
+    InterviewSeed(
+        ROSA_NOVA,
+        "Recruiter screen",
+        -9,
+        "09:30",
+        30,
+        P,
+        (NOVA_RECRUITER["full_name"],),
+        DONE,
+        True,
+        "Strong on LLM evaluation; probe system design depth in the technical round.",
     ),
 )
 
@@ -917,6 +1068,38 @@ THREADS: tuple[ThreadSeed, ...] = (
                 R,
                 12000,
                 "Hi Leah, I lead recruiting for Encord's product team. Your work on data platforms caught my eye. Would you be open to a quick chat about our Product Manager role?",
+            ),
+        ),
+    ),
+    ThreadSeed(
+        "rosa-navarro",
+        (
+            MessageSeed(
+                R,
+                8800,
+                "Hi Rosa, thanks for the recruiter screen. Ian would like to meet you for a systems design interview for the Software Engineer role.",
+            ),
+            MessageSeed(C, 8600, "Thanks Alex, happy to. Any day next week works for me."),
+            MessageSeed(
+                R,
+                2000,
+                "Your systems design interview with Ian is booked: 60 minutes on video, about scaling a data pipeline.",
+            ),
+        ),
+    ),
+    ThreadSeed(
+        ROSA_NOVA,
+        (
+            MessageSeed(
+                R,
+                8800,
+                "Hi Rosa, thanks for the recruiter screen. We'd love to move you forward to a technical interview for the Applied AI Engineer role with Lena and Tariq.",
+            ),
+            MessageSeed(C, 8600, "Thank you Mira, that sounds great. I'm looking forward to it."),
+            MessageSeed(
+                R,
+                4300,
+                "Your technical interview is booked: 60 minutes on video, covering an LLM evaluation problem and a short system design discussion.",
             ),
         ),
     ),

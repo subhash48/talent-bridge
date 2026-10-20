@@ -221,12 +221,15 @@ type ApplicationCardProps = {
 };
 
 function ApplicationCard({ application, selected, tabbable, onSelect }: ApplicationCardProps) {
+  const unread = application.unreadMessages;
+  const name = [`${application.company}, ${application.jobTitle}`, application.stageLabel];
+  if (unread > 0) name.push(pluralize(unread, "unread message"));
   return (
     <button
       type="button"
       role="radio"
       aria-checked={selected}
-      aria-label={`${application.company}, ${application.jobTitle}. ${application.stageLabel}`}
+      aria-label={name.join(". ")}
       tabIndex={tabbable ? 0 : -1}
       data-application={application.id}
       onClick={onSelect}
@@ -239,7 +242,10 @@ function ApplicationCard({ application, selected, tabbable, onSelect }: Applicat
     >
       <EmployerLogo name={application.company} logoUrl={application.companyLogoUrl} size={40} className="rounded-[9px]" />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] leading-5 font-semibold text-ink">{application.company}</span>
+        <span className="flex items-center gap-1.5">
+          <span className="truncate text-[13px] leading-5 font-semibold text-ink">{application.company}</span>
+          {unread > 0 && <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-highlight" />}
+        </span>
         <span className="block truncate text-xs leading-4 text-stone">{application.jobTitle}</span>
         <PortalStatusBadge
           stage={application.stage}

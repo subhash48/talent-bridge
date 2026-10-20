@@ -16,9 +16,9 @@ type CurrentApplicationCardProps = {
   otherApplications: number;
 };
 
-/** The application the portal is showing: the role, where and how it's worked, its stage and progress. */
+/** The application the portal is showing: the role, its employer, where and how it's worked, its stage and progress. */
 export function CurrentApplicationCard({ application, job, otherApplications }: CurrentApplicationCardProps) {
-  const meta = [job.location, job.employmentType].filter(Boolean).join(" · ");
+  const meta = [job.company, job.location, job.employmentType].filter(Boolean).join(" · ");
 
   return (
     <Card className="p-5 sm:p-5">

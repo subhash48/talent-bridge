@@ -16,7 +16,7 @@ export function CandidatePipeline({ stage }: { stage: CandidateStage }) {
     <div className="relative">
       <div aria-hidden className="absolute top-[11px] h-[2px] rounded-full bg-ink/15" style={{ left: `${inset}%`, right: `${inset}%` }}>
         <div
-          className="h-full rounded-full bg-ink/60 transition-[width] duration-500 ease-out"
+          className="h-full rounded-full bg-brand transition-[width] duration-500 ease-out"
           style={{ width: `${filled * 100}%` }}
         />
       </div>
@@ -28,15 +28,15 @@ export function CandidatePipeline({ stage }: { stage: CandidateStage }) {
             <li key={step} aria-current={active ? "step" : undefined} className="flex flex-col items-center gap-2">
               <span className="flex size-6 items-center justify-center">
                 {active ? (
-                  <span className="flex size-5 items-center justify-center rounded-full bg-canvas ring-2 ring-ink transition-shadow">
-                    <span className="size-1.5 rounded-full bg-ink" />
+                  <span className="flex size-5 items-center justify-center rounded-full bg-surface ring-2 ring-brand-ink transition-shadow">
+                    <span className="size-1.5 rounded-full bg-brand" />
                   </span>
                 ) : done ? (
-                  <span className="flex size-3.5 items-center justify-center rounded-full bg-ink text-canvas">
-                    {stage === "hired" && <Check aria-hidden className="size-2.5 text-canvas" strokeWidth={4} />}
+                  <span className="flex size-3.5 items-center justify-center rounded-full bg-brand text-on-brand">
+                    {stage === "hired" && <Check aria-hidden className="size-2.5 text-on-brand" strokeWidth={4} />}
                   </span>
                 ) : (
-                  <span className="size-3.5 rounded-full bg-canvas ring-1 ring-ink/25 ring-inset" />
+                  <span className="size-3.5 rounded-full bg-surface ring-1 ring-ink/25 ring-inset" />
                 )}
               </span>
               <span className={cn("text-[13px]", active ? "font-medium text-ink" : "text-stone")}>

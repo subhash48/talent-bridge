@@ -32,7 +32,7 @@ export function NotificationsMenu() {
         <Button variant="ghost" size="icon" aria-label="Notifications" className="relative rounded-full text-charcoal">
           <Bell strokeWidth={1.75} />
           {!seen && recent.length > 0 && (
-            <span className="absolute top-2 right-2 size-[7px] rounded-full bg-ink ring-2 ring-canvas">
+            <span className="absolute top-2 right-2 size-[7px] rounded-full bg-highlight ring-2 ring-canvas">
               <span className="sr-only">New activity</span>
             </span>
           )}

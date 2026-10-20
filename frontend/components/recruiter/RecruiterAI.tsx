@@ -116,8 +116,8 @@ export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: strin
       aria-label={listening ? "Stop listening" : "Speak to the AI Assistant"}
       title={micUnavailable ? "Voice input isn't supported in this browser" : undefined}
       className={cn(
-        "flex size-9 shrink-0 items-center justify-center rounded-[8px] border border-ink/20 bg-ink/[0.04] text-ink transition-[border-color,background-color,transform] duration-200 hover:border-ink/35 hover:bg-ink/[0.1] active:scale-95",
-        listening && "border-ink/50 bg-ink/[0.14]",
+        "flex size-9 shrink-0 items-center justify-center rounded-[8px] border border-ink/20 bg-ink/[0.04] text-ink transition-[border-color,background-color,transform] duration-200 hover:border-ink/35 hover:bg-ink/[0.07] active:scale-95",
+        listening && "border-brand-ink/55 bg-brand-soft text-brand-ink",
       )}
     >
       {micUnavailable ? <MicOff aria-hidden className="size-4 text-stone" /> : <Mic aria-hidden className={cn("size-4", listening && "animate-pulse")} />}
@@ -225,7 +225,7 @@ function Welcome({ focusedName, onPick, disabled }: { focusedName: string | null
               type="button"
               disabled={disabled}
               onClick={() => onPick(example)}
-              className="flex h-full w-full gap-2.5 rounded-[10px] border border-border bg-ink/[0.03] px-3.5 py-2.5 text-left transition-[background-color,border-color] duration-200 hover:border-ink/30 hover:bg-ink/[0.06] disabled:opacity-50"
+              className="flex h-full w-full gap-2.5 rounded-[10px] border border-border bg-surface-raised px-3.5 py-2.5 text-left transition-[background-color,border-color] duration-200 hover:border-brand-ink/35 hover:bg-brand-soft disabled:opacity-50"
             >
               <Icon aria-hidden className="mt-0.5 size-4 shrink-0 text-ai" />
               <span>
@@ -267,7 +267,7 @@ function Thread({ turns, actions }: { turns: AssistantTurn[]; actions: CardActio
     >
       {turns.map((turn) =>
         turn.role === "user" ? (
-          <p key={turn.id} className="flex max-w-[85%] animate-rise items-start gap-1.5 self-end rounded-[12px] rounded-br-[4px] bg-ink/[0.1] px-3.5 py-2 text-sm text-ink">
+          <p key={turn.id} className="flex max-w-[85%] animate-rise items-start gap-1.5 self-end rounded-[12px] rounded-br-[4px] bg-brand-soft px-3.5 py-2 text-sm text-ink ring-1 ring-brand-ink/15">
             {turn.inputType === "voice" && <Mic aria-label="Spoken" className="mt-0.5 size-3.5 shrink-0 text-stone" />}
             <span>{turn.text}</span>
           </p>
@@ -282,15 +282,15 @@ function Thread({ turns, actions }: { turns: AssistantTurn[]; actions: CardActio
 function AssistantTurnView({ turn, actions }: { turn: Exclude<AssistantTurn, { role: "user" }>; actions: CardActions }) {
   return (
     <div className="flex animate-rise gap-2.5">
-      <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-ink/[0.05] ring-1 ring-ink/10">
-        <Sparkles aria-hidden className="size-3.5 text-ink" />
+      <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-brand-soft ring-1 ring-brand-ink/20">
+        <Sparkles aria-hidden className="size-3.5 text-brand-ink" />
       </span>
       <div className="min-w-0 flex-1 text-sm leading-relaxed text-charcoal">
         {turn.status === "thinking" ? (
           <span className="inline-flex h-6 items-center gap-1">
             <span className="sr-only">Working…</span>
             {[0, 150, 300].map((delay) => (
-              <span key={delay} aria-hidden className="size-1.5 animate-pulse rounded-full bg-ink/70" style={{ animationDelay: `${delay}ms` }} />
+              <span key={delay} aria-hidden className="size-1.5 animate-pulse rounded-full bg-brand-ink/60" style={{ animationDelay: `${delay}ms` }} />
             ))}
           </span>
         ) : turn.status === "error" ? (

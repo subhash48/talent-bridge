@@ -2,8 +2,8 @@ import { cn } from "@/lib/utils";
 import type { CommunicationStatus } from "@/types/communication";
 
 const STATUS: Record<CommunicationStatus, { label: string; className: string; dot: string }> = {
-  needs_attention: { label: "Needs update", className: "bg-caution/[0.1] text-caution ring-caution/25", dot: "bg-caution" },
-  due_soon: { label: "Due soon", className: "bg-ink/[0.05] text-charcoal ring-ink/15", dot: "bg-caution/70" },
+  needs_attention: { label: "Needs update", className: "bg-caution/10 text-caution ring-caution/30", dot: "bg-caution" },
+  due_soon: { label: "Due soon", className: "bg-ink/[0.05] text-charcoal ring-ink/15", dot: "bg-caution/50" },
   on_track: { label: "On track", className: "bg-sage/[0.08] text-sage ring-sage/20", dot: "bg-sage" },
   closed: { label: "Closed", className: "bg-ink/[0.04] text-stone ring-ink/10", dot: "bg-faint" },
 };

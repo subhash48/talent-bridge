@@ -85,7 +85,7 @@ export function JobPipeline({ job }: { job: JobOpening }) {
                       <li key={candidate.id}>
                         <Link
                           href={`/recruiter/candidates?candidate=${candidate.id}`}
-                          className="flex items-start gap-2.5 rounded-[10px] bg-ink/[0.03] p-2.5 ring-1 ring-ink/10 transition-[background-color,box-shadow] hover:bg-ink/[0.06] hover:ring-ink/20"
+                          className="flex items-start gap-2.5 rounded-[10px] bg-surface-raised p-2.5 ring-1 ring-ink/10 transition-[background-color,box-shadow] hover:bg-overlay hover:ring-ink/20"
                         >
                           <Avatar name={candidate.name} src={candidate.avatarUrl} size={28} />
                           <span className="min-w-0">

@@ -400,7 +400,7 @@ export function DemoJobEditor({ job: initialJob }: { job?: DemoJob }) {
             responsibility and one requirement.
           </p>
           <p className="mt-4 flex items-start gap-2.5 rounded-[10px] border border-border bg-ink/[0.03] px-3.5 py-2.5 text-sm text-charcoal">
-            <Sparkles aria-hidden className="mt-0.5 size-4 shrink-0 text-ink" />
+            <Sparkles aria-hidden className="mt-0.5 size-4 shrink-0 text-brand-ink" />
             AI drafts are a starting point: review and edit everything. Nothing is published until you click Publish Demo Job.
           </p>
           <div className="mt-5 grid gap-4">

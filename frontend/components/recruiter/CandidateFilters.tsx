@@ -101,12 +101,12 @@ export function CandidateFilters({
               <Button
                 variant="secondary"
                 size="icon"
-                className={cn("relative", filterCount > 0 && "border-ink/25")}
+                className={cn("relative", filterCount > 0 && "border-brand-ink/45")}
                 aria-label={filterCount ? `Filters, ${filterCount} active` : "Filters"}
               >
                 <ListFilter />
                 {filterCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 flex size-[18px] items-center justify-center rounded-full bg-ink text-[11px] font-semibold text-canvas tabular-nums">
+                  <span className="absolute -top-1.5 -right-1.5 flex size-[18px] items-center justify-center rounded-full bg-brand text-[11px] font-semibold text-on-brand tabular-nums">
                     {filterCount}
                   </span>
                 )}

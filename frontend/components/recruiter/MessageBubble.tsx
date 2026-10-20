@@ -11,7 +11,7 @@ export function MessageBubble({ message, authorName }: { message: ThreadMessage;
       <p
         className={cn(
           "max-w-[85%] rounded-[12px] px-3.5 py-2 text-sm leading-relaxed whitespace-pre-line",
-          outgoing ? "rounded-br-[5px] bg-ink/[0.1] text-ink" : "rounded-bl-[5px] bg-ink/[0.04] text-charcoal ring-1 ring-ink/[0.07]",
+          outgoing ? "rounded-br-[5px] bg-brand-soft text-ink ring-1 ring-brand-ink/15" : "rounded-bl-[5px] bg-ink/[0.04] text-charcoal ring-1 ring-ink/[0.07]",
         )}
       >
         <span className="sr-only">{outgoing ? "You" : authorName}: </span>

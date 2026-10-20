@@ -9,7 +9,7 @@ const PREVIEW_COUNT = 3;
 
 export function CandidateMessagesPreview({ candidate, messages }: { candidate: PipelineCandidate; messages: ThreadMessage[] }) {
   const href = `/recruiter/messages?candidate=${candidate.id}`;
-  const linkClass = "inline-flex items-center gap-1.5 rounded-sm text-sm text-charcoal transition-colors hover:text-ink";
+  const linkClass = "inline-flex items-center gap-1.5 rounded-sm text-sm text-brand-ink transition-colors hover:text-ink";
 
   if (messages.length === 0) {
     return (

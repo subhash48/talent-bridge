@@ -19,7 +19,7 @@ export type CandidateSelectionProps = {
 
 const cell = (className?: string) =>
   cn(
-    "border-b border-border py-2 align-middle transition-colors duration-150 group-hover:bg-ink/[0.04] group-data-[selected]:border-transparent group-data-[selected]:bg-ink/[0.06] first:rounded-l-[10px] last:rounded-r-[10px]",
+    "border-b border-border py-2 align-middle transition-colors duration-150 group-hover:bg-ink/[0.04] group-data-[selected]:border-transparent group-data-[selected]:bg-brand-soft first:rounded-l-[10px] last:rounded-r-[10px]",
     className,
   );
 

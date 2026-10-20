@@ -9,7 +9,7 @@ export function EmailNotice({ className }: { className?: string }) {
     <p
       role="note"
       className={cn(
-        "flex items-start gap-2.5 rounded-[10px] border border-caution/20 bg-caution/[0.06] px-3.5 py-2.5 text-[13px] text-caution",
+        "flex items-start gap-2.5 rounded-[10px] border border-caution/30 bg-caution/[0.07] px-3.5 py-2.5 text-[13px] text-caution",
         className,
       )}
     >

@@ -11,7 +11,7 @@ export function CandidateCard({ candidate, selected, checked, onSelect, onChecke
   return (
     <div
       data-selected={selected || undefined}
-      className="flex items-start gap-3 rounded-[12px] px-3 py-3 transition-colors duration-150 hover:bg-ink/[0.04] data-[selected]:bg-ink/[0.06]"
+      className="flex items-start gap-3 rounded-[12px] px-3 py-3 transition-colors duration-150 hover:bg-ink/[0.04] data-[selected]:bg-brand-soft"
     >
       <Checkbox
         className="mt-2.5"

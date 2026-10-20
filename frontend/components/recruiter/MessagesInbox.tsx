@@ -117,7 +117,7 @@ export function MessagesInbox({ initialConversations, initialCandidateId, draftO
                   aria-current={selected || undefined}
                   className={cn(
                     "flex w-full items-start gap-3 rounded-[10px] px-3 py-2.5 text-left transition-colors hover:bg-ink/[0.04]",
-                    selected && "bg-ink/[0.06] hover:bg-ink/[0.06]",
+                    selected && "bg-brand-soft hover:bg-brand-soft",
                   )}
                 >
                   <Avatar name={conversation.candidate.name} src={conversation.candidate.avatarUrl} size={32} />
@@ -133,7 +133,7 @@ export function MessagesInbox({ initialConversations, initialCandidateId, draftO
                         {last ? `${last.author === "recruiter" ? "You: " : ""}${last.body}` : "No messages yet"}
                       </span>
                       {conversation.unread > 0 && (
-                        <span className="size-2 shrink-0 rounded-full bg-ai">
+                        <span className="size-2 shrink-0 rounded-full bg-highlight">
                           <span className="sr-only">Unread</span>
                         </span>
                       )}
@@ -285,7 +285,7 @@ function Thread({ conversation, onBack, onSent, draftOnOpen, onDraftStarted }: T
           placeholder={`Write to ${first}…`}
           aria-describedby={`${composerId}-hint`}
           readOnly={drafting}
-          className="field-sizing-content max-h-52 min-h-[72px] bg-black/20"
+          className="field-sizing-content max-h-52 min-h-[72px] bg-overlay"
         />
         <div className="mt-2.5 flex flex-wrap items-center gap-2">
           <Button variant="ai" size="sm" onClick={() => void draftWithAI()} disabled={drafting || sending}>

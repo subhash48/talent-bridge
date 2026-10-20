@@ -23,13 +23,13 @@ export function RecruiterShell({ children }: { children: ReactNode }) {
     <ToastProvider>
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:rounded-[8px] focus:bg-ink focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-canvas"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:rounded-[8px] focus:bg-brand focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-on-brand"
       >
         Skip to content
       </a>
       <div className="relative isolate flex min-h-dvh">
         {/* The sign-in page's sky, fainter and fixed behind the workspace. */}
-        <NightSky className="fixed opacity-50" />
+        <NightSky className="fixed opacity-30" />
         <aside className="sticky top-0 hidden h-dvh w-[216px] shrink-0 border-r border-border bg-surface/85 lg:block">
           <SidebarContent />
         </aside>

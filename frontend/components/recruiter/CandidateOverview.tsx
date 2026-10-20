@@ -47,7 +47,7 @@ export function CandidateOverview({ candidate, state, onViewAll }: CandidateOver
           <button
             type="button"
             onClick={onViewAll}
-            className="inline-flex items-center gap-1.5 rounded-sm text-sm text-charcoal transition-colors hover:text-ink"
+            className="inline-flex items-center gap-1.5 rounded-sm text-sm text-brand-ink transition-colors hover:text-ink"
           >
             View all <ArrowRight aria-hidden className="size-4" />
           </button>

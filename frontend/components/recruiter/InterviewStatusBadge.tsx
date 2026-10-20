@@ -2,7 +2,7 @@ import { INTERVIEW_STATUS } from "@/lib/stages";
 import { cn } from "@/lib/utils";
 import type { ScheduledInterview } from "@/types/workspace";
 
-const FEEDBACK_PENDING = { label: "Feedback pending", className: "bg-caution/10 text-caution ring-caution/20" };
+const FEEDBACK_PENDING = { label: "Feedback pending", className: "bg-caution/10 text-caution ring-caution/30" };
 
 export function InterviewStatusBadge({ interview, className }: { interview: ScheduledInterview; className?: string }) {
   const status = interview.feedback === "pending" ? FEEDBACK_PENDING : INTERVIEW_STATUS[interview.status];

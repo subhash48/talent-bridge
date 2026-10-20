@@ -131,7 +131,7 @@ function MessageProposal({ card, actions }: { card: MessageCard; actions: CardAc
           />
         </div>
       ) : (
-        <p className="mt-3 rounded-[10px] bg-canvas/60 px-3.5 py-3 text-[13px] leading-relaxed whitespace-pre-wrap text-charcoal ring-1 ring-border">
+        <p className="mt-3 rounded-[10px] bg-overlay px-3.5 py-3 text-[13px] leading-relaxed whitespace-pre-wrap text-charcoal ring-1 ring-border">
           {card.status === "completed" ? card.body : body}
         </p>
       )}
@@ -240,7 +240,7 @@ function Clarify({ card, actions }: { card: ClarifyCard; actions: CardActions })
             type="button"
             disabled={actions.busy}
             onClick={() => actions.onSend(option.reply, { application_id: option.application_id })}
-            className="rounded-[10px] border border-border bg-ink/[0.03] px-3.5 py-2.5 text-left transition-[background-color,border-color] duration-200 hover:border-ink/30 hover:bg-ink/[0.06] disabled:opacity-50"
+            className="rounded-[10px] border border-border bg-surface-raised px-3.5 py-2.5 text-left transition-[background-color,border-color] duration-200 hover:border-brand-ink/35 hover:bg-brand-soft disabled:opacity-50"
           >
             <span className="block text-sm font-medium text-ink">{option.label}</span>
             <span className="block text-xs text-stone">{option.detail}</span>

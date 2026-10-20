@@ -96,7 +96,7 @@ export function DemoJobsSection({ jobs, error }: DemoJobsSectionProps) {
       <h2 id="demo-jobs-heading" className="flex flex-wrap items-center gap-2 text-base font-semibold tracking-tight text-ink">
         <FlaskConical aria-hidden className="size-4 text-stone" />
         Demo jobs
-        <span className="inline-flex h-6 items-center rounded-[6px] bg-caution/10 px-2 text-xs font-medium text-caution ring-1 ring-caution/20 ring-inset">
+        <span className="inline-flex h-6 items-center rounded-[6px] bg-caution/10 px-2 text-xs font-medium text-caution ring-1 ring-caution/30 ring-inset">
           Development demo
         </span>
       </h2>
@@ -106,7 +106,7 @@ export function DemoJobsSection({ jobs, error }: DemoJobsSectionProps) {
       </p>
 
       {error ? (
-        <p className="mt-4 rounded-[10px] bg-caution/[0.06] px-3.5 py-2.5 text-sm text-caution ring-1 ring-caution/20">
+        <p className="mt-4 rounded-[10px] bg-caution/[0.07] px-3.5 py-2.5 text-sm text-caution ring-1 ring-caution/25">
           Demo jobs couldn&apos;t load: {error}
         </p>
       ) : jobs.length === 0 ? (
@@ -137,7 +137,7 @@ export function DemoJobsSection({ jobs, error }: DemoJobsSectionProps) {
               {jobs.map((job) => (
                 <tr key={job.id} className="group">
                   <td className={cell}>
-                    <Link href={editPath(job)} className="rounded-sm font-medium text-ink underline-offset-4 hover:underline">
+                    <Link href={editPath(job)} className="rounded-sm font-medium text-brand-ink underline-offset-4 hover:text-ink hover:underline">
                       {job.title}
                     </Link>
                     {(job.department || job.location) && (

@@ -104,7 +104,7 @@ export function TodayView({ initial, error }: TodayViewProps) {
           title="Nobody is waiting on you"
           description="When a candidate is owed an update (a stage change, a reply, an interview follow-up), they'll show up here with a draft ready to review."
           action={
-            <Link href="/recruiter/candidates" className="text-sm text-charcoal underline underline-offset-2 hover:text-ink">
+            <Link href="/recruiter/candidates" className="text-sm text-brand-ink underline underline-offset-2 hover:text-ink">
               Go to candidates
             </Link>
           }

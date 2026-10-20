@@ -66,7 +66,7 @@ export default async function InterviewsPage() {
             <h2 id="feedback-heading" className="flex items-center justify-between px-3 pt-3 text-base font-semibold tracking-tight text-ink">
               Needs feedback
               {needsFeedback.length > 0 && (
-                <span className="rounded-full bg-caution/10 px-2 py-0.5 text-xs font-medium text-caution ring-1 ring-caution/20">
+                <span className="rounded-full bg-caution/10 px-2 py-0.5 text-xs font-medium text-caution ring-1 ring-caution/30">
                   {needsFeedback.length}
                 </span>
               )}

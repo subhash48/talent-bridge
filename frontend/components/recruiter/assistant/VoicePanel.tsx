@@ -36,7 +36,7 @@ export function VoicePanel({ state, levels, response, actions, onMic, onClose }:
       role="dialog"
       aria-modal="false"
       aria-label="Voice assistant"
-      className="fixed inset-x-0 bottom-0 z-40 max-h-[85dvh] animate-rise overflow-y-auto rounded-t-[18px] border-t border-border-strong bg-surface/95 px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-24px_60px_-20px_rgb(0_0_0/0.85)] backdrop-blur-md md:inset-x-auto md:right-6 md:bottom-6 md:w-[392px] md:rounded-[16px] md:border md:pb-4"
+      className="fixed inset-x-0 bottom-0 z-40 max-h-[85dvh] animate-rise overflow-y-auto rounded-t-[18px] border-t border-border-strong bg-surface px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-raised md:inset-x-auto md:right-6 md:bottom-6 md:w-[392px] md:rounded-[16px] md:border md:pb-4"
     >
       <div aria-hidden className="mx-auto mb-2 h-1 w-9 rounded-full bg-ink/15 md:hidden" />
       <header className="flex items-center justify-between gap-3">
@@ -85,14 +85,14 @@ export function VoicePanel({ state, levels, response, actions, onMic, onClose }:
   );
 }
 
-/** A quiet waveform: ivory bars that follow the microphone's level while listening. */
+/** A quiet waveform: brand-blue bars that follow the microphone's level while listening. */
 function Waveform({ levels, active, working }: { levels: number[]; active: boolean; working: boolean }) {
   return (
     <div aria-hidden className="my-3 flex h-12 items-center justify-center gap-[3px]">
       {levels.map((level, index) => (
         <span
           key={index}
-          className={cn("w-[3px] rounded-full bg-ink transition-[height,opacity] duration-100", working && "animate-pulse")}
+          className={cn("w-[3px] rounded-full bg-brand transition-[height,opacity] duration-100", working && "animate-pulse")}
           style={{
             height: `${active ? Math.max(3, level * 44) : working ? 6 + ((index * 7) % 10) : 3}px`,
             opacity: active ? 0.35 + level * 0.65 : 0.25,
@@ -106,7 +106,7 @@ function Waveform({ levels, active, working }: { levels: number[]; active: boole
 /** Three stars joined by faint lines, from the sign-in page's night sky. They brighten while it works. */
 function Constellation({ active }: { active: boolean }) {
   return (
-    <svg aria-hidden viewBox="0 0 28 20" className={cn("h-5 w-7 text-ink transition-opacity duration-300", active ? "opacity-100" : "opacity-50")}>
+    <svg aria-hidden viewBox="0 0 28 20" className={cn("h-5 w-7 text-brand-ink transition-opacity duration-300", active ? "opacity-100" : "opacity-50")}>
       <path d="M3 15L12 5L25 9" stroke="currentColor" strokeWidth={0.8} opacity={0.35} fill="none" />
       {[
         [3, 15],

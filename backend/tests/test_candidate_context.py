@@ -125,6 +125,46 @@ async def test_switching_changes_everything_and_mixes_nothing(client: AsyncClien
     assert [note for note in NOTES if note in nova_text + encord_text] == []
 
 
+async def test_each_of_three_applications_shows_only_its_own_employer(client: AsyncClient) -> None:
+    """The dashboard's application selector, one card at a time: everything follows the card chosen."""
+    expected = {
+        ENCORD_APP: ("Encord", "Software Engineer", "interview", "Alex Chen", ["London", "San Francisco", "New York"]),
+        NOVA_APP: ("Nova AI", "Applied AI Engineer", "interview", "Mira Hoffmann", ["Berlin", "Lisbon"]),
+        HARBOR_APP: ("Harbor Robotics", "Platform Engineer", "screening", "Daan Visser", ["Rotterdam", "Hamburg"]),
+    }
+    words = {ENCORD_APP: ENCORD_ONLY, NOVA_APP: NOVA_ONLY, HARBOR_APP: HARBOR_ONLY}
+    slugs = {"Encord": "encord", "Nova AI": "nova-ai", "Harbor Robotics": "harbor-robotics"}
+    for application, (company, role, stage, recruiter, locations) in expected.items():
+        reads = await portal(client, application)
+        me, interviews, thread, prep = reads["me"], reads["interviews"], reads["messages"], reads["prep"]
+        assert me["application"]["id"] == application and me["application"]["stage"] == stage  # type: ignore[index]
+        assert me["company"]["name"] == company and me["job"]["title"] == role  # type: ignore[index]
+        assert me["recruiter"]["name"] == recruiter  # type: ignore[index]
+        assert reads["company"]["name"] == company and reads["company"]["locations"] == locations  # type: ignore[index]
+        assert {item["application_id"] for item in interviews} <= {application}  # type: ignore[union-attr]
+        assert {item["sender_name"] for item in thread["messages"]} <= {recruiter, "Rosa Navarro"}  # type: ignore[index]
+        assert prep["application_id"] == application and prep["company"] == company and prep["role"] == role  # type: ignore[index]
+
+        # The selector's card for it agrees with what the portal shows.
+        [card] = [item for item in me["applications"] if item["id"] == application]  # type: ignore[union-attr]
+        assert card["company"] == company and card["job_title"] == role and card["stage"] == stage
+        assert card["unread_messages"] == me["unread_messages"] == thread["unread"]  # type: ignore[index]
+
+        # And nothing from the other two applications appears anywhere else, the assistant included.
+        ask = {"message": "What does the company do?", "application_id": application}
+        answer = (await client.post(f"{API}/candidate/ai/ask", json=ask)).json()["answer"]
+        assert seeded_profile(slugs[company]).overview in answer
+        text = without_switcher(reads) + answer
+        others = [word for other, listed in words.items() if other != application for word in listed]
+        assert [word for word in others if word in text] == []
+        assert [note for note in NOTES if note in text] == []
+
+    # Harbor has no interview yet and an update Rosa hasn't read.
+    harbor = await portal(client, HARBOR_APP)
+    assert harbor["interviews"] == [] and harbor["me"]["next_interview"] is None  # type: ignore[index]
+    assert harbor["me"]["unread_messages"] == 1 and harbor["prep"]["interview"] is None  # type: ignore[index]
+
+
 async def test_opening_an_interview_makes_its_application_the_context(client: AsyncClient) -> None:
     # The portal was showing Encord; opening Nova's technical interview prepares for Nova.
     params = {"interview_id": NOVA_TECHNICAL, "application_id": ENCORD_APP}

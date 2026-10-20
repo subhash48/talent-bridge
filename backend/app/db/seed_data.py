@@ -20,6 +20,8 @@ DAY = 24 * 60
 RECRUITER = {"email": "alex.chen@encord.example", "full_name": "Alex Chen"}
 # Nova AI's recruiter, so a Nova AI application is never answered in an Encord recruiter's name.
 NOVA_RECRUITER = {"email": "mira.hoffmann@nova-ai.example", "full_name": "Mira Hoffmann"}
+# Harbor Robotics' recruiter, for the same reason.
+HARBOR_RECRUITER = {"email": "daan.visser@harbor-robotics.example", "full_name": "Daan Visser"}
 
 
 @dataclass(frozen=True)
@@ -227,6 +229,53 @@ COMPANIES: tuple[CompanySeed, ...] = (
         ),
         source="Fictional demo employer in TalentBridge's seed data.",
     ),
+    # Fictional: a third employer, so the portal's application selector can be seen (and tested) with
+    # applications at three companies. Its links use the reserved .example domain.
+    CompanySeed(
+        "harbor-robotics",
+        "Harbor Robotics",
+        150,
+        "/logos/harbor-robotics.svg",
+        "https://harbor-robotics.example/",
+        overview=(
+            "Harbor Robotics builds autonomous straddle carriers and the fleet software that runs them, so container "
+            "terminals can move cargo safely around the clock."
+        ),
+        mission="Make ports safer and cleaner by automating the heaviest, most repetitive work on the quay.",
+        highlights=(
+            ("14", "container terminals running Harbor fleets"),
+            ("2M+", "containers moved autonomously"),
+            ("85", "people across Rotterdam and Hamburg"),
+        ),
+        products=(
+            ("Harbor Carrier", "An electric, autonomous straddle carrier that lifts, moves and stacks containers."),
+            ("Fleet OS", "Plans, routes and monitors a terminal's whole autonomous fleet in real time."),
+            ("Harbor Twin", "A simulation of each terminal, used to test every software release before it ships."),
+        ),
+        values=(
+            ("Safety first", "Every change is proven in simulation before it reaches a real carrier."),
+            ("Own the outcome", "Teams run what they build, from the design review to the night shift on the quay."),
+            ("Stay curious", "Hard problems are shared openly, and anyone can ask why."),
+        ),
+        benefits=(
+            "28 days paid holiday",
+            "Flexible hours around a 10:00 to 15:00 core",
+            "Pension contribution of 8% of salary",
+            "€1,500 annual learning budget",
+            "Bike lease scheme",
+        ),
+        benefits_scope="employees in the Netherlands and Germany",
+        benefits_note="Benefits follow the local contract in each country. Your recruiter can share the details for yours.",
+        locations=("Rotterdam", "Hamburg"),
+        locations_note="Engineers work on site three days a week, with regular visits to customer terminals.",
+        hiring_process=("Recruiter call", "Technical screen", "Systems interview", "Terminal visit and team lunch"),
+        hiring_note="Most processes take about three weeks, and your recruiter shares feedback after each stage.",
+        links=(
+            ("Harbor Robotics website", "https://harbor-robotics.example/"),
+            ("Engineering at Harbor", "https://harbor-robotics.example/engineering/"),
+        ),
+        source="Fictional demo employer in TalentBridge's seed data.",
+    ),
 )
 
 
@@ -412,6 +461,16 @@ JOBS: tuple[JobSeed, ...] = (
         "Turn Nova AI's speech and translation research into features customers use on live support calls.",
         ("Python", "LLM evaluation", "Speech recognition", "PyTorch", "APIs"),
         company="nova-ai",
+    ),
+    JobSeed(
+        "Platform Engineer",
+        "Fleet Software",
+        "Rotterdam, Netherlands · Hybrid",
+        "Femke Jansen",
+        21,
+        "Build and run the cloud platform that plans, routes and monitors Harbor's autonomous fleets.",
+        ("Go", "Kubernetes", "Distributed systems", "Observability", "PostgreSQL"),
+        company="harbor-robotics",
     ),
 )
 

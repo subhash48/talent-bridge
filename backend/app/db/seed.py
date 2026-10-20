@@ -29,6 +29,7 @@ from app.db.seed_data import (
     CHECK_IN,
     COMPANIES,
     DAY,
+    HARBOR_RECRUITER,
     INTERVIEWS,
     JOBS,
     NO_FOLLOW_UP,
@@ -123,7 +124,7 @@ class Recorder:
 def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
     rows: dict[type[Base], list[dict[str, Any]]] = {table: [] for table in TABLES}
     recruiter_id = seed_id("user", RECRUITER["email"])
-    for person, days in ((RECRUITER, 120), (NOVA_RECRUITER, 90)):
+    for person, days in ((RECRUITER, 120), (NOVA_RECRUITER, 90), (HARBOR_RECRUITER, 60)):
         rows[User].append(
             {
                 "id": seed_id("user", person["email"]),

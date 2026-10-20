@@ -1,15 +1,23 @@
 "use client";
 
-import { Check, Search } from "lucide-react";
-import { useId, useState } from "react";
+import { Check, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
 import { EmployerLogo } from "@/components/candidate/EmployerLogo";
 import { PortalStatusBadge } from "@/components/candidate/PortalStatusBadge";
+import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { pluralize } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { CandidateApplicationSummary } from "@/types/portal";
+
+// How far the edges fade while there's more to scroll to that side. Cards snap this far in from the
+// left edge, so the one in front is always clear of the fade.
+const FADE_PX = 28;
+
+const scrollBehavior = (): ScrollBehavior =>
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
 
 function matches(application: CandidateApplicationSummary, query: string): boolean {
   return [application.company, application.jobTitle].some((text) => text.toLowerCase().includes(query));
@@ -18,19 +26,54 @@ function matches(application: CandidateApplicationSummary, query: string): boole
 /**
  * The dashboard's row of the candidate's applications, one card each: employer, role and the stage they
  * may see. Choosing a card makes it the application the whole portal shows (application -> job ->
- * company). The row scrolls sideways when the cards don't fit, with a search by company or role.
+ * company). The row scrolls sideways: arrows on wider screens, touch on phones, and a search by company
+ * or role.
  */
 export function ApplicationSelector() {
   const { me, selectedId, selectApplication } = useCandidatePortal();
   const applications = me.applications;
   const [query, setQuery] = useState("");
+  const [edges, setEdges] = useState({ back: false, forward: false });
+  const scroller = useRef<HTMLDivElement>(null);
+  const row = useRef<HTMLDivElement>(null);
   const labelId = useId();
   const rowId = useId();
 
-  if (applications.length === 0) return null;
+  const any = applications.length > 0;
   const many = applications.length > 1;
   const search = query.trim().toLowerCase();
   const shown = search ? applications.filter((application) => matches(application, search)) : applications;
+
+  // Whether there's more to scroll to on either side, for the arrows and the fades. Watching the row
+  // as well as the scroller catches cards coming and going with the search.
+  useEffect(() => {
+    const box = scroller.current;
+    const content = row.current;
+    if (!box || !content) return;
+    const measure = () => {
+      const back = box.scrollLeft > 1;
+      const forward = box.scrollLeft + box.clientWidth < box.scrollWidth - 1;
+      setEdges((current) => (current.back === back && current.forward === forward ? current : { back, forward }));
+    };
+    const resized = new ResizeObserver(measure);
+    resized.observe(box);
+    resized.observe(content);
+    box.addEventListener("scroll", measure, { passive: true });
+    return () => {
+      resized.disconnect();
+      box.removeEventListener("scroll", measure);
+    };
+  }, [any]);
+
+  if (!any) return null;
+
+  const page = (direction: 1 | -1) => {
+    const box = scroller.current;
+    if (box) box.scrollBy({ left: direction * Math.max(box.clientWidth - 2 * FADE_PX, 160), behavior: scrollBehavior() });
+  };
+
+  const fade = (more: boolean, side: "left" | "right") =>
+    more ? `linear-gradient(to ${side}, #000 calc(100% - ${FADE_PX}px), transparent)` : "linear-gradient(#000, #000)";
 
   return (
     <section aria-labelledby={labelId} className="flex flex-col gap-2.5">
@@ -60,6 +103,30 @@ export function ApplicationSelector() {
                 className="h-8 pl-8 text-[13px]"
               />
             </div>
+            <div className="hidden items-center gap-1 sm:flex">
+              <Button
+                variant="secondary"
+                size="icon-sm"
+                aria-label="Scroll back through your applications"
+                aria-controls={rowId}
+                disabled={!edges.back}
+                onClick={() => page(-1)}
+                className="size-8"
+              >
+                <ChevronLeft />
+              </Button>
+              <Button
+                variant="secondary"
+                size="icon-sm"
+                aria-label="Scroll on through your applications"
+                aria-controls={rowId}
+                disabled={!edges.forward}
+                onClick={() => page(1)}
+                className="size-8"
+              >
+                <ChevronRight />
+              </Button>
+            </div>
           </div>
         )}
       </div>
@@ -69,8 +136,16 @@ export function ApplicationSelector() {
       </p>
 
       {/* Padded inside so a card's selected border and focus ring aren't clipped by the scrolling. */}
-      <div id={rowId} className="scrollbar-none -m-1 snap-x snap-mandatory scroll-px-1 overflow-x-auto overscroll-x-contain p-1">
-        <div className="w-max min-w-full">
+      <div
+        ref={scroller}
+        id={rowId}
+        className="scrollbar-none -m-1 snap-x snap-mandatory scroll-px-[28px] overflow-x-auto overscroll-x-contain p-1"
+        style={{
+          maskImage: `${fade(edges.back, "left")}, ${fade(edges.forward, "right")}`,
+          maskComposite: "intersect",
+        }}
+      >
+        <div ref={row} className="w-max min-w-full">
           {shown.length > 0 ? (
             <div role="radiogroup" aria-labelledby={labelId} className="flex gap-2.5">
               {shown.map((application) => (

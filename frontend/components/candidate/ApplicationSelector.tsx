@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, ChevronLeft, ChevronRight, Search } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
 import { EmployerLogo } from "@/components/candidate/EmployerLogo";
@@ -27,7 +27,7 @@ function matches(application: CandidateApplicationSummary, query: string): boole
  * The dashboard's row of the candidate's applications, one card each: employer, role and the stage they
  * may see. Choosing a card makes it the application the whole portal shows (application -> job ->
  * company). The row scrolls sideways: arrows on wider screens, touch on phones, and a search by company
- * or role.
+ * or role. Keyboard: the cards are one radio group, so Tab reaches the chosen one and the arrow keys move.
  */
 export function ApplicationSelector() {
   const { me, selectedId, selectApplication } = useCandidatePortal();
@@ -44,6 +44,7 @@ export function ApplicationSelector() {
   const many = applications.length > 1;
   const search = query.trim().toLowerCase();
   const shown = search ? applications.filter((application) => matches(application, search)) : applications;
+  const tabStop = shown.some((application) => application.id === selectedId) ? selectedId : shown[0]?.id;
 
   // Whether there's more to scroll to on either side, for the arrows and the fades. Watching the row
   // as well as the scroller catches cards coming and going with the search.
@@ -84,6 +85,31 @@ export function ApplicationSelector() {
   const page = (direction: 1 | -1) => {
     const box = scroller.current;
     if (box) box.scrollBy({ left: direction * Math.max(box.clientWidth - 2 * FADE_PX, 160), behavior: scrollBehavior() });
+  };
+
+  const choose = (id: string, focus = false) => {
+    selectApplication(id);
+    // Focus without the browser's own scrolling: the effect above brings the card to a snap point.
+    if (focus) scroller.current?.querySelector<HTMLElement>(`[data-application="${id}"]`)?.focus({ preventScroll: true });
+  };
+
+  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const focused = event.target instanceof HTMLElement ? event.target.dataset.application : undefined;
+    const index = shown.findIndex((application) => application.id === focused);
+    if (index < 0) return;
+    const last = shown.length - 1;
+    const moves: Record<string, number> = {
+      ArrowRight: index === last ? 0 : index + 1,
+      ArrowDown: index === last ? 0 : index + 1,
+      ArrowLeft: index === 0 ? last : index - 1,
+      ArrowUp: index === 0 ? last : index - 1,
+      Home: 0,
+      End: last,
+    };
+    const next = moves[event.key];
+    if (next === undefined) return;
+    event.preventDefault();
+    choose(shown[next].id, true);
   };
 
   const fade = (more: boolean, side: "left" | "right") =>
@@ -161,13 +187,14 @@ export function ApplicationSelector() {
       >
         <div ref={row} className="w-max min-w-full">
           {shown.length > 0 ? (
-            <div role="radiogroup" aria-labelledby={labelId} className="flex gap-2.5">
+            <div role="radiogroup" aria-labelledby={labelId} onKeyDown={onKeyDown} className="flex gap-2.5">
               {shown.map((application) => (
                 <ApplicationCard
                   key={application.id}
                   application={application}
                   selected={application.id === selectedId}
-                  onSelect={() => selectApplication(application.id)}
+                  tabbable={application.id === tabStop}
+                  onSelect={() => choose(application.id)}
                 />
               ))}
             </div>
@@ -188,16 +215,19 @@ export function ApplicationSelector() {
 type ApplicationCardProps = {
   application: CandidateApplicationSummary;
   selected: boolean;
+  /** The card Tab reaches: the chosen one, or the first shown when the search hides it. */
+  tabbable: boolean;
   onSelect: () => void;
 };
 
-function ApplicationCard({ application, selected, onSelect }: ApplicationCardProps) {
+function ApplicationCard({ application, selected, tabbable, onSelect }: ApplicationCardProps) {
   return (
     <button
       type="button"
       role="radio"
       aria-checked={selected}
       aria-label={`${application.company}, ${application.jobTitle}. ${application.stageLabel}`}
+      tabIndex={tabbable ? 0 : -1}
       data-application={application.id}
       onClick={onSelect}
       className={cn(

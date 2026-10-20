@@ -22,8 +22,8 @@ export function AskAIEntry({ title = "Ask AI", description, prompts, className }
   return (
     <Card className={cn("flex flex-col gap-3 p-5 sm:p-5 xl:flex-row xl:items-center xl:justify-between", className)}>
       <div className="flex items-center gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-ink/[0.05] ring-1 ring-ink/10">
-          <Sparkles aria-hidden className="size-4 text-ink" />
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-soft ring-1 ring-brand-ink/20">
+          <Sparkles aria-hidden className="size-4 text-brand-ink" />
         </span>
         <div className="min-w-0">
           <h2 className="text-base font-semibold tracking-tight text-ink">{title}</h2>

@@ -90,7 +90,7 @@ export function ResumeInput({ id, file, onChange, error, disabled }: ResumeInput
       }}
       onDrop={drop}
       className={cn(
-        "rounded-[10px] border border-dashed border-border-strong bg-ink/[0.02] transition-[border-color,background-color,box-shadow] duration-150 has-[input:focus-visible]:border-ink/30 has-[input:focus-visible]:ring-4 has-[input:focus-visible]:ring-ink/[0.06]",
+        "rounded-[10px] border border-dashed border-border-strong bg-ink/[0.02] transition-[border-color,background-color,box-shadow] duration-150 has-[input:focus-visible]:border-brand has-[input:focus-visible]:ring-4 has-[input:focus-visible]:ring-brand-ink/20",
         file && "border-solid border-border",
         error && "border-danger/60",
         dragging && "border-ai/60 bg-ai/[0.06]",
@@ -133,7 +133,7 @@ export function ResumeInput({ id, file, onChange, error, disabled }: ResumeInput
             <Upload aria-hidden className="size-[18px] text-charcoal" />
           </span>
           <p className="text-sm text-charcoal">
-            <label htmlFor={id} className={cn("font-medium text-ink underline-offset-4 hover:underline", chooseStyles)}>
+            <label htmlFor={id} className={cn("font-medium text-brand-ink underline-offset-4 hover:text-ink hover:underline", chooseStyles)}>
               Choose a file
             </label>
             <span className="hidden sm:inline"> or drag it here</span>

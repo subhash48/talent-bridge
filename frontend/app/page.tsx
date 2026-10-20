@@ -67,8 +67,8 @@ export default async function Home() {
         <ul className="mt-16 grid grid-cols-1 gap-4 md:grid-cols-3">
           {POINTS.map(({ icon: Icon, title, text }) => (
             <li key={title} className="glass rounded-[14px] border border-border p-5">
-              <span className="flex size-9 items-center justify-center rounded-[10px] bg-ink/[0.05] ring-1 ring-ink/10">
-                <Icon aria-hidden strokeWidth={1.75} className="size-4 text-charcoal" />
+              <span className="flex size-9 items-center justify-center rounded-[10px] bg-brand-soft ring-1 ring-brand-ink/20">
+                <Icon aria-hidden strokeWidth={1.75} className="size-4 text-brand-ink" />
               </span>
               <h2 className="mt-4 text-[15px] font-semibold text-ink">{title}</h2>
               <p className="mt-1.5 text-sm leading-relaxed text-stone">{text}</p>

@@ -6,7 +6,7 @@ import { buttonStyles } from "@/components/ui/Button";
 export default function NotFound() {
   return (
     <main className="app-backdrop flex min-h-dvh flex-col items-center justify-center px-4 text-center">
-      <TalentBridgeMark className="h-8 w-auto text-ink" />
+      <TalentBridgeMark className="h-8 w-auto text-brand-ink" />
       <p className="mt-8 text-sm text-stone">404</p>
       <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink">This page doesn&apos;t exist</h1>
       <p className="mt-2 max-w-sm text-stone">The link may be out of date, or the record may have been removed.</p>

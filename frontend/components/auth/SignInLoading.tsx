@@ -10,7 +10,7 @@ export function SignInLoading({ active }: { active: boolean }) {
   return (
     <div role="status" hidden={!active} className="fixed inset-0 z-50 flex items-center justify-center bg-canvas">
       <span className="inline-flex items-center gap-3 text-ink">
-        <TalentBridgeMark className="h-10 w-auto motion-safe:animate-pulse" />
+        <TalentBridgeMark className="h-10 w-auto text-brand-ink motion-safe:animate-pulse" />
         <span className="text-[32px] font-semibold tracking-[-0.01em]">TalentBridge</span>
       </span>
       <span className="sr-only">Signing you in…</span>

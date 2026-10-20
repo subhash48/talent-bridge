@@ -20,9 +20,9 @@ const SIGN_IN_PATH = "/login?next=/candidate";
 const PORTAL_PATH = "/candidate";
 
 const TONES = {
-  positive: "bg-sage/10 text-sage ring-sage/25",
-  ai: "bg-ai/12 text-ink ring-ai/30",
-  attention: "bg-caution/10 text-caution ring-caution/25",
+  positive: "bg-sage/[0.08] text-sage ring-sage/25",
+  ai: "bg-brand-soft text-brand-ink ring-brand-ink/25",
+  attention: "bg-caution/10 text-caution ring-caution/30",
 } as const;
 
 const VIEWS: Record<ApplyOutcome, { title: string; icon: LucideIcon; tone: keyof typeof TONES }> = {

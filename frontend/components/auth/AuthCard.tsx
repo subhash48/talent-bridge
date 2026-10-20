@@ -28,4 +28,4 @@ export function AuthCard({ title, description, children, footer }: AuthCardProps
 }
 
 /** A quiet in-card link, e.g. "Forgot password?". */
-export const authLinkStyles = "font-medium text-charcoal underline-offset-4 transition-colors hover:text-ink hover:underline";
+export const authLinkStyles = "font-medium text-brand-ink underline-offset-4 transition-colors hover:text-ink hover:underline";

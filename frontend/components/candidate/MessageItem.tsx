@@ -13,7 +13,7 @@ const KIND_LABELS: Partial<Record<MessageKind, string>> = {
 
 /**
  * One message in the thread. Compact and document-like rather than chat bubbles: the hiring team's
- * messages sit on the left with their name, the candidate's own on the right with a faint ivory tint.
+ * messages sit on the left with their name, the candidate's own on the right with a soft brand tint.
  */
 type MessageItemProps = {
   message: CandidateMessage;
@@ -41,7 +41,7 @@ export function MessageItem({ message, grouped, receipt = false }: MessageItemPr
         <p
           className={cn(
             "rounded-[12px] px-3.5 py-2 text-sm leading-relaxed whitespace-pre-line",
-            own ? "bg-ink/[0.1] text-ink ring-1 ring-ink/15" : "bg-ink/[0.04] text-charcoal ring-1 ring-ink/[0.07]",
+            own ? "bg-brand-soft text-ink ring-1 ring-brand-ink/20" : "bg-ink/[0.04] text-charcoal ring-1 ring-ink/[0.07]",
           )}
         >
           <span className="sr-only">{own ? "You" : message.senderName}: </span>
@@ -49,7 +49,7 @@ export function MessageItem({ message, grouped, receipt = false }: MessageItemPr
         </p>
         {own && receipt && (
           <p className="mt-1 flex items-center gap-1 px-1 text-[11px] text-faint">
-            {message.readAt ? <CheckCheck aria-hidden className="size-3.5 text-ink" /> : <Check aria-hidden className="size-3.5" />}
+            {message.readAt ? <CheckCheck aria-hidden className="size-3.5 text-brand-ink" /> : <Check aria-hidden className="size-3.5" />}
             {message.readAt ? "Read" : "Sent"}
           </p>
         )}

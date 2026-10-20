@@ -32,7 +32,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <p className="text-[13px] text-stone">Applied for a role?</p>
           <Link
             href="/signup"
-            className="mt-0.5 inline-flex items-center gap-2 rounded-md text-[15px] text-ink underline-offset-4 hover:underline"
+            className="mt-0.5 inline-flex items-center gap-2 rounded-md text-[15px] text-brand-ink underline-offset-4 hover:text-ink hover:underline"
           >
             Create your candidate account <ArrowRight aria-hidden className="size-4" />
           </Link>

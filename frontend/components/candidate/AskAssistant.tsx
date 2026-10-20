@@ -53,8 +53,8 @@ export function AskAssistant({
   return (
     <Card className={cn("flex flex-col p-5 sm:p-5", className)}>
       <div className="flex items-center gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-ink/[0.05] ring-1 ring-ink/10">
-          <Sparkles aria-hidden className="size-4 text-ink" />
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-soft ring-1 ring-brand-ink/20">
+          <Sparkles aria-hidden className="size-4 text-brand-ink" />
         </span>
         <div>
           <h2 className="text-base font-semibold tracking-tight text-ink">Ask AI</h2>

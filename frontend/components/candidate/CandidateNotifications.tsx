@@ -35,7 +35,7 @@ export function CandidateNotifications() {
         <Button variant="ghost" size="icon" aria-label="Notifications" className="relative rounded-full text-charcoal">
           <Bell strokeWidth={1.75} />
           {unseen && (
-            <span className="absolute top-2 right-2 size-[7px] rounded-full bg-ink ring-2 ring-canvas">
+            <span className="absolute top-2 right-2 size-[7px] rounded-full bg-highlight ring-2 ring-canvas">
               <span className="sr-only">New notifications</span>
             </span>
           )}
@@ -63,7 +63,7 @@ function NotificationItems() {
           <span
             className={cn(
               "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full ring-1",
-              item.attention ? "bg-ai/15 ring-ai/30 [&_svg]:text-ink!" : "bg-ink/[0.05] ring-ink/10",
+              item.attention ? "bg-caution/[0.12] ring-caution/35 [&_svg]:text-caution!" : "bg-ink/[0.05] ring-ink/10",
             )}
           >
             <Icon aria-hidden className="size-3.5!" />

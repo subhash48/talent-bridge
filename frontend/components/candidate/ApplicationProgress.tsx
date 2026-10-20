@@ -22,7 +22,7 @@ export function ApplicationProgress({ application, showDates = false }: { applic
           <div
             className={cn(
               "h-full rounded-full transition-[width] duration-500 ease-out",
-              closed ? "bg-ink/30" : "bg-ink/60",
+              closed ? "bg-ink/30" : "bg-brand",
             )}
             style={{ width: `${filled * 100}%` }}
           />
@@ -35,15 +35,15 @@ export function ApplicationProgress({ application, showDates = false }: { applic
               <li key={step.stage} aria-current={current ? "step" : undefined} className="flex flex-col items-center gap-2.5 text-center">
                 <span className="flex size-6 items-center justify-center">
                   {current ? (
-                    <span className="flex size-5 items-center justify-center rounded-full bg-canvas ring-2 ring-ink">
-                      <span className="size-2 rounded-full bg-ink" />
+                    <span className={cn("flex size-5 items-center justify-center rounded-full bg-surface ring-2", closed ? "ring-ink/50" : "ring-brand-ink")}>
+                      <span className={cn("size-2 rounded-full", closed ? "bg-ink/50" : "bg-brand")} />
                     </span>
                   ) : complete ? (
-                    <span className="flex size-5 items-center justify-center rounded-full bg-ink">
-                      <Check aria-hidden className="size-3 text-canvas" strokeWidth={3.5} />
+                    <span className={cn("flex size-5 items-center justify-center rounded-full", closed ? "bg-ink/50" : "bg-brand")}>
+                      <Check aria-hidden className="size-3 text-on-brand" strokeWidth={3.5} />
                     </span>
                   ) : (
-                    <span className="size-3.5 rounded-full bg-canvas ring-1 ring-ink/25" />
+                    <span className="size-3.5 rounded-full bg-surface ring-1 ring-ink/25" />
                   )}
                 </span>
                 <span className={cn("text-[13px]", current ? "font-medium text-ink" : complete ? "text-charcoal" : "text-faint")}>

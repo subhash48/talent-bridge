@@ -54,12 +54,22 @@ const SECTIONS: { field: PrepList; title: string; icon: LucideIcon; hint?: strin
   { field: "practiceQuestions", title: "Practice questions", icon: Lightbulb },
 ];
 
+type InterviewPrepProps = {
+  interviewId?: string;
+  /** The application the interview belongs to, when the page could read it. */
+  interviewApplicationId?: string;
+};
+
 /**
  * Prep for the application the portal is showing, or for one interview (/candidate/prep?interview=...).
- * An interview decides the application: opening one makes its application the portal's context.
+ * An interview decides the application: opening one makes its application the portal's context, at once
+ * when the page knows it, else as soon as the prep (which names it) arrives.
  */
-export function InterviewPrep({ interviewId }: { interviewId?: string }) {
-  const { applicationId } = useCandidatePortal();
+export function InterviewPrep({ interviewId, interviewApplicationId }: InterviewPrepProps) {
+  const { applicationId, selectApplication } = useCandidatePortal();
+  useEffect(() => {
+    if (interviewApplicationId) selectApplication(interviewApplicationId);
+  }, [interviewApplicationId, selectApplication]);
   // Keyed by the interview when there is one, so the selection following it doesn't restart the prep.
   return (
     <PrepView key={interviewId ? `interview:${interviewId}` : (applicationId ?? "none")} applicationId={applicationId} interviewId={interviewId ?? null} />

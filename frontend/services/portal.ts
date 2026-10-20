@@ -87,6 +87,12 @@ export async function getCandidateInterviews(applicationId?: string | null): Pro
   return (await apiFetch<ApiPortalInterview[]>(`/candidate/interviews${forApplication(applicationId)}`)).map(fromInterview);
 }
 
+/** GET /candidate/interviews/{id}: one of the candidate's interviews, which names its application. A 404
+ * means it isn't one of theirs. */
+export async function getCandidateInterview(interviewId: string): Promise<CandidateInterview> {
+  return fromInterview(await apiFetch<ApiPortalInterview>(`/candidate/interviews/${encodeURIComponent(interviewId)}`));
+}
+
 /** PATCH /candidate/interviews/{id}/confirm. The recruiter sees the confirmation straight away. */
 export async function confirmInterview(interviewId: string): Promise<CandidateInterview> {
   return fromInterview(await apiFetch<ApiPortalInterview>(`/candidate/interviews/${interviewId}/confirm`, { method: "PATCH" }));

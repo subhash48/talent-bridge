@@ -9,6 +9,7 @@ import { CurrentApplicationCard } from "@/components/candidate/CurrentApplicatio
 import { FourQuestions } from "@/components/candidate/FourQuestions";
 import { LastUpdateCard } from "@/components/candidate/LastUpdateCard";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { ASK_AI_PROMPTS } from "@/lib/ask-ai";
 
 /**
@@ -19,11 +20,23 @@ import { ASK_AI_PROMPTS } from "@/lib/ask-ai";
  * own page, which follows the same choice.
  */
 export function CandidateDashboard() {
-  const { me } = useCandidatePortal();
+  const { me, selectedId, switching } = useCandidatePortal();
   const { application, job } = me;
 
   let content;
-  if (application && job) {
+  if (switching) {
+    // The chosen application's details are on their way. The previous one's are never shown under it.
+    const chosen = me.applications.find((item) => item.id === selectedId);
+    content = (
+      <div className="flex flex-col gap-4" aria-busy="true">
+        <p role="status" className="sr-only">
+          {chosen ? `Loading your ${chosen.jobTitle} application at ${chosen.company}` : "Loading your application"}
+        </p>
+        <Skeleton className="h-[218px] rounded-[14px]" />
+        <Skeleton className="h-[300px] rounded-[14px]" />
+      </div>
+    );
+  } else if (application && job) {
     content = (
       <>
         <CurrentApplicationCard application={application} job={job} otherApplications={me.applications.length - 1} />

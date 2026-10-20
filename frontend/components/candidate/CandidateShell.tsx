@@ -2,6 +2,7 @@
 
 import { CloudOff, Menu } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
@@ -18,6 +19,10 @@ import { cn } from "@/lib/utils";
 export function CandidateShell({ children }: { children: ReactNode }) {
   const [navOpen, setNavOpen] = useState(false);
   const { offline, switching } = useCandidatePortal();
+  const pathname = usePathname();
+  // The dashboard shows its own placeholder while another application loads. Every other page fades
+  // until the chosen application is in, so its old content never reads as the new one's.
+  const fading = switching && pathname !== "/candidate";
 
   return (
     <ToastProvider>
@@ -59,14 +64,13 @@ export function CandidateShell({ children }: { children: ReactNode }) {
               We can’t reach the server right now. You’re seeing the latest information we have.
             </p>
           )}
-          {/* While another application loads the page fades, so its old content never reads as the new one's. */}
           <main
             id="main"
             tabIndex={-1}
-            aria-busy={switching || undefined}
+            aria-busy={fading || undefined}
             className={cn(
               "relative mx-auto w-full max-w-[1120px] flex-1 px-4 pb-10 transition-opacity duration-200 focus:outline-none sm:px-6 lg:px-8",
-              switching && "pointer-events-none opacity-50",
+              fading && "pointer-events-none opacity-50",
             )}
           >
             {children}

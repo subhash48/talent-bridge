@@ -221,6 +221,16 @@ async def test_the_assistant_answers_about_the_application_asked_about(client: A
     assert "Nova AI" not in await ask("What does the company do?", ENCORD_APP)
 
 
+async def test_a_profile_change_reaches_every_hiring_team(client: AsyncClient) -> None:
+    updated = await client.patch(f"{API}/candidate/profile", json={"location": "Valencia, Spain"})
+    assert updated.status_code == 200
+    for application in (ENCORD_APP, NOVA_APP, HARBOR_APP):
+        activity = (await client.get(f"{API}/candidate/activity", params={"application_id": application})).json()
+        assert activity[0]["title"] == "You updated your profile", application
+    # Recording it doesn't change which application the portal opens on.
+    assert (await client.get(f"{API}/candidate/me")).json()["application"]["id"] == ENCORD_APP
+
+
 async def test_another_candidates_application_or_interview_is_a_404(client: AsyncClient) -> None:
     for path, params in [
         ("me", None),  # /me shows her own default instead of anyone else's

@@ -383,7 +383,8 @@ async def list_activity(
 
 
 async def update_profile(session: AsyncSession, candidate: Candidate, data: ProfileUpdate) -> PortalCandidate:
-    """Changes the candidate's own contact details. The recruiter sees them on the same record."""
+    """Changes the candidate's own contact details. The recruiter sees them on the same record, and every
+    hiring team still considering them finds the change on its own application's timeline."""
     sent = data.model_dump(exclude_unset=True)
     if sent.get("skills", []) is None:
         del sent["skills"]  # null skills means "no change", not "remove them all"
@@ -395,9 +396,11 @@ async def update_profile(session: AsyncSession, candidate: Candidate, data: Prof
     for field, value in changes.items():
         setattr(candidate, field, value)
     candidate.updated_at = now
-    application = await current_application(session, candidate.id)
-    if application is not None:
-        labels = [PROFILE_FIELDS[field] for field in PROFILE_FIELDS if field in changes]
+    applications = await candidate_applications(session, candidate.id)
+    # Every active application, or without one the application the portal opens on.
+    active = [application for application in applications if status_of(application).bucket == B.ACTIVE]
+    labels = [PROFILE_FIELDS[field] for field in PROFILE_FIELDS if field in changes]
+    for application in active or applications[:1]:
         record_activity(
             session,
             application.id,

@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/DropdownMenu";
 import { useSignOut } from "@/hooks/useSignOut";
+import { pluralize } from "@/lib/format";
 
 // Each page and the addresses that belong to it: one application lives under Applications, and
 // interview prep (opened from Interviews and the dashboard's next step) under Interviews.
@@ -130,6 +131,8 @@ function ApplicationContext({ onNavigate }: { onNavigate?: () => void }) {
   const router = useRouter();
   const current = me.applications.find((application) => application.id === applicationId);
   if (!current) return null;
+  // Unread messages about the applications that aren't on screen: the sidebar's Messages badge only counts this one's.
+  const unreadElsewhere = me.applications.reduce((sum, item) => (item.id === current.id ? sum : sum + item.unreadMessages), 0);
 
   const summary = (label: string) => (
     <>
@@ -157,9 +160,15 @@ function ApplicationContext({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        aria-label={`Viewing ${current.company} — ${current.jobTitle}. Switch application`}
+        aria-label={[
+          `Viewing ${current.company} — ${current.jobTitle}`,
+          unreadElsewhere > 0 ? `${pluralize(unreadElsewhere, "unread message")} in your other applications` : "",
+          "Switch application",
+        ]
+          .filter(Boolean)
+          .join(". ")}
         aria-busy={switching || undefined}
-        className="mb-4 flex w-full items-center gap-2.5 rounded-[8px] bg-ink/[0.04] px-2.5 py-2 text-left ring-1 ring-ink/[0.08] transition-colors hover:bg-ink/[0.07]"
+        className="relative mb-4 flex w-full items-center gap-2.5 rounded-[8px] bg-ink/[0.04] px-2.5 py-2 text-left ring-1 ring-ink/[0.08] transition-colors hover:bg-ink/[0.07]"
       >
         {summary("Viewing application")}
         {switching ? (
@@ -167,6 +176,7 @@ function ApplicationContext({ onNavigate }: { onNavigate?: () => void }) {
         ) : (
           <ChevronsUpDown aria-hidden className="size-4 shrink-0 text-stone" />
         )}
+        {unreadElsewhere > 0 && <span aria-hidden className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-highlight" />}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-[280px]">
         <DropdownMenuLabel>Your applications</DropdownMenuLabel>
@@ -177,7 +187,10 @@ function ApplicationContext({ onNavigate }: { onNavigate?: () => void }) {
                 <span className="block truncate">
                   {application.company} — {application.jobTitle}
                 </span>
-                <span className="block text-xs text-stone">{application.stageLabel}</span>
+                <span className="block text-xs text-stone">
+                  {application.stageLabel}
+                  {application.unreadMessages > 0 && ` · ${pluralize(application.unreadMessages, "new message")}`}
+                </span>
               </span>
             </DropdownMenuRadioItem>
           ))}

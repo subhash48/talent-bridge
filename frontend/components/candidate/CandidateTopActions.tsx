@@ -6,10 +6,7 @@ import { CandidateNotifications } from "@/components/candidate/CandidateNotifica
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
 import { Avatar } from "@/components/shared/Avatar";
 
-/**
- * The notification bell and the candidate's avatar, which opens their profile. They sit in the top bar
- * on every page but the dashboard, which shows them beside its game's score instead.
- */
+/** The notification bell and the candidate's avatar, which opens their profile, in every page's top bar. */
 export function CandidateTopActions() {
   const { me } = useCandidatePortal();
 

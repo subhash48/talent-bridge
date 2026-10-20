@@ -2,7 +2,6 @@
 
 import { CloudOff, Menu } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
@@ -19,9 +18,6 @@ import { cn } from "@/lib/utils";
 export function CandidateShell({ children }: { children: ReactNode }) {
   const [navOpen, setNavOpen] = useState(false);
   const { offline, switching } = useCandidatePortal();
-  // The dashboard shows the bell and avatar itself, beside its game's score. Its top bar is then
-  // only the menu button and logo, which a wide screen has in the sidebar.
-  const dashboard = usePathname() === "/candidate";
 
   return (
     <ToastProvider>
@@ -43,12 +39,7 @@ export function CandidateShell({ children }: { children: ReactNode }) {
 
         <div className="relative flex min-w-0 flex-1 flex-col">
           <div aria-hidden className="app-backdrop pointer-events-none absolute inset-x-0 top-0 h-[420px]" />
-          <header
-            className={cn(
-              "relative flex h-14 shrink-0 items-center justify-between gap-3 px-4 sm:px-6 lg:justify-end lg:px-8",
-              dashboard && "lg:hidden",
-            )}
-          >
+          <header className="relative flex h-14 shrink-0 items-center justify-between gap-3 px-4 sm:px-6 lg:justify-end lg:px-8">
             <div className="flex items-center gap-1 lg:hidden">
               <Button variant="ghost" size="icon" onClick={() => setNavOpen(true)} aria-label="Open navigation">
                 <Menu />
@@ -57,15 +48,12 @@ export function CandidateShell({ children }: { children: ReactNode }) {
                 <TalentBridgeLogo />
               </Link>
             </div>
-            {!dashboard && <CandidateTopActions />}
+            <CandidateTopActions />
           </header>
           {offline && (
             <p
               role="status"
-              className={cn(
-                "relative mx-4 mb-2 flex items-center gap-2 rounded-[10px] border border-caution/30 bg-caution/10 px-3 py-2 text-[13px] text-caution sm:mx-6 lg:mx-8",
-                dashboard && "lg:mt-3",
-              )}
+              className="relative mx-4 mb-2 flex items-center gap-2 rounded-[10px] border border-caution/30 bg-caution/10 px-3 py-2 text-[13px] text-caution sm:mx-6 lg:mx-8"
             >
               <CloudOff aria-hidden className="size-4 shrink-0" />
               We can’t reach the server right now. You’re seeing the latest information we have.

@@ -6,7 +6,7 @@ type CandidateHeaderProps = {
   actions?: ReactNode;
 };
 
-/** Page header for the portal's inner pages. The dashboard has its own greeting. */
+/** Page header for the portal's inner pages. The dashboard has no title: it opens on the application selector. */
 export function CandidateHeader({ title, subtitle, actions }: CandidateHeaderProps) {
   return (
     <header className="flex flex-col gap-3 pt-1 pb-6 sm:flex-row sm:items-end sm:justify-between">

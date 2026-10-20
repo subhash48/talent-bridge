@@ -119,7 +119,8 @@ insert into public.applications (id, candidate_id, job_id, stage, source, applie
   ('f37db6fa-d19d-574c-bea9-5528211ed300', '936f9fb4-0799-5592-8c55-000ac68ecc1e', 'd80aee5d-3019-5f40-bd21-241fb1a5f3c9', 'sourced', 'GitHub', now() - interval '19000 minutes', now() - interval '19000 minutes', null),
   ('6f12e11b-a961-544b-93ce-d7371ce1410a', '1743b8bb-623e-55ef-af48-6d2bdbcf553d', '364db22d-5121-57d6-b74e-f6bdcd94f393', 'hired', 'LinkedIn', now() - interval '115200 minutes', now() - interval '21000 minutes', null),
   ('57ad530b-ba59-5753-980c-0655b3f0ffe0', 'e37da7a4-b2dc-5c43-b719-66eaa5be2dbf', 'd80aee5d-3019-5f40-bd21-241fb1a5f3c9', 'interview', 'Careers site', now() - interval '20160 minutes', now() - interval '2000 minutes', null),
-  ('7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'e37da7a4-b2dc-5c43-b719-66eaa5be2dbf', 'f1e625f8-e4b3-5808-8cf1-5e4b512386c3', 'interview', 'Careers site', now() - interval '23040 minutes', now() - interval '4300 minutes', null);
+  ('7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'e37da7a4-b2dc-5c43-b719-66eaa5be2dbf', 'f1e625f8-e4b3-5808-8cf1-5e4b512386c3', 'interview', 'Careers site', now() - interval '23040 minutes', now() - interval '4300 minutes', null),
+  ('6d6a41f3-12e8-5505-b163-142d4973ad66', 'e37da7a4-b2dc-5c43-b719-66eaa5be2dbf', 'af2a49b5-253b-5127-ab5f-d4316d97e806', 'screening', 'Careers site', now() - interval '8640 minutes', now() - interval '2900 minutes', null);
 
 insert into public.candidate_stage_history (id, application_id, previous_stage, new_stage, changed_by, changed_at) values
   ('3d06f32e-46ef-56bc-aa27-c435a65abbc7', '9ba87e3b-2ac4-5432-a823-4e50d03eabc4', null, 'sourced', '7029e685-fea9-5ce3-9750-8a3f04fb2f2e', now() - interval '17280 minutes'),
@@ -215,7 +216,9 @@ insert into public.candidate_stage_history (id, application_id, previous_stage, 
   ('d389b9e9-018c-5f0c-85d8-c909c3e77351', '57ad530b-ba59-5753-980c-0655b3f0ffe0', 'screening', 'interview', '7029e685-fea9-5ce3-9750-8a3f04fb2f2e', now() - interval '8800 minutes'),
   ('aca7e34e-1a00-5146-85d4-943f5580feaa', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', null, 'sourced', '38ce73f3-9425-5f05-bb27-02e58acc0e12', now() - interval '23040 minutes'),
   ('63faf441-f87b-5598-89f4-ad52b61ec173', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'sourced', 'screening', '38ce73f3-9425-5f05-bb27-02e58acc0e12', now() - interval '15000 minutes'),
-  ('0935ac45-d9bf-57f9-b40d-cda0a4d69282', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'screening', 'interview', '38ce73f3-9425-5f05-bb27-02e58acc0e12', now() - interval '8800 minutes');
+  ('0935ac45-d9bf-57f9-b40d-cda0a4d69282', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'screening', 'interview', '38ce73f3-9425-5f05-bb27-02e58acc0e12', now() - interval '8800 minutes'),
+  ('6f005a7f-c0f9-5271-abc8-cc4b18bc9bec', '6d6a41f3-12e8-5505-b163-142d4973ad66', null, 'sourced', '4cc9d9ed-4c7f-51af-a7d7-a0ac1dda6812', now() - interval '8640 minutes'),
+  ('fad3bb1b-5a70-58a2-ba35-a17e8b196681', '6d6a41f3-12e8-5505-b163-142d4973ad66', 'sourced', 'screening', '4cc9d9ed-4c7f-51af-a7d7-a0ac1dda6812', now() - interval '4400 minutes');
 
 insert into public.interviews (id, application_id, title, interview_type, scheduled_at, duration_minutes, status, meeting_url, notes, interviewers, confirmed_at, created_at, updated_at) values
   ('812585a6-2bfb-50e2-a3c2-7801f0704487', '9ba87e3b-2ac4-5432-a823-4e50d03eabc4', 'Design interview', 'video', date_trunc('day', now()) + interval '1 days 10 hours 0 minutes', 60, 'scheduled', 'https://meet.example.com/sophia-martinez', null, '["Maya Okafor", "Leo Brandt"]'::jsonb, now() - interval '120 minutes', now() - interval '4320 minutes', now() - interval '4320 minutes'),
@@ -261,6 +264,7 @@ insert into public.messages (id, application_id, sender_type, content, created_a
   ('da63d0de-e662-5ce8-b58a-45794c589cd7', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'recruiter', 'Hi Rosa, thanks for the recruiter screen. We''d love to move you forward to a technical interview for the Applied AI Engineer role with Lena and Tariq.', now() - interval '8800 minutes', now() - interval '8600 minutes'),
   ('2e2dc5c3-51cb-5273-96e6-34a854400b16', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'candidate', 'Thank you Mira, that sounds great. I''m looking forward to it.', now() - interval '8600 minutes', now() - interval '8570 minutes'),
   ('4bf39aae-b375-5257-b4d2-44e48dc26228', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'recruiter', 'Your technical interview is booked: 60 minutes on video, covering an LLM evaluation problem and a short system design discussion.', now() - interval '4300 minutes', null),
+  ('53cfe11a-b048-587f-957a-fd0c9a340901', '6d6a41f3-12e8-5505-b163-142d4973ad66', 'recruiter', 'Hi Rosa, thanks for applying for the Platform Engineer role. Femke is reviewing your application this week, and I''ll be in touch about a technical screen.', now() - interval '2900 minutes', null),
   ('6f4e52ff-5d0c-5528-a52a-6a986590c190', 'cba0f815-a6dc-5a9f-83fd-db8add16ff48', 'recruiter', 'Hi Daniel,
 
 Thanks for applying for the Software Engineer role. We''ve received your application and the team is reviewing it. I''ll update you within a week.
@@ -732,6 +736,9 @@ insert into public.candidate_activity (id, application_id, activity_type, title,
   ('efbdc0b3-f5e2-5158-b4df-21ce8e96ab93', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'stage_changed', 'Moved to Screening', null, '{"from": "sourced", "to": "screening"}'::jsonb, now() - interval '15000 minutes'),
   ('a84c2a2f-5e86-516d-8961-3dde2aeb5eda', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'stage_changed', 'Moved to Interview', null, '{"from": "screening", "to": "interview"}'::jsonb, now() - interval '8800 minutes'),
   ('0162ff02-b51a-52ef-9f7e-ee6f8b001ce9', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'interview_completed', 'Recruiter screen completed', null, null, now() - interval '12900 minutes'),
-  ('5b74a984-7abc-5ea5-84f5-7e3b624c2e6c', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'interview_scheduled', 'Technical interview scheduled', null, null, now() - interval '4300 minutes');
+  ('5b74a984-7abc-5ea5-84f5-7e3b624c2e6c', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'interview_scheduled', 'Technical interview scheduled', null, null, now() - interval '4300 minutes'),
+  ('2f3ef8f2-e87a-5db2-b792-8e596414d0d1', '6d6a41f3-12e8-5505-b163-142d4973ad66', 'application_created', 'Applied on the Harbor Robotics careers site', null, '{"source": "Careers site"}'::jsonb, now() - interval '8640 minutes'),
+  ('50c323c6-8a14-55bc-9b2e-fae3359db1a0', '6d6a41f3-12e8-5505-b163-142d4973ad66', 'stage_changed', 'Moved to Screening', null, '{"from": "sourced", "to": "screening"}'::jsonb, now() - interval '4400 minutes'),
+  ('def083a7-c5a7-53e1-bc3a-a1759f7d4a53', '6d6a41f3-12e8-5505-b163-142d4973ad66', 'message_sent', 'Screening update sent', null, null, now() - interval '2900 minutes');
 
 commit;

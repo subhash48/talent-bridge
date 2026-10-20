@@ -885,8 +885,8 @@ CANDIDATES: tuple[CandidateSeed, ...] = (
         ("Bayesian modeling", "Python", "Experimentation", "R"),
         events=(Event(A.OFFER_ACCEPTED, "Accepted offer", 21000),),
     ),
-    # Rosa applied to two employers: this Encord role, and Nova AI's (APPLICATIONS). Her portal opens on
-    # this one, the more recently updated.
+    # Rosa applied to three employers: this Encord role, Nova AI's and Harbor Robotics' (APPLICATIONS). Her
+    # portal opens on this one, the most recently updated.
     CandidateSeed(
         "rosa-navarro",
         "Rosa",
@@ -908,6 +908,7 @@ CANDIDATES: tuple[CandidateSeed, ...] = (
 )
 
 ROSA_NOVA = "rosa-navarro@nova-ai"
+ROSA_HARBOR = "rosa-navarro@harbor-robotics"
 APPLICATIONS: tuple[ApplicationSeed, ...] = (
     ApplicationSeed(
         ROSA_NOVA,
@@ -922,6 +923,18 @@ APPLICATIONS: tuple[ApplicationSeed, ...] = (
         created_title="Applied on the Nova AI careers site",
         moves=(15000, 8800),
         recruiter=NOVA_RECRUITER["email"],
+    ),
+    # Still in screening, with no interview yet and an update she hasn't read.
+    ApplicationSeed(
+        ROSA_HARBOR,
+        "rosa-navarro",
+        "Platform Engineer",
+        S.SCREENING,
+        6 * DAY,
+        events=(Event(A.MESSAGE_SENT, "Screening update sent", 2900),),
+        created_title="Applied on the Harbor Robotics careers site",
+        moves=(4400,),
+        recruiter=HARBOR_RECRUITER["email"],
     ),
 )
 
@@ -1159,6 +1172,16 @@ THREADS: tuple[ThreadSeed, ...] = (
                 R,
                 4300,
                 "Your technical interview is booked: 60 minutes on video, covering an LLM evaluation problem and a short system design discussion.",
+            ),
+        ),
+    ),
+    ThreadSeed(
+        ROSA_HARBOR,
+        (
+            MessageSeed(
+                R,
+                2900,
+                "Hi Rosa, thanks for applying for the Platform Engineer role. Femke is reviewing your application this week, and I'll be in touch about a technical screen.",
             ),
         ),
     ),

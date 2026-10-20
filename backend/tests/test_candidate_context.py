@@ -1,8 +1,9 @@
-"""One candidate, two employers: the portal follows the application the candidate is viewing.
+"""One candidate, three employers: the portal follows the application the candidate is viewing.
 
-Rosa Navarro (seeded) has two applications:
+Rosa Navarro (seeded) has three applications:
 - A: Software Engineer at Encord (interviewing; her portal opens on it), recruiter Alex Chen
 - B: Applied AI Engineer at Nova AI (interviewing, a technical interview booked), recruiter Mira Hoffmann
+- C: Platform Engineer at Harbor Robotics (screening, no interview yet, an unread update), recruiter Daan Visser
 
 Everything the portal says (company, status, interviews, messages, prep, the assistant's answers) must
 come from the application asked about, and nothing from the other one may appear in it.
@@ -25,6 +26,7 @@ from tests.conftest import API, application_id, link
 ROSA_EMAIL = "rosa.navarro@example.com"
 ENCORD_APP = application_id("rosa-navarro")
 NOVA_APP = application_id("rosa-navarro@nova-ai")
+HARBOR_APP = application_id("rosa-navarro@harbor-robotics")
 NOVA_TECHNICAL = str(seed_id("interview", "rosa-navarro@nova-ai:Technical interview"))
 NOVA_SCREEN = str(seed_id("interview", "rosa-navarro@nova-ai:Recruiter screen"))
 SOPHIA_APP = application_id("sophia-martinez")
@@ -33,6 +35,7 @@ SOPHIA_INTERVIEW = str(seed_id("interview", "sophia-martinez:Design interview"))
 # Words that only belong to one side. Neither may show up in the other application's responses.
 ENCORD_ONLY = ["Encord", "Software Engineer", "Systems design interview", "Alex Chen", "Ian Park", "data pipeline"]
 NOVA_ONLY = ["Nova AI", "Applied AI Engineer", "Technical interview", "Mira Hoffmann", "Lena Vogel", "LLM evaluation"]
+HARBOR_ONLY = ["Harbor Robotics", "Platform Engineer", "Daan Visser", "Femke Jansen", "Rotterdam", "straddle carrier"]
 # The recruiter-only notes on each recruiter screen: no candidate-facing response may carry them.
 NOTES = ["probe system design depth", "Kubernetes operations"]
 
@@ -58,19 +61,27 @@ async def portal(client: AsyncClient, application: str) -> dict[str, object]:
 
 
 def without_switcher(reads: dict[str, object]) -> str:
-    """The reads as text, minus the list of all applications (the switcher names both, by design)."""
+    """The reads as text, minus the list of all applications (the switcher names them all, by design)."""
     me = dict(reads["me"])  # type: ignore[call-overload]
     me.pop("applications")
     return json.dumps({**reads, "me": me})
 
 
-async def test_the_switcher_lists_both_employers(client: AsyncClient) -> None:
+async def test_the_switcher_lists_every_employer(client: AsyncClient) -> None:
     me = (await client.get(f"{API}/candidate/me")).json()
     assert me["application"]["id"] == ENCORD_APP  # the most recently updated active one
-    switcher = {(item["company"], item["job_title"]) for item in me["applications"]}
-    assert switcher == {("Encord", "Software Engineer"), ("Nova AI", "Applied AI Engineer")}
+    switcher = [(item["company"], item["job_title"]) for item in me["applications"]]
+    assert switcher == [
+        ("Encord", "Software Engineer"),
+        ("Harbor Robotics", "Platform Engineer"),
+        ("Nova AI", "Applied AI Engineer"),
+    ]  # active ones, most recently updated first
     logos = {item["company"]: item["company_logo_url"] for item in me["applications"]}
-    assert logos == {"Encord": "/logos/encord.svg", "Nova AI": "/logos/nova-ai.svg"}
+    assert logos == {
+        "Encord": "/logos/encord.svg",
+        "Nova AI": "/logos/nova-ai.svg",
+        "Harbor Robotics": "/logos/harbor-robotics.svg",
+    }
 
 
 async def test_switching_changes_everything_and_mixes_nothing(client: AsyncClient) -> None:
@@ -109,8 +120,8 @@ async def test_switching_changes_everything_and_mixes_nothing(client: AsyncClien
 
     # Nothing from the other application, anywhere (the switcher's list aside).
     nova_text, encord_text = without_switcher(nova), without_switcher(encord)
-    assert [word for word in ENCORD_ONLY if word in nova_text] == []
-    assert [word for word in NOVA_ONLY if word in encord_text] == []
+    assert [word for word in ENCORD_ONLY + HARBOR_ONLY if word in nova_text] == []
+    assert [word for word in NOVA_ONLY + HARBOR_ONLY if word in encord_text] == []
     assert [note for note in NOTES if note in nova_text + encord_text] == []
 
 

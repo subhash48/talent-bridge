@@ -1,26 +1,36 @@
 "use client";
 
-import { Check } from "lucide-react";
-import { useId } from "react";
+import { Check, Search } from "lucide-react";
+import { useId, useState } from "react";
 
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
 import { EmployerLogo } from "@/components/candidate/EmployerLogo";
 import { PortalStatusBadge } from "@/components/candidate/PortalStatusBadge";
+import { Input } from "@/components/ui/Input";
+import { pluralize } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { CandidateApplicationSummary } from "@/types/portal";
+
+function matches(application: CandidateApplicationSummary, query: string): boolean {
+  return [application.company, application.jobTitle].some((text) => text.toLowerCase().includes(query));
+}
 
 /**
  * The dashboard's row of the candidate's applications, one card each: employer, role and the stage they
  * may see. Choosing a card makes it the application the whole portal shows (application -> job ->
- * company). The row scrolls sideways when the cards don't fit.
+ * company). The row scrolls sideways when the cards don't fit, with a search by company or role.
  */
 export function ApplicationSelector() {
   const { me, selectedId, selectApplication } = useCandidatePortal();
   const applications = me.applications;
+  const [query, setQuery] = useState("");
   const labelId = useId();
+  const rowId = useId();
 
   if (applications.length === 0) return null;
   const many = applications.length > 1;
+  const search = query.trim().toLowerCase();
+  const shown = search ? applications.filter((application) => matches(application, search)) : applications;
 
   return (
     <section aria-labelledby={labelId} className="flex flex-col gap-2.5">
@@ -29,19 +39,57 @@ export function ApplicationSelector() {
           {many ? "My applications" : "My application"}
           {many && <span className="ml-1.5 font-normal text-stone tabular-nums">{applications.length}</span>}
         </h2>
+        {many && (
+          <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-1.5">
+            <div className="relative min-w-0 flex-1 sm:max-w-64">
+              <Search aria-hidden className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-faint" />
+              <Input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape" && query) {
+                    event.preventDefault();
+                    setQuery("");
+                  }
+                }}
+                placeholder="Search company or role"
+                aria-label="Search your applications by company or role"
+                aria-controls={rowId}
+                autoComplete="off"
+                className="h-8 pl-8 text-[13px]"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
+      <p role="status" className="sr-only">
+        {search ? `${pluralize(shown.length, "application")} of ${applications.length} match.` : ""}
+      </p>
+
       {/* Padded inside so a card's selected border and focus ring aren't clipped by the scrolling. */}
-      <div className="scrollbar-none -m-1 snap-x snap-mandatory scroll-px-1 overflow-x-auto overscroll-x-contain p-1">
-        <div role="radiogroup" aria-labelledby={labelId} className="flex w-max gap-2.5">
-          {applications.map((application) => (
-            <ApplicationCard
-              key={application.id}
-              application={application}
-              selected={application.id === selectedId}
-              onSelect={() => selectApplication(application.id)}
-            />
-          ))}
+      <div id={rowId} className="scrollbar-none -m-1 snap-x snap-mandatory scroll-px-1 overflow-x-auto overscroll-x-contain p-1">
+        <div className="w-max min-w-full">
+          {shown.length > 0 ? (
+            <div role="radiogroup" aria-labelledby={labelId} className="flex gap-2.5">
+              {shown.map((application) => (
+                <ApplicationCard
+                  key={application.id}
+                  application={application}
+                  selected={application.id === selectedId}
+                  onSelect={() => selectApplication(application.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex min-h-[78px] items-center gap-2 rounded-[12px] border border-dashed border-border-strong px-4 text-[13px] text-stone">
+              <span className="min-w-0 truncate">No applications match “{query.trim()}”.</span>
+              <button type="button" onClick={() => setQuery("")} className="shrink-0 font-medium text-brand-ink underline-offset-2 hover:underline">
+                Clear search
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </section>

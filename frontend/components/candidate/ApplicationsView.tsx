@@ -34,7 +34,7 @@ function groupOf(application: CandidateApplicationSummary): Group {
 /** Every application the candidate has made, by where it stands. Opening one switches the portal
  * (interviews, messages, prep) to it. */
 export function ApplicationsView() {
-  const { me, applicationId } = useCandidatePortal();
+  const { me, selectedId } = useCandidatePortal();
 
   if (me.applications.length === 0) {
     return (
@@ -64,7 +64,7 @@ export function ApplicationsView() {
                 {items.length > 0 ? (
                   <ul className="mt-3 flex flex-col gap-1.5">
                     {items.map((application) => (
-                      <ApplicationRow key={application.id} application={application} selected={application.id === applicationId} />
+                      <ApplicationRow key={application.id} application={application} selected={application.id === selectedId} />
                     ))}
                   </ul>
                 ) : (

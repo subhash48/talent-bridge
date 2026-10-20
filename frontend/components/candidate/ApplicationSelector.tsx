@@ -36,6 +36,7 @@ export function ApplicationSelector() {
   const [edges, setEdges] = useState({ back: false, forward: false });
   const scroller = useRef<HTMLDivElement>(null);
   const row = useRef<HTMLDivElement>(null);
+  const placed = useRef(false);
   const labelId = useId();
   const rowId = useId();
 
@@ -64,6 +65,19 @@ export function ApplicationSelector() {
       box.removeEventListener("scroll", measure);
     };
   }, [any]);
+
+  // The chosen card is always in view (at a snap point): straight away on arrival, smoothly after a change.
+  useEffect(() => {
+    const box = scroller.current;
+    const card = box?.querySelector<HTMLElement>(`[data-application="${selectedId}"]`);
+    if (!box || !card) return;
+    const view = box.getBoundingClientRect();
+    const target = card.getBoundingClientRect();
+    const behavior = placed.current ? scrollBehavior() : "auto";
+    placed.current = true;
+    const hidden = target.left < view.left + FADE_PX - 1 || target.right > view.right - FADE_PX + 1;
+    if (hidden) box.scrollBy({ left: target.left - view.left - FADE_PX, behavior });
+  }, [selectedId]);
 
   if (!any) return null;
 

@@ -9,11 +9,14 @@ export type PortalNotification = {
   href: string;
   /** Needs the candidate to do something: read a message or confirm an interview. */
   attention: boolean;
+  /** About another of the candidate's applications: opening it makes that one the portal's application. */
+  applicationId?: string;
 };
 
 /**
  * Notifications derived from /candidate/me rather than stored: unread messages, the next interview
- * and recent stage changes. Only items that need action count towards the bell's badge.
+ * and recent stage changes for the application on screen, then unread messages and interviews this
+ * week for the candidate's other applications. Only items that need action count towards the bell's badge.
  */
 export function portalNotifications(me: CandidateMeResponse, now = Date.now()): PortalNotification[] {
   const items: PortalNotification[] = [];
@@ -65,6 +68,32 @@ export function portalNotifications(me: CandidateMeResponse, now = Date.now()): 
       attention: false,
     });
   }
+
+  for (const other of me.applications) {
+    if (other.id === me.application?.id) continue;
+    if (other.unreadMessages > 0) {
+      items.push({
+        id: `message:${other.id}:${other.unreadMessages}`,
+        kind: "message",
+        title: `${other.unreadMessages === 1 ? "New message" : `${other.unreadMessages} new messages`} from ${other.company}`,
+        description: `About your ${other.jobTitle} application`,
+        href: "/candidate/messages",
+        attention: true,
+        applicationId: other.id,
+      });
+    }
+    if (other.nextInterviewAt && new Date(other.nextInterviewAt).getTime() - now < 7 * DURATION.DAY) {
+      items.push({
+        id: `upcoming:${other.id}:${other.nextInterviewAt}`,
+        kind: "interview",
+        title: `${other.company} interview: ${formatSchedule(other.nextInterviewAt)}`,
+        description: other.jobTitle,
+        href: "/candidate/interviews",
+        attention: false,
+        applicationId: other.id,
+      });
+    }
+  }
   return items;
 }
 
@@ -73,5 +102,8 @@ export function attentionKey(me: CandidateMeResponse): string {
   const parts = [];
   if (me.unreadMessages > 0 && me.latestMessage) parts.push(`message:${me.latestMessage.id}`);
   if (me.nextInterview?.canConfirm) parts.push(`confirm:${me.nextInterview.id}`);
+  for (const other of me.applications) {
+    if (other.id !== me.application?.id && other.unreadMessages > 0) parts.push(`message:${other.id}:${other.unreadMessages}`);
+  }
   return parts.join("|");
 }

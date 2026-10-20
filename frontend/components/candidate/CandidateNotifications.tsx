@@ -22,7 +22,7 @@ const ICONS: Record<PortalNotification["kind"], LucideIcon> = {
   stage: Route,
 };
 
-/** Derived from the candidate's own record: unread messages, the next interview and stage changes. */
+/** Derived from the candidate's own records: unread messages, interviews and stage changes, across their applications. */
 export function CandidateNotifications() {
   const { me } = useCandidatePortal();
   const [seenKey, setSeenKey] = useState("");
@@ -51,7 +51,7 @@ export function CandidateNotifications() {
 
 // Rendered only while the menu is open, so times are formatted in the browser.
 function NotificationItems() {
-  const { me } = useCandidatePortal();
+  const { me, selectApplication } = useCandidatePortal();
   const items = portalNotifications(me);
   if (items.length === 0) return <p className="px-2.5 py-3 text-sm text-stone">You’re all caught up.</p>;
 
@@ -59,7 +59,8 @@ function NotificationItems() {
     const Icon = ICONS[item.kind];
     return (
       <DropdownMenuItem key={item.id} asChild className="h-auto items-start py-2">
-        <Link href={item.href}>
+        {/* One about another application switches the portal to it on the way. */}
+        <Link href={item.href} onClick={() => item.applicationId && selectApplication(item.applicationId)}>
           <span
             className={cn(
               "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full ring-1",

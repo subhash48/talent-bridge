@@ -376,6 +376,7 @@ async def test_the_careers_site_lists_published_roles_only(
     assert listed[1] == {
         "id": str(older),
         "title": JOB,
+        "company": None,  # only TalentBridge's own careers site names the employer
         "department": "Machine Learning",
         "location": "London",
         "work_arrangement": "Hybrid",

@@ -14,7 +14,7 @@ export function CareerJobView({ job, site = "demo" }: { job: CareerJobDetail; si
   return (
     <div className="grid grid-cols-1 gap-6 pt-6 sm:pt-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-10">
       <div className="min-w-0">
-        <RoleHeading job={job} back={{ href: CAREERS_PATHS[site], label: "All roles" }} eyebrow={job.department}>
+        <RoleHeading job={job} back={{ href: CAREERS_PATHS[site], label: "All roles" }} eyebrow={[job.company, job.department].filter(Boolean).join(" · ") || null}>
           {job.summary && <p className="mt-5 max-w-2xl text-[17px] leading-relaxed text-charcoal">{job.summary}</p>}
           <Link href={applyPath} className={buttonStyles({ size: "lg", className: "mt-6 w-full sm:w-auto lg:hidden" })}>
             Apply for this role

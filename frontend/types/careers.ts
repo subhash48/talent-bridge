@@ -8,6 +8,8 @@
 export type ApiCareerJobSummary = {
   id: string;
   title: string;
+  /** The employer (job -> company). Only TalentBridge's own careers site names it. */
+  company?: string | null;
   department: string | null;
   location: string | null;
   work_arrangement: string | null;
@@ -76,6 +78,8 @@ export type ApiCareerApplicationResult = { status: ApplyOutcome; email: string; 
 export type CareerJob = {
   id: string;
   title: string;
+  /** The employer; null on the demo site. */
+  company: string | null;
   department: string | null;
   location: string | null;
   /** "On-site", "Hybrid" or "Remote". */

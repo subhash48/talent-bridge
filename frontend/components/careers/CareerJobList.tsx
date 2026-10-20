@@ -24,7 +24,9 @@ export function CareerJobList({ jobs, basePath = "/demo/careers" }: { jobs: Care
               className="glass group flex flex-col gap-4 rounded-[14px] border border-border p-5 transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-border-strong sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:p-6"
             >
               <div className="min-w-0">
-                {job.department && <p className="text-[13px] text-stone">{job.department}</p>}
+                {(job.company || job.department) && (
+                  <p className="text-[13px] text-stone">{[job.company, job.department].filter(Boolean).join(" · ")}</p>
+                )}
                 <h2 className="mt-1 text-lg font-semibold tracking-tight text-ink">{job.title}</h2>
                 <JobFacts job={job} className="mt-2" />
                 {job.summary && <p className="mt-3 line-clamp-2 max-w-2xl text-sm leading-relaxed text-stone">{job.summary}</p>}

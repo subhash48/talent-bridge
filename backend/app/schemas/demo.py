@@ -196,6 +196,7 @@ class CareerJobSummary(APIModel):
 
     id: UUID
     title: str
+    company: str | None = None  # the employer (job -> company); the demo site leaves it out
     department: str | None = None
     location: str | None = None
     work_arrangement: str | None = None

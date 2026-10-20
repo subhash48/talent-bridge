@@ -4,9 +4,9 @@ import type { ReactNode } from "react";
 import { CareersShell } from "@/components/careers/CareersShell";
 
 export const metadata: Metadata = {
-  // absolute: not "· Encord Recruiting", the workspace's suffix.
-  title: { absolute: "Encord Careers", template: "%s · Encord Careers" },
-  description: "Open roles at Encord. A development demo: these roles are not real.",
+  // absolute: not the workspace's title suffix.
+  title: { absolute: "Demo careers · TalentBridge", template: "%s · Demo careers · TalentBridge" },
+  description: "A development demo of TalentBridge's careers site: these roles are not real.",
   // Made-up roles on a development server: keep them out of search engines.
   robots: { index: false, follow: false },
 };

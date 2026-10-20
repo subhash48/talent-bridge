@@ -55,6 +55,7 @@ def _summary(job: Job) -> CareerJobSummary:
     return CareerJobSummary(
         id=job.id,
         title=job.title,
+        company=job.company.name,
         department=job.department,
         location=job.location,
         employment_type=job.employment_type,

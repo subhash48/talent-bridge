@@ -16,7 +16,7 @@ export default async function CareersPage() {
   return (
     <div className="pt-8 sm:pt-12">
       <header className="pb-8">
-        <p className="text-xs font-medium tracking-wide text-ai">Careers at Encord</p>
+        <p className="text-xs font-medium tracking-wide text-ai">Careers</p>
         <h1 className="mt-2 text-[34px] leading-tight font-semibold tracking-[-0.03em] text-ink sm:text-[44px]">Open roles</h1>
         <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-stone">
           Apply with your name, email and résumé. No account needed: we&apos;ll email you a link to your candidate portal, where you&apos;ll

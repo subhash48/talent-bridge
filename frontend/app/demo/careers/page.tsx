@@ -17,10 +17,10 @@ export default async function CareersPage() {
   return (
     <div className="pt-8 sm:pt-12">
       <header className="pb-8">
-        <p className="text-xs font-medium tracking-wide text-ai">Careers at Encord</p>
+        <p className="text-xs font-medium tracking-wide text-ai">Demo careers</p>
         <h1 className="mt-2 text-[34px] leading-tight font-semibold tracking-[-0.03em] text-ink sm:text-[44px]">Open roles</h1>
         <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-stone">
-          Apply with your résumé in a few minutes, then follow your application in the Encord candidate portal.
+          Apply with your résumé in a few minutes, then follow your application in your candidate portal.
         </p>
       </header>
       {jobs === null ? <CareersOff /> : "error" in jobs ? <CareersUnavailable message={jobs.error} /> : <CareerJobList jobs={jobs} />}

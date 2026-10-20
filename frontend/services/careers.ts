@@ -87,6 +87,7 @@ function fromSummary(job: ApiCareerJobSummary): CareerJob {
   return {
     id: job.id,
     title: job.title,
+    company: job.company ?? null,
     department: job.department,
     location: job.location,
     workArrangement: job.work_arrangement,

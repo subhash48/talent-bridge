@@ -52,7 +52,7 @@ function MessagesView({ applicationId, initialThread }: { applicationId: string 
   const [firstUnreadId] = useState(() => initialThread?.messages.find(isIncomingUnread)?.id);
   const unread = thread?.unread ?? 0;
 
-  // Reading the thread marks it read, for the badge here and for the read state the recruiter sees. Not
+  // Reading the thread marks it read, for the badges here and for the read state the recruiter sees. Not
   // while another application is loading: this thread is on its way out, not being read.
   useEffect(() => {
     if (unread === 0 || switching || document.visibilityState !== "visible") return;
@@ -62,7 +62,12 @@ function MessagesView({ applicationId, initialThread }: { applicationId: string 
         if (cancelled) return;
         const readAt = new Date().toISOString();
         setData((current) => current && { ...current, unread: 0, messages: current.messages.map((m) => (isIncomingUnread(m) ? { ...m, readAt } : m)) });
-        update((current) => ({ ...current, unreadMessages: 0 }));
+        update((current) => ({
+          ...current,
+          unreadMessages: 0,
+          // Its card in the application selector, and the sidebar switcher, too.
+          applications: current.applications.map((item) => (item.id === applicationId ? { ...item, unreadMessages: 0 } : item)),
+        }));
       },
       () => undefined, // stays unread; the next refresh retries
     );

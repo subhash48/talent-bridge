@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 // Same frame as the recruiter workspace, calmer inside: sidebar on desktop, a sheet below lg.
 export function CandidateShell({ children }: { children: ReactNode }) {
   const [navOpen, setNavOpen] = useState(false);
-  const { offline } = useCandidatePortal();
+  const { offline, switching } = useCandidatePortal();
   // The dashboard shows the bell and avatar itself, beside its game's score. Its top bar is then
   // only the menu button and logo, which a wide screen has in the sidebar.
   const dashboard = usePathname() === "/candidate";
@@ -71,7 +71,16 @@ export function CandidateShell({ children }: { children: ReactNode }) {
               We can’t reach the server right now. You’re seeing the latest information we have.
             </p>
           )}
-          <main id="main" tabIndex={-1} className="relative mx-auto w-full max-w-[1120px] flex-1 px-4 pb-10 focus:outline-none sm:px-6 lg:px-8">
+          {/* While another application loads the page fades, so its old content never reads as the new one's. */}
+          <main
+            id="main"
+            tabIndex={-1}
+            aria-busy={switching || undefined}
+            className={cn(
+              "relative mx-auto w-full max-w-[1120px] flex-1 px-4 pb-10 transition-opacity duration-200 focus:outline-none sm:px-6 lg:px-8",
+              switching && "pointer-events-none opacity-50",
+            )}
+          >
             {children}
           </main>
         </div>

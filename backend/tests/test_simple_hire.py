@@ -286,3 +286,32 @@ async def test_the_applicant_list_carries_what_each_applicant_gave(client: Async
         ["friday", "saturday"],
         "Two years as a prep cook in a busy kitchen. I can start right away.",
     )
+
+
+async def test_sam_reads_plain_replies_not_recruiting_terms(client: AsyncClient, sam: dict[str, str]) -> None:
+    found = await ask(
+        client, sam, "Show me 3 applicants with kitchen experience who are available Friday and Saturday."
+    )
+    assert found["reply"] == (
+        "Here are 3 people who applied with kitchen experience and who can work Friday and Saturday. Each one shows "
+        "why. Tick the people you'd like to contact."
+    )
+    picked = [item["application_id"] for item in found["cards"][0]["items"]]
+    asked = await ask(
+        client,
+        sam,
+        "Ask them if they can come in Tuesday between 2 and 5.",
+        context={"selected_application_ids": picked},
+    )
+    assert asked["reply"].startswith("Here's an interview request for each of them on Tuesday, ")
+    assert "between 2 PM and 5 PM" in asked["reply"] and "Nothing is sent until you press Send." in asked["reply"]
+    sent = await approve(client, sam, asked["id"])
+    assert sent["reply"].startswith("Sent to Maria, John and Amina.")
+    assert "No calendar is connected" in sent["reply"]
+    for words in ("candidate", "personalized", "pipeline", "criteria"):
+        assert words not in (found["reply"] + asked["reply"] + sent["reply"]).lower()
+
+
+async def test_recruiting_teams_keep_their_replies(client: AsyncClient) -> None:
+    found = await ask(client, {}, "Show 5 candidates for Product Designer matching Figma")
+    assert "candidates" in found["reply"]

@@ -164,6 +164,8 @@ async def handle(
     personalized outreach") comes with its intent already structured, and takes the same path from there."""
     email = email or DisabledEmail()
     calendar = calendar or DisabledCalendar()
+    # Read now: a rollback while planning would expire the recruiter.
+    plain = await _simple_hire(session, recruiter)
     if request.client_request_id:
         existing = await _by_request(session, recruiter, request.client_request_id)
         if existing is not None:
@@ -216,6 +218,8 @@ async def handle(
         logger.exception("assistant.request_failed action=%s intent=%s", row_id, intent.action)
         outcome = Outcome(reply="Something went wrong on our side. Nothing was changed. Try again.", status=S.FAILED)
 
+    if outcome.cards and plain:
+        outcome.reply = simple.plain_reply(outcome.cards, outcome.reply)
     row = await _reload(session, row_id)
     response = AssistantResponse(
         id=row.id,
@@ -326,6 +330,12 @@ async def _plan(
         result = await ai_service.ask_candidate(session, application.id, request.text, provider, recruiter)
         return Outcome(reply=result.answer, sources=result.sources, context=keep)
     return Outcome(reply=answers.HELP, context=keep)
+
+
+async def _simple_hire(session: AsyncSession, recruiter: User) -> bool:
+    """Whether the recruiter's company hires with Simple Hire, whose owners get plainer replies."""
+    company = await session.get(Company, recruiter.company_id) if recruiter.company_id else None
+    return company is not None and company.workspace_mode == WorkspaceMode.SIMPLE
 
 
 def delivered(message: MessageRead) -> str:
@@ -1004,6 +1014,7 @@ async def confirm(
     A failure is reported as one: nothing claims success unless the service it ran succeeded."""
     calendar = calendar or DisabledCalendar()
     request = edits if isinstance(edits, ConfirmActionRequest) else ConfirmActionRequest(body=edits)
+    plain = await _simple_hire(session, recruiter)  # before anything can roll back and expire the recruiter
     row = await _own(session, recruiter, action_id)
     claimed = await session.execute(
         update(AssistantAction)
@@ -1114,6 +1125,8 @@ async def confirm(
         status, reply = S.FAILED, error
         summary, card = _failed(payload, label), _failed_card(payload, error)
 
+    if plain:
+        reply = simple.plain_reply([card], reply)
     row = await _reload(session, action_id)
     if created is not None:
         row.target_type, row.target_id, row.target_label = created

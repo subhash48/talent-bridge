@@ -16,9 +16,17 @@ reader ends up with the same structured action.
 """
 
 import re
+from datetime import date
 
 from app.core.enums import WEEKEND, Weekday
-from app.schemas.assistant import AssistantIntent, JobChanges, ScheduleDetails
+from app.schemas.assistant import (
+    AssistantCard,
+    AssistantIntent,
+    CandidateMatchCard,
+    JobChanges,
+    OutreachCard,
+    ScheduleDetails,
+)
 from app.services import personal_characteristics
 from app.services.assistant import rules
 from app.services.assistant.schedule import window_from_text
@@ -346,3 +354,78 @@ def _experience_criteria(skills: list[str], text: str) -> list[str]:
 def _generic(said: str) -> bool:
     """ "Workers", "people", "staff": not a title."""
     return bool(re.fullmatch(rf"(?:\w+\s+)?(?:{_PEOPLE}|someone|help)", said.strip(), _I))
+
+
+# Simple Hire's words for the assistant's answers: what happened, plainly, with no recruiting terms.
+
+
+def plain_reply(cards: list[AssistantCard], reply: str) -> str:
+    """The reply a Simple Hire owner reads with these cards. Answers with no plainer form keep their own."""
+    for card in cards:
+        if isinstance(card, CandidateMatchCard):
+            return _people(card)
+        if isinstance(card, OutreachCard):
+            return _sent(card) if card.stage == "done" else _to_send(card)
+    return reply
+
+
+def _people(card: CandidateMatchCard) -> str:
+    shown = len(card.items)
+    if not shown:
+        return "Nobody who applied fits that yet. Try asking for less, or look again when more people have applied."
+    lead = f"Here {'is' if shown == 1 else 'are'} {shown} {'person' if shown == 1 else 'people'} who applied"
+    asked = [criterion[:1].lower() + criterion[1:] for criterion in card.criteria]
+    if asked:
+        lead += f" with {_join(asked)}"
+    if card.available_days:
+        lead += f"{' and' if asked else ','} who can work {_join([day.label for day in card.available_days])}"
+    return f"{lead}. Each one shows why. Tick the people you'd like to contact."
+
+
+def _to_send(card: OutreachCard) -> str:
+    if card.schedule is not None:
+        when = f" between {_clock(card.schedule.window_start)} and {_clock(card.schedule.window_end)}"
+        if card.schedule.day:
+            when = f" on {_day(card.schedule.day)}{when}"
+        return (
+            f"Here's an interview request for each of them{when}, each with its own time. Read them and change "
+            "anything you like. Nothing is sent until you press Send."
+        )
+    return "Here's a message for each of them. Read them and change anything you like. Nothing is sent until you press Send."
+
+
+def _sent(card: OutreachCard) -> str:
+    done = [item for item in card.items if item.result and item.result.message_sent]
+    failed = [item for item in card.items if item.result and not item.result.message_sent]
+    lines = [f"Sent to {_join([item.candidate.name.split()[0] for item in done])}." if done else "Nothing was sent."]
+    booked = [item for item in done if item.result and item.result.interview_created]
+    if booked:
+        calendar = all(item.result and item.result.calendar == "created" for item in booked)
+        lines.append(
+            "Their interviews are booked, and calendar invitations went out."
+            if calendar
+            else "Their interviews are booked in TalentBridge. No calendar is connected, so no calendar invitations were sent."
+        )
+    if done:
+        lines.append("They can reply, and you'll see it in Messages.")
+    lines += [f"Couldn't send to {item.candidate.name}: {item.result.error}" for item in failed if item.result]
+    return " ".join(lines)
+
+
+def _join(items: list[str]) -> str:
+    return items[0] if len(items) == 1 else f"{', '.join(items[:-1])} and {items[-1]}"
+
+
+def _clock(time: str) -> str:
+    hours, minutes = (int(part) for part in time.split(":"))
+    hour = hours % 12 or 12
+    suffix = "PM" if hours >= 12 else "AM"
+    return f"{hour}:{minutes:02d} {suffix}" if minutes else f"{hour} {suffix}"
+
+
+def _day(iso: str) -> str:
+    try:
+        day = date.fromisoformat(iso)
+    except ValueError:
+        return iso
+    return f"{day:%A}, {day:%B} {day.day}"

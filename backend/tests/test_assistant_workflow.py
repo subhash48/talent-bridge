@@ -21,9 +21,11 @@ from app.integrations.calendar import NOT_CONFIGURED
 from app.main import app
 from app.models import Application, CommunicationDraft, Interview, Job, Message
 from app.models.base import utcnow
-from app.schemas.assistant import AssistantIntent, JobChanges
+from app.schemas.assistant import AssistantIntent, JobChanges, JobDraft
 from app.services.ai.client import get_ai_provider
+from app.services.ai.context import parse_requirements
 from app.services.ai.fallback import MockProvider
+from app.services.assistant.jobs import render_description
 from tests.conftest import API, FakeEmail, application_id, use_email
 
 SOPHIA = application_id("sophia-martinez")  # her Encord Product Designer application
@@ -110,6 +112,25 @@ async def test_a_job_is_drafted_changed_and_created_only_once_approved(
     [listed] = applicants["cards"]
     assert listed["filters"] == [{"key": f"job:{card['job_id']}", "label": "Job: Senior Product Designer · Encord"}]
     assert listed["considered"] == 0
+
+
+def test_a_long_job_keeps_its_salary_and_requirements() -> None:
+    long = JobDraft(
+        title="Senior Product Designer",
+        seniority="Senior",
+        salary_min=150000,
+        salary_max=180000,
+        skills=["Figma", "Design systems"],
+        summary="S" * 600,
+        description="About the role. " * 180,
+        responsibilities=[f"Responsibility {n} " + "x" * 100 for n in range(12)],
+        requirements=[f"Requirement {n} " + "y" * 100 for n in range(12)],
+        preferred_qualifications=[f"Nice {n} " + "z" * 100 for n in range(12)],
+    )
+    text = render_description(long)
+    assert text is not None and len(text) <= 5000
+    assert text.endswith("Seniority: Senior · Salary: $150K–$180K\n\nRequirements: Figma, Design systems.")
+    assert parse_requirements(text) == ("Figma", "Design systems")
 
 
 async def test_approve_and_create_takes_the_recruiters_edits(

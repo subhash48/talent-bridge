@@ -179,27 +179,50 @@ async def create(session: AsyncSession, job: JobDraft) -> Job:
     return stored
 
 
+DESCRIPTION_LIMIT = 5000  # a job description's own limit (schemas/job.py)
+
+
 def render_description(job: JobDraft) -> str | None:
     """The job's description as the careers site reads it: the summary first (its card), the role, its
     lists, and the "Requirements:" line with the skills (the site's requirements, and the job-related
-    criteria the shortlist starts from)."""
+    criteria the shortlist starts from). The facts and that line are always kept; a long description
+    and lists are cut at the end of a line to fit before them."""
     facts = [
         f"Seniority: {job.seniority}" if job.seniority else None,
         f"Salary: {salary_label(job.salary_min, job.salary_max, job.salary_currency)}"
         if job.salary_min or job.salary_max
         else None,
     ]
-    sections = [
+    body = [
         job.summary,
         job.description,
         _bullets("What you'll do", job.responsibilities),
         _bullets("What you'll bring", job.requirements),
         _bullets("Nice to have", job.preferred_qualifications),
-        " · ".join(fact for fact in facts if fact) or None,
-        f"Requirements: {', '.join(job.skills)}." if job.skills else None,
     ]
-    text = "\n\n".join(section for section in sections if section)
-    return text[:5000] or None
+    end = "\n\n".join(
+        section
+        for section in (
+            " · ".join(fact for fact in facts if fact) or None,
+            f"Requirements: {', '.join(job.skills)}." if job.skills else None,
+        )
+        if section
+    )
+    room = DESCRIPTION_LIMIT - (len(end) + 2 if end else 0)
+    text = _fit("\n\n".join(section for section in body if section), room)
+    return "\n\n".join(part for part in (text, end) if part) or None
+
+
+def _fit(text: str, room: int) -> str:
+    """The text in room characters: whole lines where it can, else whole words, marked as cut."""
+    if len(text) <= room:
+        return text
+    cut = text[: max(room - 1, 0)]
+    line = cut.rfind("\n")
+    if line > len(cut) // 2:
+        return cut[:line].rstrip()
+    space = cut.rfind(" ")
+    return (cut[:space] if space > 0 else cut).rstrip() + "…"
 
 
 def _bullets(heading: str, items: list[str]) -> str | None:

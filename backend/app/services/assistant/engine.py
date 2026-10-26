@@ -57,6 +57,7 @@ from app.schemas.assistant import (
     MessageCard,
     OutreachCard,
     ScheduleDetails,
+    ScheduleProposal,
     SearchState,
 )
 from app.schemas.message import MessageRead
@@ -731,8 +732,16 @@ async def _draft_outreach(
     if isinstance(targets, str):
         return Outcome(reply=targets, context=keep)
     details = intent.schedule
+    note = None
     if details is not None and times.resolve_day(details.timeframe, _today(request)) is None:
-        details = None  # no day said: invitations that ask for times, not times nobody chose
+        # No day to propose (none said, or one already past): invitations that ask for times, and it's said.
+        if details.timeframe or details.window_start:
+            note = (
+                f"I couldn't use “{details.timeframe}” as the day, so the invitations ask for times instead."
+                if details.timeframe
+                else "No day was given, so the invitations ask for times instead."
+            ) + ' Say a day to propose times, like "make them next Tuesday afternoon".'
+        details = None
     # The purpose chosen stands; otherwise an invitation is asked for in so many words, not just a mention
     # ("thank them for interviewing" is a message).
     invitation = (
@@ -741,7 +750,7 @@ async def _draft_outreach(
         else intent.interview is not None or details is not None or rules.invites(request.text)
     )
     return await _propose_outreach(
-        session, recruiter, row_id, targets, invitation, request, details, keep, provider, email, calendar
+        session, recruiter, row_id, targets, invitation, request, details, keep, provider, email, calendar, note=note
     )
 
 
@@ -758,18 +767,20 @@ async def _schedule(
     calendar: CalendarProvider,
 ) -> Outcome:
     details = intent.schedule or ScheduleDetails(**(intent.interview or InterviewDetails()).model_dump())
+    previous: OutreachCard | None = None
+    if context.proposal is not None and context.proposal_kind == "outreach":
+        previous = OutreachCard.model_validate((context.proposal.payload or {})["card"])
+        if previous.schedule is not None:
+            details = _keep_unchanged(details, previous.schedule)
     if times.resolve_day(details.timeframe, _today(request)) is None:
         return Outcome(
             reply='Which day should I propose? For example "next Tuesday between 1 and 4 PM".',
             context=keep.model_copy(update={"action_id": context.proposal.id if context.proposal else None}),
         )
-    if context.proposal is not None and context.proposal_kind == "outreach":
+    if context.proposal is not None and previous is not None:
         payload = dict(context.proposal.payload or {})
         ids = [uuid.UUID(value) for value in payload.get("application_ids", [])]
-        previous = OutreachCard.model_validate(payload["card"])
         left_out = {item.candidate.application_id for item in previous.items if not item.include}
-        if previous.schedule is not None and not details.interview_type:
-            details = details.model_copy(update={"interview_type": previous.schedule.title})
         return await _propose_outreach(
             session,
             recruiter,
@@ -793,6 +804,24 @@ async def _schedule(
     )
 
 
+def _keep_unchanged(details: ScheduleDetails, before: ScheduleProposal) -> ScheduleDetails:
+    """New times for outreach already proposed: what the recruiter didn't change stays as it was. "Make them
+    Wednesday instead" keeps the length, the window and the interview; "make them 60 minutes" keeps the day."""
+    said_part_of_day = any(name in (details.timeframe or "").lower() for name in times.WINDOWS)
+    return details.model_copy(
+        update={
+            "interview_type": details.interview_type or before.title,
+            "duration_minutes": details.duration_minutes or before.duration_minutes,
+            "timeframe": details.timeframe or before.day,
+            **(
+                {"window_start": before.window_start, "window_end": before.window_end}
+                if not details.window_start and not said_part_of_day
+                else {}
+            ),
+        }
+    )
+
+
 async def _propose_outreach(
     session: AsyncSession,
     recruiter: User,
@@ -809,6 +838,7 @@ async def _propose_outreach(
     instructions: str | None = None,
     existing: AssistantAction | None = None,
     left_out: set[uuid.UUID] | None = None,
+    note: str | None = None,
 ) -> Outcome:
     applications = await outreach.applications_for(session, targets)
     words = instructions if instructions is not None else request.text
@@ -841,7 +871,14 @@ async def _propose_outreach(
     }
     keep = keep.model_copy(update={"action_id": action_id})
     names = _names([item.candidate.name for item in card.items])
-    lines = [f"**{len(card.items)} personalized drafts**, one each for {names}. Nothing has been sent."]
+    drafts = (
+        "1 personalized draft**, for"
+        if len(card.items) == 1
+        else f"{len(card.items)} personalized drafts**, one each for"
+    )
+    lines = [f"**{drafts} {names}. Nothing has been sent."]
+    if note:
+        lines.append(note)
     if card.schedule is not None:
         lines.append(_times(card, _zone(request)))
         if not card.schedule.calendar_configured:

@@ -316,6 +316,8 @@ def _invitation(context: CandidateContext, instructions: str) -> DraftContent:
 
 
 _PROPOSED = re.compile(r"Proposed time:\s*(?P<time>[^\n]+?)\.?(?:\n|$)")
+_INTERVIEW_LINE = re.compile(r"^Interview:\s*(?P<kind>[^\n]+)$", re.MULTILINE)
+_LENGTH_LINE = re.compile(r"^Length:\s*(?P<minutes>\d{1,3}) minutes$", re.MULTILINE)
 
 
 def _proposal(context: CandidateContext, instructions: str) -> DraftContent:
@@ -323,8 +325,12 @@ def _proposal(context: CandidateContext, instructions: str) -> DraftContent:
     from app.services.assistant.rules import interview_details
 
     details = interview_details(instructions)
-    kind = (details.interview_type or "interview").lower()
-    length = f"{details.duration_minutes}-minute " if details.duration_minutes else ""
+    # The interview as proposed (its own lines) before anything in the recruiter's words.
+    named = _INTERVIEW_LINE.search(instructions)
+    kind = (named.group("kind").strip() if named else details.interview_type or "interview").lower()
+    minutes = _LENGTH_LINE.search(instructions)
+    length_minutes = int(minutes.group("minutes")) if minutes else details.duration_minutes
+    length = f"{length_minutes}-minute " if length_minutes else ""
     article = "an" if (length or kind)[0] in "aeiou8" else "a"
     proposed = _PROPOSED.search(instructions)
     when = f" on {proposed.group('time').strip()}" if proposed else ""

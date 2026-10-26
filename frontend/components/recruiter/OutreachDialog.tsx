@@ -31,6 +31,10 @@ function nextWorkday(): string {
   const date = new Date();
   do date.setDate(date.getDate() + 1);
   while (date.getDay() === 0 || date.getDay() === 6);
+  return isoDay(date);
+}
+
+function isoDay(date: Date): string {
   const pad = (value: number) => String(value).padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
@@ -168,14 +172,14 @@ function OutreachForm({ candidates, onClose, onDone }: { candidates: PipelineCan
                 </Select>
               </Field>
               <Field label="Day" htmlFor="outreach-day">
-                <Input id="outreach-day" type="date" value={day} onChange={(event) => setDay(event.target.value)} />
+                <Input id="outreach-day" type="date" required min={isoDay(new Date())} value={day} onChange={(event) => setDay(event.target.value)} />
               </Field>
               <div className="grid grid-cols-2 gap-2">
                 <Field label="From" htmlFor="outreach-from">
-                  <Input id="outreach-from" type="time" value={from} onChange={(event) => setFrom(event.target.value)} />
+                  <Input id="outreach-from" type="time" required value={from} onChange={(event) => setFrom(event.target.value)} />
                 </Field>
                 <Field label="To" htmlFor="outreach-to">
-                  <Input id="outreach-to" type="time" value={to} onChange={(event) => setTo(event.target.value)} />
+                  <Input id="outreach-to" type="time" required min={from} value={to} onChange={(event) => setTo(event.target.value)} />
                 </Field>
               </div>
             </div>

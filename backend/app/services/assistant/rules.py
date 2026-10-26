@@ -274,9 +274,12 @@ _INTERVIEW_TYPE = re.compile(
     _I,
 )
 _TIMEFRAME = re.compile(
-    rf"\b(?:(?:next|this|on)\s+(?:{_DAYS}|week|month)(?:\s+(?:morning|afternoon|evening))?"
-    rf"|{_DAYS}\s+(?:morning|afternoon|evening)|tomorrow(?:\s+(?:morning|afternoon|evening))?|later this week"
-    rf"|early next week|end of (?:the )?week|{_DAYS})\b",
+    rf"\b(?:next week\s+on\s+{_DAYS}(?:\s+(?:morning|afternoon|evening))?"
+    rf"|(?:(?:next|this|on)\s+)?(?:the\s+)?{_DAYS}(?:\s+(?:next week|this week|after next))?"
+    rf"(?:\s+(?:morning|afternoon|evening))?"
+    rf"|(?:next|this)\s+(?:week|month)"
+    rf"|tomorrow(?:\s+(?:morning|afternoon|evening))?|today|tonight|this (?:morning|afternoon|evening)"
+    rf"|later this week|early next week|end of (?:the )?week)\b",
     _I,
 )
 

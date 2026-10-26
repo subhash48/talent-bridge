@@ -586,6 +586,79 @@ async def test_a_message_that_mentions_interviewing_is_still_a_message(client: A
     assert invited["cards"][0]["purpose"] == "Interview invitation"
 
 
+# Interview times
+
+
+async def test_a_new_time_keeps_the_length_window_and_interview(client: AsyncClient) -> None:
+    proposed = await ask(
+        client,
+        "Invite these to a 45-minute technical interview next Tuesday between 1 and 4 PM",
+        {"selected_application_ids": [MAYA, JAMES]},
+    )
+    plan = proposed["cards"][0]["schedule"]
+    assert (plan["title"], plan["duration_minutes"], plan["window_start"]) == ("Technical interview", 45, "13:00")
+    moved = await ask(client, "Make these interviews next Wednesday instead", proposed["context"])
+    [card] = moved["cards"]
+    plan = card["schedule"]
+    wednesday = next_tuesday(utcnow().date()) + timedelta(days=1)
+    assert (plan["day"], plan["duration_minutes"], plan["window_start"], plan["window_end"]) == (
+        wednesday.isoformat(),
+        45,
+        "13:00",
+        "16:00",
+    )
+    assert plan["title"] == "Technical interview"
+    assert all("45-minute technical interview" in item["body"] for item in card["items"])
+    longer = await ask(client, "Make these interviews 60 minutes.", moved["context"])
+    [card] = longer["cards"]
+    assert (card["schedule"]["day"], card["schedule"]["duration_minutes"]) == (wednesday.isoformat(), 60)
+    assert all("60-minute" in item["body"] and "45-minute" not in item["body"] for item in card["items"])
+
+
+async def test_a_day_that_cant_be_used_is_said_and_today_can_be_picked(client: AsyncClient) -> None:
+    today = utcnow().date()
+    schedule = {"duration_minutes": 30, "window_start": "00:00", "window_end": "23:59"}
+    picked = (
+        await client.post(
+            f"{API}/assistant/outreach",
+            json={
+                "application_ids": [MAYA],
+                "purpose": "interview_invitation",
+                "schedule": {**schedule, "timeframe": today.isoformat()},
+                "time_zone": "UTC",
+            },
+        )
+    ).json()
+    assert picked["cards"][0]["schedule"]["day"] == today.isoformat()
+    past = (today - timedelta(days=1)).isoformat()
+    gone = (
+        await client.post(
+            f"{API}/assistant/outreach",
+            json={
+                "application_ids": [MAYA],
+                "purpose": "interview_invitation",
+                "schedule": {**schedule, "timeframe": past},
+                "time_zone": "UTC",
+            },
+        )
+    ).json()
+    assert gone["cards"][0]["schedule"] is None
+    assert f"I couldn't use “{past}” as the day, so the invitations ask for times instead." in gone["reply"]
+    assert gone["reply"].startswith("**1 personalized draft**, for Maya Brooks.")
+    # A time zone name that isn't one (a folder of zones) falls back to the offset.
+    folder = await client.post(
+        f"{API}/assistant/outreach",
+        json={
+            "application_ids": [MAYA],
+            "purpose": "interview_invitation",
+            "schedule": {**schedule, "timeframe": "next Tuesday"},
+            "time_zone": "America",
+            "utc_offset_minutes": -300,
+        },
+    )
+    assert folder.status_code == 200 and folder.json()["status"] == "proposed"
+
+
 async def test_outreach_needs_candidates_and_approve_still_shows_the_final_look(client: AsyncClient) -> None:
     nobody = await ask(client, "Draft interview invitations for the selected candidates.")
     assert nobody["reply"].startswith("Tick the candidates first")

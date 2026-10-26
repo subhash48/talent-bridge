@@ -147,11 +147,14 @@ async def propose(
     asks: dict[uuid.UUID, tuple[DraftPurpose, str | None]] = {}
     for application, slot in zip(applications, slots, strict=True):
         if proposal is not None and slot is not None:
+            # The interview as proposed now comes first, and replaces any length or time in the request.
             lines = [
-                instructions or "",
                 f"Interview: {proposal.title}",
                 f"Length: {proposal.duration_minutes} minutes",
                 f"Proposed time: {times.describe(slot, tz)}.",
+                f"The recruiter's request (the interview, length and time above replace any in it): {instructions}"
+                if instructions
+                else "",
             ]
             asks[application.id] = (DraftPurpose.INTERVIEW_PROPOSAL, "\n".join(line for line in lines if line)[:1000])
         elif invitation:

@@ -152,6 +152,17 @@ async def test_matching_and_the_assistant_stay_in_the_workspace(client: AsyncCli
     assert leaked(who) == []
 
 
+async def test_sla_rules_are_each_workspaces_own(client: AsyncClient, julia: dict[str, str]) -> None:
+    changed = await client.put(
+        f"{API}/communication/rules/no_recent_update", json={"enabled": False, "threshold_hours": 48}, headers=julia
+    )
+    assert changed.status_code == 200
+    theirs = {rule["key"]: rule for rule in (await client.get(f"{API}/communication/rules", headers=julia)).json()}
+    ours = {rule["key"]: rule for rule in (await client.get(f"{API}/communication/rules")).json()}
+    assert (theirs["no_recent_update"]["enabled"], theirs["no_recent_update"]["threshold_hours"]) == (False, 48)
+    assert (ours["no_recent_update"]["enabled"], ours["no_recent_update"]["threshold_hours"]) == (True, 120)
+
+
 async def test_a_new_job_belongs_to_the_workspace_that_made_it(client: AsyncClient, julia: dict[str, str]) -> None:
     created = await client.post(f"{API}/jobs", json={"title": "Research Engineer", "status": "open"}, headers=julia)
     assert created.status_code == 201

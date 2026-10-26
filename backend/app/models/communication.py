@@ -9,11 +9,12 @@ from app.models.base import Base, Timestamps, UUIDPrimaryKey, text_enum, utcnow
 
 
 class CommunicationRule(Base):
-    """A recruiter's change to one SLA rule (migration 015). Rules without a row use their defaults
-    (services/communication/rules.py)."""
+    """A workspace's change to one SLA rule (migrations 015 and 019). Rules without a row use their
+    defaults (services/communication/rules.py)."""
 
     __tablename__ = "communication_rules"
 
+    company_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("companies.id", ondelete="CASCADE"), primary_key=True)
     key: Mapped[CommunicationRuleKey] = mapped_column(text_enum(CommunicationRuleKey), primary_key=True)
     enabled: Mapped[bool] = mapped_column(default=True)
     # Hours since the event, or for interview_unconfirmed, hours before the interview.

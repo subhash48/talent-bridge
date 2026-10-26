@@ -11,7 +11,7 @@ that session sees only the workspace's own rows, however it's written:
                    employers; each sees only its own applications and what the candidate shared there)
     everything kept per application: messages and their delivery, interviews, timeline, stage history,
     drafts, résumés sent with an application, portal sessions
-    companies      only its own
+    companies      only its own; SLA rules, its own
 
 A row of another workspace isn't there: a list leaves it out and an id answers 404, exactly as if it
 didn't exist, so nothing says it does. The filter is added to the statement itself (with_loader_criteria),
@@ -44,6 +44,7 @@ from app.models import (
     CandidateResume,
     CandidateStageHistory,
     CommunicationDraft,
+    CommunicationRule,
     Company,
     DemoApplication,
     DemoJobPosting,
@@ -124,6 +125,7 @@ def criteria(company_id: uuid.UUID) -> list[ExecutableOption]:
             include_aliases=True,
         ),
         with_loader_criteria(CandidateDemographics, CandidateDemographics.candidate_id.in_(candidate_ids)),
+        with_loader_criteria(CommunicationRule, CommunicationRule.company_id == company_id),
         with_loader_criteria(AssistantAction, AssistantAction.recruiter_id.in_(staff_ids)),
         with_loader_criteria(DemoJobPosting, DemoJobPosting.job_id.in_(job_ids)),
         with_loader_criteria(DemoApplication, DemoApplication.job_id.in_(job_ids)),

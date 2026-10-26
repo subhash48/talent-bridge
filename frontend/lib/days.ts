@@ -29,3 +29,11 @@ export function daysLabel(days: readonly Weekday[]): string {
 export function openingsLabel(count: number): string {
   return `${count} opening${count === 1 ? "" : "s"}`;
 }
+
+/** "13:00" as people say it: "1 PM"; "14:30" is "2:30 PM". */
+export function clockLabel(time: string): string {
+  const [hours, minutes] = time.split(":").map(Number);
+  const suffix = hours >= 12 ? "PM" : "AM";
+  const hour = hours % 12 || 12;
+  return minutes ? `${hour}:${String(minutes).padStart(2, "0")} ${suffix}` : `${hour} ${suffix}`;
+}

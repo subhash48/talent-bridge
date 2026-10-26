@@ -18,3 +18,12 @@ test("openings", () => {
   assert.equal(openingsLabel(1), "1 opening");
   assert.equal(openingsLabel(2), "2 openings");
 });
+
+test("clock times read the way people say them", async () => {
+  const { clockLabel } = await import("../lib/days.ts");
+  assert.equal(clockLabel("13:00"), "1 PM");
+  assert.equal(clockLabel("14:30"), "2:30 PM");
+  assert.equal(clockLabel("09:00"), "9 AM");
+  assert.equal(clockLabel("12:00"), "12 PM");
+  assert.equal(clockLabel("00:15"), "12:15 AM");
+});

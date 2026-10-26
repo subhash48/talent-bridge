@@ -159,11 +159,19 @@ def _norm(text: str) -> str:
 def _mentions(text: str | None, term: str) -> bool:
     if not text:
         return False
+    said = term.strip()
+    if 0 < len(said.replace("#", "").replace("+", "")) <= 2:
+        # "Go", "R", "C", "UX": also everyday words and letters, so only as a name is written ("Go", "GO", never
+        # "go"), and never inside another word or name ("go-to-market", "R&D", "C-suite", "C++" for "C").
+        names = {said.upper(), said[:1].upper() + said[1:].lower()}
+        pattern = "|".join(map(re.escape, sorted(names)))
+        return re.search(rf"(?<![\w&/.+#-])(?:{pattern})(?![\w&/+#-])", text) is not None
     words = _norm(term).split()
     if not words:
         return False
-    # Singular or plural: "design system" and "design systems" are the same thing.
-    last = words[-1][:-1] if len(words[-1]) > 3 and words[-1].endswith("s") else words[-1]
+    # Singular or plural: "design system" and "design systems" are the same thing ("Sass" isn't "SAS").
+    plural = len(words[-1]) > 3 and words[-1].endswith("s") and not words[-1].endswith("ss")
+    last = words[-1][:-1] if plural else words[-1]
     pattern = r"[\s-]+".join([*map(re.escape, words[:-1]), re.escape(last)])
     return re.search(rf"(?<![\w]){pattern}(?:e?s)?(?![\w])", text.casefold()) is not None
 

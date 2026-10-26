@@ -11,7 +11,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.models import Candidate, CandidateActivity, CandidateResume, Message
-from app.services.candidate_matching import experience
+from app.services.candidate_matching import _mentions, experience
 from app.services.personal_characteristics import REFUSAL
 from tests.conftest import API, application_id, candidate_id, job_id
 
@@ -147,6 +147,24 @@ async def test_only_job_related_criteria_can_be_asked(client: AsyncClient) -> No
     # Job-related ones that look alike still work.
     for criteria in (["Spanish", "Mandarin"], ["over 10 years of experience"], ["React Native"], ["Accessibility"]):
         assert (await client.post(f"{API}/candidates/match", json={"skills": criteria})).status_code == 200
+
+
+def test_short_names_and_double_s_words_match_only_themselves() -> None:
+    assert _mentions("Backend services in Go and Rust", "Go")
+    assert _mentions("Statistics in R and Python", "R")
+    assert _mentions("Firmware in C, some C++", "C")
+    assert _mentions("UX research lead", "ux")
+    for text, term in (
+        ("Owned go-to-market launches", "Go"),
+        ("Ready to go live", "Go"),
+        ("Led R&D for a hardware team", "R"),
+        ("Presented to the C-suite", "C"),
+        ("Embedded C++ only", "C"),
+        ("Statistical analysis in SAS and R", "Sass"),
+    ):
+        assert not _mentions(text, term), (text, term)
+    assert _mentions("Styled with Sass and CSS modules", "Sass")
+    assert _mentions("Built design systems", "design system") and _mentions("A design system", "Design systems")
 
 
 def test_the_experience_note_is_years_of_that_work_never_an_age_or_time_away() -> None:

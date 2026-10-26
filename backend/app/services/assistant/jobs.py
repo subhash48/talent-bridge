@@ -34,9 +34,14 @@ DEPARTMENTS = (
 )
 
 
+TRAILING = re.compile(r"\s+(?:experience|skills?|knowledge|background)$", re.IGNORECASE)
+
+
 def skill_names(said: list[str]) -> list[str]:
-    """Skills as said, tidied like the editor's chips: "talent research" becomes "Talent research"."""
-    return clean_list([skill[:1].upper() + skill[1:] if skill.islower() else skill for skill in said])
+    """Skills as said, tidied like the editor's chips: "talent research" becomes "Talent research", and
+    "B2B SaaS experience" "B2B SaaS", as a hosted model may pass them."""
+    tidy = [TRAILING.sub("", skill.strip()) for skill in said]
+    return clean_list([skill[:1].upper() + skill[1:] if skill[:1].islower() else skill for skill in tidy if skill])
 
 
 def salary_label(low: int | None, high: int | None, currency: str = "USD") -> str | None:

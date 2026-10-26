@@ -18,8 +18,12 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.enums import DraftStatus, JobStatus, SenderType
 from app.integrations.calendar import NOT_CONFIGURED
+from app.main import app
 from app.models import Application, CommunicationDraft, Interview, Job, Message
 from app.models.base import utcnow
+from app.schemas.assistant import AssistantIntent, JobChanges
+from app.services.ai.client import get_ai_provider
+from app.services.ai.fallback import MockProvider
 from tests.conftest import API, application_id
 
 SOPHIA = application_id("sophia-martinez")  # her Encord Product Designer application
@@ -335,3 +339,16 @@ async def test_top_n_is_a_search_on_the_jobs_requirements_and_ranking_is_refused
         assert answer["cards"] == [] and "I don't rank, score or judge candidates" in answer["reply"], refused
     interviewed = await ask(client, "Show candidates who interviewed but haven't received an update.")
     assert interviewed["cards"][0]["filters"] == [{"key": "interview", "label": "Interviewed, no update since"}]
+
+
+async def test_skills_a_hosted_model_passes_are_tidied_like_the_rules_do(client: AsyncClient) -> None:
+    class Reader(MockProvider):
+        name, model = "reader", "reader-1"
+
+        async def understand_request(self, text: str, context: str) -> AssistantIntent:
+            changes = JobChanges(title="Senior Product Designer", skills_add=["figma", "B2B SaaS experience"])
+            return AssistantIntent(action="create_job", job=changes)
+
+    app.dependency_overrides[get_ai_provider] = Reader
+    drafted = await ask(client, "Create a Senior Product Designer role requiring Figma and B2B SaaS experience")
+    assert drafted["cards"][0]["draft"]["skills"][:2] == ["Figma", "B2B SaaS"]

@@ -17,6 +17,7 @@ from app.core.enums import JobStatus
 from app.schemas.assistant import AssistantContext, AssistantIntent, CandidateMatchCard, SearchState
 from app.schemas.matching import MatchRequest, MatchResult
 from app.services import candidate_matching
+from app.services.assistant.jobs import skill_names
 from app.services.assistant.resolve import active_applications, find_jobs, normalize
 
 LIST = "|"
@@ -58,7 +59,7 @@ async def state_for(
         previous = SearchState()
     return SearchState(
         job_ids=job_ids[:20],
-        skills=intent.skills or previous.skills,
+        skills=skill_names(intent.skills) or previous.skills,
         stage=intent.stage or previous.stage,
         location=intent.location or previous.location,
         interview=intent.interview_state or previous.interview,

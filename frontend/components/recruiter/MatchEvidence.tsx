@@ -22,7 +22,7 @@ export function MatchEvidence({ match, className }: { match: CandidateMatch; cla
           <li
             key={item.criterion}
             title={item.source ? `From their ${SOURCE_LABELS[item.source]}` : undefined}
-            className="inline-flex h-6 items-center gap-1 rounded-full bg-sage/[0.08] px-2 text-xs text-sage ring-1 ring-sage/20"
+            className="inline-flex min-h-6 items-center gap-1 rounded-[12px] bg-sage/[0.08] px-2 py-0.5 text-xs leading-tight text-sage ring-1 ring-sage/20"
           >
             <Check aria-hidden className="size-3" strokeWidth={2.5} />
             {item.criterion}
@@ -32,7 +32,7 @@ export function MatchEvidence({ match, className }: { match: CandidateMatch; cla
         {match.experience && (
           <li
             title={`“${match.experience.quote}”`}
-            className="inline-flex h-6 items-center gap-1 rounded-full bg-sage/[0.08] px-2 text-xs text-sage ring-1 ring-sage/20"
+            className="inline-flex min-h-6 items-center gap-1 rounded-[12px] bg-sage/[0.08] px-2 py-0.5 text-xs leading-tight text-sage ring-1 ring-sage/20"
           >
             <Check aria-hidden className="size-3" strokeWidth={2.5} />
             {match.experience.label}

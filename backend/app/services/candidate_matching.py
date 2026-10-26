@@ -61,7 +61,20 @@ TOPICS = {
     "analyst": "analysis",
     "recruiter": "recruiting",
 }
-YEARS = re.compile(r"\b(\d{1,2})\+?\s*(?:years?|yrs?)\b", re.IGNORECASE)
+YEARS = re.compile(r"\b(\d{1,2})\+?\s*(?:years?|yrs?)(?:'|\u2019)?(?![\w-])", re.IGNORECASE)
+# Next to the years: it's experience ("6 years of experience", "worked as … for 6 years", "6+ years designing").
+WORKED = re.compile(
+    r"\b(experienced?|exp|worked|working|work|career|professional(?:ly)?|building|designing|developing|engineering"
+    r"|leading|managing|shipping|practi[cs]ing)\b",
+    re.IGNORECASE,
+)
+# Right after the years: an age or time away, never experience ("52 years old", "3 years of parental leave").
+NOT_WORKED_AFTER = re.compile(
+    r"^\s*(?:old|of age|ago|off|of (?:\w+ ){0,2}(?:leave|break|sabbatical|gap|absence|unemployment|caregiving|caring)"
+    r"|(?:\w+ ){0,2}(?:leave|break|sabbatical|gap|absence))\b",
+    re.IGNORECASE,
+)
+NOT_WORKED_BEFORE = re.compile(r"\b(?:aged?|age of|turning|turned)\s*$", re.IGNORECASE)
 SENTENCE = re.compile(r"(?<=[.!?;])\s+|\n+")
 
 
@@ -169,7 +182,9 @@ def _evidence(term: str, candidate: Candidate, resume: str | None) -> MatchEvide
 
 
 def experience(job_title: str, headline: str | None, resume: str | None) -> ExperienceNote | None:
-    """Years of experience the application states in a sentence about this kind of work, quoted as written."""
+    """Years of experience the application states in a sentence about this kind of work, quoted as written: the
+    sentence names every word of the job ("product" and "design" for a Product Designer), and the years are
+    said as experience. Never an age ("29 years old") or time away ("3 years of parental leave")."""
     words = SENIORITY.sub("", job_title.strip()).split()
     stems = {word.casefold()[:5] for word in words if len(word) >= 4} | {
         word.casefold() for word in words if word.isupper()
@@ -179,10 +194,19 @@ def experience(job_title: str, headline: str | None, resume: str | None) -> Expe
     topic = " ".join(word if word.isupper() else TOPICS.get(word.casefold(), word.casefold()) for word in words)
     for source, text in (("headline", headline), ("resume", resume)):
         for sentence in SENTENCE.split(text or ""):
-            years = YEARS.search(sentence)
             lowered = sentence.casefold()
-            if years and any(re.search(rf"\b{re.escape(stem)}", lowered) for stem in stems):
+            if not all(re.search(rf"\b{re.escape(stem)}", lowered) for stem in stems):
+                continue
+            for years in YEARS.finditer(sentence):
                 count = int(years.group(1))
+                around = sentence[max(0, years.start() - 50) : years.end() + 50]
+                if (
+                    not 1 <= count <= 50
+                    or NOT_WORKED_AFTER.match(sentence[years.end() :])
+                    or NOT_WORKED_BEFORE.search(sentence[: years.start()])
+                    or not WORKED.search(around)
+                ):
+                    continue
                 return ExperienceNote(
                     label=f"{count} year{'' if count == 1 else 's'} {topic} experience",
                     source=source,  # type: ignore[arg-type]

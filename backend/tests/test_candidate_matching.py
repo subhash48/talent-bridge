@@ -11,6 +11,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.models import Candidate, CandidateActivity, CandidateResume, Message
+from app.services.candidate_matching import experience
 from app.services.personal_characteristics import REFUSAL
 from tests.conftest import API, application_id, candidate_id, job_id
 
@@ -146,3 +147,29 @@ async def test_only_job_related_criteria_can_be_asked(client: AsyncClient) -> No
     # Job-related ones that look alike still work.
     for criteria in (["Spanish", "Mandarin"], ["over 10 years of experience"], ["React Native"], ["Accessibility"]):
         assert (await client.post(f"{API}/candidates/match", json={"skills": criteria})).status_code == 200
+
+
+def test_the_experience_note_is_years_of_that_work_never_an_age_or_time_away() -> None:
+    def note(title: str, text: str) -> str | None:
+        found = experience(title, text, None)
+        return found.label if found else None
+
+    assert note("Product Designer", "Product designer with 4 years of experience in B2B SaaS") == (
+        "4 years product design experience"
+    )
+    assert note("ML Engineer", "ML engineer, 5+ years building recommendation systems") == (
+        "5 years ML engineering experience"
+    )
+    assert note("Product Designer", "Took 3 years of parental leave after 6 years of product design work") == (
+        "6 years product design experience"
+    )
+    for title, text in (
+        ("Senior Product Designer", "I am a 52 year old product designer based in Austin."),
+        ("Product Designer", "Product designer, 29 years old"),
+        ("ML Engineer", "Returning ML engineer after 3 years of parental leave"),
+        ("Product Designer", "Product manager with 6 years of experience"),  # not design
+        ("ML Engineer", "I spent 10 years as a civil engineer building bridges."),  # not ML
+        ("Data Scientist", "Data entry clerk for 12 years."),
+        ("Product Designer", "I am 34 years old and have worked as a product designer since 2019."),
+    ):
+        assert note(title, text) is None, text

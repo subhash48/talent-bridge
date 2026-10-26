@@ -38,7 +38,7 @@ Every data call goes through `frontend/services/*` to `NEXT_PUBLIC_API_URL` (def
 
 1. Apply `supabase/migrations/001`–`016` in order (`supabase db push --db-url "$DATABASE_URL"`, the SQL editor, or `supabase db reset` locally with the [Supabase CLI](https://supabase.com/docs/guides/local-development)). Never edit a migration that has been applied; add the next number instead. `015` (communication) and `016` (careers résumés) only add tables.
 2. Set `DATABASE_URL` in `backend/.env` to the project's connection string (direct or pooler), replacing `[YOUR-PASSWORD]` including the brackets.
-3. Load the demo data: `python -m app.db.seed` (or `--reset` to replace existing data). The API also loads it into an empty database on startup while `SEED_DEMO_DATA=true`.
+3. Load the demo data: `python -m app.db.seed` (or `--reset` to replace existing data). The API also loads it into an empty database on startup while `SEED_DEMO_DATA=true`. A database seeded before newer demo data was added gets just the rows it's missing with `--add-missing`, which never changes or deletes what's there.
 
 Row-level security is on with no policies: the browser only talks to the API, which connects as the database owner.
 

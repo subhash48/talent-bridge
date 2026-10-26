@@ -2,6 +2,7 @@
 
     python -m app.db.seed                            load into an empty database (DATABASE_URL)
     python -m app.db.seed --reset                    replace everything with the demo data
+    python -m app.db.seed --add-missing              add demo rows the database doesn't have yet
     python -m app.db.seed --sql ../supabase/seed.sql write it as SQL for the Supabase CLI
 
 Ids are deterministic and times are relative to now, so every load looks the same and current.
@@ -392,6 +393,26 @@ async def seed_if_empty(session: AsyncSession) -> bool:
     return True
 
 
+async def add_missing(session: AsyncSession, now: datetime | None = None) -> dict[str, int]:
+    """Insert the demo rows the database doesn't have yet (matched by id), for one seeded before newer demo
+    data (another employer, another application) was added. Nothing already there is changed or deleted,
+    and it all goes in one transaction. Returns how many rows each table got."""
+    now = now or utcnow()
+    added: dict[str, int] = {}
+    for table, items in build_seed().items():
+        if not items:
+            continue
+        existing = set((await session.scalars(select(table.__table__.c.id))).all())
+        new = [row for row in items if row["id"] not in existing]
+        if new:
+            await session.execute(
+                insert(table.__table__), [{key: resolve(value, now) for key, value in row.items()} for row in new]
+            )
+            added[table.__tablename__] = len(new)
+    await session.commit()
+    return added
+
+
 async def reset_and_seed(session: AsyncSession) -> None:
     """Replace everything with the demo data. Sign-in links are kept: whoever was linked to Alex Chen
     or a demo candidate before the reset still is afterwards."""
@@ -454,14 +475,21 @@ def _quote(text: str) -> str:
     return "'" + text.replace("'", "''") + "'"
 
 
-async def _seed_database(reset: bool) -> None:
+async def _seed_database(reset: bool, missing: bool = False) -> None:
     from app.core.database import create_tables, dispose_engine, get_engine, get_sessionmaker
 
     engine = get_engine()
     if engine.dialect.name == "sqlite":
         await create_tables(engine)
     async with get_sessionmaker()() as session:
-        if reset:
+        if missing:
+            added = await add_missing(session)
+            where = engine.url.render_as_string(hide_password=True)
+            summary = (
+                ", ".join(f"{count} {table}" for table, count in added.items()) or "nothing; it has every demo row"
+            )
+            print(f"Added to {where}: {summary}.")
+        elif reset:
             await reset_and_seed(session)
             print(f"Replaced the data in {engine.url.render_as_string(hide_password=True)} with the demo pipeline.")
         elif await seed_if_empty(session):
@@ -475,12 +503,15 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Load the TalentBridge demo pipeline.")
     parser.add_argument("--reset", action="store_true", help="delete all existing data first")
     parser.add_argument("--sql", type=Path, metavar="FILE", help="write the seed as SQL to FILE instead")
+    parser.add_argument(
+        "--add-missing", action="store_true", help="add only the demo rows the database doesn't have yet"
+    )
     args = parser.parse_args()
     if args.sql:
         args.sql.write_text(render_sql(), encoding="utf-8")
         print(f"Wrote {args.sql}")
         return
-    asyncio.run(_seed_database(args.reset))
+    asyncio.run(_seed_database(args.reset, args.add_missing))
 
 
 if __name__ == "__main__":

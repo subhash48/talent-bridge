@@ -227,3 +227,52 @@ async def test_sams_job_draft_can_be_changed_in_words(client: AsyncClient, sam: 
     [card] = changed["cards"]
     assert card["draft"]["pay"] == "$17/hour" and card["layout"] == "simple"
     assert KITCHEN_JOB  # the seeded job stays as it was
+
+
+async def test_the_cashier_demo_from_post_to_interviews(
+    client: AsyncClient,
+    sam: dict[str, str],
+    sessions: async_sessionmaker[AsyncSession],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The whole Simple Hire demo: Sam posts the cashier job, demo applicants apply, and Sam finds three, gets
+    their numbers and asks them to interviews."""
+    from app.core.config import settings
+    from app.db import demo_applicants
+
+    answer = await ask(client, sam, CASHIER)
+    job_id = (await approve(client, sam, answer["id"]))["cards"][0]["job_id"]
+    async with sessions() as session:
+        job = await session.get(Job, uuid.UUID(job_id))
+        assert job is not None
+        results = await demo_applicants.apply_all(session, job)
+        assert [result.status for result in results] == ["submitted"] * len(demo_applicants.SERVICE)
+        again = await demo_applicants.apply_all(session, job)
+        assert {result.status for result in again} == {"already_applied"}
+        monkeypatch.setattr(settings, "environment", "production")
+        with pytest.raises(RuntimeError):
+            await demo_applicants.apply_all(session, job)
+
+    found = await ask(client, sam, "Show me 3 applicants available weekends with customer service experience.")
+    [card] = found["cards"]
+    shown = {item["name"]: [e["label"] for e in item["evidence"] if e["matched"]] for item in card["items"]}
+    assert shown == {
+        "Grace Liu": ["Cashier experience", "Saturday available", "Sunday available"],
+        "Omar Haddad": ["Customer service experience", "Saturday available", "Sunday available"],
+        "Priya Raman": ["Barista experience", "Saturday available", "Sunday available"],
+    }
+    picked = [item["application_id"] for item in card["items"]]
+    numbers = await ask(client, sam, "Show me their phone numbers.", context={"selected_application_ids": picked})
+    assert [item["phone"] for item in numbers["cards"][0]["items"]] == [
+        "+1 503 555 0151",
+        "+1 503 555 0152",
+        "+1 503 555 0153",
+    ]
+    invite = await ask(
+        client,
+        sam,
+        "Ask them if they can interview Tuesday afternoon.",
+        context={"selected_application_ids": picked},
+    )
+    assert invite["cards"][0]["type"] == "outreach" and invite["status"] == "proposed"
+    assert (await approve(client, sam, invite["id"]))["status"] == "completed"

@@ -152,7 +152,7 @@ Actions and their fields:
 - who_needs_update: who is owed an update today ("who needs an update?", "who's waiting on us?").
 - unanswered: candidates whose messages have no reply yet.
 - unconfirmed_interviews: upcoming interviews the candidates haven't confirmed.
-- no_follow_up: candidates who interviewed recently and haven't heard from us since.
+- no_follow_up: the question "who interviewed recently and hasn't heard from us since?". A request to show or filter a list ("show candidates who interviewed but haven't received an update") is search_candidates with interview_state awaiting_update.
 - draft_message: a message to one candidate ("draft Sarah an update", "remind Priya about her interview"). candidate_name, instructions (what it should say), mode.
 - send_interview_email: ask a candidate to schedule an interview. candidate_name, job_title (only if said), interview {{"interview_type", "duration_minutes", "timeframe"}}, mode.
 - search_candidates: a list of candidates ("show applicants for the ML Engineer job", "filter for Python and AWS", "show 10 matching", "the top 10 for this role"). job_title ("that role" for the job in context), skills (array, as said), stage (sourced|screening|interview|offer|hired), location, interview_state (upcoming|interviewed|awaiting_update|none; "interviewed but haven't had an update" is awaiting_update), limit (a number), refine (true when it narrows the list already shown).

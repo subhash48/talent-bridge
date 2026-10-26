@@ -37,6 +37,7 @@ COMPANIES = [m for m in MIGRATIONS if m.name.startswith("017")]
 BEFORE_MESSAGING = [m for m in MIGRATIONS if m.name < "018"]
 MESSAGING = [m for m in MIGRATIONS if m.name.startswith("018")]
 WORKSPACES = [m for m in MIGRATIONS if m.name.startswith("019")]
+SIMPLE_HIRE = [m for m in MIGRATIONS if m.name.startswith("020")]
 LATER = [m for m in MIGRATIONS if m.name >= "020"]
 ENCORD = seed_id("company", "encord")
 
@@ -254,3 +255,26 @@ async def test_019_gives_todays_staff_and_rule_changes_the_oldest_company_and_ke
         other,
     )
     assert await connection.fetchval("select count(*) from public.communication_rules") == 2
+
+
+async def test_020_gives_each_application_the_phone_number_it_came_with(
+    database: tuple[str, asyncpg.Connection, Apply],
+) -> None:
+    _, connection, apply = database
+    await apply(BEFORE_COMPANIES)
+    await connection.execute(LEGACY_ROWS)
+    await apply([*COMPANIES, *MESSAGING, *WORKSPACES])
+    await connection.execute(
+        f"""
+        update public.candidates set phone = '+1 415 555 0134' where id = '{CANDIDATE}';
+        update public.applications set updated_at = now() - interval '6 days' where id = '{APPLICATION}';
+        """
+    )
+    before = await connection.fetchval(f"select updated_at from public.applications where id = '{APPLICATION}'")
+    await apply(SIMPLE_HIRE)
+    row = await connection.fetchrow(
+        f"select phone, availability, updated_at from public.applications where id = '{APPLICATION}'"
+    )
+    assert (row["phone"], row["availability"], row["updated_at"]) == ("+1 415 555 0134", "[]", before)
+    job = await connection.fetchrow(f"select pay, shift, work_days, openings from public.jobs where id = '{JOB}'")
+    assert dict(job) == {"pay": None, "shift": None, "work_days": "[]", "openings": None}

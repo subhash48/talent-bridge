@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, LoaderCircle, MessageSquareText, SendHorizontal, Sparkles } from "lucide-react";
+import { ArrowLeft, LoaderCircle, MessageSquareLock, MessageSquareReply, MessageSquareText, SendHorizontal, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useEffectEvent, useId, useMemo, useRef, useState } from "react";
 
@@ -174,7 +174,8 @@ type ThreadProps = {
 };
 
 function Thread({ conversation, onBack, onSent, draftOnOpen, onDraftStarted }: ThreadProps) {
-  const { candidates, refresh, emailConfigured } = useWorkspace();
+  const { candidates, refresh, emailConfigured, setMessaging } = useWorkspace();
+  const [switching, setSwitching] = useState(false);
   const toast = useToast();
   const composerId = useId();
   const [draft, setDraft] = useState("");
@@ -217,6 +218,18 @@ function Thread({ conversation, onBack, onSent, draftOnOpen, onDraftStarted }: T
     }
   }
 
+  async function toggleReplies() {
+    if (!candidate || switching) return;
+    setSwitching(true);
+    try {
+      await setMessaging([candidate.id], !candidate.candidateMessagingEnabled);
+    } catch (error) {
+      toast({ title: "Couldn't change candidate messaging", description: errorMessage(error), tone: "error" });
+    } finally {
+      setSwitching(false);
+    }
+  }
+
   async function send() {
     const body = draft.trim();
     if (!body || sending) return;
@@ -246,6 +259,23 @@ function Thread({ conversation, onBack, onSent, draftOnOpen, onDraftStarted }: T
           <p className="truncate text-[13px] text-stone">{conversation.candidate.role}</p>
         </div>
         {candidate && <StatusBadge stage={candidate.stage} className="hidden sm:inline-flex" />}
+        {candidate && (
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={switching}
+            aria-pressed={candidate.candidateMessagingEnabled}
+            onClick={() => void toggleReplies()}
+            title={
+              candidate.candidateMessagingEnabled
+                ? `${first} can write to you about this application. Turn it off.`
+                : `${first} can read your messages but can't write back. Turn it on.`
+            }
+          >
+            {candidate.candidateMessagingEnabled ? <MessageSquareReply /> : <MessageSquareLock />}
+            <span className="hidden md:inline">{candidate.candidateMessagingEnabled ? "Replies on" : "Replies off"}</span>
+          </Button>
+        )}
         <Link href={`/recruiter/candidates?candidate=${conversation.candidate.id}`} className={buttonStyles({ variant: "secondary", size: "sm" })}>
           View profile
         </Link>

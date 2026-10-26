@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import Field, computed_field
 
-from app.core.enums import ApplicationStage
+from app.core.enums import ApplicationStage, Weekday
 from app.schemas.common import APIModel, OptionalText, Timestamp
 
 # Where the application came from: synced from Ashby (the system of record) or made here.
@@ -26,6 +26,11 @@ class ApplicationRead(APIModel):
     updated_at: Timestamp
     archived_at: Timestamp | None = None
     candidate_messaging_enabled: bool = False  # the candidate may write to the hiring team about it
+    # What the applicant gave with it: for contacting them about this job only.
+    phone: str | None = None
+    linkedin_url: str | None = None
+    availability: list[Weekday] = []  # which of the job's work days they can work
+    experience_note: str | None = None  # their relevant experience, in their words
     # Ashby's own view of it, for recruiters (null for applications made in TalentBridge).
     external_id: str | None = None
     external_status: str | None = None

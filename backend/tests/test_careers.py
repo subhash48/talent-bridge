@@ -184,3 +184,55 @@ def test_resume_text_is_read_from_docx_and_pdf_never_fails() -> None:
     assert "Design systems at Nubank" in (read_text(Resume(docx(RESUME_TEXT), DOCX, "cv.docx")) or "")
     assert read_text(Resume(PDF, "application/pdf", "cv.pdf")) is None  # no text in it
     assert read_text(Resume(b"PK\x03\x04garbage", DOCX, "cv.docx")) is None  # damaged: no text, no error
+
+
+async def test_an_application_keeps_what_the_applicant_gave_for_it(
+    anonymous: AsyncClient, client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    """The phone number, LinkedIn profile, days and experience are this application's: the recruiter sees
+    them with it."""
+    async with sessions() as session:
+        job = await session.get(Job, uuid.UUID(PRODUCT_DESIGNER))
+        assert job is not None
+        job.work_days = ["friday", "saturday", "sunday"]
+        await session.commit()
+
+    def apply(**changes: Any) -> Any:
+        return anonymous.post(f"{API}/careers/jobs/{PRODUCT_DESIGNER}/apply", json=application(**changes))
+
+    missing = await apply()
+    assert missing.status_code == 422 and missing.json()["error"]["code"] == "availability_required"
+    other_day = await apply(availability=["monday"])
+    assert (
+        other_day.status_code == 422 and other_day.json()["error"]["message"] == "Choose from the days this job needs."
+    )
+    for bad in ({"linkedin_url": "https://example.com/ana"}, {"availability": ["someday"]}):
+        assert (await apply(**{"availability": ["friday"], **bad})).status_code == 422
+
+    applied = await apply(
+        phone="+1 503 555 0142",
+        linkedin_url="linkedin.com/in/ana-lima",
+        availability=["saturday", "friday", "saturday"],
+        experience_note="  Two years as a barista, and weekend shifts at a bakery.  ",
+    )
+    assert applied.status_code == 200, applied.text
+    [item] = (await client.get(f"{API}/candidates", params={"search": EMAIL})).json()["items"]
+    detail = (await client.get(f"{API}/candidates/{item['candidate']['id']}")).json()
+    assert {
+        key: detail["application"][key] for key in ("phone", "linkedin_url", "availability", "experience_note")
+    } == {
+        "phone": "+1 503 555 0142",
+        "linkedin_url": "https://linkedin.com/in/ana-lima",
+        "availability": ["friday", "saturday"],
+        "experience_note": "Two years as a barista, and weekend shifts at a bakery.",
+    }
+    listed = (await anonymous.get(f"{API}/careers/jobs/{PRODUCT_DESIGNER}")).json()
+    assert listed["work_days"] == ["friday", "saturday", "sunday"]
+
+
+async def test_a_job_without_work_days_asks_for_none(anonymous: AsyncClient, client: AsyncClient) -> None:
+    applied = await anonymous.post(f"{API}/careers/jobs/{PRODUCT_DESIGNER}/apply", json=application())
+    assert applied.status_code == 200
+    [item] = (await client.get(f"{API}/candidates", params={"search": EMAIL})).json()["items"]
+    detail = (await client.get(f"{API}/candidates/{item['candidate']['id']}")).json()
+    assert (detail["application"]["availability"], detail["application"]["phone"]) == ([], None)

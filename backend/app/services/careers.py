@@ -1,4 +1,5 @@
-"""TalentBridge's own careers site: open jobs, and applying with a name, an email and a résumé.
+"""TalentBridge's own careers site: open jobs, and applying with a name, an email and a résumé (and
+what the job asks: which of its work days they can work, and their relevant experience).
 
 An application is created the moment it's sent: the recruiter sees it at once, with the résumé, and
 the applicant gets a secure email link into their candidate portal (an invitation for a new account,
@@ -15,7 +16,7 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.enums import ActivityType, ApplicationStage, JobStatus, PortalAccountStatus, UserRole
+from app.core.enums import ActivityType, ApplicationStage, JobStatus, PortalAccountStatus, UserRole, Weekday
 from app.core.errors import AppError, ConflictError, NotFoundError
 from app.integrations.supabase_admin import SupabaseAdmin, SupabaseAdminError
 from app.models import Application, Candidate, CandidateStageHistory, Job, User
@@ -37,6 +38,11 @@ PortalLink = Literal["invitation_sent", "sign_in_link_sent", "unavailable"]
 class EmailNotAccepted(AppError):
     status_code = 422
     code = "email_not_accepted"
+
+
+class AvailabilityRequired(AppError):
+    status_code = 422
+    code = "availability_required"
 
 
 def _native_open(job: Job | None) -> Job:
@@ -61,6 +67,10 @@ def _summary(job: Job) -> CareerJobSummary:
         employment_type=job.employment_type,
         summary=paragraphs[0] if paragraphs else None,
         published_at=job.created_at,
+        pay=job.pay,
+        shift=job.shift,
+        work_days=job.work_days or [],
+        openings=job.openings,
     )
 
 
@@ -99,6 +109,7 @@ async def apply(
     if staff is not None:
         raise EmailNotAccepted("Apply with a personal email address, not a staff account.")
     resume = read_upload(data.resume)  # 422 invalid_resume says what to fix
+    _check_availability(job, data.availability)
     await _lock_email(session, email)
 
     candidate = await session.scalar(select(Candidate).where(Candidate.email == email))
@@ -121,7 +132,15 @@ async def apply(
     if existing is None:
         now = utcnow()
         application = Application(
-            candidate_id=candidate.id, job_id=job.id, stage=ApplicationStage.SOURCED, source=SOURCE, applied_at=now
+            candidate_id=candidate.id,
+            job_id=job.id,
+            stage=ApplicationStage.SOURCED,
+            source=SOURCE,
+            applied_at=now,
+            phone=data.phone,
+            linkedin_url=data.linkedin_url,
+            availability=[day.value for day in data.availability],
+            experience_note=data.experience_note,
         )
         session.add(application)
         await session.flush()
@@ -145,6 +164,18 @@ async def apply(
     status = "already_applied" if existing is not None else "submitted"
     logger.info("careers.applied job=%s candidate=%s status=%s portal=%s", job.id, candidate.id, status, portal_link)
     return ApplicationResult(status=status, portal_link=portal_link, email=email, job_title=job.title)
+
+
+def _check_availability(job: Job, days: list[Weekday]) -> None:
+    """A job that lists its work days asks which of them the applicant can work: at least one, and only
+    those."""
+    offered = set(job.work_days or [])
+    if not offered:
+        return
+    if not days:
+        raise AvailabilityRequired("Choose the days you can work.")
+    if any(day.value not in offered for day in days):
+        raise AvailabilityRequired("Choose from the days this job needs.")
 
 
 async def _portal_link(session: AsyncSession, candidate: Candidate, admin: SupabaseAdmin | None) -> PortalLink:

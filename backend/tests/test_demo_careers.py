@@ -387,6 +387,11 @@ async def test_the_careers_site_lists_published_roles_only(
         "salary_currency": "USD",
         "summary": "Build the models behind data curation.",
         "published_at": listed[1]["published_at"],
+        # A small business's job facts: TalentBridge's own careers site only.
+        "pay": None,
+        "shift": None,
+        "work_days": [],
+        "openings": None,
     }
     detail = (await anonymous.get(f"{API}/demo/careers/jobs/{older}")).json()
     assert detail["responsibilities"] == ["Train ranking models", "Run evaluation studies"]

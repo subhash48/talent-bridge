@@ -9,7 +9,7 @@ from uuid import UUID
 
 from pydantic import BeforeValidator, EmailStr, Field, field_validator, model_validator
 
-from app.core.enums import DemoPostingStatus, JobStatus
+from app.core.enums import DemoPostingStatus, JobStatus, Weekday
 from app.schemas.common import APIModel, OptionalText, OptionalURL, Timestamp
 
 WorkArrangement = Literal["On-site", "Hybrid", "Remote"]
@@ -207,6 +207,11 @@ class CareerJobSummary(APIModel):
     salary_currency: str = "USD"
     summary: str | None = None
     published_at: Timestamp | None = None
+    # A small business's job (TalentBridge's own careers site): in the employer's words, or empty.
+    pay: str | None = None
+    shift: str | None = None
+    work_days: list[Weekday] = []
+    openings: int | None = None
 
 
 class CareerJobDetail(CareerJobSummary):

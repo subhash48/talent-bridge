@@ -14,7 +14,7 @@ when configured). Each candidate's outcome is reported on its own; nothing claim
 
 import re
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, tzinfo
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -86,16 +86,16 @@ def plan_schedule(
     details: ScheduleDetails,
     count: int,
     recruiter: User,
+    tz: tzinfo,
     utc_offset_minutes: int,
     calendar: CalendarProvider,
     now: datetime,
 ) -> tuple[ScheduleProposal, list]:
     """The proposal and one slot per candidate (None where there's no room, or no day yet)."""
     minutes = details.duration_minutes or times.DEFAULT_MINUTES
-    today = (now + timedelta(minutes=utc_offset_minutes)).date()
-    day = times.resolve_day(details.timeframe, today)
+    day = times.resolve_day(details.timeframe, now.astimezone(tz).date())
     window = times.window_for(details)
-    slots = times.slots(count, day, window, minutes, utc_offset_minutes, now)
+    slots = times.slots(count, day, window, minutes, tz, now)
     title = details.interview_type[:1].upper() + details.interview_type[1:] if details.interview_type else "Interview"
     proposal = ScheduleProposal(
         title=title,
@@ -104,6 +104,7 @@ def plan_schedule(
         window_start=window[0],
         window_end=window[1],
         utc_offset_minutes=utc_offset_minutes,
+        time_zone=getattr(tz, "key", None),
         interviewers=[recruiter.full_name],
         calendar_configured=calendar.configured,
         calendar_note=f"Calendar invitations go out through {calendar.name}."
@@ -123,6 +124,7 @@ async def propose(
     invitation: bool,
     instructions: str | None,
     details: ScheduleDetails | None,
+    tz: tzinfo,
     utc_offset_minutes: int,
     provider: AIProvider,
     email: EmailProvider,
@@ -132,7 +134,7 @@ async def propose(
     """One personalized draft per candidate, and the interview times proposed when details are given."""
     proposal, slots = (None, [None] * len(applications))
     if details is not None:
-        proposal, slots = plan_schedule(details, len(applications), recruiter, utc_offset_minutes, calendar, now)
+        proposal, slots = plan_schedule(details, len(applications), recruiter, tz, utc_offset_minutes, calendar, now)
     asks: dict[uuid.UUID, tuple[DraftPurpose, str | None]] = {}
     for application, slot in zip(applications, slots, strict=True):
         if proposal is not None and slot is not None:
@@ -140,7 +142,7 @@ async def propose(
                 instructions or "",
                 f"Interview: {proposal.title}",
                 f"Length: {proposal.duration_minutes} minutes",
-                f"Proposed time: {times.describe(slot, utc_offset_minutes)}.",
+                f"Proposed time: {times.describe(slot, tz)}.",
             ]
             asks[application.id] = (DraftPurpose.INTERVIEW_PROPOSAL, "\n".join(line for line in lines if line)[:1000])
         elif invitation:

@@ -3,10 +3,12 @@
 Only a proposal: a day and back-to-back slots in a window, in the recruiter's own time zone, for them to
 check and change before anything is created. Nothing is guessed that they'd have to spot: a request
 with no day leaves the day for them to pick, and candidates the window has no room for get no time.
+The time zone is the browser's named one, so a day after the clocks change gets that day's offset.
 """
 
 import re
-from datetime import UTC, date, datetime, time, timedelta
+from datetime import UTC, date, datetime, time, timedelta, timezone, tzinfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from app.schemas.assistant import OutreachSlot, ScheduleDetails
 
@@ -78,20 +80,27 @@ def window_for(details: ScheduleDetails) -> tuple[str, str]:
     return next((window for name, window in WINDOWS.items() if name in words), DEFAULT_WINDOW)
 
 
+def zone(time_zone: str | None, utc_offset_minutes: int) -> tzinfo:
+    """The recruiter's time zone: the browser's named one (America/Chicago), else the offset they're at now."""
+    if time_zone:
+        try:
+            return ZoneInfo(time_zone)
+        except (ZoneInfoNotFoundError, ValueError):
+            pass
+    return timezone(timedelta(minutes=utc_offset_minutes))
+
+
 def slots(
-    count: int, day: date | None, window: tuple[str, str], minutes: int, utc_offset_minutes: int, now: datetime
+    count: int, day: date | None, window: tuple[str, str], minutes: int, tz: tzinfo, now: datetime
 ) -> list[OutreachSlot | None]:
     """Back-to-back slots from the window's start, one per candidate, in UTC. None once the window is full,
     or when there's no day yet; never a time already past."""
     if day is None:
         return [None] * count
-    offset = timedelta(minutes=utc_offset_minutes)
-    start = datetime.combine(day, time.fromisoformat(window[0])) - offset
-    end = datetime.combine(day, time.fromisoformat(window[1])) - offset
+    cursor = datetime.combine(day, time.fromisoformat(window[0]), tzinfo=tz).astimezone(UTC)
+    end = datetime.combine(day, time.fromisoformat(window[1]), tzinfo=tz).astimezone(UTC)
     length = timedelta(minutes=minutes)
     result: list[OutreachSlot | None] = []
-    cursor = start.replace(tzinfo=UTC)
-    end = end.replace(tzinfo=UTC)
     for _ in range(count):
         if cursor + length > end or cursor <= now:
             result.append(None)
@@ -101,17 +110,13 @@ def slots(
     return result
 
 
-def describe(slot: OutreachSlot, utc_offset_minutes: int) -> str:
-    """ "Tuesday, November 3, 1:00 PM–1:30 PM (UTC−5)": in the recruiter's time zone, which it names."""
-    offset = timedelta(minutes=utc_offset_minutes)
-    start, end = slot.starts_at + offset, slot.ends_at + offset
-    hours, rest = divmod(abs(utc_offset_minutes), 60)
-    zone = (
-        "UTC"
-        if utc_offset_minutes == 0
-        else f"UTC{'+' if utc_offset_minutes > 0 else '−'}{hours}{f':{rest:02d}' if rest else ''}"
-    )
-    return f"{start:%A}, {start:%B} {start.day}, {_time(start)}–{_time(end)} ({zone})"
+def describe(slot: OutreachSlot, tz: tzinfo) -> str:
+    """ "Tuesday, November 3, 1:00 PM–1:30 PM (UTC−6)": in the recruiter's time zone, with that day's offset."""
+    start, end = slot.starts_at.astimezone(tz), slot.ends_at.astimezone(tz)
+    minutes = int((start.utcoffset() or timedelta()).total_seconds() // 60)
+    hours, rest = divmod(abs(minutes), 60)
+    label = "UTC" if minutes == 0 else f"UTC{'+' if minutes > 0 else '−'}{hours}{f':{rest:02d}' if rest else ''}"
+    return f"{start:%A}, {start:%B} {start.day}, {_time(start)}–{_time(end)} ({label})"
 
 
 def _time(moment: datetime) -> str:

@@ -34,6 +34,7 @@ export async function askAssistant({ text, inputType, context, clientRequestId, 
       context,
       client_request_id: clientRequestId,
       utc_offset_minutes: -new Date().getTimezoneOffset(),
+      time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     }),
     signal,
   });
@@ -60,6 +61,7 @@ export async function draftOutreach(request: OutreachRequest): Promise<Assistant
       ...request,
       client_request_id: crypto.randomUUID(),
       utc_offset_minutes: -new Date().getTimezoneOffset(),
+      time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     }),
   });
 }

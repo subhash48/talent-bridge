@@ -25,7 +25,7 @@ import logging
 import re
 import uuid
 from dataclasses import dataclass, field
-from datetime import timedelta
+from datetime import date, tzinfo
 from typing import Any
 
 from sqlalchemy import select, update
@@ -734,6 +734,7 @@ async def _propose_outreach(
         invitation=invitation,
         instructions=words,
         details=details,
+        tz=_zone(request),
         utc_offset_minutes=request.utc_offset_minutes,
         provider=provider,
         email=email,
@@ -751,7 +752,7 @@ async def _propose_outreach(
     names = _names([item.candidate.name for item in card.items])
     lines = [f"**{len(card.items)} personalized drafts**, one each for {names}. Nothing has been sent."]
     if card.schedule is not None:
-        lines.append(_times(card, request.utc_offset_minutes))
+        lines.append(_times(card, _zone(request)))
         if not card.schedule.calendar_configured:
             lines.append(card.schedule.calendar_note)
     lines.append("Review each one, edit what you like, untick anyone to leave out, then approve.")
@@ -770,12 +771,12 @@ async def _propose_outreach(
     )
 
 
-def _times(card: OutreachCard, utc_offset_minutes: int) -> str:
+def _times(card: OutreachCard, tz: tzinfo) -> str:
     assert card.schedule is not None
     proposed = [(item.candidate.name, item.slot) for item in card.items if item.slot is not None]
     if not proposed:
         return "The window had no room for these interviews, so the drafts ask for times instead."
-    first = times.describe(proposed[0][1], utc_offset_minutes)  # type: ignore[arg-type]
+    first = times.describe(proposed[0][1], tz)  # type: ignore[arg-type]
     text = (
         f"I proposed {len(proposed)} {card.schedule.duration_minutes}-minute {card.schedule.title.lower()}s back to back "
         f"from {first}, and each draft names its time."
@@ -1036,9 +1037,13 @@ async def _save_payload(session: AsyncSession, action_id: uuid.UUID, payload: di
     await session.commit()
 
 
-def _today(request: AssistantRequest):  # type: ignore[no-untyped-def]
+def _zone(request: AssistantRequest) -> tzinfo:
+    return times.zone(request.time_zone, request.utc_offset_minutes)
+
+
+def _today(request: AssistantRequest) -> date:
     """The recruiter's today, in their own time zone."""
-    return (utcnow() + timedelta(minutes=request.utc_offset_minutes)).date()
+    return utcnow().astimezone(_zone(request)).date()
 
 
 def _names(names: list[str]) -> str:

@@ -86,6 +86,7 @@ async def draft_outreach(
         client_request_id=body.client_request_id,
         context=AssistantContext(selected_application_ids=body.application_ids),
         utc_offset_minutes=body.utc_offset_minutes,
+        time_zone=body.time_zone,
     )
     intent = AssistantIntent(
         action="draft_outreach",

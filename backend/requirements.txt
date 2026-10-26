@@ -11,6 +11,7 @@ httpx==0.28.1         # Gemini, Groq, Ashby and Supabase's signing keys
 PyJWT[crypto]==2.15.1 # Supabase Auth access tokens
 cryptography==50.0.2
 pypdf==6.21.1         # text from PDF résumés, for the candidate's interview preparation
+tzdata==2025.2        # time zones for proposed interview times, where the system has none (Windows)
 
 # test and lint
 pytest==9.1.1

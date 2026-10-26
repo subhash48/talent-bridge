@@ -147,6 +147,8 @@ class AssistantRequest(APIModel):
     client_request_id: Annotated[str, Field(min_length=8, max_length=64)] | None = None
     context: AssistantContext = AssistantContext()
     utc_offset_minutes: UTCOffset = 0
+    # The browser's named time zone ("America/Chicago"), so interview times are right after a clock change.
+    time_zone: Annotated[str, Field(max_length=64)] | None = None
 
 
 class OutreachItemEdit(APIModel):
@@ -207,6 +209,7 @@ class OutreachRequest(APIModel):
     schedule: ScheduleDetails | None = None
     client_request_id: Annotated[str, Field(min_length=8, max_length=64)] | None = None
     utc_offset_minutes: UTCOffset = 0
+    time_zone: Annotated[str, Field(max_length=64)] | None = None
 
 
 class ConfirmActionRequest(APIModel):
@@ -351,6 +354,7 @@ class ScheduleProposal(APIModel):
     window_start: str  # "13:00"
     window_end: str
     utc_offset_minutes: int  # the recruiter's, when it was proposed
+    time_zone: str | None = None  # the recruiter's named time zone, when the browser gave it
     interviewers: list[str]
     meeting_url: str | None = None  # only a link the recruiter gave: no video service is connected
     calendar_configured: bool

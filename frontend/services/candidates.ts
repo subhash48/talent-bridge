@@ -32,16 +32,29 @@ export type CandidateQuery = {
   offset?: number;
 };
 
-/** GET /candidates: the pipeline, most recent activity first, filtered on the server. */
+/** The API's largest page of GET /candidates. */
+const PAGE_SIZE = 200;
+
+/**
+ * GET /candidates: the pipeline, most recent activity first, filtered on the server. Every page of it,
+ * however many applications there are, unless the caller asks for one page with a limit: the workspace
+ * never quietly stops at the first page.
+ */
 export async function getCandidates(query: CandidateQuery = {}): Promise<PipelineCandidate[]> {
   if (USE_MOCK_API) return mockApi.getCandidates(query);
-  const params = new URLSearchParams({ limit: String(query.limit ?? 200) });
-  if (query.stage) params.set("stage", query.stage);
-  if (query.jobId) params.set("job_id", query.jobId);
-  if (query.search?.trim()) params.set("search", query.search.trim());
-  if (query.offset) params.set("offset", String(query.offset));
-  const page = await apiFetch<ApiPage<ApiCandidateListItem>>(`/candidates?${params}`);
-  return page.items.filter(isPipelineStage).map(fromListItem);
+  const rows = new Map<string, ApiCandidateListItem>(); // by application, in case a row moves between pages
+  let offset = query.offset ?? 0;
+  for (;;) {
+    const params = new URLSearchParams({ limit: String(query.limit ?? PAGE_SIZE), offset: String(offset) });
+    if (query.stage) params.set("stage", query.stage);
+    if (query.jobId) params.set("job_id", query.jobId);
+    if (query.search?.trim()) params.set("search", query.search.trim());
+    const page = await apiFetch<ApiPage<ApiCandidateListItem>>(`/candidates?${params}`);
+    for (const item of page.items) rows.set(item.application_id, item);
+    offset += page.items.length;
+    if (query.limit !== undefined || page.items.length === 0 || offset >= page.total) break;
+  }
+  return [...rows.values()].filter(isPipelineStage).map(fromListItem);
 }
 
 export async function getCandidate(id: string): Promise<PipelineCandidate | null> {

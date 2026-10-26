@@ -9,6 +9,7 @@ import {
   MessageSquareReply,
   Plus,
   SearchX,
+  Sparkles,
   UsersRound,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
@@ -18,6 +19,7 @@ import { CandidateDetail } from "@/components/recruiter/CandidateDetail";
 import { CandidateFilters } from "@/components/recruiter/CandidateFilters";
 import { CandidateTable } from "@/components/recruiter/CandidateTable";
 import { DashboardMetrics } from "@/components/recruiter/DashboardMetrics";
+import { OutreachDialog } from "@/components/recruiter/OutreachDialog";
 import { ShortlistPanel } from "@/components/recruiter/ShortlistPanel";
 import { useWorkspace } from "@/components/recruiter/WorkspaceProvider";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -60,13 +62,15 @@ type CandidatesWorkspaceProps = {
   initialCandidateId?: string;
   /** Search and filters from the link (the AI Assistant's "Open in Candidates"), shown like any others. */
   initialView?: CandidateView;
+  /** Candidates ticked in the AI Assistant, ticked here too. */
+  initialChecked?: string[];
 };
 
 function needsUpdateOnly(filters: Filters): boolean {
   return filters.communication.length === 1 && filters.communication[0] === "needs_attention";
 }
 
-export function CandidatesWorkspace({ greeting, initialCandidateId, initialView }: CandidatesWorkspaceProps) {
+export function CandidatesWorkspace({ greeting, initialCandidateId, initialView, initialChecked }: CandidatesWorkspaceProps) {
   const { user, candidates, jobs, revision, moveCandidate, setMessaging } = useWorkspace();
   const toast = useToast();
   const panelInline = useMediaQuery(PANEL_QUERY);
@@ -76,7 +80,8 @@ export function CandidatesWorkspace({ greeting, initialCandidateId, initialView 
   const [sort, setSort] = useState<SortKey>("recent");
   const [filters, setFilters] = useState<Filters>(initialView?.filters ?? EMPTY_FILTERS);
   const [page, setPage] = useState(1);
-  const [checkedIds, setCheckedIds] = useState<ReadonlySet<string>>(new Set());
+  const [checkedIds, setCheckedIds] = useState<ReadonlySet<string>>(() => new Set(initialChecked));
+  const [outreachOpen, setOutreachOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(initialCandidateId);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -283,6 +288,7 @@ export function CandidatesWorkspace({ greeting, initialCandidateId, initialView 
                 busy={bulkBusy}
                 onMove={(target) => void moveChecked(target)}
                 onMessaging={(enabled) => void messagingChecked(enabled)}
+                onOutreach={() => setOutreachOpen(true)}
                 onClear={() => setCheckedIds(new Set())}
               />
             )}
@@ -374,6 +380,13 @@ export function CandidatesWorkspace({ greeting, initialCandidateId, initialView 
         {selected && <CandidateDetail candidate={selected} variant="sheet" />}
       </Sheet>
 
+      <OutreachDialog
+        candidates={checked}
+        open={outreachOpen}
+        onOpenChange={setOutreachOpen}
+        onDone={() => toast({ title: "Outreach sent", description: "Each candidate's outcome is in the dialog.", tone: "success" })}
+      />
+
       <AddCandidateDialog
         open={addOpen}
         onOpenChange={setAddOpen}
@@ -445,10 +458,12 @@ type BulkActionsBarProps = {
   onMove: (stage: CandidateStage) => void;
   /** Candidate messaging on or off, for the checked applications only. */
   onMessaging: (enabled: boolean) => void;
+  /** One personal draft each, for the checked candidates only. */
+  onOutreach: () => void;
   onClear: () => void;
 };
 
-function BulkActionsBar({ count, busy, onMove, onMessaging, onClear }: BulkActionsBarProps) {
+function BulkActionsBar({ count, busy, onMove, onMessaging, onOutreach, onClear }: BulkActionsBarProps) {
   return (
     <div
       role="region"
@@ -457,6 +472,9 @@ function BulkActionsBar({ count, busy, onMove, onMessaging, onClear }: BulkActio
     >
       <span className="text-sm font-medium text-ink">{count} selected</span>
       <span className="flex-1" />
+      <Button variant="ai" size="sm" disabled={busy} onClick={onOutreach}>
+        <Sparkles /> Draft personalized outreach
+      </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="secondary" size="sm" disabled={busy}>

@@ -17,6 +17,7 @@ export default async function CandidatesPage({ searchParams }: CandidatesPagePro
   );
   const { candidate } = params;
   const view = viewFromParams(single);
+  const checked = (single.get("select") ?? "").split("|").filter(Boolean);
   return (
     <CandidatesWorkspace
       // A link with other filters (from the AI Assistant, say) starts the page again with them; a new
@@ -25,6 +26,7 @@ export default async function CandidatesPage({ searchParams }: CandidatesPagePro
       greeting={greetingFor()}
       initialCandidateId={typeof candidate === "string" ? candidate : undefined}
       initialView={view}
+      initialChecked={checked}
     />
   );
 }

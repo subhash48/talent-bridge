@@ -57,7 +57,10 @@ export function useShortlist(shortlist: Shortlist | null, applicationIds: string
 
   const current = state?.key === key ? state : undefined;
   return {
-    result: shortlist ? (current?.result ?? last) : null,
+    /** The answer for exactly the candidates, criteria and size on screen; null until it's in. */
+    result: shortlist ? (current?.result ?? null) : null,
+    /** While the next one is on its way: the last answer, to show faded rather than an empty list. */
+    previous: shortlist && !current ? last : null,
     loading: Boolean(shortlist) && !current,
     error: current?.error,
   };

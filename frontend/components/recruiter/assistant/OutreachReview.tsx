@@ -77,10 +77,15 @@ export function OutreachReview({ card, onConfirm, onCancel, onEdits, superseded 
   const chosen = card.items.filter((item) => edits[item.candidate.application_id]?.include);
   const closedReplies = chosen.filter((item) => !item.replies_open);
   const linkError = meetingUrl.trim() && !/^https?:\/\//.test(meetingUrl.trim()) ? "Enter a full link, starting with https://." : undefined;
+  const emptyFor = chosen.find((item) => {
+    const edit = edits[item.candidate.application_id];
+    return !edit.subject.trim() || !edit.body.trim();
+  });
+  const textError = emptyFor ? `${emptyFor.candidate.name.split(" ")[0]}'s message needs a subject and some text.` : undefined;
   const what = card.purpose === "Interview invitation" ? "interview invitation" : "message";
 
   async function confirm() {
-    if (sending || chosen.length === 0 || linkError) return;
+    if (sending || chosen.length === 0 || linkError || textError) return;
     setSending(true);
     setProblem(undefined);
     try {
@@ -260,6 +265,7 @@ export function OutreachReview({ card, onConfirm, onCancel, onEdits, superseded 
 
       {!done && !cancelled && view === "review" && <Notes card={card} replies={replies} closedReplies={closedReplies.length} onReplies={change(setReplies)} />}
 
+      {!done && !cancelled && textError && <p className="mt-2 text-xs text-danger">{textError}</p>}
       {(problem || card.error) && <p className="mt-2 text-xs text-danger">{problem ?? card.error}</p>}
 
       {!done && !cancelled && (
@@ -268,7 +274,7 @@ export function OutreachReview({ card, onConfirm, onCancel, onEdits, superseded 
             <X aria-hidden /> Cancel
           </Button>
           {view === "review" ? (
-            <Button size="sm" disabled={chosen.length === 0 || Boolean(linkError)} onClick={() => setView("final")}>
+            <Button size="sm" disabled={chosen.length === 0 || Boolean(linkError) || Boolean(textError)} onClick={() => setView("final")}>
               <Check aria-hidden /> Approve selected ({chosen.length})
             </Button>
           ) : (
@@ -276,7 +282,7 @@ export function OutreachReview({ card, onConfirm, onCancel, onEdits, superseded 
               <Button variant="secondary" size="sm" disabled={sending} onClick={() => setView("review")}>
                 <ArrowLeft aria-hidden /> Back
               </Button>
-              <Button size="sm" disabled={sending || chosen.length === 0} onClick={() => void confirm()}>
+              <Button size="sm" disabled={sending || chosen.length === 0 || Boolean(textError)} onClick={() => void confirm()}>
                 {sending ? <LoaderCircle aria-hidden className="animate-spin" /> : <Send aria-hidden />}
                 {sending ? "Sending…" : "Confirm & send"}
               </Button>
@@ -296,11 +302,12 @@ function asEdits(
   return {
     items: card.items.map((item) => {
       const edit = state.edits[item.candidate.application_id];
+      // Only what will be sent: a draft left out keeps its text as it was.
       return {
         application_id: item.candidate.application_id,
         include: edit.include,
-        ...(edit.subject !== item.subject ? { subject: edit.subject } : {}),
-        ...(edit.body !== item.body ? { body: edit.body } : {}),
+        ...(edit.include && edit.subject.trim() && edit.subject !== item.subject ? { subject: edit.subject } : {}),
+        ...(edit.include && edit.body.trim() && edit.body !== item.body ? { body: edit.body } : {}),
       };
     }),
     enable_replies: state.replies,

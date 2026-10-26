@@ -121,13 +121,17 @@ export function CandidatesWorkspace({ greeting, initialCandidateId, initialView,
     [visible, candidates.length],
   );
   const match = useShortlist(shortlist, visibleIds, filters.jobs);
-  const matches = useMemo(() => new Map(match.result?.items.map((item) => [item.application_id, item]) ?? []), [match.result]);
+  // The shortlist's own answer, or (faded, and not to be ticked) the last one while the next is on its way.
+  // Never everyone in view as if it were the shortlist.
+  const shown = match.result ?? match.previous;
+  const stale = Boolean(shortlist) && !match.result && shown !== null;
+  const matches = useMemo(() => new Map(shown?.items.map((item) => [item.application_id, item]) ?? []), [shown]);
   const listed = useMemo(
     () =>
-      shortlist && match.result
-        ? match.result.items.flatMap((item) => candidates.find((candidate) => candidate.id === item.application_id) ?? [])
+      shortlist
+        ? (shown?.items ?? []).flatMap((item) => candidates.find((candidate) => candidate.id === item.application_id) ?? [])
         : visible,
-    [shortlist, match.result, candidates, visible],
+    [shortlist, shown, candidates, visible],
   );
 
   const pageCount = shortlist ? 1 : Math.max(1, Math.ceil(listed.length / PAGE_SIZE));
@@ -279,7 +283,7 @@ export function CandidatesWorkspace({ greeting, initialCandidateId, initialView,
                 shortlist={shortlist}
                 onChange={setShortlist}
                 onClose={() => setShortlist(null)}
-                result={match.result}
+                result={shown}
                 loading={match.loading}
                 error={match.error}
                 suggestions={skillChoices}
@@ -297,7 +301,7 @@ export function CandidatesWorkspace({ greeting, initialCandidateId, initialView,
               />
             )}
 
-            <div className="mt-3">
+            <div className={stale ? "mt-3 opacity-55 transition-opacity" : "mt-3"} inert={stale || undefined}>
               <CandidateTable
                 candidates={pageItems}
                 selectedId={selected?.id}
@@ -307,7 +311,19 @@ export function CandidatesWorkspace({ greeting, initialCandidateId, initialView,
                 onCheckAll={toggleAll}
                 matches={shortlist ? matches : undefined}
                 emptyState={
-                  candidates.length === 0 ? (
+                  shortlist ? (
+                    <EmptyState
+                      icon={SearchX}
+                      title={
+                        match.error
+                          ? "Couldn't make the shortlist"
+                          : match.loading
+                            ? "Finding matches…"
+                            : "Nobody in view shows these criteria"
+                      }
+                      description={match.error ?? (match.loading ? "Looking at the candidates in view." : "Try other criteria, or widen the filters.")}
+                    />
+                  ) : candidates.length === 0 ? (
                     <EmptyState
                       icon={UsersRound}
                       title="No candidates yet"
@@ -388,7 +404,17 @@ export function CandidatesWorkspace({ greeting, initialCandidateId, initialView,
         candidates={checked}
         open={outreachOpen}
         onOpenChange={setOutreachOpen}
-        onDone={() => toast({ title: "Outreach sent", description: "Each candidate's outcome is in the dialog.", tone: "success" })}
+        onDone={(card) =>
+          toast(
+            card.status === "completed"
+              ? { title: "Outreach sent", description: "Each candidate's outcome is in the dialog.", tone: "success" }
+              : {
+                  title: card.items.some((item) => item.result?.message_sent) ? "Some couldn't be sent" : "Nothing was sent",
+                  description: "Each candidate's outcome is in the dialog.",
+                  tone: "error",
+                },
+          )
+        }
       />
 
       <AddCandidateDialog

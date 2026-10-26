@@ -23,7 +23,8 @@ type OutreachDialogProps = {
   candidates: PipelineCandidate[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onDone: () => void;
+  /** Approved: the outcome, sent or not, for each candidate. */
+  onDone: (card: OutreachCard) => void;
 };
 
 /** The next weekday, as a date input's value. */
@@ -58,7 +59,15 @@ export function OutreachDialog({ candidates, open, onOpenChange, onDone }: Outre
   );
 }
 
-function OutreachForm({ candidates, onClose, onDone }: { candidates: PipelineCandidate[]; onClose: () => void; onDone: () => void }) {
+function OutreachForm({
+  candidates,
+  onClose,
+  onDone,
+}: {
+  candidates: PipelineCandidate[];
+  onClose: () => void;
+  onDone: (card: OutreachCard) => void;
+}) {
   const { refresh } = useWorkspace();
   const [purpose, setPurpose] = useState<OutreachRequest["purpose"]>("interview_invitation");
   const [instructions, setInstructions] = useState("");
@@ -102,7 +111,7 @@ function OutreachForm({ candidates, onClose, onDone }: { candidates: PipelineCan
     const done = result.cards.find((item): item is OutreachCard => item.type === "outreach");
     if (done) setCard(done);
     refresh().catch(() => undefined);
-    onDone();
+    if (done) onDone(done);
   }
 
   async function cancel(actionId: string) {

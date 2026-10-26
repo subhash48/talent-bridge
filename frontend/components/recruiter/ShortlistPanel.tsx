@@ -30,7 +30,7 @@ export function ShortlistPanel({ shortlist, onChange, onClose, result, loading, 
   const inputId = useId();
   const listId = useId();
   const [draft, setDraft] = useState("");
-  const custom = !(SHORTLIST_SIZES as readonly number[]).includes(shortlist.size);
+  const [custom, setCustom] = useState(() => !(SHORTLIST_SIZES as readonly number[]).includes(shortlist.size));
   const [customValue, setCustomValue] = useState(custom ? String(shortlist.size) : "");
   const fromJob = result?.criteria_source === "job_requirements";
 
@@ -112,7 +112,15 @@ export function ShortlistPanel({ shortlist, onChange, onClose, result, loading, 
       <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="How many to show">
         <span className="text-xs text-stone">Show:</span>
         {SHORTLIST_SIZES.map((size) => (
-          <FilterChip key={size} active={!custom && shortlist.size === size} onClick={() => onChange({ ...shortlist, size })} className="h-7 px-2.5 text-xs">
+          <FilterChip
+            key={size}
+            active={!custom && shortlist.size === size}
+            onClick={() => {
+              setCustom(false);
+              onChange({ ...shortlist, size });
+            }}
+            className="h-7 px-2.5 text-xs"
+          >
             {size}
           </FilterChip>
         ))}
@@ -120,6 +128,7 @@ export function ShortlistPanel({ shortlist, onChange, onClose, result, loading, 
           active={custom}
           onClick={() => {
             const value = Number(customValue) || 15;
+            setCustom(true);
             setCustomValue(String(value));
             onChange({ ...shortlist, size: value });
           }}

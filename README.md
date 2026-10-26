@@ -58,11 +58,11 @@ Row-level security is on with no policies: the browser only talks to the API, wh
 
 Supabase Auth (email and password, or a one-time link by email) proves who someone is; the API decides what they may do. The frontend sends the session's access token as `Authorization: Bearer` on every API call (`frontend/services/api.ts`), and the API verifies it against the project's public signing keys (signature, issuer, audience, expiry) before loading the `users` row it's linked to (`users.auth_user_id`). **The role on that row is the only source of access**: nothing the browser sends, and nothing in the token's metadata, can change it.
 
-- **Recruiters and admins** use `/recruiter` and every staff endpoint. There is no public sign-up for them.
+- **Recruiters and admins** hire for one company, their workspace (`users.company_id`), and use the staff endpoints for it only: `/recruiter` in a full workspace, `/hire` in Simple Hire. An employer can create a new, empty workspace for their company and become its admin (below); nobody can join an existing one from the website.
 - **Candidates** use `/candidate` and `/api/v1/candidate/*` only, always scoped to their own record (`candidates.user_id`); the API never takes a candidate id from the browser.
 - No token or an invalid one is `401`; a valid token without a linked account, or with the wrong role, is `403`. `users.disabled_at` revokes access immediately.
 
-Pages: `/login`, `/signup` (candidates), `/forgot-password`, `/reset-password`, `/auth/confirm`, where Supabase's confirmation and reset emails land, `/auth/callback`, where portal invitations land, and `/welcome`, where an invited candidate can choose a password (or skip it: "Email me a sign-in link" on `/login` always works).
+Pages: `/signin` asks "How are you using TalentBridge?" and leads to `/login?as=candidate` or `/login?as=employer`; `/signup` (candidates), `/signup/employer` and `/onboarding/workspace` (employers), `/forgot-password`, `/reset-password`, `/auth/confirm`, where Supabase's confirmation and reset emails land, `/auth/callback`, where portal invitations and activation links land, and `/welcome`, where an applicant creates their TalentBridge password (or skips it: "Email me a sign-in link" on `/login` always works). Passwords only ever go to Supabase Auth: the API never receives or stores one.
 
 **Configure** (values from Project Settings > API):
 
@@ -84,7 +84,18 @@ Pages: `/login`, `/signup` (candidates), `/forgot-password`, `/reset-password`, 
 
 Linking never sets a role: Alex keeps the recruiter role his `users` row has, and Sophia gets a candidate `users` row tied to her existing candidate record. To add another recruiter or an admin, insert their `users` row (with `role`) in the database first, then create and link their account the same way. Resetting the demo data (`POST /api/v1/demo/reset`) keeps these links.
 
-**Candidate sign-up.** A candidate can sign up at `/signup` with the email they applied with. After they click Supabase's confirmation email, the API links the account to their candidate record on their first request. That happens only if the email matches a candidate in the pipeline and no account is linked to them yet. Anyone else gets an account that can see nothing, and sign-up never creates a candidate or an application. Staff accounts are never linked automatically.
+**Candidate sign-up** (`/signup`): first and last name, email, and a password typed twice (at least 8 characters with a number, and not a common one; `frontend/lib/password.ts`). Supabase emails a verification link; opening it lands on `/signup/complete`, which creates the candidate account (`POST /api/v1/accounts/candidate`) and opens the portal. If they had already applied with that email, anywhere, that candidate record becomes theirs with every application on it; otherwise they start with none. Sign-up never creates an application. Nothing is created before the email is verified (403 `email_not_verified`).
+
+**Applying first.** Someone who applies on the careers site without an account gets one email with a one-time link to create their password (see Careers site); `/welcome` takes the password twice, and their application is in the portal. Applying again later with the same email, at the same employer or another, never makes a second account: they get a sign-in link instead, and every application is in the one portal.
+
+**Employer sign-up** (`/signup/employer`, from "Create company workspace" or "Simple Hire" on the website): their name, work email and a password; after verifying, `/onboarding/workspace` asks "Which best describes you?" (a recruiting team or growing company, or a small business hiring simply) and the company's name and location, then creates the workspace (`POST /api/v1/accounts/workspace`) in that mode with them as its admin. An admin can switch the mode later in Settings.
+
+**Accounts are never mixed.** One email is one kind of account: an employer's address can't become a candidate account (409 `staff_email`) and a candidate's can't create a workspace (409 `candidate_email`). Signing in as an employer with a candidate account, or the other way round, signs them out with "This is a candidate account. Use candidate sign in…" and a link to the right page. Someone who verified but never finished setting up is sent back to finish.
+
+**Email templates** (Supabase dashboard, Authentication > Emails). The defaults work. Two changes help:
+
+- **Confirm signup**: the default link must be opened in the browser that signed up. For one that works anywhere, link to `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email` (`/auth/confirm` accepts both).
+- **Invite user**: without an email provider, an applicant's activation link comes in this email, so word it for them: "Your application has been submitted. Create your TalentBridge password to follow updates from the hiring team." With Resend set up, TalentBridge sends its own confirmation with the link instead, and Supabase sends nothing.
 
 ## Ashby (optional)
 

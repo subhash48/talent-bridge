@@ -34,6 +34,8 @@ pytestmark = pytest.mark.skipif(not POSTGRES_URL, reason="needs TALENT_BRIDGE_TE
 MIGRATIONS = sorted((Path(__file__).parents[2] / "supabase" / "migrations").glob("*.sql"))
 BEFORE_COMPANIES = [m for m in MIGRATIONS if m.name < "017"]
 COMPANIES = [m for m in MIGRATIONS if m.name.startswith("017")]
+BEFORE_MESSAGING = [m for m in MIGRATIONS if m.name < "018"]
+MESSAGING = [m for m in MIGRATIONS if m.name.startswith("018")]
 ENCORD = seed_id("company", "encord")
 
 Apply = Callable[[list[Path]], Awaitable[None]]
@@ -106,7 +108,7 @@ insert into public.interviews (application_id, title, scheduled_at) values ('{AP
 """
 
 
-async def test_the_pipeline_works_on_a_database_upgraded_through_017(
+async def test_the_pipeline_works_on_a_database_upgraded_through_the_latest(
     database: tuple[str, asyncpg.Connection, Apply], anonymous: AsyncClient
 ) -> None:
     name, connection, apply = database
@@ -115,12 +117,19 @@ async def test_the_pipeline_works_on_a_database_upgraded_through_017(
     engine = create_engine_for(normalize_database_url(_dsn(name)))
     sessions = async_sessionmaker(engine, expire_on_commit=False)
     try:
-        # The original failure: today's backend on a database without 017.
+        # The original failure: today's backend on a database without 017 (or, now, 018).
         async with sessions() as session:
-            with pytest.raises(ProgrammingError, match='relation "companies" does not exist'):
+            with pytest.raises(
+                ProgrammingError, match='companies" does not exist|candidate_messaging_enabled does not exist'
+            ):
                 await list_pipeline(session, limit=200)
 
         await apply(COMPANIES)
+        # Today's backend reads candidate messaging too: deploying it before 018 fails the same way.
+        async with sessions() as session:
+            with pytest.raises(ProgrammingError, match="candidate_messaging_enabled"):
+                await list_pipeline(session, limit=200)
+        await apply(MESSAGING)
         async with sessions() as session:
             await link_account(session, ALEX_EMAIL, ALEX_AUTH)
 
@@ -141,8 +150,37 @@ async def test_the_pipeline_works_on_a_database_upgraded_through_017(
         assert item["next_interview"]["title"] == "Design interview"
         # The existing job now belongs to the workspace's company.
         assert await connection.fetchval(f"select company_id from public.jobs where id = '{JOB}'") == ENCORD
+        assert item["candidate_messaging_enabled"] is False  # no conversation yet, so it waits for a recruiter
     finally:
         await engine.dispose()
+
+
+async def test_018_keeps_open_the_conversations_candidates_already_took_part_in(
+    database: tuple[str, asyncpg.Connection, Apply],
+) -> None:
+    _, connection, apply = database
+    await apply(BEFORE_COMPANIES)
+    await connection.execute(LEGACY_ROWS)
+    await apply([m for m in BEFORE_MESSAGING if m.name >= "017"])
+    other, other_application = uuid.uuid4(), uuid.uuid4()
+    await connection.execute(
+        f"""
+        insert into public.candidates (id, first_name, last_name, email) values ('{other}', 'Maya', 'Brooks', 'maya@example.com');
+        insert into public.applications (id, candidate_id, job_id, stage) values ('{other_application}', '{other}', '{JOB}', 'screening');
+        insert into public.messages (application_id, sender_type, content) values ('{APPLICATION}', 'candidate', 'Hi Alex!');
+        insert into public.messages (application_id, sender_type, content) values ('{other_application}', 'recruiter', 'Thanks for applying.');
+        """
+    )
+    await apply(MESSAGING)
+    flags = dict(await connection.fetch("select id, candidate_messaging_enabled from public.applications"))
+    # Sophia had written: still open. Maya has only heard from the team: she waits for a recruiter.
+    assert (flags[APPLICATION], flags[other_application]) == (True, False)
+    # Every application made from now on starts with messaging off.
+    default = await connection.fetchrow(
+        "select column_default, is_nullable from information_schema.columns"
+        " where table_name = 'applications' and column_name = 'candidate_messaging_enabled'"
+    )
+    assert (default["column_default"], default["is_nullable"]) == ("false", "NO")
 
 
 async def test_a_job_written_without_a_company_gets_the_workspaces(

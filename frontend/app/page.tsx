@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { NightSky } from "@/components/shared/NightSky";
+import { AboutSection } from "@/components/site/AboutSection";
 import { CandidatesSection } from "@/components/site/CandidatesSection";
 import { HowItWorks } from "@/components/site/HowItWorks";
 import { RecruitersSection } from "@/components/site/RecruitersSection";
@@ -51,6 +52,7 @@ export default async function Home() {
         <RecruitersSection />
         <SmallBusinessSection />
         <CandidatesSection />
+        <AboutSection />
       </main>
       <SiteFooter />
     </div>

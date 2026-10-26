@@ -7,6 +7,7 @@ import { CandidateStatusCard } from "@/components/recruiter/settings/CandidateSt
 import { CommunicationRulesCard } from "@/components/recruiter/settings/CommunicationRulesCard";
 import { EmailDeliveryCard } from "@/components/recruiter/settings/EmailDeliveryCard";
 import { Avatar } from "@/components/shared/Avatar";
+import { WorkspaceSettingsCard } from "@/components/shared/WorkspaceSettingsCard";
 import { Card } from "@/components/ui/Card";
 import { API_URL, USE_MOCK_API, errorMessage } from "@/services/api";
 import { getCommunicationRules, getEmailDelivery } from "@/services/communication";
@@ -26,7 +27,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="max-w-3xl">
-      <RecruiterHeader title="Settings" subtitle="Your profile, the communication rules, and how messages reach candidates." />
+      <RecruiterHeader title="Settings" subtitle="Your profile, your company, the communication rules, and how messages reach candidates." />
       <div className="flex flex-col gap-4">
         <Card>
           <h2 className="flex items-center gap-2 text-sm font-medium text-stone">
@@ -60,6 +61,8 @@ export default async function SettingsPage() {
               : `Candidates, jobs, interviews and messages are stored in the database behind ${API_URL}.`}
           </p>
         </Card>
+
+        {user.workspace && <WorkspaceSettingsCard workspace={user.workspace} />}
 
         <CommunicationRulesCard initial={rules.value} error={rules.error} />
         <EmailDeliveryCard status={email} />

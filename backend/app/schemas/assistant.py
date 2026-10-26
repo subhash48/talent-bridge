@@ -20,6 +20,7 @@ from app.core.enums import (
     AssistantInputType,
     CommunicationStatus,
     InterviewType,
+    Weekday,
 )
 from app.schemas.ai import AISource
 from app.schemas.common import APIModel, OptionalText, OptionalURL, Timestamp
@@ -42,6 +43,7 @@ IntentAction = Literal[
     "update_job",  # "Add Kubernetes and model monitoring": the job draft in context
     "candidate_info",
     "next_interview",
+    "show_contacts",  # "Give me their phone numbers": what the applicants gave with their applications
     "confirm",  # "send it", "looks good", "yes": the proposal in context
     "cancel",
     "help",
@@ -79,6 +81,11 @@ class JobChanges(APIModel):
     skills_add: ShortList = []
     skills_remove: ShortList = []
     notes: OptionalText(1000) = None  # what the recruiter said about the role, for the AI job writer
+    # A small business's job, as said (services/assistant/simple.py): never guessed.
+    pay: Annotated[str, Field(max_length=100)] | None = None  # "$18/hour"
+    shift: Annotated[str, Field(max_length=100)] | None = None  # "Evenings"
+    work_days: Annotated[list[Weekday], Field(max_length=7)] = []
+    openings: Annotated[int, Field(ge=1, le=500)] | None = None
 
 
 class AssistantIntent(APIModel):
@@ -99,6 +106,7 @@ class AssistantIntent(APIModel):
     location: ShortText | None = None
     interview_state: InterviewState | None = None
     communication: CommunicationStatus | None = None
+    available_days: Annotated[list[Weekday], Field(max_length=7)] = []  # the days applicants said they can work
     refine: bool = False  # narrows the list in context ("only those in screening"), keeping its filters
     selection: Literal["replace", "add", "remove", "clear"] = "replace"  # select_candidates
     schedule: ScheduleDetails | None = None  # draft_outreach, schedule_interviews

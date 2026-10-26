@@ -2,7 +2,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ApiError, errorMessage } from "@/services/api";
 import { askAssistant, cancelAction, confirmAction, getRecentActions } from "@/services/assistant";
-import type { AssistantCard, AssistantContext, AssistantHistoryItem, AssistantResponse, InputType } from "@/types/assistant";
+import type {
+  AssistantCard,
+  AssistantContext,
+  AssistantHistoryItem,
+  AssistantResponse,
+  ConfirmEdits,
+  InputType,
+} from "@/types/assistant";
 
 export type AssistantTurn =
   | { id: string; role: "user"; text: string; inputType: InputType }
@@ -10,13 +17,20 @@ export type AssistantTurn =
   | { id: string; role: "assistant"; status: "done"; response: AssistantResponse }
   | { id: string; role: "assistant"; status: "error"; error: string };
 
-const EMPTY_CONTEXT: AssistantContext = { application_id: null, action_id: null };
+const EMPTY_CONTEXT: AssistantContext = {
+  application_id: null,
+  action_id: null,
+  job_id: null,
+  search: null,
+  selected_application_ids: [],
+};
 
 /**
  * One conversation with the recruiter assistant. Typed and spoken requests both go through send(); the
- * context the API returns (the candidate or proposal being discussed) goes back with the next request,
- * so "send it" means the draft just made. One request at a time, and each has its own id,
- * so a double click or a repeated voice result can't run anything twice.
+ * context the API returns (the candidate, list, job or proposal being discussed) goes back with the next
+ * request, with the candidates the recruiter has ticked, so "send them" means the drafts just made and
+ * "these candidates" the ones ticked. One request at a time, and each has its own id, so a double click
+ * or a repeated voice result can't run anything twice.
  */
 export function useAssistant(initialApplicationId?: string) {
   const [turns, setTurns] = useState<AssistantTurn[]>([]);
@@ -101,11 +115,11 @@ export function useAssistant(initialApplicationId?: string) {
     );
   }, []);
 
-  /** Run a proposal (send the message). The result replaces the proposal's card. */
+  /** Run a proposal with the recruiter's edits. The result replaces the proposal's card. */
   const confirm = useCallback(
-    async (actionId: string, body?: string): Promise<AssistantResponse> => {
+    async (actionId: string, edits?: ConfirmEdits): Promise<AssistantResponse> => {
       try {
-        const result = await confirmAction(actionId, body);
+        const result = await confirmAction(actionId, edits);
         if (result.cards[0]) updateCards(actionId, { ...result.cards[0], action_id: actionId } as AssistantCard);
         setContext((current) => ({ ...current, action_id: null, ...withoutNulls(result.context) }));
         void refreshHistory();
@@ -131,7 +145,25 @@ export function useAssistant(initialApplicationId?: string) {
 
   const clearFocus = useCallback(() => setContext((current) => ({ ...current, application_id: null })), []);
 
-  return { turns, context, pending, history, send, confirm, cancel, clearFocus };
+  /** The recruiter's own ticks in a candidate list: what "these candidates" means next. */
+  const setSelection = useCallback((ids: string[]) => {
+    setContext((current) => ({ ...current, selected_application_ids: ids }));
+    setTurns((list) =>
+      list.map((turn) =>
+        turn.role === "assistant" && turn.status === "done"
+          ? {
+              ...turn,
+              response: {
+                ...turn.response,
+                cards: turn.response.cards.map((card) => (card.type === "candidate_match" ? { ...card, selected: ids } : card)),
+              },
+            }
+          : turn,
+      ),
+    );
+  }, []);
+
+  return { turns, context, pending, history, send, confirm, cancel, clearFocus, setSelection };
 }
 
 function withoutNulls(context: AssistantContext): Partial<AssistantContext> {

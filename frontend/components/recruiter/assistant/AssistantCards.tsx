@@ -1,10 +1,13 @@
 "use client";
 
-import { ArrowRight, CalendarClock, Check, CircleAlert, Inbox, LoaderCircle, Pencil, Send, Sparkles, X } from "lucide-react";
+import { ArrowRight, CalendarClock, Inbox, LoaderCircle, Pencil, Send, Sparkles, X } from "lucide-react";
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 
-import { StatusBadge } from "@/components/shared/StatusBadge";
+import { CandidateMatchList } from "@/components/recruiter/assistant/CandidateMatchList";
+import { Chips, Frame } from "@/components/recruiter/assistant/CardFrame";
+import { JobDraftReview } from "@/components/recruiter/assistant/JobDraftReview";
+import { OutreachReview } from "@/components/recruiter/assistant/OutreachReview";
 import { Button, buttonStyles } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { formatDateTime, formatDuration, formatRelativeTime } from "@/lib/format";
@@ -12,67 +15,56 @@ import { cn } from "@/lib/utils";
 import { errorMessage } from "@/services/api";
 import type {
   AssistantCard,
-  CandidateListCard,
   ClarifyCard,
+  ConfirmEdits,
   FollowUpListCard,
   InterviewInfoCard,
   MessageCard,
 } from "@/types/assistant";
 
 export type CardActions = {
-  /** Run a proposal once: send the message, with edits. */
-  onConfirm: (actionId: string, body?: string) => Promise<unknown>;
+  /** Run a proposal once, with the recruiter's edits: send the message or the outreach, create the job. */
+  onConfirm: (actionId: string, edits?: ConfirmEdits) => Promise<unknown>;
   onCancel: (actionId: string, card: AssistantCard) => Promise<unknown>;
   /** Ask the assistant something next, e.g. "Draft Sophia an update" or a clarification choice. */
   onSend: (text: string, context?: { application_id?: string | null }) => void;
+  /** The recruiter ticked candidates in a list. */
+  onSelect: (ids: string[]) => void;
   busy: boolean;
 };
 
-export function AssistantCardView({ card, actions }: { card: AssistantCard; actions: CardActions }) {
+/** superseded: a newer version of this card (the same proposal) is further down the conversation. */
+export function AssistantCardView({ card, actions, superseded = false }: { card: AssistantCard; actions: CardActions; superseded?: boolean }) {
   switch (card.type) {
     case "message":
       return <MessageProposal card={card} actions={actions} />;
-    case "candidates":
-      return <CandidateList card={card} />;
     case "follow_ups":
       return <FollowUpList card={card} actions={actions} />;
     case "clarify":
       return <Clarify card={card} actions={actions} />;
     case "interview":
       return <InterviewInfo card={card} />;
+    case "candidate_match":
+      return <CandidateMatchList card={card} onSelect={actions.onSelect} superseded={superseded} />;
+    case "outreach":
+      return (
+        <OutreachReview
+          card={card}
+          superseded={superseded}
+          onConfirm={(actionId, edits) => actions.onConfirm(actionId, edits)}
+          onCancel={(actionId) => actions.onCancel(actionId, card)}
+        />
+      );
+    case "job_draft":
+      return (
+        <JobDraftReview
+          card={card}
+          superseded={superseded}
+          onApprove={(actionId, draft) => actions.onConfirm(actionId, { job: draft })}
+          onCancel={(actionId) => actions.onCancel(actionId, card)}
+        />
+      );
   }
-}
-
-function Frame({ label, tone = "neutral", children }: { label: string; tone?: "neutral" | "done" | "failed"; children: ReactNode }) {
-  return (
-    <div className="mt-2.5 animate-rise rounded-[12px] border border-border bg-ink/[0.025] p-3.5 sm:p-4">
-      <p
-        className={cn(
-          "flex items-center gap-1.5 text-[11px] font-medium tracking-wide uppercase",
-          tone === "done" ? "text-sage" : tone === "failed" ? "text-danger" : "text-faint",
-        )}
-      >
-        {tone === "done" && <Check aria-hidden className="size-3.5" strokeWidth={2.5} />}
-        {tone === "failed" && <CircleAlert aria-hidden className="size-3.5" />}
-        {label}
-      </p>
-      {children}
-    </div>
-  );
-}
-
-function Chips({ items }: { items: (string | null | undefined)[] }) {
-  const shown = items.filter(Boolean) as string[];
-  if (!shown.length) return null;
-  return (
-    <ul className="mt-2 flex flex-wrap gap-1.5">
-      {shown.map((item) => (
-        <li key={item} className="inline-flex h-6 items-center rounded-full bg-ink/[0.05] px-2.5 text-xs text-charcoal ring-1 ring-ink/10">
-          {item}
-        </li>
-      ))}
-    </ul>
-  );
 }
 
 // Messages
@@ -91,7 +83,7 @@ function MessageProposal({ card, actions }: { card: MessageCard; actions: CardAc
     setSending(true);
     setProblem(undefined);
     try {
-      await actions.onConfirm(card.action_id, body !== card.body ? body : undefined);
+      await actions.onConfirm(card.action_id, body !== card.body ? { body } : undefined);
     } catch (error) {
       setProblem(errorMessage(error));
     } finally {
@@ -161,35 +153,7 @@ function MessageProposal({ card, actions }: { card: MessageCard; actions: CardAc
   );
 }
 
-// Jobs
-
 // Lists and answers
-
-function CandidateList({ card }: { card: CandidateListCard }) {
-  return (
-    <Frame label={`${card.title} · ${card.total}`}>
-      {card.items.length > 0 && (
-        <ul className="mt-2 divide-y divide-border">
-          {card.items.slice(0, 8).map((item) => (
-            <li key={item.application_id}>
-              <Link
-                href={`/recruiter/candidates/${item.application_id}`}
-                className="flex items-center justify-between gap-3 py-2 text-sm transition-colors hover:text-ink"
-              >
-                <span className="min-w-0">
-                  <span className="block truncate font-medium text-ink">{item.name}</span>
-                  <span className="block truncate text-xs text-stone">{item.job_title}</span>
-                </span>
-                <StatusBadge stage={item.stage} />
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-      {card.total > 8 && <p className="mt-2 text-xs text-faint">And {card.total - 8} more on the Candidates page.</p>}
-    </Frame>
-  );
-}
 
 function FollowUpList({ card, actions }: { card: FollowUpListCard; actions: CardActions }) {
   return (

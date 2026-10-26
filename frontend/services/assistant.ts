@@ -4,7 +4,9 @@ import type {
   AssistantHistoryItem,
   AssistantResponse,
   AssistantStatus,
+  ConfirmEdits,
   InputType,
+  OutreachRequest,
 } from "@/types/assistant";
 
 // The recruiter assistant (/assistant/*). Typed and spoken requests go through the same call; speech is
@@ -37,12 +39,28 @@ export async function askAssistant({ text, inputType, context, clientRequestId, 
   });
 }
 
-/** Run a proposal: send the message, with the recruiter's edits. Once only. */
-export async function confirmAction(actionId: string, body?: string): Promise<AssistantResponse> {
+/** Run a proposal with the recruiter's edits: send the message or the outreach, create the job. Once only. */
+export async function confirmAction(actionId: string, edits: ConfirmEdits = {}): Promise<AssistantResponse> {
   if (USE_MOCK_API) throw NEEDS_API;
   return apiFetch<AssistantResponse>(`/assistant/actions/${actionId}/confirm`, {
     method: "POST",
-    body: JSON.stringify(body ? { body } : {}),
+    body: JSON.stringify(edits),
+  });
+}
+
+/**
+ * POST /assistant/outreach: one personal draft per candidate ticked on the Candidates page, with interview
+ * times when a schedule is given. The same proposal the assistant makes; nothing is sent until it's approved.
+ */
+export async function draftOutreach(request: OutreachRequest): Promise<AssistantResponse> {
+  if (USE_MOCK_API) throw NEEDS_API;
+  return apiFetch<AssistantResponse>("/assistant/outreach", {
+    method: "POST",
+    body: JSON.stringify({
+      ...request,
+      client_request_id: crypto.randomUUID(),
+      utc_offset_minutes: -new Date().getTimezoneOffset(),
+    }),
   });
 }
 

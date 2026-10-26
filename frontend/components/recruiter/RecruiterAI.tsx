@@ -1,6 +1,7 @@
 "use client";
 
-import { CalendarClock, History, Inbox, MessageCircleQuestion, Mic, MicOff, PenLine, ShieldCheck, Sparkles, X } from "lucide-react";
+import { BriefcaseBusiness, History, Inbox, ListChecks, Mic, MicOff, PenLine, ShieldCheck, Sparkles, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AIComposer, suggestionChipStyles } from "@/components/ai/AIComposer";
@@ -16,19 +17,23 @@ import { firstName } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { errorMessage } from "@/services/api";
 import { getAssistantStatus } from "@/services/assistant";
-import type { AssistantResponse, AssistantStatus } from "@/types/assistant";
+import type { AssistantResponse, AssistantStatus, ConfirmEdits } from "@/types/assistant";
 
 const CAPABILITIES = [
   { icon: Inbox, label: "Who needs an update", example: "Who needs an update today?" },
   { icon: PenLine, label: "Draft an update", example: "Draft Sophia an update" },
-  { icon: MessageCircleQuestion, label: "Unanswered messages", example: "Which candidates have unanswered questions?" },
-  { icon: CalendarClock, label: "Interviews to confirm", example: "Which interviews need confirmation?" },
+  { icon: ListChecks, label: "Find matching candidates", example: "Show 5 candidates for Product Designer matching Figma and design systems" },
+  {
+    icon: BriefcaseBusiness,
+    label: "Draft a job",
+    example: "Create a Senior Product Designer role in New York, hybrid, requiring Figma, design systems and user research",
+  },
 ];
 
 const STARTERS = [
-  "Who interviewed this week and has not received follow-up?",
-  "Send Sophia an interview invitation for next Tuesday",
-  "Show candidates interviewing for Product Designer",
+  "Which candidates have unanswered questions?",
+  "Show candidates who interviewed but haven't received an update",
+  "Which interviews need confirmation?",
 ];
 
 /**
@@ -39,7 +44,8 @@ const STARTERS = [
  * secondary way in: the microphone beside Send.
  */
 export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: string }) {
-  const { candidates } = useWorkspace();
+  const { candidates, refresh } = useWorkspace();
+  const router = useRouter();
   const assistant = useAssistant(initialCandidateId);
   const [status, setStatus] = useState<AssistantStatus | null>(null);
   const [voiceOpen, setVoiceOpen] = useState(false);
@@ -73,21 +79,35 @@ export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: strin
     [candidates, assistant.context.application_id],
   );
 
+  const { confirm: confirmProposal } = assistant;
+  /** Approve, then show what changed elsewhere: a new job on the Jobs page, messages and interviews on candidates. */
+  const approve = useCallback(
+    async (actionId: string, edits?: ConfirmEdits) => {
+      const result = await confirmProposal(actionId, edits);
+      const card = result.cards[0];
+      if (card?.type === "job_draft" && card.stage === "created") router.refresh();
+      if (card?.type === "outreach" || card?.type === "message") refresh().catch(() => undefined);
+      return result;
+    },
+    [confirmProposal, refresh, router],
+  );
+
   const actions: CardActions = {
-    onConfirm: assistant.confirm,
+    onConfirm: approve,
     onCancel: assistant.cancel,
     onSend: (text, context) => void assistant.send(text, "text", context),
+    onSelect: assistant.setSelection,
     busy: assistant.pending,
   };
 
   // In the voice panel, confirming moves the voice state through Executing… to Complete.
   const voiceActions: CardActions = {
     ...actions,
-    onConfirm: async (actionId, body) => {
+    onConfirm: async (actionId, edits) => {
       const session = voice.state.session;
       voice.executing(session);
       try {
-        const result = await assistant.confirm(actionId, body);
+        const result = await approve(actionId, edits);
         if (result.status === "completed") voice.executed(session);
         else voice.fail(session, result.reply);
         return result;
@@ -128,13 +148,26 @@ export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: strin
     <div>
       <RecruiterHeader
         title="AI Assistant"
-        subtitle="Ask who needs an update, or have it draft one. Nothing is sent until you confirm."
+        subtitle="Ask who needs an update, find candidates on job-related criteria, draft outreach or a new job. Nothing is sent, scheduled or created until you approve."
       />
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
         <section
           aria-label="Conversation with the AI Assistant"
           className="glass flex min-h-[520px] flex-col rounded-[16px] border border-border p-4 sm:p-5 xl:h-[calc(100dvh-13.5rem)]"
         >
+          {(assistant.context.selected_application_ids?.length ?? 0) > 0 && (
+            <div className="mb-3 flex w-fit items-center gap-2 rounded-full bg-brand-soft py-1 pr-1 pl-3 text-xs text-ink ring-1 ring-brand-ink/25">
+              {assistant.context.selected_application_ids?.length} selected: what you ask next applies to them only
+              <button
+                type="button"
+                onClick={() => assistant.setSelection([])}
+                aria-label="Clear the selection"
+                className="rounded-full p-0.5 text-stone transition-colors hover:bg-ink/10 hover:text-ink"
+              >
+                <X aria-hidden className="size-3.5" />
+              </button>
+            </div>
+          )}
           {focused && (
             <div className="mb-3 flex w-fit items-center gap-2 rounded-full bg-ink/[0.05] py-1 pr-1 pl-3 text-xs text-charcoal ring-1 ring-ink/10">
               Focused on {focused.name} · {focused.role}
@@ -179,8 +212,10 @@ export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: strin
               <ShieldCheck aria-hidden className="size-4 text-ai" /> How it works
             </h2>
             <p className="mt-3 text-xs leading-relaxed text-stone">
-              Typed and spoken requests go through the same steps. Messages are drafted for you to review, and only go out
-              when you confirm. It never evaluates, ranks or rejects candidates.
+              Typed and spoken requests go through the same steps. Messages, interview times and jobs are drafted for you to
+              review, and only happen when you approve them, after one final look. It never evaluates, ranks or rejects
+              candidates: lists show the filters behind them and why each candidate matches your job-related criteria, and
+              only the candidates you tick are contacted.
             </p>
             <p className="mt-3 text-xs leading-relaxed text-faint">
               Voice: only the words are kept, never the recording.
@@ -250,6 +285,15 @@ function Welcome({ focusedName, onPick, disabled }: { focusedName: string | null
 function Thread({ turns, actions }: { turns: AssistantTurn[]; actions: CardActions }) {
   const container = useRef<HTMLDivElement>(null);
   const last = turns.at(-1);
+  // A proposal changed further down (the job draft edited, interview times added) shows only its latest card.
+  const latest = useMemo(() => {
+    const where = new Map<string, string>();
+    for (const turn of turns) {
+      if (turn.role !== "assistant" || turn.status !== "done") continue;
+      for (const card of turn.response.cards) if ("action_id" in card) where.set(card.action_id, turn.id);
+    }
+    return where;
+  }, [turns]);
 
   useEffect(() => {
     const element = container.current;
@@ -272,14 +316,16 @@ function Thread({ turns, actions }: { turns: AssistantTurn[]; actions: CardActio
             <span>{turn.text}</span>
           </p>
         ) : (
-          <AssistantTurnView key={turn.id} turn={turn} actions={actions} />
+          <AssistantTurnView key={turn.id} turn={turn} actions={actions} latest={latest} />
         ),
       )}
     </div>
   );
 }
 
-function AssistantTurnView({ turn, actions }: { turn: Exclude<AssistantTurn, { role: "user" }>; actions: CardActions }) {
+type TurnProps = { turn: Exclude<AssistantTurn, { role: "user" }>; actions: CardActions; latest: Map<string, string> };
+
+function AssistantTurnView({ turn, actions, latest }: TurnProps) {
   return (
     <div className="flex animate-rise gap-2.5">
       <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-brand-soft ring-1 ring-brand-ink/20">
@@ -296,19 +342,24 @@ function AssistantTurnView({ turn, actions }: { turn: Exclude<AssistantTurn, { r
         ) : turn.status === "error" ? (
           <p className="text-danger">{turn.error}</p>
         ) : (
-          <Answer response={turn.response} actions={actions} />
+          <Answer response={turn.response} actions={actions} superseded={(id) => latest.get(id) !== turn.id} />
         )}
       </div>
     </div>
   );
 }
 
-function Answer({ response, actions }: { response: AssistantResponse; actions: CardActions }) {
+function Answer({ response, actions, superseded }: { response: AssistantResponse; actions: CardActions; superseded: (actionId: string) => boolean }) {
   return (
     <>
       <AIMessageContent text={response.reply} />
       {response.cards.map((card, index) => (
-        <AssistantCardView key={`${card.type}-${"action_id" in card ? card.action_id : index}`} card={card} actions={actions} />
+        <AssistantCardView
+          key={`${card.type}-${"action_id" in card ? card.action_id : index}`}
+          card={card}
+          actions={actions}
+          superseded={"action_id" in card && superseded(card.action_id)}
+        />
       ))}
       {response.sources.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5 text-xs text-faint">

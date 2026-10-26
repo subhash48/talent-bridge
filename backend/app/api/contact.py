@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Request
 
 from app.core.dependencies import EmailProviderDep, SessionDep
+from app.core.rate_limit import client_address
 from app.schemas.contact import ContactCreate, ContactInfo, ContactReceived
 from app.services import contact_service
 
@@ -22,11 +23,5 @@ async def send_message(
 ) -> ContactReceived:
     """Kept, and emailed to CONTACT_EMAIL when email is set up. 429 too_many_messages after a few messages
     in a few minutes from the same address."""
-    await contact_service.receive(session, body, email, _client(request))
+    await contact_service.receive(session, body, email, client_address(request))
     return ContactReceived()
-
-
-def _client(request: Request) -> str:
-    """Who's sending, for the rate limit: the first address a proxy forwarded for, else the connection's."""
-    forwarded = request.headers.get("x-forwarded-for", "").split(",")[0].strip()
-    return forwarded or (request.client.host if request.client else "unknown")

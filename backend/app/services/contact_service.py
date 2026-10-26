@@ -8,14 +8,12 @@ wait (429).
 """
 
 import logging
-import time
-from collections import defaultdict, deque
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.enums import ContactTopic, EmailStatus
-from app.core.errors import AppError
+from app.core.rate_limit import RateLimiter
 from app.integrations.email import EmailProvider, OutboundEmail
 from app.models import ContactRequest
 from app.schemas.contact import ContactCreate, ContactInfo
@@ -33,28 +31,12 @@ WINDOW_SECONDS = 600
 PER_WINDOW = 5
 
 
-class TooManyMessages(AppError):
-    status_code = 429
-    code = "too_many_messages"
-
-
-class _Limiter:
-    """Messages per client in the last WINDOW_SECONDS, in this process."""
-
-    def __init__(self) -> None:
-        self._sent: dict[str, deque[float]] = defaultdict(deque)
-
-    def check(self, client: str) -> None:
-        now = time.monotonic()
-        sent = self._sent[client]
-        while sent and now - sent[0] > WINDOW_SECONDS:
-            sent.popleft()
-        if len(sent) >= PER_WINDOW:
-            raise TooManyMessages("You've sent several messages just now. Please wait a few minutes and try again.")
-        sent.append(now)
-
-
-limiter = _Limiter()
+limiter = RateLimiter(
+    PER_WINDOW,
+    WINDOW_SECONDS,
+    "You've sent several messages just now. Please wait a few minutes and try again.",
+    code="too_many_messages",
+)
 
 
 def info() -> ContactInfo:

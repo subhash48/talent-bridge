@@ -14,14 +14,16 @@ export const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
 
 /** An API failure with the backend's friendly message ({"error": {"code", "message"}}). */
 export class ApiError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-    readonly code: string,
-    readonly details?: unknown,
-  ) {
+  readonly status: number;
+  readonly code: string;
+  readonly details?: unknown;
+
+  constructor(message: string, status: number, code: string, details?: unknown) {
     super(message);
     this.name = "ApiError";
+    this.status = status;
+    this.code = code;
+    this.details = details;
   }
 }
 
@@ -46,6 +48,8 @@ async function accessToken(): Promise<string | null> {
 }
 
 const AUTH_PAGES = ["/login", "/signup", "/forgot-password", "/reset-password", "/welcome"];
+/** 403s that refuse one thing, not the session (messaging the hiring team turned off): the page explains them. */
+const REFUSALS = new Set(["messaging_disabled"]);
 
 /**
  * This page's session can't be used any more, so leave for a page that fits it rather than show an
@@ -113,7 +117,8 @@ async function send(url: string, { headers, ...init }: RequestInit = {}): Promis
   }
   if (!response.ok) {
     const error = await toApiError(response);
-    if ((error.status === 401 || error.status === 403) && typeof window !== "undefined") onAccessLost(error);
+    const lost = error.status === 401 || (error.status === 403 && !REFUSALS.has(error.code));
+    if (lost && typeof window !== "undefined") onAccessLost(error);
     throw error;
   }
   return response;

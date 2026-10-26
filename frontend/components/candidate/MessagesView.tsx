@@ -50,6 +50,8 @@ function MessagesView({ applicationId, initialThread }: { applicationId: string 
   });
   // Where "New" goes: the first message that was unread when the page opened.
   const [firstUnreadId] = useState(() => initialThread?.messages.find(isIncomingUnread)?.id);
+  // What they'd written when the hiring team turned messaging off, kept on screen for them.
+  const [unsent, setUnsent] = useState<string | null>(null);
   const unread = thread?.unread ?? 0;
 
   // Reading the thread marks it read, for the badges here and for the read state the recruiter sees. Not
@@ -130,10 +132,13 @@ function MessagesView({ applicationId, initialThread }: { applicationId: string 
               setData((current) => current && { ...current, messages: [...current.messages, message] });
               void refreshPortal(); // the dashboard's activity and the recruiter-facing timeline
             }}
-            onClosed={() => setData((current) => current && { ...current, canMessage: false })}
+            onClosed={(text) => {
+              setUnsent(text);
+              setData((current) => current && { ...current, canMessage: false });
+            }}
           />
         ) : (
-          <MessagingClosed />
+          <MessagingClosed unsent={unsent} />
         )}
       </section>
     </>
@@ -196,12 +201,22 @@ function MessageList({ messages, firstUnreadId, recruiterFirst, canMessage }: Me
 }
 
 /** In place of the composer until the hiring team turns on messaging for this application. */
-function MessagingClosed() {
+function MessagingClosed({ unsent }: { unsent?: string | null }) {
   return (
-    <p role="status" className="flex items-center gap-2.5 border-t border-border px-4 py-4 text-sm text-stone sm:px-5">
-      <Lock aria-hidden className="size-4 shrink-0 text-faint" />
-      Messaging will become available when the hiring team enables it.
-    </p>
+    <div role="status" className="border-t border-border px-4 py-4 sm:px-5">
+      <p className="flex items-center gap-2.5 text-sm text-stone">
+        <Lock aria-hidden className="size-4 shrink-0 text-faint" />
+        Messaging will become available when the hiring team enables it.
+      </p>
+      {unsent && (
+        <div className="mt-3">
+          <p className="text-xs text-stone">Your message wasn&apos;t sent. Here it is, so you can keep it:</p>
+          <p className="mt-1 rounded-[10px] bg-overlay px-3 py-2 text-[13px] whitespace-pre-wrap text-charcoal ring-1 ring-border select-all">
+            {unsent}
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -209,8 +224,8 @@ type ComposerProps = {
   applicationId: string | null;
   recruiterFirst: string;
   onSent: (message: CandidateMessage) => void;
-  /** The hiring team turned messaging off since the thread loaded. */
-  onClosed: () => void;
+  /** The hiring team turned messaging off since the thread loaded; text is what wasn't sent. */
+  onClosed: (text: string) => void;
 };
 
 function Composer({ applicationId, recruiterFirst, onSent, onClosed }: ComposerProps) {
@@ -229,7 +244,7 @@ function Composer({ applicationId, recruiterFirst, onSent, onClosed }: ComposerP
       setDraft("");
       setKind("message");
     } catch (error) {
-      if (error instanceof ApiError && error.code === "messaging_disabled") onClosed();
+      if (error instanceof ApiError && error.code === "messaging_disabled") onClosed(body);
       toast({ title: "Message not sent", description: errorMessage(error, "Check your connection and try again."), tone: "error" });
     } finally {
       setSending(false);

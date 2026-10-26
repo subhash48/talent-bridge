@@ -8,7 +8,7 @@ TalentBridge makes sure candidates never get forgotten during hiring. It catches
 
 - `frontend/` — Next.js app: the homepage (`/`), the careers site (`/careers`), the recruiter workspace (`/recruiter`) and the candidate portal (`/candidate`).
 - `backend/` — FastAPI service under `/api/v1`: jobs, candidates, applications, interviews, messages, communication (SLA rules, drafts, delivery, analytics), the assistants, the careers site and an optional Ashby integration.
-- `supabase/` — Postgres migrations (`001`–`016`) and the demo seed (`seed.sql`, generated from `backend/app/db/seed_data.py`).
+- `supabase/` — Postgres migrations (`001`–`018`) and the demo seed (`seed.sql`, generated from `backend/app/db/seed_data.py`).
 
 ## Quickstart
 
@@ -36,7 +36,7 @@ Every data call goes through `frontend/services/*` to `NEXT_PUBLIC_API_URL` (def
 
 **Supabase**
 
-1. Apply `supabase/migrations/001`–`016` in order (`supabase db push --db-url "$DATABASE_URL"`, the SQL editor, or `supabase db reset` locally with the [Supabase CLI](https://supabase.com/docs/guides/local-development)). Never edit a migration that has been applied; add the next number instead. `015` (communication) and `016` (careers résumés) only add tables.
+1. Apply `supabase/migrations/001`–`018` in order (`supabase db push --db-url "$DATABASE_URL"`, the SQL editor, or `supabase db reset` locally with the [Supabase CLI](https://supabase.com/docs/guides/local-development)). Never edit a migration that has been applied; add the next number instead. `015` (communication) and `016` (careers résumés) only add tables; `017` adds employers; `018` adds `applications.candidate_messaging_enabled` (off by default, and on where the candidate had already written). The backend reads that column, so apply `018` before deploying code that includes it.
 2. Set `DATABASE_URL` in `backend/.env` to the project's connection string (direct or pooler), replacing `[YOUR-PASSWORD]` including the brackets.
 3. Load the demo data: `python -m app.db.seed` (or `--reset` to replace existing data). The API also loads it into an empty database on startup while `SEED_DEMO_DATA=true`. A database seeded before newer demo data was added gets just the rows it's missing with `--add-missing`, which never changes or deletes what's there.
 
@@ -173,9 +173,23 @@ An update is any message the candidate received from the hiring team. Archived a
 
 **Drafts.** `POST /communication/drafts` writes an update for the rule that needs attention (a stage-change update, and for a rejection a kind note that never gives a reason; a reply; a post-interview follow-up; a reminder to confirm; a status update). The recruiter edits it (`PATCH`), then approves and sends it (`POST …/send`, once: a second send is a 409) or discards it. Nothing is ever sent automatically. Drafts to candidates get a candidate-safe context: no interviewer feedback, no recruiter's free text from the timeline, no internal activity.
 
+**Candidate messaging.** A candidate can always read what the hiring team sends, but can only write to them about an application once a recruiter turns messaging on for it (`applications.candidate_messaging_enabled`): from the candidate's ⋮ menu or actions, the Messages inbox ("Replies on/off"), or for the candidates ticked on the Candidates page (`PUT /applications/{id}/messaging`, `POST /applications/messaging`). While it's off, the portal shows the thread with "Messaging will become available when the hiring team enables it." instead of the composer, and `POST /candidate/messages` answers 403 `messaging_disabled`. Turning it on for one application never opens another, even for the same person.
+
 **Delivery.** Every recruiter message, from Today, the candidate page, the inbox or the assistant, goes the same way (`message_service.send_message`): to the candidate portal and the timeline (the audit entry) at once, with a delivery record; then by email when `RESEND_API_KEY` and `EMAIL_FROM` are set (a sender on a domain verified in Resend). Each message shows whether it was emailed, failed (with the reason) or reached the portal only; a failed email never unsends the portal message. Without Resend, everything still works and the workspace says that email isn't set up.
 
 **Analytics.** `/recruiter/analytics` (`GET /communication/analytics?days=30`): candidates needing an update now, median time between updates (counting silences still going on), updates sent on time per rule, interview confirmation rate, unanswered messages, updates and emails sent, AI drafts generated, sent as written or edited, and discarded, and an estimate of recruiter time saved (5 minutes per AI draft sent; the assumption is shown).
+
+## Finding candidates and reaching out
+
+`/recruiter/candidates` lists every active application (the workspace reads every page of `GET /candidates`, not just the first). Search matches name, job, employer, stage, skills, location and email; **Filters** has job, skills (every one ticked), location, application date, interview status (booked, interviewed, interviewed with no update since, none yet), communication, candidate messaging and portal. Every filter in force shows under the stage chips with its own ×, and a link can carry them (`?job=…&skills=Figma|Design systems&stage=…`).
+
+**Shortlist** asks for job-related criteria (skills or requirements; with a job filter and none typed, the job's own listed requirements) and how many to show (5, 10, 20 or a custom number). `POST /candidates/match` (`backend/app/services/candidate_matching.py`) orders the candidates in view by how many criteria their application shows, then the earliest application, and each row says why: ✓ for each criterion found, with where (listed skills, headline or résumé), and stated experience such as "4 years product design experience", quoted. There are no scores, nothing personal (demographics, pronouns, portal activity, engagement) is read, and nobody is moved or rejected: the recruiter ticks who to act on.
+
+With candidates ticked, the bulk bar moves them, turns candidate messaging on or off, or **Draft personalized outreach**: one draft per ticked candidate (an interview invitation or a message), optionally with interview times proposed back to back in a window. Each can be reviewed and edited or left out; "Approve selected" shows one final look at the candidates, messages and times, and only "Confirm & send" sends the messages (through the one send path) and creates the interviews in TalentBridge. Each candidate's outcome is reported, such as "Portal delivered — Email not configured" and "Interview created in TalentBridge — Calendar invite not sent".
+
+**Calendars and video.** Interviews go to a calendar provider (`backend/app/integrations/calendar.py`) as events. None is connected, so no invitation is claimed and the workspace says "Calendar integration required to create real calendar events."; Google Calendar or Microsoft Outlook plug in there as another provider. No video meeting link is ever invented: only one the recruiter types is used. Proposed times use the browser's named time zone, so a day after a clock change gets that day's offset.
+
+A candidate's panel and page have Application, Interviews, Messages, Activity and Communication tabs and four actions: Message, Draft with AI, Schedule interview, and Enable or Disable candidate messaging. Someone with several applications is asked which one to act on first, and every action applies to that application only.
 
 ## Careers site
 
@@ -189,9 +203,16 @@ Preparation (`/candidate/prep`) opens once the candidate is invited to interview
 
 ## AI Assistant
 
-`/recruiter/ai` is one assistant for typed and spoken requests about candidate communication, through one action engine (`POST /api/v1/assistant/requests`, `backend/app/services/assistant/`): "Who needs an update today?", "Which candidates have unanswered questions?", "Which interviews need confirmation?", "Who interviewed this week and hasn't had a follow-up?", "Draft Sarah an update" (written for the rule that needs attention, through the drafts ledger), "Send Sophia an interview invitation for next Tuesday", and questions about one candidate's application or next interview. Names are matched against the active pipeline and never guessed: someone with several applications, like Sophia, gets "Which one?" with each role and employer, unless the request comes from one application's page. Messages wait as editable proposals until the recruiter confirms, then go through the one send path, exactly once.
+`/recruiter/ai` is one assistant for typed and spoken requests, through one action engine (`POST /api/v1/assistant/requests`, `backend/app/services/assistant/`): speech → text → one structured action (the hosted model, or the offline rules in `rules.py`) → the existing services → a preview → explicit approval → execution. It handles:
 
-The AI never evaluates, scores, ranks or rejects candidates, lists strengths or concerns, or recommends a hiring decision; those requests are declined. **Voice** stays inside the assistant (the microphone beside Send): the recording is transcribed (Groq Whisper with `AI_PROVIDER=groq`, else the browser's own recognition) and never stored, and a spoken "send it" only shows the confirmation.
+- **Communication:** "Who needs an update today?", "Which candidates have unanswered questions?", "Which interviews need confirmation?", "Who interviewed this week and hasn't had a follow-up?", "Draft Sarah an update" (through the drafts ledger), "Send Sophia an interview invitation for next Tuesday", and questions about one candidate's application or next interview.
+- **Jobs:** "Create a Senior Product Designer role in New York, hybrid, requiring Figma, design systems and user research" writes an **AI Job Draft** with the AI job writer: no job exists yet. Anything not said (salary, department) is left empty and flagged. "Add Kubernetes and model monitoring" changes the same draft, "Looks good" asks "Create this job?", and "Yes", "Approve" or the Approve & Create button creates it, open on the careers site.
+- **Candidates:** "Show applicants for that role", "Filter for candidates with Python, PyTorch and AWS", "Show 10 matching", "Show candidates currently in screening" and "Show candidates who interviewed but haven't received an update" become visible filters and criteria, kept as the conversation narrows the list. Each candidate shows the evidence, and the list links to the same view on the Candidates page. "The top 10 for the ML Engineer role" is answered as a search on the job's listed requirements, saying it isn't a ranking.
+- **Outreach:** the recruiter ticks candidates (or says "Select Sophia, Maya and James"). "Draft interview invitations for the selected candidates" writes one personal draft each, and "Make these 30-minute interviews next Tuesday afternoon" proposes the times and rewrites each draft to name its own. "Send them" shows one final confirmation of the candidates, messages and times, and only "yes" (or Confirm & send) runs it, once.
+
+Names are matched against the active pipeline and never guessed: someone with several applications, like Sophia, gets "Which one?" with each role and employer, unless the request comes from one application's page. Every proposal runs exactly once.
+
+The AI never evaluates, scores, ranks or rejects candidates, lists strengths or concerns, judges culture fit or recommends a hiring decision; those requests are declined, and searches use only job-related criteria. **Voice** stays inside the assistant (the microphone beside Send): the recording is transcribed (Groq Whisper with `AI_PROVIDER=groq`, else the browser's own recognition) and never stored. It takes exactly the same path as typed text, so a first spoken "send it" or "looks good" only shows the final confirmation.
 
 All `/assistant/*` routes check the recruiter role on the server; a candidate's token gets 403.
 

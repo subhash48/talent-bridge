@@ -276,3 +276,13 @@ async def test_the_cashier_demo_from_post_to_interviews(
     )
     assert invite["cards"][0]["type"] == "outreach" and invite["status"] == "proposed"
     assert (await approve(client, sam, invite["id"]))["status"] == "completed"
+
+
+async def test_the_applicant_list_carries_what_each_applicant_gave(client: AsyncClient, sam: dict[str, str]) -> None:
+    page = (await client.get(f"{API}/candidates", params={"limit": 200}, headers=sam)).json()
+    maria = next(item for item in page["items"] if item["candidate"]["full_name"] == "Maria Lopez")
+    assert (maria["phone"], maria["availability"], maria["experience_note"]) == (
+        "+1 503 555 0141",
+        ["friday", "saturday"],
+        "Two years as a prep cook in a busy kitchen. I can start right away.",
+    )

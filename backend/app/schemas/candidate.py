@@ -9,7 +9,7 @@ from uuid import UUID
 
 from pydantic import EmailStr, Field, field_validator
 
-from app.core.enums import ApplicationStage, PortalAccountStatus
+from app.core.enums import ApplicationStage, PortalAccountStatus, Weekday
 from app.schemas.activity import ActivityBrief, ActivityRead
 from app.schemas.application import ApplicationBrief, ApplicationRead, Origin, StageHistoryRead
 from app.schemas.common import APIModel, OptionalText, OptionalURL, Timestamp
@@ -92,6 +92,10 @@ class CandidateListItem(APIModel):
     updated_at: Timestamp
     archived_at: Timestamp | None = None
     candidate_messaging_enabled: bool = False  # the candidate may write to the hiring team about it
+    # What the applicant gave with this application: for contacting them about this job only.
+    phone: str | None = None
+    availability: list[Weekday] = []
+    experience_note: str | None = None
     last_activity: ActivityBrief | None = None
     communication: CommunicationSummary
     next_interview: InterviewBrief | None = None

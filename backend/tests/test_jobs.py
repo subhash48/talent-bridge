@@ -49,3 +49,26 @@ async def test_job_validation(client: AsyncClient) -> None:
     assert (await client.post(f"{API}/jobs", json={"title": "X", "status": "paused"})).status_code == 422
     null_title = await client.patch(f"{API}/jobs/{job_id('ML Engineer')}", json={"title": None})
     assert null_title.status_code == 422
+
+
+async def test_a_small_business_job_keeps_its_pay_shift_days_and_openings(client: AsyncClient) -> None:
+    body = {
+        "title": "Kitchen Assistant",
+        "pay": "$18/hour",
+        "shift": "Evenings",
+        "work_days": ["saturday", "friday", "saturday"],
+        "openings": 2,
+    }
+    created = await client.post(f"{API}/jobs", json=body)
+    assert created.status_code == 201
+    job = created.json()
+    assert (job["pay"], job["shift"], job["work_days"], job["openings"]) == (
+        "$18/hour",
+        "Evenings",
+        ["friday", "saturday"],
+        2,
+    )
+    changed = (await client.patch(f"{API}/jobs/{job['id']}", json={"work_days": ["sunday"], "openings": 3})).json()
+    assert (changed["work_days"], changed["openings"], changed["pay"]) == (["sunday"], 3, "$18/hour")
+    assert (await client.post(f"{API}/jobs", json={**body, "openings": 0})).status_code == 422
+    assert (await client.post(f"{API}/jobs", json={**body, "work_days": ["someday"]})).status_code == 422

@@ -19,7 +19,7 @@ from app.models import Application, Candidate, CandidateResume, Job
 from app.services.demo_resumes import DOCX, Resume
 from app.services.resumes import read_text
 from tests.ashby_support import FakeSupabaseAdmin
-from tests.conftest import API, bearer, job_id
+from tests.conftest import API, SOPHIA_AUTH, FakeEmail, bearer, job_id, use_email
 
 PRODUCT_DESIGNER = job_id("Product Designer")
 EMAIL = "ana.lima@inbox.dev"
@@ -93,9 +93,12 @@ async def test_applying_creates_the_application_at_once_and_emails_the_portal_li
         "portal_link": "invitation_sent",
         "email": EMAIL,
         "job_title": "Product Designer",
+        "company": "Encord",
+        "confirmation_emailed": False,  # no email provider: Supabase's own invitation email went
     }
     [invite] = supabase.invites
     assert invite["email"] == EMAIL and invite["redirect_to"].endswith("/auth/callback?next=/welcome")
+    assert invite["emailed_by"] == "supabase"
 
     # The recruiter sees it straight away, with the résumé.
     [item] = (await client.get(f"{API}/candidates", params={"search": EMAIL})).json()["items"]
@@ -236,3 +239,69 @@ async def test_a_job_without_work_days_asks_for_none(anonymous: AsyncClient, cli
     [item] = (await client.get(f"{API}/candidates", params={"search": EMAIL})).json()["items"]
     detail = (await client.get(f"{API}/candidates/{item['candidate']['id']}")).json()
     assert (detail["application"]["availability"], detail["application"]["phone"]) == ([], None)
+
+
+# With an email provider: one email from TalentBridge confirms the application and carries the link.
+
+
+async def test_a_new_applicant_gets_one_email_to_create_their_password(
+    anonymous: AsyncClient, client: AsyncClient, supabase: FakeSupabaseAdmin
+) -> None:
+    mail = use_email(FakeEmail())
+    applied = (await anonymous.post(f"{API}/careers/jobs/{PRODUCT_DESIGNER}/apply", json=application())).json()
+    assert (applied["portal_link"], applied["confirmation_emailed"]) == ("invitation_sent", True)
+    [invite] = supabase.invites
+    assert invite["emailed_by"] == "talentbridge"  # Supabase made the account; it sent nothing
+    [sent] = mail.sent
+    assert (sent.to, sent.subject) == (EMAIL, "Application received: Product Designer at Encord")
+    assert "Your application for Product Designer at Encord has been submitted." in sent.text
+    assert "Create your TalentBridge password to follow updates from the hiring team:" in sent.text
+    assert "type=invite&token=invite-1" in sent.text
+    [item] = (await client.get(f"{API}/candidates", params={"search": EMAIL})).json()["items"]
+    timeline = (await client.get(f"{API}/applications/{item['application_id']}/activity")).json()
+    assert timeline[0]["title"] == "Candidate portal invitation sent"
+
+    # Applying to another role: the same account, so a sign-in link this time.
+    again = (await anonymous.post(f"{API}/careers/jobs/{job_id('ML Engineer')}/apply", json=application())).json()
+    assert (again["status"], again["portal_link"], again["confirmation_emailed"]) == (
+        "submitted",
+        "sign_in_link_sent",
+        True,
+    )
+    assert len(supabase.invites) == 1 and len(mail.sent) == 2
+    assert "Sign in to TalentBridge to follow updates from the hiring team:" in mail.sent[1].text
+    assert mail.sent[0].idempotency_key != mail.sent[1].idempotency_key
+
+
+async def test_if_the_email_fails_the_application_still_stands(
+    anonymous: AsyncClient, client: AsyncClient, supabase: FakeSupabaseAdmin
+) -> None:
+    use_email(FakeEmail(fail="The email service refused the email (403): domain not verified"))
+    applied = (await anonymous.post(f"{API}/careers/jobs/{PRODUCT_DESIGNER}/apply", json=application())).json()
+    assert (applied["status"], applied["portal_link"], applied["confirmation_emailed"]) == (
+        "submitted",
+        "unavailable",
+        False,
+    )
+    [item] = (await client.get(f"{API}/candidates", params={"search": EMAIL})).json()["items"]
+    assert item["candidate"]["portal_status"] == "invited"  # the account is theirs: "Forgot password" works
+
+
+async def test_someone_with_an_account_applies_elsewhere_and_it_joins_their_portal(
+    anonymous: AsyncClient, client: AsyncClient, supabase: FakeSupabaseAdmin, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    """Sophia already has a TalentBridge account. Applying to another company with the same email adds an
+    application to it: no second account, no second candidate."""
+    mail = use_email(FakeEmail())
+    other = next(job for job in (await anonymous.get(f"{API}/careers/jobs")).json() if job["company"] != "Encord")
+    sophia = application(first_name="Sophia", last_name="Martinez", email="Sophia.Martinez@example.com")
+    applied = (await anonymous.post(f"{API}/careers/jobs/{other['id']}/apply", json=sophia)).json()
+    assert (applied["status"], applied["portal_link"]) == ("submitted", "sign_in_link_sent")
+    assert supabase.invites == [] and "Sign in to TalentBridge" in mail.sent[0].text
+    async with sessions() as session:
+        people = await session.scalar(
+            select(func.count()).select_from(Candidate).where(Candidate.email == "sophia.martinez@example.com")
+        )
+    assert people == 1
+    mine = (await client.get(f"{API}/candidate/applications", headers=bearer(SOPHIA_AUTH))).json()
+    assert (other["title"], other["company"]) in {(item["job_title"], item["company"]) for item in mine}

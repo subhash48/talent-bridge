@@ -84,3 +84,7 @@ class ApplicationResult(APIModel):
     portal_link: Literal["invitation_sent", "sign_in_link_sent", "unavailable"]
     email: str
     job_title: str
+    company: str | None = None
+    # TalentBridge emailed its own confirmation with the link (an email provider is configured); otherwise
+    # the link came in Supabase's invitation or sign-in email.
+    confirmation_emailed: bool = False

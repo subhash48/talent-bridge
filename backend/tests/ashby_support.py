@@ -166,7 +166,7 @@ class FakeSupabaseAdmin:
         self.sign_in_links: list[dict[str, str]] = []
 
     async def send_sign_in_link(self, email: str, *, redirect_to: str) -> None:
-        self.sign_in_links.append({"email": email.lower(), "redirect_to": redirect_to})
+        self.sign_in_links.append({"email": email.lower(), "redirect_to": redirect_to, "emailed_by": "supabase"})
 
     async def invite(self, email: str, *, redirect_to: str, data: dict[str, Any]) -> InvitedUser:
         email = email.lower()
@@ -177,8 +177,19 @@ class FakeSupabaseAdmin:
             raise AuthUserExists("This email already has a TalentBridge sign-in.")
         user_id = uuid.uuid5(uuid.NAMESPACE_URL, f"auth:{email}")
         self.users[email] = user_id
-        self.invites.append({"email": email, "redirect_to": redirect_to, "data": data})
+        self.invites.append({"email": email, "redirect_to": redirect_to, "data": data, "emailed_by": "supabase"})
         return InvitedUser(id=user_id, email=email)
+
+    async def invite_link(self, email: str, *, redirect_to: str, data: dict[str, Any]) -> InvitedUser:
+        """invite, with the link handed back for TalentBridge to email instead."""
+        invited = await self.invite(email, redirect_to=redirect_to, data=data)
+        self.invites[-1]["emailed_by"] = "talentbridge"
+        link = f"https://test-project.supabase.co/auth/v1/verify?type=invite&token=invite-{len(self.invites)}"
+        return InvitedUser(id=invited.id, email=invited.email, action_link=link)
+
+    async def sign_in_link_url(self, email: str, *, redirect_to: str) -> str:
+        self.sign_in_links.append({"email": email.lower(), "redirect_to": redirect_to, "emailed_by": "talentbridge"})
+        return f"https://test-project.supabase.co/auth/v1/verify?type=magiclink&token=magic-{len(self.sign_in_links)}"
 
 
 Handler = Callable[[str, dict[str, Any]], tuple[int, dict[str, Any]]]

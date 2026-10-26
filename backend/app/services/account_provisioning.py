@@ -18,7 +18,7 @@ invitation, and Supabase refuses a second account for the same address anyway.
 
 import logging
 import uuid
-from collections.abc import Iterable
+from collections.abc import Awaitable, Callable, Iterable
 from datetime import timedelta
 
 from sqlalchemy import or_, select, update
@@ -40,10 +40,22 @@ MAX_AUTOMATIC_ATTEMPTS = 5  # the sync stops retrying after this; a recruiter ca
 NOT_CONFIGURED = "Portal invitations aren't set up yet: add SUPABASE_SECRET_KEY to backend/.env."
 
 
+# Emails a one-time invitation link with TalentBridge's own message. Returns None once the email provider
+# accepted it, or a safe reason it didn't.
+InvitationSender = Callable[[str], Awaitable[str | None]]
+
+
 async def provision_portal_account(
-    session: AsyncSession, candidate_id: uuid.UUID, admin: SupabaseAdmin | None
+    session: AsyncSession,
+    candidate_id: uuid.UUID,
+    admin: SupabaseAdmin | None,
+    *,
+    send_invitation: InvitationSender | None = None,
 ) -> PortalAccountStatus | None:
-    """Give the candidate portal access if they should have it. Commits. Returns their status."""
+    """Give the candidate portal access if they should have it. Commits. Returns their status.
+
+    Supabase emails the invitation itself, unless send_invitation is given: then Supabase only creates the
+    account and hands back its link, which send_invitation emails (the careers site's confirmation)."""
     candidate = await _load(session, candidate_id)
     if candidate is None:
         return None
@@ -76,7 +88,8 @@ async def provision_portal_account(
     candidate = await _load(session, candidate_id)
     assert candidate is not None
     try:
-        invited = await admin.invite(
+        invite = admin.invite if send_invitation is None else admin.invite_link
+        invited = await invite(
             candidate.email,
             redirect_to=settings.portal_invite_redirect_url,
             data={"full_name": candidate.full_name},
@@ -99,6 +112,10 @@ async def provision_portal_account(
         return await _settle(session, candidate, P.INVITE_FAILED, error=f"Invited, but not linked: {exc}")
     candidate = await _load(session, candidate_id)
     assert candidate is not None
+    if send_invitation is not None:
+        failed = await send_invitation(invited.action_link or "")
+        if failed:  # the account exists and is theirs: "Forgot password" or a recruiter's retry still works
+            return await _settle(session, candidate, P.INVITED, error=f"The invitation email wasn't sent: {failed}")
     candidate.portal_invited_at = utcnow()
     application_id = await session.scalar(
         select(Application.id)

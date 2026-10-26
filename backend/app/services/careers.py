@@ -10,19 +10,29 @@ to the same job adds nothing, and just sends a fresh link.
 import logging
 import re
 import uuid
+from collections.abc import Awaitable, Callable
 from typing import Literal
 
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.enums import ActivityType, ApplicationStage, JobStatus, PortalAccountStatus, UserRole, Weekday
+from app.core.enums import (
+    ActivityType,
+    ApplicationStage,
+    EmailStatus,
+    JobStatus,
+    PortalAccountStatus,
+    UserRole,
+    Weekday,
+)
 from app.core.errors import AppError, ConflictError, NotFoundError
+from app.integrations.email import DisabledEmail, EmailProvider
 from app.integrations.supabase_admin import SupabaseAdmin, SupabaseAdminError
 from app.models import Application, Candidate, CandidateStageHistory, Job, User
 from app.models.base import utcnow
 from app.schemas.careers import ApplicationCreate, ApplicationResult, CareerJobDetail, CareerJobSummary
-from app.services import account_provisioning, resumes
+from app.services import account_provisioning, application_emails, resumes
 from app.services.activity_service import record_activity
 from app.services.ai.context import parse_requirements
 from app.services.demo_resumes import read_upload
@@ -32,6 +42,7 @@ logger = logging.getLogger(__name__)
 P = PortalAccountStatus
 SOURCE = "Careers site"
 NOT_OPEN = "This role isn't open for applications."
+NOT_EMAILED = "The email service didn't accept it."
 PortalLink = Literal["invitation_sent", "sign_in_link_sent", "unavailable"]
 
 
@@ -99,8 +110,13 @@ async def get_job(session: AsyncSession, job_id: uuid.UUID) -> CareerJobDetail:
 
 
 async def apply(
-    session: AsyncSession, job_id: uuid.UUID, data: ApplicationCreate, admin: SupabaseAdmin | None
+    session: AsyncSession,
+    job_id: uuid.UUID,
+    data: ApplicationCreate,
+    admin: SupabaseAdmin | None,
+    mailer: EmailProvider | None = None,
 ) -> ApplicationResult:
+    mailer = mailer or DisabledEmail()
     job = _native_open(await session.get(Job, job_id))
     if job.status == JobStatus.CLOSED:
         raise ConflictError(NOT_OPEN, code="job_closed")
@@ -129,6 +145,7 @@ async def apply(
     existing = await session.scalar(
         select(Application).where(Application.candidate_id == candidate.id, Application.job_id == job.id).limit(1)
     )
+    application: Application | None = None
     if existing is None:
         now = utcnow()
         application = Application(
@@ -160,10 +177,19 @@ async def apply(
         await resumes.store(session, candidate, application, resume)
     await session.commit()
 
-    portal_link = await _portal_link(session, candidate, admin)
+    applied = existing or application
+    assert applied is not None
+    portal_link = await _portal_link(session, candidate, applied, job, admin, mailer)
     status = "already_applied" if existing is not None else "submitted"
     logger.info("careers.applied job=%s candidate=%s status=%s portal=%s", job.id, candidate.id, status, portal_link)
-    return ApplicationResult(status=status, portal_link=portal_link, email=email, job_title=job.title)
+    return ApplicationResult(
+        status=status,
+        portal_link=portal_link,
+        email=email,
+        job_title=job.title,
+        company=job.company.name,
+        confirmation_emailed=mailer.configured and portal_link != "unavailable",
+    )
 
 
 def _check_availability(job: Job, days: list[Weekday]) -> None:
@@ -178,21 +204,58 @@ def _check_availability(job: Job, days: list[Weekday]) -> None:
         raise AvailabilityRequired("Choose from the days this job needs.")
 
 
-async def _portal_link(session: AsyncSession, candidate: Candidate, admin: SupabaseAdmin | None) -> PortalLink:
-    """Email the applicant a way into their portal: a new account's invitation, or an existing
-    account's sign-in link. Failing to email never undoes the application."""
+async def _portal_link(
+    session: AsyncSession,
+    candidate: Candidate,
+    application: Application,
+    job: Job,
+    admin: SupabaseAdmin | None,
+    email: EmailProvider,
+) -> PortalLink:
+    """Email the applicant a way into their portal: a new account's invitation (to create their password),
+    or an existing account's sign-in link. With an email provider configured, TalentBridge sends one email
+    of its own that confirms the application and carries the link; otherwise Supabase sends its invitation
+    or sign-in email. Failing to email never undoes the application."""
     if admin is None:
         return "unavailable"
     if candidate.portal_status in (P.NOT_REQUIRED, P.INVITE_FAILED):
         await account_provisioning.request_invitation(session, candidate)
     invited_before = candidate.portal_invited_at
-    status = await account_provisioning.provision_portal_account(session, candidate.id, admin)
+    company = job.company.name
+
+    def confirmation(new_account: bool) -> Callable[[str], Awaitable[str | None]]:
+        async def send(link: str) -> str | None:
+            message = application_emails.application_received(
+                to=candidate.email,
+                first_name=candidate.first_name,
+                job_title=job.title,
+                company=company,
+                link=link,
+                new_account=new_account,
+                application_id=str(application.id),
+            )
+            result = await email.send(message)
+            return None if result.status == EmailStatus.SENT else result.error or NOT_EMAILED
+
+        return send
+
+    ours = email.configured
+    status = await account_provisioning.provision_portal_account(
+        session, candidate.id, admin, send_invitation=confirmation(True) if ours else None
+    )
     await session.refresh(candidate)
     if status == P.INVITED and candidate.portal_invited_at and candidate.portal_invited_at != invited_before:
         return "invitation_sent"
     if status in (P.INVITED, P.ACTIVE):
+        redirect = settings.portal_sign_in_redirect_url
         try:
-            await admin.send_sign_in_link(candidate.email, redirect_to=settings.portal_sign_in_redirect_url)
+            if ours:
+                failed = await confirmation(False)(await admin.sign_in_link_url(candidate.email, redirect_to=redirect))
+                if failed:
+                    logger.warning("careers.confirmation_failed candidate=%s error=%s", candidate.id, failed)
+                    return "unavailable"
+            else:
+                await admin.send_sign_in_link(candidate.email, redirect_to=redirect)
         except SupabaseAdminError as exc:
             logger.warning("careers.sign_in_link_failed candidate=%s error=%s", candidate.id, exc)
             return "unavailable"

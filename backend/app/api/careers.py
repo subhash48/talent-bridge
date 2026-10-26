@@ -5,7 +5,7 @@ from uuid import UUID
 
 from fastapi import APIRouter
 
-from app.core.dependencies import SessionDep, SupabaseAdminDep
+from app.core.dependencies import EmailProviderDep, SessionDep, SupabaseAdminDep
 from app.schemas.careers import ApplicationCreate, ApplicationResult, CareerJobDetail, CareerJobSummary
 from app.services import careers
 
@@ -25,9 +25,9 @@ async def get_job(job_id: UUID, session: SessionDep) -> CareerJobDetail:
 
 @router.post("/jobs/{job_id}/apply", response_model=ApplicationResult, summary="Apply for a role")
 async def apply(
-    job_id: UUID, body: ApplicationCreate, session: SessionDep, admin: SupabaseAdminDep
+    job_id: UUID, body: ApplicationCreate, session: SessionDep, admin: SupabaseAdminDep, email: EmailProviderDep
 ) -> ApplicationResult:
     """The application is created straight away, with the résumé, and the applicant is emailed a link
-    into their candidate portal. 404 job_not_found, 409 job_closed, 422 invalid_resume or
-    email_not_accepted."""
-    return await careers.apply(session, job_id, body, admin)
+    into their candidate portal: to create their password, or to sign in if they have an account. 404
+    job_not_found, 409 job_closed, 422 invalid_resume, email_not_accepted or availability_required."""
+    return await careers.apply(session, job_id, body, admin, email)

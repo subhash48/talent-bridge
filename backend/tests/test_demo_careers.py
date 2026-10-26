@@ -441,7 +441,12 @@ async def test_apply_activate_and_reach_the_recruiter(
     assert response.status_code == 200
     assert response.json() == {"status": "invitation_sent", "email": EMAIL, "job_title": JOB}
     assert ashby.invites == [
-        {"email": EMAIL, "redirect_to": settings.portal_invite_redirect_url, "data": {"full_name": "Maya Patel"}}
+        {
+            "email": EMAIL,
+            "redirect_to": settings.portal_invite_redirect_url,
+            "data": {"full_name": "Maya Patel"},
+            "emailed_by": "supabase",
+        }
     ]
 
     # 2. Her application waits, unseen: there is no candidate yet, nothing for a recruiter to see.

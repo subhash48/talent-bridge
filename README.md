@@ -2,13 +2,20 @@
 
 TalentBridge makes sure candidates never get forgotten during hiring. It catches communication gaps (a stage change nobody mentioned, a question with no reply, an interview with no follow-up), helps recruiters send personalized updates (AI drafts, the recruiter edits and approves), and gives every candidate a clear next step and interview preparation in their own portal.
 
-**Status:** the native MVP. Companies create jobs, candidates apply on the careers site without an account and follow everything in the candidate portal, and recruiters work from **Today**: who needs an update, with a draft ready to review. Every message a recruiter approves reaches the candidate's portal, and their inbox when email (Resend) is configured.
+**Status:** the native MVP, with three journeys on one product and one backend:
+
+- **Candidates** apply on the careers site without an account (then create a password from the confirmation email), or sign up first, and follow every application in the candidate portal.
+- **Recruiting teams** work in the full workspace, from **Today**: who needs an update, with a draft ready to review.
+- **Small businesses** use **Simple Hire**: one big "What would you like to do?" button, plain words, and the same assistant underneath ("Post a kitchen job for Friday and Saturday evenings, $18 an hour").
+
+Each employer is its own workspace, and none sees another's applicants. Every message an employer approves reaches the candidate's portal, and their inbox when email (Resend) is configured.
 
 ## Repository
 
-- `frontend/` — Next.js app: the homepage (`/`), the careers site (`/careers`), the recruiter workspace (`/recruiter`) and the candidate portal (`/candidate`).
-- `backend/` — FastAPI service under `/api/v1`: jobs, candidates, applications, interviews, messages, communication (SLA rules, drafts, delivery, analytics), the assistants, the careers site and an optional Ashby integration.
-- `supabase/` — Postgres migrations (`001`–`018`) and the demo seed (`seed.sql`, generated from `backend/app/db/seed_data.py`).
+- `frontend/` — Next.js app: the public website (`/`, `/privacy`, `/terms`), sign-in and sign-up (`/signin`, `/login`, `/signup`, `/signup/employer`, `/onboarding/workspace`), the careers site (`/careers`), the full recruiter workspace (`/recruiter`), Simple Hire (`/hire`) and the candidate portal (`/candidate`).
+- `backend/` — FastAPI service under `/api/v1`: accounts and workspaces, jobs, candidates, applications, interviews, messages, communication (SLA rules, drafts, delivery, analytics), the assistants, the careers site, the website's contact form and an optional Ashby integration.
+- `supabase/` — Postgres migrations (`001`–`021`) and the demo seed (`seed.sql`, generated from `backend/app/db/seed_data.py`).
+- `e2e/` — the three journeys end to end in a real browser ([e2e/README.md](e2e/README.md)).
 
 ## Quickstart
 

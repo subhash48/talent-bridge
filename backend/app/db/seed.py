@@ -35,6 +35,7 @@ from app.db.seed_data import (
     HARBOR_RECRUITER,
     INTERVIEWS,
     JOBS,
+    LATER_CANDIDATES,
     NO_FOLLOW_UP,
     NOVA_RECRUITER,
     OPENAI_RECRUITER,
@@ -191,7 +192,8 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
 
     application_ids: dict[str, uuid.UUID] = {}
     confirmations: dict[str, int] = {}
-    for seed in CANDIDATES:
+
+    def add_candidate(seed: CandidateSeed) -> None:
         candidate_id = seed_id("candidate", seed.key)
         added = seed.added_minutes_ago
         rows[Candidate].append(
@@ -213,10 +215,16 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
             }
         )
         _add_application(rows, seed.key, candidate_id, job_ids[seed.job], seed, recruiter_id)
+
+    # In this order, so every row's id stays what it was when it was first seeded (see LATER_CANDIDATES).
+    for seed in CANDIDATES:
+        add_candidate(seed)
     for extra in APPLICATIONS:
         candidate_id = seed_id("candidate", extra.candidate)
         _add_application(rows, extra.key, candidate_id, job_ids[extra.job], extra, seed_id("user", extra.recruiter))
-    for seed in (*CANDIDATES, *APPLICATIONS):
+    for seed in LATER_CANDIDATES:
+        add_candidate(seed)
+    for seed in (*CANDIDATES, *LATER_CANDIDATES, *APPLICATIONS):
         application_ids[seed.key] = seed_id("application", seed.key)
         confirmations[seed.key] = next(
             (e.minutes_ago for e in seed.events if e.type == ActivityType.INTERVIEW_CONFIRMED), DAY
@@ -284,7 +292,7 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
 
     upcoming = {i.candidate for i in INTERVIEWS if i.days > 0 and i.status == InterviewStatus.SCHEDULED}
     threaded = {thread.candidate for thread in THREADS}
-    for seed in CANDIDATES:
+    for seed in (*CANDIDATES, *LATER_CANDIDATES):
         if seed.key in threaded or seed.key in WAITING:
             continue
         for index, (minutes, text) in enumerate(_updates(seed, has_interview_booked=seed.key in upcoming)):

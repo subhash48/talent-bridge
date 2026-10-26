@@ -1030,8 +1030,13 @@ CANDIDATES: tuple[CandidateSeed, ...] = (
         headline="Backend engineer moving into applied machine learning",
         moves=(16000, 8800),
     ),
-    # More applicants for Product Designer, so the Candidates page's filters and shortlist have a real
-    # choice: some list both Figma and design systems, some one of them, one neither.
+)
+
+# More applicants for Product Designer, so the Candidates page's filters and shortlist have a real choice:
+# some list both Figma and design systems, some one of them, one neither. Added after databases were first
+# seeded, so they're recorded after APPLICATIONS: timeline and stage-history ids follow each table's row
+# order, and every row seeded before keeps its id (seed --add-missing adds only what's new).
+LATER_CANDIDATES: tuple[CandidateSeed, ...] = (
     CandidateSeed(
         "maya-brooks",
         "Maya",

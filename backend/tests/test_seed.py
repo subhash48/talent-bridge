@@ -2,10 +2,13 @@
 
 import uuid
 
+import pytest
 from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.db.seed import add_missing
+from app.db import seed
+from app.db.seed import add_missing, build_seed, seed_id
+from app.db.seed_data import LATER_CANDIDATES
 from app.models import Application, Candidate, CandidateActivity, CandidateStageHistory, Interview, Message
 from tests.conftest import application_id, candidate_id
 
@@ -30,3 +33,16 @@ async def test_add_missing_inserts_only_rows_the_database_lacks(sessions: async_
         # Nothing already there was touched, and a second run adds nothing.
         assert await session.scalar(select(Candidate.location).where(Candidate.id == SOPHIA)) == "Bristol, UK"
         assert await add_missing(session) == {}
+
+
+def test_later_demo_candidates_never_change_the_ids_of_rows_seeded_before(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Timeline and stage-history ids follow each table's row order, so candidates added to the demo data
+    later go after everything a database may already have: none of its rows gets a new id (and a second copy
+    from seed --add-missing)."""
+    current = build_seed()
+    monkeypatch.setattr(seed, "LATER_CANDIDATES", ())
+    before = build_seed()
+    later = {seed_id("application", candidate.key) for candidate in LATER_CANDIDATES}
+    for table in (CandidateActivity, CandidateStageHistory, Message, Interview):
+        kept = {row["id"] for row in before[table]}
+        assert kept == {row["id"] for row in current[table] if row["application_id"] not in later}, table.__tablename__

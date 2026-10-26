@@ -43,7 +43,12 @@ Every data call goes through `frontend/services/*` to `NEXT_PUBLIC_API_URL` (def
 
 **Supabase**
 
-1. Apply `supabase/migrations/001`–`018` in order (`supabase db push --db-url "$DATABASE_URL"`, the SQL editor, or `supabase db reset` locally with the [Supabase CLI](https://supabase.com/docs/guides/local-development)). Never edit a migration that has been applied; add the next number instead. `015` (communication) and `016` (careers résumés) only add tables; `017` adds employers; `018` adds `applications.candidate_messaging_enabled` (off by default, and on where the candidate had already written). The backend reads that column, so apply `018` before deploying code that includes it.
+1. Apply `supabase/migrations/001`–`021` in order (`supabase db push --db-url "$DATABASE_URL"`, the SQL editor, or `supabase db reset` locally with the [Supabase CLI](https://supabase.com/docs/guides/local-development)). Never edit a migration that has been applied; add the next number instead. `015` (communication) and `016` (careers résumés) only add tables; `017` adds employers; `018` adds `applications.candidate_messaging_enabled` (off by default, and on where the candidate had already written). The backend reads each new column, so apply a migration before deploying the code that needs it:
+   - `019` makes each company a workspace: `companies.workspace_mode` (`full` or `simple`), `users.company_id` (the staff who exist today get the oldest company, the one `017` gave the jobs; candidates never have one) and per-workspace SLA rules (`communication_rules.company_id`).
+   - `020` adds a small business's job facts (`jobs.pay`, `shift`, `work_days`, `openings`) and what each application says (`applications.phone`, `linkedin_url`, `availability`, `experience_note`); the phone number already on each person becomes their existing applications' own.
+   - `021` adds `contact_requests`, for the website's contact form.
+
+   Each one's backfill leaves `updated_at` as it was, and `e2e/make_db.py` applies them all to an empty database on every end-to-end run.
 2. Set `DATABASE_URL` in `backend/.env` to the project's connection string (direct or pooler), replacing `[YOUR-PASSWORD]` including the brackets.
 3. Load the demo data: `python -m app.db.seed` (or `--reset` to replace existing data). The API also loads it into an empty database on startup while `SEED_DEMO_DATA=true`. A database seeded before newer demo data was added gets just the rows it's missing with `--add-missing`, which never changes or deletes what's there.
 

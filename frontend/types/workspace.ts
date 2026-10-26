@@ -1,3 +1,4 @@
+import type { Weekday } from "@/lib/days";
 import type { ApplicationStage } from "@/types/application";
 import type { CommunicationHealth, CommunicationSummary, MessageDelivery } from "@/types/communication";
 import type { Role } from "@/types/candidate";
@@ -52,6 +53,11 @@ export type PipelineCandidate = CandidateRef & {
   communication: CommunicationSummary;
   /** The recruiter has turned on messaging, so the candidate can write to the hiring team about it. */
   candidateMessagingEnabled: boolean;
+  /** What they gave with this application: the phone number to call them back on, the days they can work and
+   * their experience in their own words. */
+  applicationPhone?: string;
+  availability?: Weekday[];
+  experienceNote?: string;
   nextStep?: { title: string; date: string };
   /** When their latest interview took place, if they've had one. */
   lastInterviewAt?: string;
@@ -137,6 +143,11 @@ export type JobOpening = {
   hiringManager: string;
   openedAt: string;
   summary: string;
+  /** A small business's job, in the employer's words. */
+  pay?: string | null;
+  shift?: string | null;
+  workDays?: Weekday[];
+  openings?: number | null;
 };
 
 export type MetricKey = "total" | "interviews" | "followUp" | "offers";

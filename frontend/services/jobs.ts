@@ -58,5 +58,9 @@ function fromJob(job: ApiJob): JobOpening {
     openedAt: job.created_at,
     // The first paragraph; the rest of the description lists the requirements.
     summary: (job.description ?? "").split(/\n\s*\n/)[0] ?? "",
+    pay: job.pay ?? null,
+    shift: job.shift ?? null,
+    workDays: job.work_days ?? [],
+    openings: job.openings ?? null,
   };
 }

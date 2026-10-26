@@ -1,3 +1,4 @@
+import type { Weekday } from "@/lib/days";
 import type { CommunicationRule, CommunicationStatus, DraftReason, EmailStatus } from "@/types/communication";
 import type { JobStatus } from "@/types/job";
 
@@ -48,6 +49,11 @@ export type ApiJob = ApiJobBrief & {
   description: string | null;
   employment_type: string;
   hiring_manager: string | null;
+  /** A small business's job, in the employer's words. */
+  pay?: string | null;
+  shift?: string | null;
+  work_days?: Weekday[];
+  openings?: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -102,6 +108,10 @@ export type ApiCandidateListItem = {
   updated_at: string;
   archived_at: string | null;
   candidate_messaging_enabled: boolean;
+  /** What the applicant gave with this application. */
+  phone?: string | null;
+  availability?: Weekday[];
+  experience_note?: string | null;
   last_activity: ApiActivityBrief | null;
   communication: ApiCommunicationSummary;
   next_interview: ApiInterviewBrief | null;

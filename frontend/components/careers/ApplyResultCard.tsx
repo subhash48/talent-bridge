@@ -30,8 +30,8 @@ const VIEWS: Record<ApplyOutcome, { title: string; icon: LucideIcon; tone: keyof
   sign_in_required: { title: "Sign in to submit your application", icon: LogIn, tone: "ai" },
   already_applied: { title: "You've already applied", icon: CircleCheck, tone: "positive" },
   invitation_failed: { title: "Your application is saved", icon: MailWarning, tone: "attention" },
-  submitted: { title: "Application sent", icon: MailCheck, tone: "positive" },
-  link_unavailable: { title: "Application sent", icon: MailWarning, tone: "attention" },
+  submitted: { title: "Application submitted", icon: MailCheck, tone: "positive" },
+  link_unavailable: { title: "Application submitted", icon: MailWarning, tone: "attention" },
 };
 
 type ApplyResultCardProps = {
@@ -92,18 +92,32 @@ export function ApplyResultCard({ site = "demo", result, problem, retrying, stil
             {email} already has a candidate portal account. Sign in with it to submit your application for {job}.
           </p>
         )}
-        {result.status === "submitted" && (
-          <>
-            <p>
-              Your application for {job} is with the hiring team. We&apos;ve emailed {email} a secure link to your
-              candidate portal, where you&apos;ll see where your application stands, what happens next and how to prepare.
-            </p>
-            <p className="text-sm text-stone">
-              {result.portalLink === "sign_in_link_sent" ? "Use the sign-in link in that email." : "No password needed: the link signs you in."}{" "}
-              Didn&apos;t get it? Check your spam folder.
-            </p>
-          </>
-        )}
+        {result.status === "submitted" &&
+          (result.portalLink === "sign_in_link_sent" ? (
+            <>
+              <p>
+                Your application for {job}
+                {result.company ? <> at {result.company}</> : null} has been submitted. You already have a TalentBridge
+                account: sign in with the link we&apos;ve emailed to {email} to follow updates from the hiring team.
+              </p>
+              <p className="text-sm text-stone">
+                It&apos;s in the same account as your other applications. Didn&apos;t get the email? Check your spam
+                folder.
+              </p>
+            </>
+          ) : (
+            <>
+              <p>
+                Your application has been submitted. Create your TalentBridge password to follow updates from the
+                hiring team.
+              </p>
+              <p>
+                We&apos;ve emailed {email} a secure link to create it. Then you&apos;ll see where your application for{" "}
+                {job} stands, what happens next and how to prepare.
+              </p>
+              <p className="text-sm text-stone">Didn&apos;t get it? Check your spam folder.</p>
+            </>
+          ))}
         {result.status === "link_unavailable" && (
           <p>
             Your application for {job} is with the hiring team. We couldn&apos;t email your candidate portal link just now;

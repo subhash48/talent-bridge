@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: ApplyPageProps): Promise<Meta
   return job ? { title: `Apply for ${job.title}` } : {};
 }
 
-// Name, email and résumé. The application reaches the hiring team the moment it's sent.
+// Name, email, phone and résumé, and what the job asks. The application reaches the hiring team the moment it's sent.
 export default async function ApplyPage({ params }: ApplyPageProps) {
   await connection();
   const { jobId } = await params;
@@ -34,7 +34,7 @@ export default async function ApplyPage({ params }: ApplyPageProps) {
     <div className="max-w-2xl pt-6 sm:pt-8">
       <RoleHeading job={job} back={{ href: `/careers/${job.id}`, label: "Back to the role" }} eyebrow="Apply for" />
       <div className="mt-8">
-        <ApplyForm jobId={job.id} site="native" />
+        <ApplyForm jobId={job.id} site="native" workDays={job.workDays} />
       </div>
     </div>
   );

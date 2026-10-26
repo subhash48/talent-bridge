@@ -10,15 +10,25 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, fieldErrorId } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { WEEKDAYS, dayLabel, type Weekday } from "@/lib/days";
+import { cn } from "@/lib/utils";
 import { ApiError, errorMessage } from "@/services/api";
 import { applyToJob } from "@/services/careers";
 import type { ApplyInput, ApplyResult, CareersSite } from "@/types/careers";
 
-type Values = { firstName: string; lastName: string; email: string; phone: string; linkedinUrl: string };
-type FieldName = keyof Values | "resume";
+type Values = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  linkedinUrl: string;
+  experienceNote: string;
+};
+type FieldName = keyof Values | "resume" | "availability";
 type Errors = Partial<Record<FieldName, string>>;
 
-const EMPTY: Values = { firstName: "", lastName: "", email: "", phone: "", linkedinUrl: "" };
+const EMPTY: Values = { firstName: "", lastName: "", email: "", phone: "", linkedinUrl: "", experienceNote: "" };
 
 const IDS: Record<FieldName, string> = {
   firstName: "apply-first-name",
@@ -26,6 +36,8 @@ const IDS: Record<FieldName, string> = {
   email: "apply-email",
   phone: "apply-phone",
   linkedinUrl: "apply-linkedin",
+  experienceNote: "apply-experience",
+  availability: "apply-availability",
   resume: "apply-resume",
 };
 const EMAIL_HINT_ID = "apply-email-hint";
@@ -37,6 +49,8 @@ const API_FIELDS: Partial<Record<string, FieldName>> = {
   email: "email",
   phone: "phone",
   linkedin_url: "linkedinUrl",
+  availability: "availability",
+  experience_note: "experienceNote",
   resume: "resume",
 };
 
@@ -46,7 +60,7 @@ const PHONE_PATTERN = /^\+?[0-9 ().\-/]+$/;
 // 16px on phones, so iOS doesn't zoom into a field when it's focused.
 const NO_ZOOM = "text-base sm:text-sm";
 
-function validate(values: Values, resume: File | null, phoneRequired: boolean): Errors {
+function validate(values: Values, resume: File | null, phoneRequired: boolean, days: DaysAsked): Errors {
   const errors: Errors = {};
   if (!values.firstName.trim()) errors.firstName = "Enter your first name.";
   if (!values.lastName.trim()) errors.lastName = "Enter your last name.";
@@ -60,10 +74,14 @@ function validate(values: Values, resume: File | null, phoneRequired: boolean): 
   if (values.linkedinUrl.trim() && !linkedInUrl(values.linkedinUrl)) {
     errors.linkedinUrl = "Enter a linkedin.com link, like linkedin.com/in/your-name.";
   }
+  if (days.offered.length > 0 && days.chosen.length === 0) errors.availability = "Choose the days you can work.";
   const resumeError = resume ? resumeProblem(resume) : "Attach your résumé.";
   if (resumeError) errors.resume = resumeError;
   return errors;
 }
+
+/** The job's work days, and the ones the applicant ticked. */
+type DaysAsked = { offered: readonly Weekday[]; chosen: readonly Weekday[] };
 
 /** The link as the API takes it (with https:// when it was left off); null when empty or not on linkedin.com. */
 function linkedInUrl(value: string): string | null {
@@ -82,8 +100,18 @@ function linkedInUrl(value: string): string | null {
  * keeps the application pending until the applicant activates their candidate portal account or signs
  * in, and the result says which of those to do.
  */
-export function ApplyForm({ jobId, site = "demo" }: { jobId: string; site?: CareersSite }) {
+export function ApplyForm({
+  jobId,
+  site = "demo",
+  workDays = [],
+}: {
+  jobId: string;
+  site?: CareersSite;
+  /** The days the job needs: the form asks which of them they can work. */
+  workDays?: readonly Weekday[];
+}) {
   const native = site === "native";
+  const [days, setDays] = useState<Weekday[]>([]);
   const formRef = useRef<HTMLFormElement>(null);
   // What was sent last, so "Try again" can send exactly the same.
   const sent = useRef<ApplyInput | null>(null);
@@ -100,7 +128,8 @@ export function ApplyForm({ jobId, site = "demo" }: { jobId: string; site?: Care
   const [attempts, setAttempts] = useState(0);
   const [focusRequest, setFocusRequest] = useState<{ target: "invalid" | "submit" } | null>(null);
 
-  const problems = validate(values, resume, !native);
+  // The phone number is how a hiring team calls an applicant back: asked of everyone.
+  const problems = validate(values, resume, true, { offered: workDays, chosen: days });
   const errors: Errors = { ...submitErrors };
   for (const [field, message] of Object.entries(problems) as [FieldName, string][]) {
     if (checkAll || (field === "resume" && resumeChosen)) errors[field] = message;
@@ -114,8 +143,13 @@ export function ApplyForm({ jobId, site = "demo" }: { jobId: string; site?: Care
     formRef.current?.querySelector<HTMLElement>(selector)?.focus();
   }, [focusRequest]);
 
+  function toggleDay(day: Weekday) {
+    setDays((current) => (current.includes(day) ? current.filter((each) => each !== day) : [...current, day]));
+    setSubmitErrors((current) => ({ ...current, availability: undefined }));
+  }
+
   function update(field: keyof Values) {
-    return (event: ChangeEvent<HTMLInputElement>) => {
+    return (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { value } = event.target;
       setValues((current) => ({ ...current, [field]: value }));
       setSubmitErrors((current) => ({ ...current, [field]: undefined }));
@@ -128,7 +162,7 @@ export function ApplyForm({ jobId, site = "demo" }: { jobId: string; site?: Care
     setSubmitErrors((current) => ({ ...current, resume: undefined }));
   }
 
-  const control = (field: keyof Values, hintId?: string) => ({
+  const control = (field: Exclude<keyof Values, "experienceNote">, hintId?: string) => ({
     id: IDS[field],
     value: values[field],
     onChange: update(field),
@@ -162,6 +196,8 @@ export function ApplyForm({ jobId, site = "demo" }: { jobId: string; site?: Care
       phone: values.phone.trim(),
       linkedinUrl: linkedInUrl(values.linkedinUrl),
       resume: upload,
+      availability: WEEKDAYS.filter((day) => days.includes(day)),
+      experienceNote: values.experienceNote.trim() || null,
     });
   }
 
@@ -233,10 +269,9 @@ export function ApplyForm({ jobId, site = "demo" }: { jobId: string; site?: Care
               {native ? "Your candidate portal link is sent here." : "Your activation link is sent here."}
             </p>
           </Field>
-          <Field label={native ? "Phone number (optional)" : "Phone number"} htmlFor={IDS.phone} error={errors.phone} required={!native}>
-            <Input {...control("phone")} type="tel" required={!native} autoComplete="tel" maxLength={40} placeholder="+1 415 555 0100" className={NO_ZOOM} />
+          <Field label="Phone number" htmlFor={IDS.phone} error={errors.phone} required>
+            <Input {...control("phone")} type="tel" required autoComplete="tel" maxLength={40} placeholder="+1 415 555 0100" className={NO_ZOOM} />
           </Field>
-          {!native && (
           <Field label="LinkedIn URL (optional)" htmlFor={IDS.linkedinUrl} error={errors.linkedinUrl} className="sm:col-span-2">
             <Input
               {...control("linkedinUrl")}
@@ -248,8 +283,66 @@ export function ApplyForm({ jobId, site = "demo" }: { jobId: string; site?: Care
               className={NO_ZOOM}
             />
           </Field>
-          )}
         </div>
+
+        {native && workDays.length > 0 && (
+          <fieldset
+            className="mt-6 border-t border-border pt-6"
+            aria-describedby={errors.availability ? fieldErrorId(IDS.availability) : undefined}
+          >
+            <legend className="text-xs font-medium text-charcoal">
+              Which of these days can you work?
+              <span aria-hidden className="ml-0.5 text-faint">
+                *
+              </span>
+            </legend>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {workDays.map((day) => (
+                <label
+                  key={day}
+                  className={cn(
+                    "inline-flex cursor-pointer items-center gap-2 rounded-full border px-3.5 py-2 text-sm transition-colors has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-brand/55",
+                    days.includes(day)
+                      ? "border-brand-ink bg-brand-soft text-ink"
+                      : "border-border bg-surface-raised text-charcoal hover:border-border-strong",
+                  )}
+                >
+                  <input
+                    type="checkbox"
+                    checked={days.includes(day)}
+                    onChange={() => toggleDay(day)}
+                    disabled={pending}
+                    aria-invalid={errors.availability ? true : undefined}
+                    className="size-4 accent-[var(--color-brand-ink)]"
+                  />
+                  {dayLabel(day)}
+                </label>
+              ))}
+            </div>
+            {errors.availability && (
+              <p id={fieldErrorId(IDS.availability)} className="mt-2 text-xs text-danger">
+                {errors.availability}
+              </p>
+            )}
+          </fieldset>
+        )}
+
+        {native && (
+          <div className="mt-6 border-t border-border pt-6">
+            <Field label="Your relevant experience (optional)" htmlFor={IDS.experienceNote} error={errors.experienceNote}>
+              <Textarea
+                id={IDS.experienceNote}
+                value={values.experienceNote}
+                onChange={update("experienceNote")}
+                rows={3}
+                maxLength={2000}
+                placeholder="For example: two years on the till at a grocery store."
+                className={NO_ZOOM}
+              />
+            </Field>
+            <p className="mt-2 text-xs text-faint">In your own words. The hiring team sees it with your application.</p>
+          </div>
+        )}
 
         <div className="mt-6 border-t border-border pt-6">
           <Field label="Résumé" htmlFor={IDS.resume} error={errors.resume} required>

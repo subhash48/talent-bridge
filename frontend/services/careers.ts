@@ -71,12 +71,21 @@ async function applyNative(id: string, input: ApplyInput): Promise<ApplyResult> 
       last_name: input.lastName,
       email: input.email,
       phone: input.phone || null,
+      linkedin_url: input.linkedinUrl,
+      availability: input.availability ?? [],
+      experience_note: input.experienceNote || null,
       resume: { file_name: input.resume.fileName, content_type: input.resume.contentType, data: input.resume.data },
     }),
   });
   const status =
     result.status === "already_applied" ? "already_applied" : result.portal_link === "unavailable" ? "link_unavailable" : "submitted";
-  return { status, portalLink: result.portal_link, email: result.email, jobTitle: result.job_title };
+  return {
+    status,
+    portalLink: result.portal_link,
+    email: result.email,
+    jobTitle: result.job_title,
+    company: result.company ?? null,
+  };
 }
 
 function apiBase(site: CareersSite): string {

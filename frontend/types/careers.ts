@@ -76,6 +76,9 @@ export type ApiNativeApplicationResult = {
   portal_link: "invitation_sent" | "sign_in_link_sent" | "unavailable";
   email: string;
   job_title: string;
+  company?: string | null;
+  /** TalentBridge emailed its own confirmation, with the link in it. */
+  confirmation_emailed?: boolean;
 };
 
 export type ApiCareerApplicationResult = { status: ApplyOutcome; email: string; job_title: string };
@@ -130,11 +133,21 @@ export type ApplyInput = {
   phone: string;
   linkedinUrl: string | null;
   resume: ResumeUpload;
+  /** Which of the job's work days they can work (TalentBridge's own site, for a job that lists them). */
+  availability?: Weekday[];
+  /** Their relevant experience, in their own words. */
+  experienceNote?: string | null;
 };
 
 export type ApplyResult = {
   /** TalentBridge's own site: how the portal link reached them. */
-  portalLink?: ApiNativeApplicationResult["portal_link"]; status: ApplyOutcome; email: string; jobTitle: string };
+  portalLink?: ApiNativeApplicationResult["portal_link"];
+  status: ApplyOutcome;
+  email: string;
+  jobTitle: string;
+  /** The employer, on TalentBridge's own site. */
+  company?: string | null;
+};
 
 /** The largest résumé the API accepts (backend MAX_RESUME_BYTES). */
 export const MAX_RESUME_BYTES = 5 * 1024 * 1024;

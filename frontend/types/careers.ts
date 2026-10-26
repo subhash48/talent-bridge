@@ -4,6 +4,8 @@
 // backend/app/schemas/demo.py; services/careers.ts maps it into the view models below, so components
 // never depend on it directly.
 
+import type { Weekday } from "@/lib/days";
+
 /** CareerJobSummary: a published demo job, as the careers site lists it. */
 export type ApiCareerJobSummary = {
   id: string;
@@ -21,6 +23,11 @@ export type ApiCareerJobSummary = {
   salary_currency: string;
   summary: string | null;
   published_at: string | null;
+  /** A small business's job, in the employer's words (TalentBridge's own careers site). */
+  pay?: string | null;
+  shift?: string | null;
+  work_days?: Weekday[];
+  openings?: number | null;
 };
 
 export type ApiCareerJobDetail = ApiCareerJobSummary & {
@@ -90,6 +97,13 @@ export type CareerJob = {
   salary: string | null;
   summary: string | null;
   publishedAt: string | null;
+  /** "$18/hour", as the employer said it. */
+  pay: string | null;
+  /** "Evenings". */
+  shift: string | null;
+  /** The days the job needs; the application asks which of them the applicant can work. */
+  workDays: Weekday[];
+  openings: number | null;
 };
 
 export type CareerJobDetail = CareerJob & {

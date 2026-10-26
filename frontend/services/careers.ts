@@ -96,6 +96,10 @@ function fromSummary(job: ApiCareerJobSummary): CareerJob {
     salary: formatSalary(job.salary_min, job.salary_max, job.salary_currency),
     summary: job.summary,
     publishedAt: job.published_at,
+    pay: job.pay ?? null,
+    shift: job.shift ?? null,
+    workDays: job.work_days ?? [],
+    openings: job.openings ?? null,
   };
 }
 

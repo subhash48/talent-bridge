@@ -161,10 +161,19 @@ async def transcribe(request: Request, session: SessionDep, provider: AIProvider
     return TranscriptionRead(text=text, model_name=settings.groq_transcription_model)
 
 
+# Words a recruiter says when creating a job or narrowing a list, so speech is spelled as they mean it.
+JOB_WORDS = "Create a Senior, Staff or Principal role, hybrid, remote or on-site, full-time, B2B SaaS"
+
+
 async def _vocabulary(session: SessionDep) -> str:
-    """Candidate names and job titles from the active pipeline, so the transcript spells them as they
-    are. Names only: nothing else about anyone."""
+    """Candidate names, job titles and the skills candidates list, from the active pipeline, so the
+    transcript spells them as they are. Names and skills only: nothing else about anyone."""
     applications = await active_applications(session)
     names = list(dict.fromkeys(app.candidate.full_name for app in applications))[:60]
     titles = list(dict.fromkeys(app.job.title for app in applications))[:20]
-    return f"Candidates: {', '.join(names)}. Jobs: {', '.join(titles)}."
+    counts: dict[str, int] = {}
+    for app in applications:
+        for skill in app.candidate.skills or []:
+            counts[skill] = counts.get(skill, 0) + 1
+    skills = sorted(counts, key=lambda skill: -counts[skill])[:30]
+    return f"Candidates: {', '.join(names)}. Jobs: {', '.join(titles)}. Skills: {', '.join(skills)}. {JOB_WORDS}."

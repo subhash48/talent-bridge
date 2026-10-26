@@ -491,6 +491,8 @@ async def test_transcription_needs_a_provider_and_keeps_nothing(
     )
     assert response.status_code == 200 and response.json()["text"] == INVITE
     assert heard[0][:2] == (200, "audio/webm") and "Sophia Martinez" in heard[0][2]
+    skills = heard[0][2].split("Skills: ")[1]
+    assert "Figma" in skills and "PyTorch" in skills and "B2B SaaS" in heard[0][2]  # spelled as recruiters mean them
     assert (await client.get(f"{API}/assistant/status")).json()["voice_transcription"] is True
 
     not_audio = await client.post(

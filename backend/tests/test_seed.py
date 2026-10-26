@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.db import seed
 from app.db.seed import add_missing, build_seed, seed_id
-from app.db.seed_data import LATER_CANDIDATES
+from app.db.seed_data import LATER_CANDIDATES, SAMS_APPLICANTS
 from app.models import Application, Candidate, CandidateActivity, CandidateStageHistory, Interview, Message
 from tests.conftest import application_id, candidate_id
 
@@ -41,8 +41,20 @@ def test_later_demo_candidates_never_change_the_ids_of_rows_seeded_before(monkey
     from seed --add-missing)."""
     current = build_seed()
     monkeypatch.setattr(seed, "LATER_CANDIDATES", ())
+    monkeypatch.setattr(seed, "SAMS_APPLICANTS", ())
     before = build_seed()
-    later = {seed_id("application", candidate.key) for candidate in LATER_CANDIDATES}
+    later = {seed_id("application", candidate.key) for candidate in (*LATER_CANDIDATES, *SAMS_APPLICANTS)}
     for table in (CandidateActivity, CandidateStageHistory, Message, Interview):
         kept = {row["id"] for row in before[table]}
         assert kept == {row["id"] for row in current[table] if row["application_id"] not in later}, table.__tablename__
+
+
+def test_sams_cafe_comes_after_everything_seeded_before(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Sam's Cafe's applicants were added to the demo data last: a database seeded before keeps every id."""
+    current = build_seed()
+    monkeypatch.setattr(seed, "SAMS_APPLICANTS", ())
+    before = build_seed()
+    sams = {seed_id("application", candidate.key) for candidate in SAMS_APPLICANTS}
+    for table in (CandidateActivity, CandidateStageHistory, Message, Interview):
+        kept = {row["id"] for row in before[table]}
+        assert kept == {row["id"] for row in current[table] if row["application_id"] not in sams}, table.__tablename__

@@ -293,7 +293,8 @@ async def test_someone_with_an_account_applies_elsewhere_and_it_joins_their_port
     """Sophia already has a TalentBridge account. Applying to another company with the same email adds an
     application to it: no second account, no second candidate."""
     mail = use_email(FakeEmail())
-    other = next(job for job in (await anonymous.get(f"{API}/careers/jobs")).json() if job["company"] != "Encord")
+    jobs = (await anonymous.get(f"{API}/careers/jobs")).json()
+    other = next(job for job in jobs if job["company"] not in ("Encord", "Sam's Cafe"))
     sophia = application(first_name="Sophia", last_name="Martinez", email="Sophia.Martinez@example.com")
     applied = (await anonymous.post(f"{API}/careers/jobs/{other['id']}/apply", json=sophia)).json()
     assert (applied["status"], applied["portal_link"]) == ("submitted", "sign_in_link_sent")

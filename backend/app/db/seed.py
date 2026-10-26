@@ -40,6 +40,9 @@ from app.db.seed_data import (
     NOVA_RECRUITER,
     OPENAI_RECRUITER,
     RECRUITER,
+    SAM,
+    SAMS_APPLICANTS,
+    SAMS_JOBS,
     STAGE_UPDATES,
     THREADS,
     WAITING,
@@ -138,13 +141,15 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
         (ANTHROPIC_RECRUITER, "anthropic", 50),
         (GOOGLE_RECRUITER, "google", 50),
     )
-    for person, company, days in recruiters:
+    staff = [(person, company, days, UserRole.RECRUITER) for person, company, days in recruiters]
+    staff.append((SAM, "sams-cafe", 40, UserRole.ADMIN))  # the owner: he may change how Sam's Cafe hires
+    for person, company, days, role in staff:
         rows[User].append(
             {
                 "id": seed_id("user", person["email"]),
                 "email": person["email"],
                 "full_name": person["full_name"],
-                "role": UserRole.RECRUITER,
+                "role": role,
                 "company_id": seed_id("company", company),
                 "created_at": Ago(days * DAY),
                 "updated_at": Ago(days * DAY),
@@ -180,7 +185,7 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
         )
 
     job_ids: dict[str, uuid.UUID] = {}
-    for job in JOBS:
+    for job in (*JOBS, *SAMS_JOBS):
         job_ids[job.key] = seed_id("job", job.key)
         rows[Job].append(
             {
@@ -188,12 +193,16 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
                 "company_id": seed_id("company", job.company),
                 "external_id": None,
                 "title": job.title,
-                "department": job.department,
+                "department": job.department or None,
                 "location": job.location,
                 "description": job.description,
                 "status": job.status,
-                "employment_type": "Full-time",
+                "employment_type": job.employment_type,
                 "hiring_manager": job.hiring_manager,
+                "pay": job.pay,
+                "shift": job.shift,
+                "work_days": list(job.work_days),
+                "openings": job.openings,
                 "created_at": Ago(job.opened_days_ago * DAY),
                 "updated_at": Ago(job.opened_days_ago * DAY),
             }
@@ -202,7 +211,7 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
     application_ids: dict[str, uuid.UUID] = {}
     confirmations: dict[str, int] = {}
 
-    def add_candidate(seed: CandidateSeed) -> None:
+    def add_candidate(seed: CandidateSeed, recruiter: uuid.UUID = recruiter_id) -> None:
         candidate_id = seed_id("candidate", seed.key)
         added = seed.added_minutes_ago
         rows[Candidate].append(
@@ -223,7 +232,7 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
                 "updated_at": Ago(added),
             }
         )
-        _add_application(rows, seed.key, candidate_id, job_ids[seed.job], seed, recruiter_id, seed.phone)
+        _add_application(rows, seed.key, candidate_id, job_ids[seed.job], seed, recruiter, seed.phone)
 
     # In this order, so every row's id stays what it was when it was first seeded (see LATER_CANDIDATES).
     for seed in CANDIDATES:
@@ -235,7 +244,9 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
         _add_application(rows, extra.key, candidate_id, job_ids[extra.job], extra, recruiter, phones[extra.candidate])
     for seed in LATER_CANDIDATES:
         add_candidate(seed)
-    for seed in (*CANDIDATES, *LATER_CANDIDATES, *APPLICATIONS):
+    for seed in SAMS_APPLICANTS:
+        add_candidate(seed, seed_id("user", SAM["email"]))
+    for seed in (*CANDIDATES, *LATER_CANDIDATES, *APPLICATIONS, *SAMS_APPLICANTS):
         application_ids[seed.key] = seed_id("application", seed.key)
         confirmations[seed.key] = next(
             (e.minutes_ago for e in seed.events if e.type == ActivityType.INTERVIEW_CONFIRMED), DAY
@@ -344,6 +355,8 @@ def _add_application(
             "updated_at": Ago(latest),
             "archived_at": None,
             "phone": phone,
+            "availability": list(getattr(seed, "availability", ())),
+            "experience_note": getattr(seed, "experience_note", None),
         }
     )
     history = Recorder(rows[CandidateStageHistory], "history", key, application_id)

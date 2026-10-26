@@ -28,6 +28,9 @@ HARBOR_RECRUITER = {"email": "daan.visser@harbor-robotics.example", "full_name":
 OPENAI_RECRUITER = {"email": "julia.moreno@openai.example", "full_name": "Julia Moreno"}
 ANTHROPIC_RECRUITER = {"email": "owen.price@anthropic.example", "full_name": "Owen Price"}
 GOOGLE_RECRUITER = {"email": "simone.hart@google.example", "full_name": "Simone Hart"}
+# A small business that hires with Simple Hire: Sam owns Sam's Cafe, a fictional cafe on the reserved .example
+# domain. Local demo data only; nothing in the code knows about it.
+SAM = {"email": "sam@samscafe.example", "full_name": "Sam Rivera"}
 
 
 @dataclass(frozen=True)
@@ -359,6 +362,28 @@ COMPANIES: tuple[CompanySeed, ...] = (
         ),
         source="Demo employer in TalentBridge's seed data, described in Google's own words from about.google.",
     ),
+    CompanySeed(
+        "sams-cafe",
+        "Sam's Cafe",
+        40,
+        None,
+        None,
+        overview="A neighbourhood cafe and kitchen serving breakfast, lunch and early dinners.",
+        mission="",
+        highlights=(),
+        products=(),
+        values=(),
+        benefits=("Staff meal every shift", "Tips shared across the team"),
+        benefits_scope="Everyone on the team",
+        benefits_note="",
+        locations=("Portland, OR",),
+        locations_note="",
+        hiring_process=("Apply", "A short chat with Sam", "A trial shift"),
+        hiring_note="",
+        links=(),
+        source="Fictional small business in TalentBridge's local demo data.",
+        workspace_mode=WorkspaceMode.SIMPLE,
+    ),
 )
 
 
@@ -376,6 +401,12 @@ class JobSeed:
     # Stands in for the title (in its id, and where an application names its job) when another employer
     # already has a job with that title.
     seed_key: str | None = None
+    # A small business's job (Simple Hire).
+    pay: str | None = None
+    shift: str | None = None
+    work_days: tuple[str, ...] = ()
+    openings: int | None = None
+    employment_type: str = "Full-time"
 
     @property
     def key(self) -> str:
@@ -411,6 +442,10 @@ class CandidateSeed:
     phone: str | None = None
     # Minutes ago for each stage move after sourced; spread evenly when not given.
     moves: tuple[int, ...] | None = None
+    # What they said when applying to a job that asks (Simple Hire): the days they can work, and their
+    # relevant experience in their own words.
+    availability: tuple[str, ...] = ()
+    experience_note: str | None = None
 
 
 @dataclass(frozen=True)
@@ -1476,4 +1511,83 @@ APPLIED_UPDATE = (
 CHECK_IN = (
     "Hi {first},\n\nA quick update on your {job} application: the team is still reviewing applications, and "
     "I'll be back in touch with next steps soon.\n\nBest,\nAlex"
+)
+
+
+# Sam's Cafe (Simple Hire): one open job, and the people who applied for it on the careers site. Recorded after
+# every other candidate, so no earlier row's id moves.
+SAMS_JOBS: tuple[JobSeed, ...] = (
+    JobSeed(
+        "Kitchen Assistant",
+        "",
+        "Portland, OR",
+        "Sam Rivera",
+        6,
+        "Sam's Cafe is hiring 2 Kitchen Assistants in Portland, OR: evening shifts on Friday and Saturday, $18/hour.",
+        ("Kitchen experience",),
+        company="sams-cafe",
+        seed_key="sams-cafe:Kitchen Assistant",
+        pay="$18/hour",
+        shift="Evenings",
+        work_days=("friday", "saturday"),
+        openings=2,
+        employment_type="Part-time",
+    ),
+)
+SAMS_KITCHEN = "sams-cafe:Kitchen Assistant"
+SAMS_APPLICANTS: tuple[CandidateSeed, ...] = tuple(
+    CandidateSeed(
+        key,
+        first,
+        last,
+        SAMS_KITCHEN,
+        "Portland, OR",
+        S.SOURCED,
+        minutes,
+        (),
+        created_title="Applied on the careers site",
+        source="Careers site",
+        phone=phone,
+        availability=days,
+        experience_note=note,
+    )
+    for key, first, last, minutes, phone, days, note in (
+        (
+            "maria-lopez",
+            "Maria",
+            "Lopez",
+            5 * DAY,
+            "+1 503 555 0141",
+            ("friday", "saturday"),
+            "Two years as a prep cook in a busy kitchen. I can start right away.",
+        ),
+        (
+            "john-patel",
+            "John",
+            "Patel",
+            4 * DAY,
+            "+1 503 555 0142",
+            ("friday", "saturday"),
+            "Three years serving tables and running food at a family restaurant.",
+        ),
+        (
+            "amina-yusuf",
+            "Amina",
+            "Yusuf",
+            3 * DAY,
+            "+1 503 555 0143",
+            ("saturday",),
+            "I worked the line in a hotel kitchen for a year.",
+        ),
+        (
+            "tom-becker",
+            "Tom",
+            "Becker",
+            2 * DAY,
+            "+1 503 555 0144",
+            ("friday", "saturday"),
+            "Retail work at a bookshop, and I'm keen to learn kitchen work.",
+        ),
+        ("lena-park", "Lena", "Park", DAY, None, ("friday",), None),
+    )
 )

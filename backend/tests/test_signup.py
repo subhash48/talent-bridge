@@ -50,7 +50,7 @@ def supabase(monkeypatch: pytest.MonkeyPatch) -> Inbox:
 
 
 NAMES = {"first_name": "Test", "last_name": "Candidate"}
-SAMS = {"full_name": "Sam Rivera", "company_name": "Sam's Cafe", "mode": "simple", "location": "Portland, OR"}
+SAMS = {"full_name": "Rosie Chen", "company_name": "Rosie's Bakery", "mode": "simple", "location": "Portland, OR"}
 
 
 async def test_a_new_candidate_signs_up_and_opens_their_portal(anonymous: AsyncClient, supabase: Inbox) -> None:
@@ -93,7 +93,9 @@ async def test_nothing_is_created_until_the_email_is_verified(
         assert (
             await session.scalar(select(func.count()).select_from(Candidate).where(Candidate.email == TEST_EMAIL)) == 0
         )
-        assert await session.scalar(select(func.count()).select_from(Company).where(Company.slug == "sams-cafe")) == 0
+        assert (
+            await session.scalar(select(func.count()).select_from(Company).where(Company.slug == "rosies-bakery")) == 0
+        )
 
 
 async def test_someone_who_already_applied_gets_their_applications(anonymous: AsyncClient, supabase: Inbox) -> None:
@@ -117,13 +119,13 @@ async def test_an_employer_email_is_never_a_candidate_account(anonymous: AsyncCl
 async def test_a_small_business_sets_up_simple_hire(
     anonymous: AsyncClient, supabase: Inbox, sessions: async_sessionmaker[AsyncSession]
 ) -> None:
-    token = supabase.sign_up("sam@samscafe.example")
+    token = supabase.sign_up("rosie@rosiesbakery.example")
     created = await anonymous.post(f"{API}/accounts/workspace", json=SAMS, headers=token)
     assert created.status_code == 200, created.text
     me = created.json()
-    assert (me["role"], me["organization"]) == ("admin", "Sam's Cafe")
+    assert (me["role"], me["organization"]) == ("admin", "Rosie's Bakery")
     assert {key: me["workspace"][key] for key in ("name", "mode", "location", "can_manage")} == {
-        "name": "Sam's Cafe",
+        "name": "Rosie's Bakery",
         "mode": "simple",
         "location": "Portland, OR",
         "can_manage": True,
@@ -135,14 +137,14 @@ async def test_a_small_business_sets_up_simple_hire(
     assert again.json()["workspace"]["id"] == me["workspace"]["id"]
 
     # Another business with the same name gets its own workspace.
-    other = supabase.sign_up("owner@another-cafe.example")
+    other = supabase.sign_up("owner@another-bakery.example")
     second = (await anonymous.post(f"{API}/accounts/workspace", json=SAMS, headers=other)).json()
     assert second["workspace"]["id"] != me["workspace"]["id"]
     async with sessions() as session:
-        slugs = set(await session.scalars(select(Company.slug).where(Company.name == "Sam's Cafe")))
-        admin = await session.scalar(select(User).where(User.email == "sam@samscafe.example"))
-    assert slugs == {"sams-cafe", "sams-cafe-2"}
-    assert admin is not None and admin.full_name == "Sam Rivera"
+        slugs = set(await session.scalars(select(Company.slug).where(Company.name == "Rosie's Bakery")))
+        admin = await session.scalar(select(User).where(User.email == "rosie@rosiesbakery.example"))
+    assert slugs == {"rosies-bakery", "rosies-bakery-2"}
+    assert admin is not None and admin.full_name == "Rosie Chen"
 
 
 async def test_a_recruiting_team_sets_up_the_full_workspace(anonymous: AsyncClient, supabase: Inbox) -> None:

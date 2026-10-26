@@ -28,6 +28,7 @@ from app.db.seed_data import (
     HARBOR_RECRUITER,
     NOVA_RECRUITER,
     OPENAI_RECRUITER,
+    SAM,
 )
 from app.models import Candidate, User
 from app.models.base import utcnow
@@ -292,9 +293,7 @@ async def test_candidate_cannot_change_their_stage(client: AsyncClient) -> None:
 
 
 async def test_candidate_cannot_use_recruiter_ai(anonymous: AsyncClient) -> None:
-    for path, body in (
-        ("/ai/draft-message", {"application_id": JAMES_APP, "intent": "follow up"}),
-    ):
+    for path, body in (("/ai/draft-message", {"application_id": JAMES_APP, "intent": "follow up"}),):
         assert (await anonymous.post(f"{API}{path}", json=body, headers=SOPHIA_TOKEN)).status_code == 403
 
 
@@ -473,7 +472,7 @@ async def test_signup_without_a_safe_match_is_not_linked(
     assert response.json()["error"]["code"] == "account_not_linked"
     async with sessions() as session:
         users = (await session.scalars(select(User.email))).all()
-        others = (NOVA_RECRUITER, HARBOR_RECRUITER, OPENAI_RECRUITER, ANTHROPIC_RECRUITER, GOOGLE_RECRUITER)
+        others = (NOVA_RECRUITER, HARBOR_RECRUITER, OPENAI_RECRUITER, ANTHROPIC_RECRUITER, GOOGLE_RECRUITER, SAM)
         recruiters = ["alex.chen@encord.example", *(person["email"] for person in others)]
         assert sorted(users) == sorted([*recruiters, "sophia.martinez@example.com"])
 

@@ -12,14 +12,15 @@ from typing import Any
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import select
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.enums import UserRole
+from app.core.tenancy import scope_to
 from app.db.seed import seed_id
 from app.db.seed_data import OPENAI_RECRUITER
 from app.main import app
-from app.models import Job, User
+from app.models import Application, Company, Job, Message, User
 from tests.conftest import API, SOPHIA_AUTH, application_id, bearer, candidate_id, job_id, link
 
 SOPHIA_ENCORD = application_id("sophia-martinez")
@@ -194,6 +195,29 @@ async def test_unscoped_sessions_are_unchanged(sessions: async_sessionmaker[Asyn
     async with sessions() as session:
         companies = {job.company.name for job in await session.scalars(select(Job))}
     assert {"Encord", "OpenAI"} <= companies
+
+
+async def test_a_scoped_bulk_change_reaches_only_its_own_workspace(sessions: async_sessionmaker[AsyncSession]) -> None:
+    """An UPDATE or DELETE written without a workspace in mind still can't touch another employer's rows."""
+    async with sessions() as session:
+        openai = await session.scalar(select(Company.id).where(Company.name == "OpenAI"))
+        assert openai is not None
+        everyone = set(await session.scalars(select(Job.id)))
+        scope_to(session, openai)
+        own = set(await session.scalars(select(Job.id)))
+        assert own and own < everyone
+        changed = await session.execute(update(Job).values(department="Renamed"))
+        assert changed.rowcount == len(own)
+        removed = await session.execute(delete(Message))
+        await session.commit()
+    async with sessions() as session:
+        renamed = set(await session.scalars(select(Job.id).where(Job.department == "Renamed")))
+        assert renamed == own
+        left = set(
+            await session.scalars(select(Job.company_id).join(Application, Application.job_id == Job.id).join(Message))
+        )
+        assert left and openai not in left
+    assert removed.rowcount > 0
 
 
 async def test_a_job_draft_is_written_for_the_recruiters_own_company(

@@ -17,8 +17,9 @@ A row of another workspace isn't there: a list leaves it out and an id answers 4
 didn't exist, so nothing says it does. The filter is added to the statement itself (with_loader_criteria),
 including the relationship loads it starts, so code written without workspaces in mind is scoped too.
 
-Only reads are filtered. Writes go through rows the scoped session loaded, and the routes that take an id
-check it first (core/dependencies own_*). A lookup that must see across workspaces says so in the
+Bulk writes are filtered the same way: an UPDATE or DELETE statement reaches only the workspace's rows,
+whatever its WHERE says. Other writes go through rows the scoped session loaded, and the routes that take
+an id check it first (core/dependencies own_*). A lookup that must see across workspaces says so in the
 statement: .execution_options(all_workspaces=True). That is for checks that reveal nothing about another
 employer, such as whether an email already has a candidate account.
 
@@ -144,5 +145,6 @@ def _only_this_workspace(state: ORMExecuteState) -> None:
     if company_id is None or state.execution_options.get(ALL_WORKSPACES):
         return
     # Relationship and column loads inherit the filters of the statement that loaded their parents.
-    if state.is_select and not state.is_column_load and not state.is_relationship_load:
+    reads = state.is_select and not state.is_column_load and not state.is_relationship_load
+    if reads or state.is_update or state.is_delete:
         state.statement = state.statement.options(*criteria(company_id))

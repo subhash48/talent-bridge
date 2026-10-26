@@ -6,6 +6,7 @@ import { NightSky } from "@/components/shared/NightSky";
 import { HowItWorks } from "@/components/site/HowItWorks";
 import { RecruitersSection } from "@/components/site/RecruitersSection";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { SmallBusinessSection } from "@/components/site/SmallBusinessSection";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { buttonStyles } from "@/components/ui/Button";
 import { homePath } from "@/lib/auth";
@@ -47,6 +48,7 @@ export default async function Home() {
         </section>
         <HowItWorks />
         <RecruitersSection />
+        <SmallBusinessSection />
       </main>
       <SiteFooter />
     </div>

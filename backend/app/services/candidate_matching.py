@@ -17,6 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import contains_eager
 
+from app.core.errors import BadRequestError
 from app.models import Application, Candidate, CandidateResume, Job
 from app.models.base import utcnow
 from app.schemas.matching import (
@@ -29,6 +30,7 @@ from app.schemas.matching import (
     MatchRequest,
     MatchResult,
 )
+from app.services import personal_characteristics
 from app.services.ai.context import parse_requirements
 from app.services.communication.health import assess
 from app.services.communication.rules import load_rules
@@ -91,9 +93,13 @@ async def match(session: AsyncSession, request: MatchRequest, now: datetime | No
         applications = await _by_progress(session, applications, request, now)
 
     criteria, source = request.skills, "recruiter"
+    if any(personal_characteristics.mentions(term) for term in criteria):
+        raise BadRequestError(personal_characteristics.REFUSAL, code="personal_characteristic")
     if not criteria and request.job_ids:
         jobs = await session.scalars(select(Job).where(Job.id.in_(request.job_ids)))
-        criteria = list(dict.fromkeys(item for job in jobs for item in parse_requirements(job.description)))
+        listed = (item for job in jobs for item in parse_requirements(job.description))
+        # A posting's line that's about a person rather than the work is never matched on.
+        criteria = list(dict.fromkeys(item for item in listed if not personal_characteristics.mentions(item)))
         source = "job_requirements"
     if not criteria:
         source = "none"

@@ -394,7 +394,12 @@ _REMOVE = re.compile(r"\b(?:remove|drop|take out)\s+(?P<skills>[^.;!?]+)", _I)
 _SKILL_SPLIT = re.compile(r"\s*(?:,|\band\b|&|\bplus\b)\s*", _I)
 _SKILL_FILLER = re.compile(r"^(?:someone |a |an |the |more |also |skills? |strong |experience (?:with|in) |with )+", _I)
 _SKILL_TAIL = re.compile(r"(?:\s+(?:experience|skills?|knowledge|background|too|as well|also|please))+$", _I)
-_NOT_SKILLS = re.compile(r"^(?:it|them|that|this|those|candidates?|applicants?|people|ones|matches|profiles)$", _I)
+_NOT_SKILLS = re.compile(
+    r"^(?:it|them|that|this|those|candidates?|applicants?|people|ones|matches|profiles)$"
+    # "over 10 years of experience" is how long, not something to find in a résumé
+    r"|^(?:over|at least|more than|under|less than|\d+\+?)\b.*\b(?:years?|yrs?)\b",
+    _I,
+)
 _JOB_EDIT = re.compile(
     r"\b(make (it|the)|change|set|add|remove|drop|update|salary|pay|hybrid|remote|on-?site|location|title|rename"
     r"|seniority|level|part[- ]time|full[- ]time|contract)\b",

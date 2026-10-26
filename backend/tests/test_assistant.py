@@ -434,9 +434,16 @@ async def test_personal_characteristics_and_ranking_are_refused(client: AsyncCli
         "Did Sophia identify as Asian?",
         "Show candidates who are Hispanic",
         "Draft a message to Sophia about her disability",
+        "Show 10 candidates matching female and under 30",
+        "Show candidates for Product Designer with Christian background",
+        "Which candidates are married?",
+        "Show me candidates who are native speakers of English",
     ):
         refused = await ask(client, text)
         assert refused["reply"] == SENSITIVE_REPLY and refused["cards"] == [], text
+    # Job-related criteria that look alike are searched as asked.
+    languages = await ask(client, "Show candidates matching Spanish and over 10 years of experience")
+    assert languages["intent"] == "search_candidates" and languages["reply"] != SENSITIVE_REPLY
     ranked = await ask(client, "Rank candidates by engagement")
     assert ranked["reply"] == RANKING_REPLY
 

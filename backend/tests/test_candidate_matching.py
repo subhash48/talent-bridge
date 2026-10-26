@@ -11,6 +11,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.models import Candidate, CandidateActivity, CandidateResume, Message
+from app.services.personal_characteristics import REFUSAL
 from tests.conftest import API, application_id, candidate_id, job_id
 
 DESIGNER = job_id("Product Designer")  # Encord's
@@ -122,6 +123,7 @@ async def test_nothing_personal_is_read_and_nothing_changes(
     second = await find(client, job_ids=[DESIGNER], skills=["Figma", "Design systems"], limit=20)
     assert [i["application_id"] for i in first["items"]] == [i["application_id"] for i in second["items"]]
     assert before == after  # a search records nothing and sends nothing
+
     def keys(value: object) -> set[str]:
         if isinstance(value, dict):
             return set(value) | {key for item in value.values() for key in keys(item)}
@@ -136,3 +138,11 @@ async def test_only_job_related_criteria_can_be_asked(client: AsyncClient) -> No
     for body in ({"skills": ["Figma"], "gender": "female"}, {"skills": ["Figma"], "pronouns": "she/her"}):
         assert (await client.post(f"{API}/candidates/match", json=body)).status_code == 422
     assert (await client.post(f"{API}/candidates/match", json={"limit": 0})).status_code == 422
+    # A personal characteristic as a criterion is refused, never matched against résumés.
+    for criteria in (["Hispanic", "pregnant"], ["Figma", "women"], ["age 25"], ["under 30"], ["Christian"]):
+        refused = await client.post(f"{API}/candidates/match", json={"skills": criteria})
+        assert refused.status_code == 400, criteria
+        assert refused.json()["error"] == {"code": "personal_characteristic", "message": REFUSAL, "details": None}
+    # Job-related ones that look alike still work.
+    for criteria in (["Spanish", "Mandarin"], ["over 10 years of experience"], ["React Native"], ["Accessibility"]):
+        assert (await client.post(f"{API}/candidates/match", json={"skills": criteria})).status_code == 200

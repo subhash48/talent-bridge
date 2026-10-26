@@ -9,6 +9,7 @@ import logging
 import re
 
 from app.schemas.assistant import AssistantIntent
+from app.services import personal_characteristics
 from app.services.ai.client import AIProvider, AIProviderError
 from app.services.assistant import rules
 
@@ -17,11 +18,7 @@ logger = logging.getLogger(__name__)
 RULES = "rules"
 
 # Personal characteristics the assistant never looks up, filters, ranks or writes about for anyone.
-SENSITIVE = re.compile(
-    r"\b(race|racial|ethnicit\w*|ethnic|disabilit\w*|sexual\w*|sexual orientation|gay|lesbian|bisexual|queer|asexual"
-    r"|heterosexual|lgbt\w*|hispanic|latin[oax]|asian|black|white|middle eastern)\b",
-    re.IGNORECASE,
-)
+SENSITIVE = personal_characteristics.SENSITIVE
 # Asking the assistant to rank, score, prioritise or judge people, or to decide who to hire or reject.
 RANKING = re.compile(
     r"\b(rank\w*|scor\w*|rate|rating|grade|prioriti[sz]\w*)\b.{0,40}\b(candidates?|applicants?|people)\b"
@@ -33,10 +30,7 @@ RANKING = re.compile(
 # "The top 10 for the ML Engineer role": not a ranking but a search on job-related criteria, and said so.
 TOP = re.compile(r"\b(top|best|strongest)\s+(\d+\s+)?(candidates?|applicants?|matches|people)\b", re.IGNORECASE)
 
-SENSITIVE_REPLY = (
-    "I can't look up, filter or use anyone's race, ethnicity, disability status or sexual orientation, and "
-    "they're never used in hiring decisions."
-)
+SENSITIVE_REPLY = personal_characteristics.REFUSAL
 RANKING_REPLY = (
     "I don't rank, score or judge candidates, and hiring decisions stay with your team. I can show who matches "
     "job-related criteria you choose, with the evidence for each, or list candidates by job or stage."
@@ -74,6 +68,6 @@ def policy_refusal(text: str, intent: AssistantIntent, *, names_a_person: bool) 
     characteristic to anyone."""
     if RANKING.search(text):
         return RANKING_REPLY
-    if SENSITIVE.search(text):
+    if SENSITIVE.search(text) or any(personal_characteristics.mentions(skill) for skill in intent.skills):
         return SENSITIVE_REPLY
     return None

@@ -6,12 +6,15 @@ own application (communication/drafts.create_personal_drafts), never one message
 time zone, and rewrites the drafts to name it. All of it waits in one proposal (assistant_actions)
 until the recruiter approves it, after one final look at the candidates, messages and times together.
 
-Approving runs the existing services, once, for the candidates still ticked: each interview is created
-in TalentBridge (interview_service), the calendar provider is asked for an event (none is connected,
-so none is claimed), then the message goes through the one send path (portal, timeline, and email
-when configured). Each candidate's outcome is reported on its own; nothing claims more than happened.
+Approving runs the existing services, once, for the candidates still ticked: first a check that their
+draft is still the one approved, then each interview is created in TalentBridge (interview_service), the
+calendar provider is asked for an event (none is connected, so none is claimed), the message goes
+through the one send path (portal, timeline, and email when configured), and only then is candidate
+messaging turned on. Each candidate's outcome is reported on its own, and one candidate's failure
+never stops or hides the others'; nothing claims more than happened.
 """
 
+import logging
 import re
 import uuid
 from datetime import datetime, tzinfo
@@ -21,7 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.enums import AssistantActionStatus, EmailStatus
-from app.core.errors import AppError, BadRequestError, NotFoundError
+from app.core.errors import AppError, BadRequestError, ConflictError, NotFoundError
 from app.integrations.calendar import NOT_CONFIGURED, CalendarEvent, CalendarProvider
 from app.integrations.email import EmailProvider
 from app.models import Application, User
@@ -41,8 +44,11 @@ from app.services.ai.client import AIProvider
 from app.services.assistant import schedule as times
 from app.services.communication import drafts
 
+logger = logging.getLogger(__name__)
+
 S = AssistantActionStatus
 INVITATION = "Interview invitation"
+UNEXPECTED = "Something went wrong for this candidate, so nothing more was done for them. Check before trying again."
 MESSAGE = "Message"
 PORTAL_ONLY = "Portal delivered — Email not configured"
 PORTAL_AND_EMAIL = "Candidate portal and email"
@@ -92,7 +98,8 @@ def plan_schedule(
     now: datetime,
 ) -> tuple[ScheduleProposal, list]:
     """The proposal and one slot per candidate (None where there's no room, or no day yet)."""
-    minutes = details.duration_minutes or times.DEFAULT_MINUTES
+    # An interview is at least 15 minutes (interview_service's own limit), at most 8 hours.
+    minutes = min(max(details.duration_minutes or times.DEFAULT_MINUTES, 15), 480)
     day = times.resolve_day(details.timeframe, now.astimezone(tz).date())
     window = times.window_for(details)
     slots = times.slots(count, day, window, minutes, tz, now)
@@ -206,15 +213,18 @@ async def execute(
             try:
                 await drafts.discard_draft(session, item.draft_id)
             except AppError:
-                await session.rollback()  # already sent or discarded elsewhere
+                await _recover(session, recruiter)  # already sent or discarded elsewhere
             items.append(item.model_copy(update={"include": False}))
             continue
         result = OutreachResult()
         application_id = item.candidate.application_id
         try:
-            if replies and not item.replies_open:
-                await application_service.set_messaging(session, [application_id], True, recruiter)
-                result.messaging_enabled = True
+            # Nothing happens for a candidate whose draft was replaced or sent since this was proposed.
+            if not await drafts.is_open(session, item.draft_id):
+                raise ConflictError(
+                    "Their draft was replaced or sent since this was proposed, so nothing was done. Draft it again.",
+                    code="draft_already_handled",
+                )
             if plan is not None and item.slot is not None:
                 interview = await interview_service.schedule_interview(
                     session,
@@ -255,9 +265,18 @@ async def execute(
             delivery = sent.message.delivery
             result.email = (delivery.email_status if delivery else EmailStatus.NOT_CONFIGURED).value  # type: ignore[assignment]
             body, subject = sent.message.content, sent.draft.subject
+            # Last, so they can only reply to a message that was sent.
+            if replies and not item.replies_open:
+                await application_service.set_messaging(session, [application_id], True, recruiter)
+                result.messaging_enabled = True
         except AppError as exc:
-            await session.rollback()
+            await _recover(session, recruiter)
             result.error = exc.message
+            body, subject = (edit.body if edit and edit.body else item.body), item.subject
+        except Exception:
+            logger.exception("assistant.outreach_item_failed application=%s", application_id)
+            await _recover(session, recruiter)
+            result.error = UNEXPECTED
             body, subject = (edit.body if edit and edit.body else item.body), item.subject
         items.append(item.model_copy(update={"result": result, "body": body, "subject": subject}))
 
@@ -276,11 +295,20 @@ def _reply(card: OutreachCard, done: list[OutreachItem], failed: list[OutreachIt
     if done:
         names = _names([item.candidate.name for item in done])
         how = (
-            "by email and in their candidate portal"
+            "in their candidate portal"
             if card.email_configured
             else "to their candidate portal (email isn't set up, so nothing was emailed)"
         )
         lines.append(f"Sent {len(done)} personalized {what}{'s' if len(done) != 1 else ''} to {names}, {how}.")
+        # Email only as it actually went, candidate by candidate.
+        for status, said in (
+            ("sent", "Emailed to {}."),
+            ("pending", "The email to {} is on its way."),
+            ("failed", "The email failed for {}; the message is in their portal."),
+        ):
+            who = [item.candidate.name for item in done if item.result and item.result.email == status]
+            if card.email_configured and who:
+                lines.append(said.format(_names(who)))
     interviews = [item for item in done if item.result and item.result.interview_created]
     if interviews:
         calendar = (
@@ -313,6 +341,13 @@ def _summary(card: OutreachCard, done: list[OutreachItem]) -> str:
 
 def _names(names: list[str]) -> str:
     return names[0] if len(names) == 1 else f"{', '.join(names[:-1])} and {names[-1]}"
+
+
+async def _recover(session: AsyncSession, recruiter: User) -> None:
+    """After one candidate's failure: undo what wasn't committed, and reload the recruiter the rollback
+    expired, so the next candidate is handled normally."""
+    await session.rollback()
+    await session.refresh(recruiter)
 
 
 async def _candidate_email(session: AsyncSession, application_id: uuid.UUID) -> str:

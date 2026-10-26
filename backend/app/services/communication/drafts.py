@@ -12,7 +12,7 @@ import uuid
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 
-from sqlalchemy import update
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import MANUAL_DRAFT, ApplicationStage, CommunicationRuleKey, DraftStatus
@@ -177,6 +177,12 @@ async def create_personal_drafts(
     session.add_all(drafts)
     await session.commit()
     return drafts
+
+
+async def is_open(session: AsyncSession, draft_id: uuid.UUID) -> bool:
+    """Whether the draft is still waiting to be sent: not sent, discarded or replaced by a newer one."""
+    status = await session.scalar(select(CommunicationDraft.status).where(CommunicationDraft.id == draft_id))
+    return status == DraftStatus.DRAFTED
 
 
 async def _open(session: AsyncSession, draft_id: uuid.UUID) -> CommunicationDraft:

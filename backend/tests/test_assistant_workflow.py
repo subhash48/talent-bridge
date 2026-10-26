@@ -24,7 +24,7 @@ from app.models.base import utcnow
 from app.schemas.assistant import AssistantIntent, JobChanges
 from app.services.ai.client import get_ai_provider
 from app.services.ai.fallback import MockProvider
-from tests.conftest import API, application_id
+from tests.conftest import API, FakeEmail, application_id, use_email
 
 SOPHIA = application_id("sophia-martinez")  # her Encord Product Designer application
 MAYA = application_id("maya-brooks")
@@ -352,3 +352,65 @@ async def test_skills_a_hosted_model_passes_are_tidied_like_the_rules_do(client:
     app.dependency_overrides[get_ai_provider] = Reader
     drafted = await ask(client, "Create a Senior Product Designer role requiring Figma and B2B SaaS experience")
     assert drafted["cards"][0]["draft"]["skills"][:2] == ["Figma", "B2B SaaS"]
+
+
+# What approving does when something goes wrong for one candidate
+
+
+async def test_one_candidates_failure_never_stops_or_hides_the_others(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    proposal = (
+        await client.post(
+            f"{API}/assistant/outreach", json={"application_ids": [SOPHIA, MAYA, JAMES], "purpose": "message"}
+        )
+    ).json()
+    async with sessions() as session:  # Maya leaves the pipeline before the recruiter approves
+        maya = await session.get(Application, uuid.UUID(MAYA))
+        assert maya is not None
+        maya.archived_at = utcnow()
+        await session.commit()
+    done = (await client.post(f"{API}/assistant/actions/{proposal['id']}/confirm", json={})).json()
+    results = {item["candidate"]["name"]: item["result"] for item in done["cards"][0]["items"]}
+    assert results["Sophia Martinez"]["message_sent"] and results["James Whitfield"]["message_sent"]
+    assert not results["Maya Brooks"]["message_sent"] and "Restore Maya" in results["Maya Brooks"]["error"]
+    assert not results["Maya Brooks"]["messaging_enabled"]  # nothing sent, so replies stay as they were
+    assert done["status"] == "failed" and "Couldn't send to Maya Brooks" in done["reply"]
+    assert done["reply"].startswith("Sent 2 personalized messages to Sophia Martinez and James Whitfield")
+
+
+async def test_a_replaced_draft_means_nothing_is_done_for_that_candidate(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    schedule = {
+        "duration_minutes": 10,
+        "timeframe": (utcnow().date() + timedelta(days=3)).isoformat(),
+        "window_start": "13:00",
+        "window_end": "15:00",
+    }
+    first = (
+        await client.post(f"{API}/assistant/outreach", json={"application_ids": [MAYA], "schedule": schedule})
+    ).json()
+    assert first["cards"][0]["schedule"]["duration_minutes"] == 15  # at least 15 minutes, as interviews are
+    await client.post(
+        f"{API}/assistant/outreach", json={"application_ids": [MAYA], "purpose": "message"}
+    )  # replaces Maya's draft
+    interviews = await count(sessions, Interview, Interview.application_id == uuid.UUID(MAYA))
+    done = (await client.post(f"{API}/assistant/actions/{first['id']}/confirm", json={})).json()
+    [item] = done["cards"][0]["items"]
+    assert item["result"]["error"].startswith("Their draft was replaced or sent since this was proposed")
+    assert not (item["result"]["interview_created"] or item["result"]["messaging_enabled"])
+    assert await count(sessions, Interview, Interview.application_id == uuid.UUID(MAYA)) == interviews
+    async with sessions() as session:
+        maya = await session.get(Application, uuid.UUID(MAYA))
+        assert maya is not None and not maya.candidate_messaging_enabled
+
+
+async def test_the_reply_says_how_each_email_went(client: AsyncClient) -> None:
+    use_email(FakeEmail(fail="Mailbox unavailable"))
+    proposal = (
+        await client.post(f"{API}/assistant/outreach", json={"application_ids": [MAYA], "purpose": "message"})
+    ).json()
+    done = (await client.post(f"{API}/assistant/actions/{proposal['id']}/confirm", json={})).json()
+    assert "in their candidate portal" in done["reply"] and "by email" not in done["reply"]
+    assert "The email failed for Maya Brooks; the message is in their portal." in done["reply"]

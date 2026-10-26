@@ -82,8 +82,9 @@ class Settings(BaseSettings):
     # form's messages are emailed (with an email provider). Unset, the site shows no address.
     contact_email: str | None = None
 
-    # Supabase Auth admin access, for candidate portal invitations only. Server-side; never sent to
-    # the browser. Either name works (the dashboard calls it the secret or the service role key).
+    # Supabase Auth admin access, for the one-time links applicants get into the candidate portal (an
+    # activation or sign-in link). Server-side; never sent to the browser. Either name works (the dashboard
+    # calls it the secret or the service role key).
     supabase_secret_key: SecretStr | None = Field(
         default=None, validation_alias=AliasChoices("SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY")
     )

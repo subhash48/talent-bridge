@@ -305,8 +305,10 @@ def _reply(card: OutreachCard, done: list[OutreachItem], failed: list[OutreachIt
 
 
 def _summary(card: OutreachCard, done: list[OutreachItem]) -> str:
-    what = "interview invitations" if card.purpose == INVITATION else "messages"
-    return f"Sent {len(done)} personalized {what}" if done else f"Couldn't send {what}"
+    what = "interview invitation" if card.purpose == INVITATION else "message"
+    if not done:
+        return f"Couldn't send {what}s"
+    return f"Sent {len(done)} personalized {what}{'' if len(done) == 1 else 's'}"
 
 
 def _names(names: list[str]) -> str:

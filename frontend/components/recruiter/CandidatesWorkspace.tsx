@@ -367,7 +367,7 @@ export function CandidatesWorkspace({ greeting, initialCandidateId, initialView,
 
         {selected && (
           <aside aria-label="Selected candidate" className="hidden xl:sticky xl:top-6 xl:block">
-            <CandidateDetail candidate={selected} variant="panel" />
+            <CandidateDetail candidate={selected} variant="panel" onSwitchApplication={setSelectedId} />
           </aside>
         )}
       </div>
@@ -377,7 +377,7 @@ export function CandidatesWorkspace({ greeting, initialCandidateId, initialView,
         onOpenChange={setSheetOpen}
         title={selected ? `${selected.name}, candidate details` : "Candidate details"}
       >
-        {selected && <CandidateDetail candidate={selected} variant="sheet" />}
+        {selected && <CandidateDetail candidate={selected} variant="sheet" onSwitchApplication={setSelectedId} />}
       </Sheet>
 
       <OutreachDialog

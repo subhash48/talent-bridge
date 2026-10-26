@@ -2,6 +2,7 @@
 
 import { ArrowLeft, UserRoundX } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { CandidateDetail } from "@/components/recruiter/CandidateDetail";
 import { useWorkspace } from "@/components/recruiter/WorkspaceProvider";
@@ -11,6 +12,7 @@ import { buttonStyles } from "@/components/ui/Button";
 /** /recruiter/candidates/[id]: the panel's content at full width, read from the shared workspace. */
 export function CandidateProfile({ candidateId }: { candidateId: string }) {
   const { candidates } = useWorkspace();
+  const router = useRouter();
   const candidate = candidates.find((item) => item.id === candidateId);
 
   return (
@@ -22,7 +24,11 @@ export function CandidateProfile({ candidateId }: { candidateId: string }) {
         <ArrowLeft aria-hidden className="size-4" /> Candidates
       </Link>
       {candidate ? (
-        <CandidateDetail candidate={candidate} variant="page" />
+        <CandidateDetail
+          candidate={candidate}
+          variant="page"
+          onSwitchApplication={(id) => router.push(`/recruiter/candidates/${id}`)}
+        />
       ) : (
         <EmptyState
           icon={UserRoundX}

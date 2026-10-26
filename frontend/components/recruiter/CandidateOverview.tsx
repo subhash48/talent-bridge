@@ -3,9 +3,10 @@ import type { ReactNode } from "react";
 
 import { CandidateActivity, CandidateActivitySkeleton } from "@/components/recruiter/CandidateActivity";
 import { DetailError } from "@/components/recruiter/DetailError";
-import { CommunicationCard } from "@/components/recruiter/communication/CommunicationCard";
+import { CommunicationBadge } from "@/components/recruiter/communication/CommunicationBadge";
 import type { CandidateDetailState } from "@/hooks/useCandidateDetail";
-import { formatSchedule } from "@/lib/format";
+import { formatDate, formatSchedule } from "@/lib/format";
+import { STAGE_LABELS } from "@/types/application";
 import type { PipelineCandidate } from "@/types/workspace";
 
 type CandidateOverviewProps = {
@@ -17,7 +18,13 @@ type CandidateOverviewProps = {
 export function CandidateOverview({ candidate, state, onViewAll }: CandidateOverviewProps) {
   return (
     <div className="@container flex flex-col gap-5">
-      <CommunicationCard candidate={candidate} health={state.detail?.communication} loading={state.loading} />
+      <section aria-label="The application" className="flex flex-wrap items-center justify-between gap-2 rounded-[10px] border border-border bg-ink/[0.03] px-3.5 py-3">
+        <p className="min-w-0 text-[13px] text-charcoal" suppressHydrationWarning>
+          <span className="font-medium text-ink">{candidate.role}</span>
+          {candidate.company && ` at ${candidate.company}`} · {STAGE_LABELS[candidate.stage]} · applied {formatDate(candidate.addedAt)}
+        </p>
+        <CommunicationBadge status={candidate.communication.status} />
+      </section>
 
       {/* Side by side when the panel is wide enough to show "Design interview" in full. */}
       <div className="grid grid-cols-1 gap-3 @[25rem]:grid-cols-2">

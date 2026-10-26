@@ -3,12 +3,14 @@
 import { Mail, Phone } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
+import { CandidateActions } from "@/components/recruiter/CandidateActions";
 import { CandidateActionsMenu } from "@/components/recruiter/CandidateActionsMenu";
 import { CandidateActivity, CandidateActivitySkeleton } from "@/components/recruiter/CandidateActivity";
 import { CandidateInterviewList } from "@/components/recruiter/CandidateInterviewList";
 import { CandidateMessagesPreview } from "@/components/recruiter/CandidateMessagesPreview";
 import { CandidateOverview } from "@/components/recruiter/CandidateOverview";
 import { CandidatePipeline } from "@/components/recruiter/CandidatePipeline";
+import { CommunicationCard } from "@/components/recruiter/communication/CommunicationCard";
 import { DetailError } from "@/components/recruiter/DetailError";
 import { ResumeLink } from "@/components/recruiter/ResumeLink";
 import { Avatar } from "@/components/shared/Avatar";
@@ -20,10 +22,11 @@ import { cn } from "@/lib/utils";
 import type { CandidateDetail as Detail, PipelineCandidate } from "@/types/workspace";
 
 const TABS = [
-  { value: "overview", label: "Overview" },
+  { value: "application", label: "Application" },
   { value: "interviews", label: "Interviews" },
   { value: "messages", label: "Messages" },
   { value: "activity", label: "Activity" },
+  { value: "communication", label: "Communication" },
 ] as const;
 
 type TabValue = (typeof TABS)[number]["value"];
@@ -39,12 +42,14 @@ type CandidateDetailProps = {
   candidate: PipelineCandidate;
   variant?: Variant;
   className?: string;
+  /** Show another of the person's applications instead. */
+  onSwitchApplication?: (applicationId: string) => void;
 };
 
 // Shared by the dashboard panel, the mobile sheet and /recruiter/candidates/[id] (ARCHITECTURE.md 12.1).
 // The active tab and the loaded details survive switching candidates.
-export function CandidateDetail({ candidate, variant = "panel", className }: CandidateDetailProps) {
-  const [tab, setTab] = useState<TabValue>("overview");
+export function CandidateDetail({ candidate, variant = "panel", className, onSwitchApplication }: CandidateDetailProps) {
+  const [tab, setTab] = useState<TabValue>("application");
   const state = useCandidateDetail(candidate);
   return (
     <CandidateDetailBody
@@ -55,18 +60,19 @@ export function CandidateDetail({ candidate, variant = "panel", className }: Can
       onTabChange={setTab}
       state={state}
       className={className}
+      onSwitchApplication={onSwitchApplication}
     />
   );
 }
 
 type BodyProps = Required<Pick<CandidateDetailProps, "candidate" | "variant">> &
-  Pick<CandidateDetailProps, "className"> & {
+  Pick<CandidateDetailProps, "className" | "onSwitchApplication"> & {
     tab: TabValue;
     onTabChange: (tab: TabValue) => void;
     state: CandidateDetailState;
   };
 
-function CandidateDetailBody({ candidate, variant, tab, onTabChange, state, className }: BodyProps) {
+function CandidateDetailBody({ candidate, variant, tab, onTabChange, state, className, onSwitchApplication }: BodyProps) {
   const Heading = variant === "page" ? "h1" : "h2";
   const isPage = variant === "page";
 
@@ -84,7 +90,10 @@ function CandidateDetailBody({ candidate, variant, tab, onTabChange, state, clas
             {candidate.name}
           </Heading>
           <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-stone">
-            <span>{candidate.role}</span>
+            <span>
+              {candidate.role}
+              {candidate.company && ` · ${candidate.company}`}
+            </span>
             {candidate.location && (
               <>
                 <span aria-hidden>·</span>
@@ -129,6 +138,9 @@ function CandidateDetailBody({ candidate, variant, tab, onTabChange, state, clas
       <div className="mt-5">
         <CandidatePipeline stage={candidate.stage} />
       </div>
+      <div className="mt-4">
+        <CandidateActions candidate={candidate} onSwitchApplication={onSwitchApplication} />
+      </div>
     </div>
   );
 
@@ -136,7 +148,7 @@ function CandidateDetailBody({ candidate, variant, tab, onTabChange, state, clas
     <Tabs value={tab} onValueChange={(value) => onTabChange(value as TabValue)} className="flex min-h-0 flex-1 flex-col">
       <TabsList tabs={[...TABS]} value={tab} label="Candidate sections" className="mx-5 mt-5 sm:mx-5" />
       <div className={cn("px-5 pt-4 pb-5 sm:px-5", variant === "panel" && "min-h-0 flex-1 overflow-y-auto")}>
-        <TabsContent value="overview">
+        <TabsContent value="application">
           <CandidateOverview
             candidate={candidate}
             state={state}
@@ -151,6 +163,17 @@ function CandidateDetailBody({ candidate, variant, tab, onTabChange, state, clas
         </TabsContent>
         <TabsContent value="activity">
           <WithDetail state={state}>{(detail) => <CandidateActivity activities={detail.activities} timeline />}</WithDetail>
+        </TabsContent>
+        <TabsContent value="communication">
+          <div className="flex flex-col gap-3">
+            <CommunicationCard candidate={candidate} health={state.detail?.communication} loading={state.loading} />
+            <p className="rounded-[10px] border border-border bg-ink/[0.03] px-3.5 py-3 text-[13px] text-charcoal">
+              <span className="font-medium text-ink">Candidate messaging: {candidate.candidateMessagingEnabled ? "on" : "off"}.</span>{" "}
+              {candidate.candidateMessagingEnabled
+                ? "They can write to you about this application."
+                : "They can read what you send, but can't write back about this application until you enable it."}
+            </p>
+          </div>
         </TabsContent>
       </div>
     </Tabs>

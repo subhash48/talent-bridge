@@ -27,7 +27,7 @@ export function ScheduleInterviewDialog({ candidate, open, onOpenChange }: Sched
       open={open}
       onClose={() => onOpenChange(false)}
       title={`Schedule an interview with ${firstName(candidate.name)}`}
-      description="It's added to their timeline. Send the details from Messages; nothing goes out automatically."
+      description={`For their ${candidate.role} application${candidate.company ? ` at ${candidate.company}` : ""}. It's added to their timeline and their portal; no calendar invitation is sent. Send the details from Messages: nothing goes out automatically.`}
     >
       {/* Mounted only while open, so the form starts fresh every time. */}
       <ScheduleForm candidate={candidate} onCancel={() => onOpenChange(false)} onScheduled={() => onOpenChange(false)} />

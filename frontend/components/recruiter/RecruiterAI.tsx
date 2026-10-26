@@ -11,13 +11,13 @@ import { RecentActions } from "@/components/recruiter/assistant/RecentActions";
 import { VoicePanel } from "@/components/recruiter/assistant/VoicePanel";
 import { RecruiterHeader } from "@/components/recruiter/RecruiterHeader";
 import { useWorkspace } from "@/components/recruiter/WorkspaceProvider";
-import { useAssistant, type AssistantTurn } from "@/hooks/useAssistant";
+import { handledCards, useAssistant, type AssistantTurn } from "@/hooks/useAssistant";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { firstName } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { errorMessage } from "@/services/api";
 import { getAssistantStatus } from "@/services/assistant";
-import type { AssistantResponse, AssistantStatus, ConfirmEdits } from "@/types/assistant";
+import type { AssistantCard, AssistantResponse, AssistantStatus } from "@/types/assistant";
 
 const CAPABILITIES = [
   { icon: Inbox, label: "Who needs an update", example: "Who needs an update today?" },
@@ -46,7 +46,16 @@ const STARTERS = [
 export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: string }) {
   const { candidates, refresh } = useWorkspace();
   const router = useRouter();
-  const assistant = useAssistant(initialCandidateId);
+  /** A proposal ran, by its button or in words: show what changed elsewhere, a new job on the Jobs page,
+   * messages and interviews on candidates. */
+  const showChanges = useCallback(
+    (card: AssistantCard) => {
+      if (card.type === "job_draft" && card.stage === "created") router.refresh();
+      if (card.type === "outreach" || card.type === "message") refresh().catch(() => undefined);
+    },
+    [refresh, router],
+  );
+  const assistant = useAssistant(initialCandidateId, showChanges);
   const [status, setStatus] = useState<AssistantStatus | null>(null);
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [voiceAnswer, setVoiceAnswer] = useState<{ session: number; id: string } | null>(null);
@@ -64,7 +73,7 @@ export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: strin
         return;
       }
       setVoiceAnswer({ session, id: response.id });
-      voice.responded(session, response.status === "completed");
+      voice.responded(session, response.status === "completed" || handledCards(response).length > 0);
     },
   });
   const { press } = voice;
@@ -79,18 +88,7 @@ export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: strin
     [candidates, assistant.context.application_id],
   );
 
-  const { confirm: confirmProposal } = assistant;
-  /** Approve, then show what changed elsewhere: a new job on the Jobs page, messages and interviews on candidates. */
-  const approve = useCallback(
-    async (actionId: string, edits?: ConfirmEdits) => {
-      const result = await confirmProposal(actionId, edits);
-      const card = result.cards[0];
-      if (card?.type === "job_draft" && card.stage === "created") router.refresh();
-      if (card?.type === "outreach" || card?.type === "message") refresh().catch(() => undefined);
-      return result;
-    },
-    [confirmProposal, refresh, router],
-  );
+  const approve = assistant.confirm;
 
   const actions: CardActions = {
     onConfirm: approve,

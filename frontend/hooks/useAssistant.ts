@@ -34,7 +34,13 @@ const EMPTY_CONTEXT: AssistantContext = {
  * request at a time, and each has its own id, so a double click or a repeated voice result can't run
  * anything twice.
  */
-export function useAssistant(initialApplicationId?: string) {
+/** The proposals a response carried out, or tried to (sent, created, failed): what may have changed elsewhere. */
+export function handledCards(response: AssistantResponse): AssistantCard[] {
+  return response.cards.filter((card) => "status" in card && (card.status === "completed" || card.status === "failed"));
+}
+
+/** onHandled: a proposal ran, by its button or in words ("yes"), so the rest of the workspace can catch up. */
+export function useAssistant(initialApplicationId?: string, onHandled?: (card: AssistantCard) => void) {
   const [turns, setTurns] = useState<AssistantTurn[]>([]);
   const [context, setContext] = useState<AssistantContext>({ ...EMPTY_CONTEXT, application_id: initialApplicationId ?? null });
   const [pending, setPending] = useState(false);
@@ -44,9 +50,13 @@ export function useAssistant(initialApplicationId?: string) {
   const edits = useRef(new Map<string, ConfirmEdits>());
   const selection = useRef({ version: 0, ids: context.selected_application_ids ?? [] });
   const contextRef = useRef(context);
+  const handledRef = useRef(onHandled);
   useEffect(() => {
     contextRef.current = context;
   }, [context]);
+  useEffect(() => {
+    handledRef.current = onHandled;
+  }, [onHandled]);
 
   const refreshHistory = useCallback(async () => {
     try {
@@ -115,7 +125,9 @@ export function useAssistant(initialApplicationId?: string) {
         setContext(response.context);
         // Ticked or cleared while it answered: the recruiter's newer choice stands.
         if (selection.current.version !== ticks) applySelection(selection.current.ids);
-        if (response.status === "completed") void refreshHistory();
+        const handled = handledCards(response);
+        if (response.status === "completed" || handled.length) void refreshHistory();
+        for (const card of handled) handledRef.current?.(card);
         return response;
       } catch (error) {
         const message = errorMessage(error, "I couldn't reach the assistant. Try again in a moment.");
@@ -155,6 +167,7 @@ export function useAssistant(initialApplicationId?: string) {
         if (result.cards[0]) updateCards(actionId, { ...result.cards[0], action_id: actionId } as AssistantCard);
         setContext((current) => ({ ...current, action_id: null, ...withoutNulls(result.context) }));
         void refreshHistory();
+        if (result.cards[0]) handledRef.current?.(result.cards[0]);
         return result;
       } catch (error) {
         // Already handled (sent from another tab, or a second click that slipped through): show its

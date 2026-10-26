@@ -9,7 +9,8 @@ import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
-import { WEEKDAYS, dayLabel, daysLabel, openingsLabel, type Weekday } from "@/lib/days";
+import { WEEKDAYS, dayLabel, type Weekday } from "@/lib/days";
+import { jobFacts } from "@/lib/simple-hire";
 import { cn } from "@/lib/utils";
 import { errorMessage } from "@/services/api";
 import type { EmploymentType, JobDraft, JobDraftCard } from "@/types/assistant";
@@ -23,16 +24,6 @@ type Props = {
 };
 
 const EMPLOYMENT: EmploymentType[] = ["Part-time", "Full-time", "Temporary", "Contract"];
-
-/** The facts an owner reads at a glance: "$18/hour · Evening shift · Friday + Saturday · 2 openings". */
-export function jobFacts(draft: JobDraft): string[] {
-  return [
-    draft.pay,
-    draft.shift ? (draft.shift.endsWith("s") ? `${draft.shift.slice(0, -1)} shift` : draft.shift) : null,
-    draft.work_days?.length ? daysLabel(draft.work_days) : null,
-    draft.openings ? openingsLabel(draft.openings) : null,
-  ].filter((fact): fact is string => Boolean(fact));
-}
 
 /**
  * Simple Hire's job draft: "Ready to post", the few facts the owner said, and two buttons. Edit opens a short

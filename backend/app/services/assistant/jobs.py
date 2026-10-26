@@ -34,7 +34,7 @@ DEPARTMENTS = (
 )
 
 
-TRAILING = re.compile(r"\s+(?:experience|skills?|knowledge|background)$", re.IGNORECASE)
+TRAILING = re.compile(r"(?:\s+(?:experience|skills?|knowledge|background|too|as well|also|please))+$", re.IGNORECASE)
 
 
 def skill_names(said: list[str]) -> list[str]:

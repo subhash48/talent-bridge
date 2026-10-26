@@ -184,6 +184,20 @@ async def resolve_names(
     return list(dict.fromkeys(found)), unknown, unclear
 
 
+def among(names: list[str], people: list[tuple[uuid.UUID, str]]) -> tuple[list[uuid.UUID], list[str]]:
+    """The names said, among these people only ("remove James" from the outreach on screen): the ones
+    found, and the names that match none of them, or more than one."""
+    found: list[uuid.UUID] = []
+    missed: list[str] = []
+    for name in names:
+        hits = [person for person, full in people if _same_person(full, name)]
+        if len(hits) == 1:
+            found.append(hits[0])
+        else:
+            missed.append(name)
+    return list(dict.fromkeys(found)), missed
+
+
 def _same_person(full_name: str, said: str) -> bool:
     words = normalize(said).replace("'s", "").split()
     have = normalize(full_name).split()

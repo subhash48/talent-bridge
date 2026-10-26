@@ -62,7 +62,7 @@ from app.schemas.assistant import (
 from app.schemas.message import MessageRead
 from app.services import ai_service, message_service
 from app.services.ai.client import AIProvider
-from app.services.assistant import answers, jobs, outreach, search
+from app.services.assistant import answers, jobs, outreach, rules, search
 from app.services.assistant import schedule as times
 from app.services.assistant.resolve import Resolution, resolve_candidate
 from app.services.assistant.understand import asks_for_top, policy_refusal, understand
@@ -72,6 +72,12 @@ logger = logging.getLogger(__name__)
 
 S = AssistantActionStatus
 DELIVERY = "Candidate portal messages"
+HOLD = 'Okay, nothing has been sent. It\'s still here to change, approve or cancel ("cancel" discards the drafts).'
+HOLD_JOB = "Okay, the job hasn't been created. The draft is still here to change, approve or cancel."
+NOT_DONE = (
+    "I haven't done anything. Tell me what you'd like instead, for example "
+    '"Make them Thursday afternoon" or "Leave James out".'
+)
 # A request for an update with nothing more to say than that.
 BARE_UPDATE = re.compile(
     r"\b(an? )?(quick )?(update|follow[- ]?up|check[- ]in|status update)\s*[.!]?\s*$|^\s*(remind|nudge)\b",
@@ -254,8 +260,14 @@ async def _plan(
     keep = context.keep()
     if refusal:
         return Outcome(reply=refusal, context=keep)
+    # "No", "not yet", "don't send them to Maya": nothing happens, and what's waiting stays waiting.
+    held = keep.model_copy(update={"action_id": context.proposal.id}) if context.proposal is not None else keep
+    if context.proposal is not None and rules.declines(request.text):
+        return Outcome(reply=HOLD_JOB if context.proposal_kind == "job" else HOLD, context=held)
 
     action = intent.action
+    if action != "cancel" and rules.negated(request.text):
+        return Outcome(reply=NOT_DONE, context=held)
     if action in ("send_interview_email", "draft_message"):
         return await _propose_message(session, recruiter, row_id, intent, request, resolution, keep, provider)
     if action == "confirm":
@@ -607,6 +619,40 @@ async def _search(
     )
 
 
+async def _leave_out(session: AsyncSession, names: list[str], context: Context, keep: AssistantContext) -> Outcome:
+    """ "Remove James" with outreach waiting: he's unticked on it (the James on it, whoever else is called
+    James), and the next "send them" shows the final look again."""
+    assert context.proposal is not None
+    payload = dict(context.proposal.payload or {})
+    card = OutreachCard.model_validate(payload["card"])
+    keep = keep.model_copy(update={"action_id": context.proposal.id})
+    found, missed = search.among(names, [(item.candidate.application_id, item.candidate.name) for item in card.items])
+    if missed or not found:
+        return Outcome(
+            reply=f"I couldn't tell who's meant by {_names(missed or names)} in the outreach waiting for approval, so "
+            "nothing changed. Untick them on the card.",
+            cards=[card],
+            context=keep,
+        )
+    keep = keep.model_copy(
+        update={"selected_application_ids": [item for item in context.selected if item not in found]}
+    )
+    gone = [item.candidate.name for item in card.items if item.candidate.application_id in found]
+    items = [
+        item.model_copy(update={"include": False}) if item.candidate.application_id in found else item
+        for item in card.items
+    ]
+    card = card.model_copy(update={"items": items, "stage": "review"})
+    await _save_payload(session, context.proposal.id, {**payload, "card": card.model_dump(mode="json"), "final": False})
+    still = [item.candidate.name for item in items if item.include]
+    reply = f"Left out **{_names(gone)}**. Nothing has been sent. " + (
+        f'{_names(still)} {"is" if len(still) == 1 else "are"} still in: say "send them" when it\'s right.'
+        if still
+        else "Nobody is ticked now, so nothing would be sent."
+    )
+    return Outcome(reply=reply, cards=[card], context=keep)
+
+
 async def _select(session: AsyncSession, intent: AssistantIntent, context: Context, keep: AssistantContext) -> Outcome:
     selected = list(context.selected)
     if intent.selection == "clear":
@@ -615,6 +661,8 @@ async def _select(session: AsyncSession, intent: AssistantIntent, context: Conte
         names = intent.candidate_names or ([intent.candidate_name] if intent.candidate_name else [])
         if not names:
             return Outcome(reply='Who should I select? Say their names, like "Select Sophia and Maya".', context=keep)
+        if intent.selection == "remove" and context.proposal is not None and context.proposal_kind == "outreach":
+            return await _leave_out(session, names, context, keep)
         found, unknown, unclear = await search.resolve_names(session, names, context.search)
         if unclear:
             name, hits = next(iter(unclear.items()))

@@ -416,6 +416,113 @@ async def test_a_spoken_approve_creates_the_job_as_edited(
         assert "70K" in (job.description or "") and "90K" in (job.description or "")
 
 
+# A change said with a yes is the change; a no, or a "don't", never does anything
+
+
+async def test_okay_remove_james_first_leaves_him_out_and_sends_nothing(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    drafted = await ask(client, "Draft interview invitations.", {"selected_application_ids": [SOPHIA, MAYA, JAMES]})
+    final = await ask(client, "Send them.", drafted["context"])
+    assert final["cards"][0]["stage"] == "final"
+    sent_before = await count(sessions, Message, Message.sender_type == SenderType.RECRUITER)
+
+    removed = await ask(client, "Okay, remove James first.", final["context"])
+    assert removed["intent"] == "select_candidates"
+    [card] = removed["cards"]
+    assert card["action_id"] == drafted["id"] and card["stage"] == "review"
+    assert [item["include"] for item in card["items"]] == [True, True, False]
+    assert removed["reply"].startswith("Left out **James Whitfield**. Nothing has been sent.")
+    assert removed["context"]["action_id"] == drafted["id"]
+    assert await count(sessions, Message, Message.sender_type == SenderType.RECRUITER) == sent_before
+
+    # The proposal changed, so a yes shows the final look again before anything is sent.
+    looked = await ask(client, "Yes", removed["context"])
+    assert looked["cards"][0]["stage"] == "final"
+    assert looked["reply"].startswith("Ready to send 2 personalized interview invitations to Sophia Martinez and Maya")
+    done = await ask(client, "Yes", looked["context"])
+    assert done["cards"][0]["status"] == "completed"
+    assert await count(sessions, Message, Message.sender_type == SenderType.RECRUITER) == sent_before + 2
+    async with sessions() as session:
+        james = await session.scalars(select(Message).where(Message.application_id == uuid.UUID(JAMES)))
+        assert all(message.content != done["cards"][0]["items"][2]["body"] for message in james)
+
+
+async def test_a_change_after_looks_good_is_made_and_nothing_runs(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    drafted = await ask(client, "Draft interview invitations.", {"selected_application_ids": [SOPHIA, MAYA]})
+    scheduled = await ask(client, "Make these 30-minute interviews next Tuesday afternoon.", drafted["context"])
+    final = await ask(client, "Looks good.", scheduled["context"])
+    assert final["cards"][0]["stage"] == "final"
+    interviews = await count(sessions, Interview)
+    moved = await ask(client, "Perfect, but make them Wednesday morning instead.", final["context"])
+    assert moved["intent"] == "schedule_interviews"
+    [card] = moved["cards"]
+    assert card["stage"] == "review" and date.fromisoformat(card["schedule"]["day"]).weekday() == 2
+    assert card["items"][0]["slot"]["starts_at"][11:13] < "12"  # in the morning
+    assert await count(sessions, Interview) == interviews
+
+    # "No" and "not yet" leave it waiting; "don't …" never does what it says not to.
+    held = await ask(client, "No", moved["context"])
+    assert held["reply"].startswith("Okay, nothing has been sent.") and held["context"]["action_id"] == drafted["id"]
+    friday = await ask(client, "Don't schedule interviews on Friday", held["context"])
+    assert friday["reply"].startswith("I haven't done anything.") and friday["cards"] == []
+    stored = await ask(client, "Send them.", friday["context"])
+    assert stored["cards"][0]["schedule"]["day"] == card["schedule"]["day"]  # still Wednesday
+    cancelled = await ask(client, "No, don't send them.", stored["context"])
+    assert cancelled["reply"] == "Cancelled. Nothing was sent or scheduled."
+    assert await count(sessions, Interview) == interviews
+
+
+async def test_approve_it_but_make_it_remote_changes_the_draft_and_creates_nothing(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    jobs = await count(sessions, Job)
+    drafted = await ask(client, "Create a Staff Data Scientist role in London, hybrid")
+    remote = await ask(client, "Approve it, but make it remote", drafted["context"])
+    assert remote["intent"] == "update_job" and remote["cards"][0]["draft"]["work_arrangement"] == "Remote"
+    looked = await ask(client, "Looks good.", remote["context"])
+    assert looked["cards"][0]["stage"] == "confirm"
+    added = await ask(client, "Okay, add Kubernetes too.", looked["context"])
+    assert added["intent"] == "update_job" and "Kubernetes" in added["cards"][0]["draft"]["skills"]
+    held = await ask(client, "Not yet", added["context"])
+    assert held["reply"].startswith("Okay, the job hasn't been created.")
+    assert await count(sessions, Job) == jobs
+    asked = await ask(client, "Yes", held["context"])
+    assert asked["cards"][0]["stage"] == "confirm"  # changed since "looks good", so asked again
+    created = await ask(client, "Yes", asked["context"])
+    [card] = created["cards"]
+    assert card["stage"] == "created" and await count(sessions, Job) == jobs + 1
+    async with sessions() as session:
+        job = await session.get(Job, uuid.UUID(card["job_id"]))
+        assert job is not None and job.location == "London · Remote"
+        assert "Kubernetes" in (job.description or "")
+
+
+async def test_a_models_confirm_stands_only_for_a_plain_approval(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    class Eager(MockProvider):
+        """A hosted model that calls anything after an opening "okay" an approval."""
+
+        name, model = "eager", "eager-1"
+
+        async def understand_request(self, text: str, context: str) -> AssistantIntent:
+            if "Waiting for approval" in context:
+                return AssistantIntent(action="confirm", mode="execute")
+            return await super().understand_request(text, context)
+
+    drafted = await ask(client, "Draft interview invitations.", {"selected_application_ids": [MAYA, JAMES]})
+    final = await ask(client, "Send them.", drafted["context"])
+    app.dependency_overrides[get_ai_provider] = Eager
+    sent_before = await count(sessions, Message, Message.sender_type == SenderType.RECRUITER)
+    removed = await ask(client, "Okay, remove James first.", final["context"])
+    assert removed["intent"] == "select_candidates" and removed["model_name"] == "rules"
+    assert [item["include"] for item in removed["cards"][0]["items"]] == [True, False]
+    assert await count(sessions, Message, Message.sender_type == SenderType.RECRUITER) == sent_before
+
+
 async def test_outreach_needs_candidates_and_approve_still_shows_the_final_look(client: AsyncClient) -> None:
     nobody = await ask(client, "Draft interview invitations for the selected candidates.")
     assert nobody["reply"].startswith("Tick the candidates first")

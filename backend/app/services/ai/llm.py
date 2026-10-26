@@ -163,8 +163,8 @@ Actions and their fields:
 - update_job: change the job draft in context ("add Kubernetes and model monitoring", "make it remote"). job with only what changes, and "skills_remove".
 - candidate_info: a question about one candidate's application or communication. candidate_name.
 - next_interview: one candidate's next interview, or whether it's confirmed. candidate_name.
-- confirm: "yes", "looks good", "send it", "send them", "approve" about the pending proposal in the context. mode "execute" only for an explicit approval ("approve", "create it", "yes, send them"), else "draft".
-- cancel: dismiss the pending proposal in the context.
+- confirm: "yes", "looks good", "send it", "send them", "approve" about the pending proposal in the context, when the request is only that approval. mode "execute" only for an explicit approval ("approve", "create it", "yes, send them"), else "draft". A request that approves and also asks for a change ("okay, remove James first", "yes, but make it remote") is never confirm: it's the change (select_candidates with selection remove, update_job, schedule_interviews). "No", "not yet" or "don't …" is never confirm, and never the thing it says not to do.
+- cancel: dismiss the pending proposal in the context ("cancel", "no, don't send them").
 - help: anything else.
 
 Return a JSON object with "action" and only the fields that apply, for example {{"action": "draft_message", "mode": "draft", "candidate_name": "Sarah", "instructions": "an update"}} or {{"action": "search_candidates", "job_title": "Product Designer", "skills": ["Figma", "Design systems"], "limit": 5}}."""

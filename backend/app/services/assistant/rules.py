@@ -21,15 +21,123 @@ _DAYS = r"(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)"
 ProposalKind = Literal["message", "outreach", "job"] | None
 
 # What kind of request it is.
-_CANCEL = re.compile(r"^\s*(cancel|never ?mind|don'?t send|scrap (it|that)|forget (it|that)|discard)\b", _I)
-_CONFIRM = re.compile(
-    r"^\s*(yes|yep|yeah|confirm|send (it|them)|go ahead|do it|looks good|approve|ok(ay)?|sounds good|create (it|the job"
-    r"|this job)|perfect|great)\b",
+_CANCEL = re.compile(
+    r"^\s*(?:(?:no|nope|nah)\b[\s,.!]*)?(?:please\s+)?(cancel|never ?mind|don'?t send|do not send|don'?t do (it|that)"
+    r"|scrap (it|that|this)|forget (it|that|this)|discard)\b",
     _I,
 )
-# Approval in so many words: for a job draft on screen, this creates it.
+# Approval in so many words: for a job draft on screen, this creates it (and only as a whole approval).
 _APPROVE = re.compile(
     r"^\s*(approve\w*|yes,? (create|approve|send)|create (it|the job|this job)|confirm (and|&) (create|send))\b", _I
+)
+# Approval is the whole request, never its first word: "Yes, send them" approves, while "Okay, remove James
+# first" and "Approve it, but make it remote" ask for a change. Read word by word (no backtracking).
+_APPROVING = frozenset(
+    tuple(phrase.split())
+    for phrase in (
+        "yes",
+        "yep",
+        "yeah",
+        "yup",
+        "sure",
+        "confirm",
+        "confirmed",
+        "ok",
+        "okay",
+        "alright",
+        "all right",
+        "sounds good",
+        "sounds great",
+        "looks good",
+        "looks great",
+        "all good",
+        "good",
+        "great",
+        "perfect",
+        "fine",
+        "go ahead",
+        "go for it",
+        "do it",
+        "approve",
+        "approved",
+        "send",
+        "create",
+        "ship it",
+        "that works",
+        "works for me",
+        "let's do it",
+        "lets do it",
+    )
+)
+_DECLINING = frozenset(
+    tuple(phrase.split())
+    for phrase in (
+        "no",
+        "nope",
+        "nah",
+        "not yet",
+        "not now",
+        "wait",
+        "hold on",
+        "hold off",
+        "hang on",
+        "stop",
+        "not so fast",
+    )
+)
+_FILLING = frozenset(
+    tuple(phrase.split())
+    for phrase in (
+        "please",
+        "thanks",
+        "thank you",
+        "now",
+        "then",
+        "and",
+        "it",
+        "them",
+        "those",
+        "these",
+        "that",
+        "that's",
+        "thats",
+        "this",
+        "all",
+        "everything",
+        "of them",
+        "as is",
+        "to me",
+        "right away",
+        "so",
+        "just",
+        "out",
+        "&",
+        "the job",
+        "this job",
+        "the role",
+        "to everyone",
+        "to all",
+    )
+)
+# An opening "okay," or "yes, but" before what's actually asked.
+_LEAD = re.compile(
+    r"^\s*(?:(?:yes|yep|yeah|sure|ok(?:ay)?|alright|great|perfect|good|fine|thanks|thank you|right|actually|wait|hmm"
+    r"|well|so|oh|ah|looks good|sounds good|approved?(?: it)?|send (?:it|them)|create it)\b\s*){1,4}"
+    r"(?:[,.!;:]+|-+|(?=but\b))\s*"
+    r"|^\s*(?:but|and|then|also|actually|first|just|so)\s+",
+    _I,
+)
+# "Don't schedule interviews on Friday", "No, never send that": not a request to do it.
+_NEGATED = re.compile(
+    r"^\s*(?:(?:no|nope|nah)\b[\s,.!]*)?(?:please\s+)?(?:don'?t|do not|never)\s+(?:\w+\s+){0,2}?"
+    r"(?:send|schedul|book|invit|message|email|contact|reach|creat|approv|publish|post|open|draft|writ|propos)\w*\b",
+    _I,
+)
+# A day ruled out: "but not on Friday", "any day except Monday".
+_NOT_DAY = re.compile(
+    rf"\b(?:not|except|avoid(?:ing)?|excluding|other than|apart from|but not|no)\s+(?:on\s+)?(?:a\s+)?"
+    rf"(?:this\s+|next\s+)?(?P<day>{_DAYS})s?\b",
+    _I,
 )
 _QUESTION = re.compile(r"^\s*(what|when|which|where|how|who|does|did|is|are|has|have|do|can you tell|show|list)\b", _I)
 # The communication questions, checked before anything that sends.
@@ -85,6 +193,16 @@ _GROUP = re.compile(
 _OUTREACH = re.compile(r"\b(personali[sz]ed|outreach|individual (drafts?|messages?|invit\w*))\b", _I)
 _SELECT = re.compile(
     r"^\s*(?:please\s+)?(?:also\s+)?(select|pick|tick|choose|check|deselect|unselect|untick|uncheck)\b", _I
+)
+# Leaving someone out, by name: "Remove James", "drop Maya", "leave James out", "don't include Liam".
+_LEAVE_OUT = re.compile(
+    r"^\s*(?i:please\s+)?(?i:remove|drop|exclude|skip|leave out|take out|don'?t include|do not include)\s+(?:[Mm]s\.? |[Mm]r\.? )?[A-Z]"
+    r"|^\s*(?i:please\s+)?(?i:leave|take)\s+(?P<names>[A-Z][^,.!?]{0,80}?)\s+(?i:out)\b"
+)
+_REMOVING = re.compile(
+    r"^\s*(?:please\s+)?(deselect|unselect|untick|uncheck|remove|drop|exclude|skip|leave|take|don'?t include"
+    r"|do not include)\b",
+    _I,
 )
 _CLEAR_SELECTION = re.compile(r"\b(clear|reset)\b.{0,15}\bselection\b|\b(deselect|untick|uncheck) (all|everyone)\b", _I)
 _SCHEDULE = re.compile(
@@ -257,7 +375,7 @@ _ADD = re.compile(r"\badd\s+(?P<skills>[^.;!?]+)", _I)
 _REMOVE = re.compile(r"\b(?:remove|drop|take out)\s+(?P<skills>[^.;!?]+)", _I)
 _SKILL_SPLIT = re.compile(r"\s*(?:,|\band\b|&|\bplus\b)\s*", _I)
 _SKILL_FILLER = re.compile(r"^(?:someone |a |an |the |more |also |skills? |strong |experience (?:with|in) |with )+", _I)
-_SKILL_TAIL = re.compile(r"\s+(?:experience|skills?|knowledge|background)$", _I)
+_SKILL_TAIL = re.compile(r"(?:\s+(?:experience|skills?|knowledge|background|too|as well|also|please))+$", _I)
 _NOT_SKILLS = re.compile(r"^(?:it|them|that|this|those|candidates?|applicants?|people|ones|matches|profiles)$", _I)
 _JOB_EDIT = re.compile(
     r"\b(make (it|the)|change|set|add|remove|drop|update|salary|pay|hybrid|remote|on-?site|location|title|rename"
@@ -272,6 +390,9 @@ def parse(
     """The request as one structured action. Unrecognised requests are "help". has_selection: the
     recruiter has ticked candidates, so "draft interview invitations" means them."""
     kind = proposal_kind or ("message" if proposal_in_context else None)
+    text = _normal(text)
+    if not is_approval(text):
+        text = core(text)
     action = classify(text, proposal_kind=kind, has_selection=has_selection)
     fields: dict[str, Any] = {"action": action}
     if action in ("send_interview_email", "draft_message", "candidate_info", "next_interview"):
@@ -285,12 +406,15 @@ def parse(
     elif action == "search_candidates":
         fields.update(search_details(text))
     elif action == "select_candidates":
-        fields["candidate_names"] = names_listed(text)
+        leave = _LEAVE_OUT.match(text)
+        fields["candidate_names"] = (
+            names_listed(f"select {leave.group('names')}") if leave and leave.group("names") else names_listed(text)
+        )
         fields["selection"] = (
             "clear"
             if _CLEAR_SELECTION.search(text)
             else "remove"
-            if re.match(r"^\s*(?:please\s+)?(deselect|unselect|untick|uncheck)\b", text, _I)
+            if _REMOVING.match(text)
             else "add"
             if re.match(r"^\s*(?:please\s+)?also\b", text, _I)
             else "replace"
@@ -313,23 +437,28 @@ def parse(
         fields["job"] = job_changes(text, creating=action == "create_job")
     elif action == "confirm":
         fields["mode"] = "execute" if _APPROVE.search(text) else "draft"
-    return AssistantIntent(**fields)
+    return without_excluded_days(AssistantIntent(**fields), text)
 
 
 def classify(
     text: str, *, proposal_kind: ProposalKind = None, proposal_in_context: bool = False, has_selection: bool = False
 ) -> str:
     kind = proposal_kind or ("message" if proposal_in_context else None)
+    text = _normal(text)
+    if kind and is_approval(text):
+        return "confirm"
+    text = core(text)
     if kind and _CANCEL.search(text):
         return "cancel"
-    if kind and _CONFIRM.search(text):
-        return "confirm"
     if kind == "job" and _JOB_EDIT.search(text) and not _MESSAGE_VERB.search(text):
         return "update_job"
     if is_create(text):
         return "create_job"
-    if _SELECT.search(text) or _CLEAR_SELECTION.search(text):
+    if _SELECT.search(text) or _CLEAR_SELECTION.search(text) or _LEAVE_OUT.search(text):
         return "select_candidates"
+    # "Perfect, but make them Wednesday morning instead": new times for the outreach on screen.
+    if kind == "outreach" and _RESCHEDULE.search(text):
+        return "schedule_interviews"
     group = bool(_GROUP.search(text)) or len(names_listed(text)) > 1
     if (kind == "outreach" or group) and _SCHEDULE.search(text) and not _OUTREACH.search(text):
         return "schedule_interviews" if kind == "outreach" or not _MESSAGE_VERB.search(text) else "draft_outreach"
@@ -367,6 +496,83 @@ def classify(
     return "help"
 
 
+_RESCHEDULE = re.compile(
+    rf"\b(make (it|them|these|those)|move (it|them|these|those)|change (it|them|the times?)|instead|switch|push (it|them))"
+    rf"\b.{{0,40}}\b({_DAYS}|tomorrow|morning|afternoon|evening|next week)\b"
+    rf"|\b({_DAYS}|tomorrow|next week)\b.{{0,30}}\binstead\b",
+    _I,
+)
+
+
+def _normal(text: str) -> str:
+    return text.replace("\u2019", "'")
+
+
+def _words(text: str) -> list[str]:
+    return re.findall(r"[^\W_]+(?:'[^\W_]+)?|&", _normal(text).lower())
+
+
+def _only(text: str, allowed: frozenset[tuple[str, ...]], needed: frozenset[tuple[str, ...]]) -> bool:
+    """Whether the request is nothing but these phrases, with at least one of the needed ones."""
+    words = _words(text)
+    if not words or len(words) > 16:
+        return False
+    at, seen = 0, False
+    while at < len(words):
+        for size in (3, 2, 1):
+            part = tuple(words[at : at + size])
+            if len(part) == size and part in allowed:
+                seen = seen or part in needed
+                at += size
+                break
+        else:
+            return False
+    return seen
+
+
+def is_approval(text: str) -> bool:
+    """ "Yes", "Looks good, send them", "Approve & create": an approval and nothing else."""
+    return _only(text, _APPROVING | _FILLING, _APPROVING)
+
+
+def declines(text: str) -> bool:
+    """ "No", "Not yet", "Wait": nothing should happen, and nothing is discarded."""
+    return _only(text, _DECLINING | _FILLING, _DECLINING)
+
+
+def negated(text: str) -> bool:
+    """ "Don't schedule interviews on Friday": a request not to do something, never a request to do it."""
+    return _NEGATED.search(_normal(text)) is not None
+
+
+def core(text: str) -> str:
+    """What's asked after an opening "okay," or "yes, but": "Okay, remove James first" is "remove James first"."""
+    rest = text
+    for _ in range(4):
+        stripped = _LEAD.sub("", rest, count=1)
+        if stripped == rest:
+            break
+        rest = stripped
+    return rest if rest.strip() else text
+
+
+def excluded_days(text: str) -> set[str]:
+    return {match.group("day").lower() for match in _NOT_DAY.finditer(text)}
+
+
+def without_excluded_days(intent: AssistantIntent, text: str) -> AssistantIntent:
+    """A day the recruiter ruled out ("but not on Friday") is never taken as the day."""
+    days = excluded_days(_normal(text))
+    if not days:
+        return intent
+    update: dict[str, Any] = {}
+    for name in ("schedule", "interview"):
+        details = getattr(intent, name)
+        if details is not None and details.timeframe and any(day in details.timeframe.lower() for day in days):
+            update[name] = details.model_copy(update={"timeframe": None})
+    return intent.model_copy(update=update) if update else intent
+
+
 def name_hint(text: str) -> str | None:
     for match in _NAME.finditer(text):
         name = match.group("name").removesuffix("'s")
@@ -378,7 +584,10 @@ def name_hint(text: str) -> str | None:
 def names_listed(text: str) -> list[str]:
     """ "Select Sophia, Maya and James" is three names: capitalised words after the verb, as said."""
     match = re.search(
-        r"\b(?:select|pick|tick|choose|check|deselect|unselect|untick|uncheck|for|to)\s+(?P<rest>.+)$", text, _I
+        r"\b(?:select|pick|tick|choose|check|deselect|unselect|untick|uncheck|remove|drop|exclude|skip|include|for|to)"
+        r"\s+(?P<rest>.+)$",
+        text,
+        _I,
     )
     if not match:
         return []
@@ -405,7 +614,7 @@ def interview_details(text: str) -> InterviewDetails:
     elif minutes is None and re.search(r"\b(an|one)[- ]hour\b|\bhour[- ]long\b", text, _I):
         minutes = 60
     kind = _INTERVIEW_TYPE.search(text)
-    timeframe = _TIMEFRAME.search(text)
+    timeframe = _TIMEFRAME.search(_NOT_DAY.sub(" ", text))
     return InterviewDetails(
         interview_type=f"{kind.group('kind').capitalize()} {kind.group('noun').lower()}" if kind else None,
         duration_minutes=minutes if minutes is not None and 10 <= minutes <= 480 else None,

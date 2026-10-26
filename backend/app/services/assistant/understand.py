@@ -53,11 +53,15 @@ async def understand(
 ) -> tuple[AssistantIntent, str]:
     """The request as one structured action, and what read it (the model, or "rules")."""
     try:
-        return await provider.understand_request(text, context), provider.model
+        intent, read_by = await provider.understand_request(text, context), provider.model
     except AIProviderError as exc:
         if provider.name != "mock":
             logger.warning("assistant.understand_failed provider=%s error=%s", provider.name, exc)
-    return rules.parse(text, proposal_kind=proposal_kind, has_selection=has_selection), RULES
+        return rules.parse(text, proposal_kind=proposal_kind, has_selection=has_selection), RULES
+    if intent.action == "confirm" and not rules.is_approval(text):
+        # Only a plain approval approves: "Okay, add Kubernetes too" is the change it asks for, read again.
+        return rules.parse(text, proposal_kind=proposal_kind, has_selection=has_selection), RULES
+    return rules.without_excluded_days(intent, text), read_by
 
 
 def asks_for_top(text: str) -> bool:

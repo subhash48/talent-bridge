@@ -1,12 +1,10 @@
 """The assistant's read-only answers: who needs an update, unanswered messages, interviews to confirm
-or follow up on, candidate lists and interviews.
+or follow up on, and one candidate's next interview. (Candidate lists are services/assistant/search.py.)
 
 Each comes from the same service the workspace page uses (communication health from
-services/communication, as on Today; candidate lists from candidate_service.list_pipeline in its
-usual order), so an answer always matches what the recruiter would see there.
+services/communication, as on Today), so an answer always matches what the recruiter would see there.
 """
 
-import uuid
 from datetime import datetime, timedelta
 
 from sqlalchemy import select
@@ -17,16 +15,12 @@ from app.core.enums import CommunicationRuleKey, InterviewStatus
 from app.models import Application, Interview
 from app.models.base import utcnow
 from app.schemas.assistant import (
-    AssistantIntent,
     CandidateBrief,
-    CandidateListCard,
     FollowUpItem,
     FollowUpListCard,
     InterviewCardItem,
     InterviewInfoCard,
 )
-from app.services import candidate_service
-from app.services.assistant.resolve import find_jobs
 from app.services.communication import service as communication
 
 K = CommunicationRuleKey
@@ -37,8 +31,11 @@ HELP = (
     '- **"Who needs an update today?"**\n'
     '- **"Draft Sarah an update."** You edit and confirm before anything is sent.\n'
     '- **"Which candidates have unanswered questions?"**\n'
-    '- **"Which interviews need confirmation?"**\n'
-    '- **"Who interviewed this week and hasn\'t had a follow-up?"**\n'
+    '- **"Show 5 candidates for Product Designer matching Figma and design systems."** Then tick who you want, '
+    'or say "Select Sophia and Maya".\n'
+    '- **"Draft interview invitations for the selected candidates"**, then **"Make them 30-minute interviews next '
+    'Tuesday afternoon."** Nothing is sent or scheduled until you approve.\n'
+    '- **"Create a Senior Product Designer role in New York, hybrid, requiring Figma."** A draft for you to check.\n'
     '- Or ask about one candidate: "Tell me about Sophia\'s application".'
 )
 
@@ -199,48 +196,6 @@ async def no_follow_up(session: AsyncSession) -> tuple[str, FollowUpListCard]:
 
 
 # Candidates and interviews
-
-
-async def search(session: AsyncSession, intent: AssistantIntent) -> tuple[str, CandidateListCard | None]:
-    """The pipeline filtered by job and stage, in its usual order (most recent activity first)."""
-    job_ids: list[uuid.UUID | None] = [None]
-    if intent.job_title:
-        jobs = await find_jobs(session, intent.job_title)
-        if not jobs:
-            return f"I couldn't find a job called **{intent.job_title}**.", None
-        job_ids = [job.id for job in jobs]
-    items: list[CandidateBrief] = []
-    total = 0
-    for job_id in job_ids:
-        page = await candidate_service.list_pipeline(
-            session, stage=intent.stage, job_id=job_id, search=intent.candidate_name, limit=25
-        )
-        total += page.total
-        items.extend(
-            CandidateBrief(
-                application_id=item.application_id,
-                candidate_id=item.candidate.id,
-                name=item.candidate.full_name,
-                job_title=item.job.title,
-                stage=item.stage,
-            )
-            for item in page.items
-        )
-    stage = intent.stage.label.lower() if intent.stage else None
-    scope = f" for **{intent.job_title}**" if intent.job_title else ""
-    title = (
-        " · ".join(part for part in (intent.stage.label if intent.stage else None, intent.job_title) if part)
-        or "Candidates"
-    )
-    if not total:
-        return f"No candidates{f' at {stage}' if stage else ''}{scope} right now.", CandidateListCard(
-            title=title, total=0, items=[]
-        )
-    verb = {"interview": "interviewing", "screening": "in screening", "offer": "at offer"}.get(
-        stage or "", f"at {stage}" if stage else ""
-    )
-    reply = f"**{total} candidate{'s' if total != 1 else ''}**{(' ' + verb) if verb else ''}{scope}."
-    return reply, CandidateListCard(title=title, total=total, items=items[:25])
 
 
 async def next_interview(

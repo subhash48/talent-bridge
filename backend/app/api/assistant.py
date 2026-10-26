@@ -2,8 +2,9 @@
 
 Recruiters and admins only (router.py checks the role on the users row, so a candidate's token gets a
 403 here whatever the browser shows). Speech is transcribed and the recording discarded; the
-transcript goes through exactly the same POST /assistant/requests as typed text. Nothing external
-happens until the recruiter confirms a proposal, and each proposal runs at most once.
+transcript goes through exactly the same POST /assistant/requests as typed text, and the Candidates
+page's outreach button through the same engine too. Nothing external happens until the recruiter
+confirms a proposal, and each proposal runs at most once.
 """
 
 from typing import Annotated
@@ -12,14 +13,18 @@ from uuid import UUID
 from fastapi import APIRouter, Query, Request, Response
 
 from app.core.config import settings
-from app.core.dependencies import AIProviderDep, EmailProviderDep, RecruiterDep, SessionDep
+from app.core.dependencies import AIProviderDep, CalendarProviderDep, EmailProviderDep, RecruiterDep, SessionDep
 from app.core.errors import AppError, BadRequestError, ServiceUnavailableError
 from app.schemas.assistant import (
+    AssistantContext,
     AssistantHistoryItem,
+    AssistantIntent,
     AssistantRequest,
     AssistantResponse,
     AssistantStatus,
     ConfirmActionRequest,
+    InterviewDetails,
+    OutreachRequest,
     TranscriptionRead,
 )
 from app.services.ai.client import AIProviderError
@@ -37,18 +42,62 @@ class AudioTooLarge(AppError):
 
 
 @router.get("/status", response_model=AssistantStatus, summary="What the assistant can do here")
-async def status(provider: AIProviderDep) -> AssistantStatus:
-    return AssistantStatus(voice_transcription=provider.can_transcribe, model_name=provider.model)
+async def status(provider: AIProviderDep, email: EmailProviderDep, calendar: CalendarProviderDep) -> AssistantStatus:
+    return AssistantStatus(
+        voice_transcription=provider.can_transcribe,
+        model_name=provider.model,
+        email_configured=email.configured,
+        calendar_configured=calendar.configured,
+    )
 
 
 @router.post("/requests", response_model=AssistantResponse, summary="Ask the assistant (typed or spoken)")
 async def ask(
-    body: AssistantRequest, session: SessionDep, provider: AIProviderDep, user: RecruiterDep
+    body: AssistantRequest,
+    session: SessionDep,
+    provider: AIProviderDep,
+    user: RecruiterDep,
+    email: EmailProviderDep,
+    calendar: CalendarProviderDep,
 ) -> AssistantResponse:
-    """One request, understood as one structured action. Questions are answered and job drafts written
-    straight away; sending a message or publishing a job comes back as a proposal to confirm. The same
-    client_request_id again returns the first answer and runs nothing twice."""
-    return await engine.handle(session, user, body, provider)
+    """One request, understood as one structured action. Questions are answered and candidate lists shown
+    straight away; a message, outreach to the candidates ticked, interview times or a new job come back as a
+    proposal. Proposals run only once the recruiter approves them, after a final look (a spoken "yes" to
+    that counts). The same client_request_id again returns the first answer and runs nothing twice."""
+    return await engine.handle(session, user, body, provider, email, calendar)
+
+
+@router.post("/outreach", response_model=AssistantResponse, summary="Draft personalized outreach")
+async def draft_outreach(
+    body: OutreachRequest,
+    session: SessionDep,
+    provider: AIProviderDep,
+    user: RecruiterDep,
+    email: EmailProviderDep,
+    calendar: CalendarProviderDep,
+) -> AssistantResponse:
+    """One draft per candidate ticked on the Candidates page (an interview invitation or a message), with
+    interview times when a schedule is given: the same proposal the assistant makes, confirmed the same way.
+    Nothing is sent or scheduled here."""
+    invitation = body.purpose == "interview_invitation"
+    words = body.instructions or ("Interview invitation" if invitation else "Personalized message")
+    request = AssistantRequest(
+        text=words,
+        client_request_id=body.client_request_id,
+        context=AssistantContext(selected_application_ids=body.application_ids),
+        utc_offset_minutes=body.utc_offset_minutes,
+    )
+    intent = AssistantIntent(
+        action="draft_outreach",
+        instructions=body.instructions,
+        interview=InterviewDetails(**body.schedule.model_dump())
+        if body.schedule
+        else InterviewDetails()
+        if invitation
+        else None,
+        schedule=body.schedule,
+    )
+    return await engine.handle(session, user, request, provider, email, calendar, intent=intent)
 
 
 @router.post("/actions/{action_id}/confirm", response_model=AssistantResponse, summary="Confirm a proposal")
@@ -57,12 +106,15 @@ async def confirm(
     session: SessionDep,
     user: RecruiterDep,
     email: EmailProviderDep,
+    calendar: CalendarProviderDep,
     body: ConfirmActionRequest | None = None,
 ) -> AssistantResponse:
-    """Runs the proposal through the existing service (sending the message, publishing the job). 409
-    action_already_handled if it was already confirmed, cancelled or failed: one confirmation, one send.
-    A failure comes back with status failed and the reason; nothing is reported as done unless it was."""
-    return await engine.confirm(session, user, action_id, body.body if body else None, email)
+    """Runs the proposal through the existing services: sending the message; creating each interview and
+    sending each personalized message, for the candidates still ticked; or creating the job. body carries the
+    recruiter's edits. 409 action_already_handled if it was already confirmed, cancelled or failed: one
+    confirmation, one send. A failure comes back with status failed and the reason; nothing is reported as
+    done unless it was."""
+    return await engine.confirm(session, user, action_id, body or ConfirmActionRequest(), email, calendar)
 
 
 @router.post("/actions/{action_id}/cancel", status_code=204, summary="Dismiss a proposal")
@@ -75,8 +127,8 @@ async def cancel(action_id: UUID, session: SessionDep, user: RecruiterDep) -> Re
 async def recent(
     session: SessionDep, user: RecruiterDep, limit: Annotated[int, Query(ge=1, le=50)] = 20
 ) -> list[AssistantHistoryItem]:
-    """What the assistant did for you, newest first: messages sent, jobs drafted, changed and
-    published, and anything that failed."""
+    """What the assistant did for you, newest first: messages and outreach sent, jobs created, and
+    anything that failed."""
     return await engine.history(session, user, limit)
 
 

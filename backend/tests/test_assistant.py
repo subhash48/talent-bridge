@@ -77,7 +77,12 @@ async def test_only_recruiters_reach_the_assistant(anonymous: AsyncClient, clien
         f"{API}/assistant/transcribe", content=b"audio", headers={**candidate, "content-type": "audio/webm"}
     )
     assert transcribe.status_code == 403
-    assert (await client.get(f"{API}/assistant/status")).json() == {"voice_transcription": False, "model_name": "mock"}
+    assert (await client.get(f"{API}/assistant/status")).json() == {
+        "voice_transcription": False,
+        "model_name": "mock",
+        "email_configured": False,
+        "calendar_configured": False,
+    }
 
 
 # One engine for text and voice
@@ -117,7 +122,8 @@ async def test_a_request_is_understood_as_one_structured_action(client: AsyncCli
         ("Remind Priya about her interview", "draft_message"),
         ("Is Priya's interview confirmed?", "next_interview"),
         ("Show candidates in screening", "search_candidates"),
-        ("Create a Backend Engineer job", "help"),
+        ("Create a Backend Engineer job", "create_job"),
+        ("Sing me a song", "help"),
     ):
         assert parse(text).action == action, text
     assert parse("Draft Sarah an update.").candidate_name == "Sarah"
@@ -176,7 +182,13 @@ async def test_an_interview_invitation_is_written_and_sent_only_when_confirmed(
     assert card["body"].startswith("Hi Sophia,\n\nThanks again for your interest in the Product Designer role.")
     assert "30-minute recruiter interview next Tuesday" in card["body"]
     assert card["body"].endswith("Best,\nAlex")
-    assert answer["context"] == {"application_id": SOPHIA_APP, "action_id": answer["id"]}
+    assert answer["context"] == {
+        "application_id": SOPHIA_APP,
+        "action_id": answer["id"],
+        "job_id": None,
+        "search": None,
+        "selected_application_ids": [],
+    }
     assert len(await messages_to(sessions, SOPHIA_APP)) == before  # nothing sent yet
 
     confirmed = await client.post(f"{API}/assistant/actions/{answer['id']}/confirm", json={})
@@ -442,8 +454,10 @@ async def test_candidates_and_interviews(client: AsyncClient) -> None:
         await client.get(f"{API}/candidates", params={"stage": "interview", "job_id": job_id("Product Designer")})
     ).json()
     card = listed["cards"][0]
-    assert card["total"] == expected["total"] > 0
-    assert [item["application_id"] for item in card["items"]] == [item["application_id"] for item in expected["items"]]
+    # The open Product Designer job (Encord's; OpenAI's and Anthropic's are drafts), at the interview stage, as filters.
+    assert card["type"] == "candidate_match" and card["considered"] == expected["total"] > 0
+    assert "Stage: Interview" in [item["label"] for item in card["filters"]]
+    assert {item["application_id"] for item in card["items"]} == {item["application_id"] for item in expected["items"]}
 
     unclear = await ask(client, "Hmm, sing me a song")
     assert unclear["intent"] == "help" and "Who needs an update today?" in unclear["reply"]

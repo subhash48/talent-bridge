@@ -134,12 +134,12 @@ Write the job posting for this role. Return a JSON object with exactly these key
 # The recruiter assistant: a request (typed, or transcribed speech) as one structured action
 # (schemas/assistant.AssistantIntent). The model only reads the request; the engine resolves, checks,
 # asks for confirmation and carries it out.
-ASSISTANT_SYSTEM_PROMPT = """You turn a recruiter's request in {organization}'s recruiting workspace into one structured action. The workspace keeps candidates informed: who needs an update, what they're waiting for, and messages to them. You never carry anything out and never answer the request yourself.
+ASSISTANT_SYSTEM_PROMPT = """You turn a recruiter's request in {organization}'s recruiting workspace into one structured action. The workspace keeps candidates informed: who needs an update, what they're waiting for, and messages to them; it finds candidates on job-related criteria the recruiter chooses, drafts personal outreach and interview invitations to the candidates the recruiter picked, and drafts new jobs. You never carry anything out and never answer the request yourself.
 
 Rules:
-- Pick exactly one action. Copy names, job titles and details as the recruiter said them; never invent a candidate, job, number or date.
+- Pick exactly one action. Copy names, job titles, skills and details as the recruiter said them; never invent a candidate, job, skill, number or date.
 - "draft", "write", "prepare" or "preview" means mode "draft"; "send", "email", "ask", "invite" or "remind" means mode "execute".
-- Never put race, ethnicity, disability, sexual orientation or any other personal characteristic in a search, a message or a question about a candidate.
+- Searches use only job-related criteria: skills, requirements, the job, the stage, a location, interview progress, communication. Never put race, ethnicity, gender, age, nationality, religion, disability, sexual orientation or any other personal characteristic in a search, a message or a question about a candidate.
 - Respond with a single JSON object only."""
 
 ASSISTANT_PROMPT = """[conversation context]
@@ -155,14 +155,19 @@ Actions and their fields:
 - no_follow_up: candidates who interviewed recently and haven't heard from us since.
 - draft_message: a message to one candidate ("draft Sarah an update", "remind Priya about her interview"). candidate_name, instructions (what it should say), mode.
 - send_interview_email: ask a candidate to schedule an interview. candidate_name, job_title (only if said), interview {{"interview_type", "duration_minutes", "timeframe"}}, mode.
-- search_candidates: stage (sourced|screening|interview|offer|hired|rejected), job_title, candidate_name.
+- search_candidates: a list of candidates ("show applicants for the ML Engineer job", "filter for Python and AWS", "show 10 matching", "the top 10 for this role"). job_title ("that role" for the job in context), skills (array, as said), stage (sourced|screening|interview|offer|hired), location, interview_state (upcoming|interviewed|awaiting_update|none; "interviewed but haven't had an update" is awaiting_update), limit (a number), refine (true when it narrows the list already shown).
+- select_candidates: tick candidates in the list on screen ("select Sophia, Maya and James"). candidate_names (array), selection (replace|add|remove|clear).
+- draft_outreach: one personal message or interview invitation for each of several candidates ("draft interview invitations for the selected candidates", "invite these five to a 30-minute first interview next Tuesday between 1 and 4 PM"). candidate_names only if named, instructions, interview {{"interview_type", "duration_minutes", "timeframe"}} for an invitation, schedule {{"interview_type", "duration_minutes", "timeframe", "window_start": "HH:MM", "window_end": "HH:MM"}} when a day or time is given.
+- schedule_interviews: interview times for the outreach in context, or for the selected candidates ("make these 30-minute interviews next Tuesday afternoon"). schedule as above.
+- create_job: draft a new job ("create a Senior Product Designer role in New York, hybrid, requiring Figma"). job {{"title" (with any level, as said), "department", "location", "work_arrangement" (On-site|Hybrid|Remote), "employment_type" (Full-time|Part-time|Contract|Internship|Temporary), "seniority" (Internship|Entry Level|Mid Level|Senior|Staff|Principal|Manager|Director), "salary_min", "salary_max" (yearly, whole units, only if said), "skills_add" (array), "notes" (the request)}}.
+- update_job: change the job draft in context ("add Kubernetes and model monitoring", "make it remote"). job with only what changes, and "skills_remove".
 - candidate_info: a question about one candidate's application or communication. candidate_name.
 - next_interview: one candidate's next interview, or whether it's confirmed. candidate_name.
-- confirm: "yes", "send it" about the pending message in the context.
-- cancel: dismiss the pending message in the context.
+- confirm: "yes", "looks good", "send it", "send them", "approve" about the pending proposal in the context. mode "execute" only for an explicit approval ("approve", "create it", "yes, send them"), else "draft".
+- cancel: dismiss the pending proposal in the context.
 - help: anything else.
 
-Return a JSON object with "action" and only the fields that apply, for example {{"action": "draft_message", "mode": "draft", "candidate_name": "Sarah", "instructions": "an update"}}."""
+Return a JSON object with "action" and only the fields that apply, for example {{"action": "draft_message", "mode": "draft", "candidate_name": "Sarah", "instructions": "an update"}} or {{"action": "search_candidates", "job_title": "Product Designer", "skills": ["Figma", "Design systems"], "limit": 5}}."""
 
 TRANSCRIPTION_PROMPT = (
     "A recruiter talking to a recruiting assistant about candidates, interviews and updates to send. {vocabulary}"

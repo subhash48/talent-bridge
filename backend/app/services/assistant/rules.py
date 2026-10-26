@@ -165,13 +165,22 @@ _NEEDS_UPDATE = re.compile(
     _I,
 )
 _MESSAGE_VERB = re.compile(
-    r"\b(email|send|ask|invite|message|reach out|draft|write|compose|remind|tell (?!me\b)|let .{1,40} know|reply to"
+    r"\b(email|send|ask|invite|message|reach out|draft|write|compose|remind|thank (?!you\b)|tell (?!me\b)|let .{1,40} know"
+    r"|reply to"
     r"|follow up with|update (?!on\b))",
     _I,
 )
 _INVITATION = re.compile(
     r"\b(schedul\w*|pick|book|set up|arrange|invit\w*|interview (email|invitation|invite|request)"
     r"|(for|to) an? (\w+[- ])?(\w+ )?(interview|call|chat|screen))\b",
+    _I,
+)
+# Asking candidates to an interview, not just mentioning one: "draft interview invitations", "invite them to a
+# first interview", "schedule interviews", "interviews next Tuesday". "Thank them for interviewing" isn't.
+_INVITES = re.compile(
+    r"\binterview (?:invitations?|invites?|requests?|emails?)\b|\binvit\w*|\b(?:schedul\w*|book|set up|arrange)\b.{0,40}"
+    r"\binterviews?\b|\b(?:to|for) (?:an?|their|the) (?:\w+[- ])?(?:\w+ )?interview\b|\binterviews?\b.{0,40}\b(?:next|this|on)\s+"
+    + _DAYS,
     _I,
 )
 _NEXT_INTERVIEW = re.compile(
@@ -429,12 +438,8 @@ def parse(
         fields["instructions"] = text
         fields["candidate_names"] = names_listed(text) if not _GROUP.search(text) else []
         details = interview_details(text)
-        if (
-            action == "schedule_interviews"
-            or details.timeframe
-            or _INVITATION.search(text)
-            or "interview" in text.lower()
-        ):
+        # A day in a message ("we'll decide by Friday") isn't interview times; asking them to an interview is.
+        if action == "schedule_interviews" or _INVITES.search(text):
             start, end = window_from_text(text)
             fields["interview"] = details
             if action == "schedule_interviews" or details.timeframe or start:
@@ -546,6 +551,11 @@ def is_approval(text: str) -> bool:
 def declines(text: str) -> bool:
     """ "No", "Not yet", "Wait": nothing should happen, and nothing is discarded."""
     return _only(text, _DECLINING | _FILLING, _DECLINING)
+
+
+def invites(text: str) -> bool:
+    """Whether outreach asks the candidates to an interview, rather than only mentioning one."""
+    return _INVITES.search(text) is not None
 
 
 def negated(text: str) -> bool:

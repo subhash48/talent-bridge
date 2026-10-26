@@ -103,6 +103,8 @@ class AssistantIntent(APIModel):
     selection: Literal["replace", "add", "remove", "clear"] = "replace"  # select_candidates
     schedule: ScheduleDetails | None = None  # draft_outreach, schedule_interviews
     job: JobChanges | None = None  # create_job, update_job
+    # draft_outreach: what the recruiter chose on the Candidates page; it stands whatever the instructions say.
+    purpose: Literal["message", "interview_invitation"] | None = None
 
 
 # Requests

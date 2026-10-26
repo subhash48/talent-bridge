@@ -565,6 +565,27 @@ async def test_the_prompts_own_search_examples_work_without_a_model(client: Asyn
     assert card["filters"][0]["key"] == f"job:{created['context']['job_id']}"
 
 
+async def test_a_message_that_mentions_interviewing_is_still_a_message(client: AsyncClient) -> None:
+    thanks = "Thank them for interviewing with us last week and say we'll decide by Friday."
+    chosen = (
+        await client.post(
+            f"{API}/assistant/outreach", json={"application_ids": [MAYA], "purpose": "message", "instructions": thanks}
+        )
+    ).json()
+    [card] = chosen["cards"]
+    assert card["purpose"] == "Message" and card["schedule"] is None
+    said = await ask(client, thanks, {"selected_application_ids": [MAYA]})
+    assert said["intent"] == "draft_outreach" and said["cards"][0]["purpose"] == "Message"
+    # Chosen as an invitation, it's one whatever the instructions say.
+    invited = (
+        await client.post(
+            f"{API}/assistant/outreach",
+            json={"application_ids": [MAYA], "purpose": "interview_invitation", "instructions": "Keep it short."},
+        )
+    ).json()
+    assert invited["cards"][0]["purpose"] == "Interview invitation"
+
+
 async def test_outreach_needs_candidates_and_approve_still_shows_the_final_look(client: AsyncClient) -> None:
     nobody = await ask(client, "Draft interview invitations for the selected candidates.")
     assert nobody["reply"].startswith("Tick the candidates first")

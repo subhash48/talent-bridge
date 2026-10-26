@@ -90,6 +90,7 @@ async def draft_outreach(
     )
     intent = AssistantIntent(
         action="draft_outreach",
+        purpose=body.purpose,
         instructions=body.instructions,
         interview=InterviewDetails(**body.schedule.model_dump())
         if body.schedule

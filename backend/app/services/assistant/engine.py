@@ -733,7 +733,13 @@ async def _draft_outreach(
     details = intent.schedule
     if details is not None and times.resolve_day(details.timeframe, _today(request)) is None:
         details = None  # no day said: invitations that ask for times, not times nobody chose
-    invitation = intent.interview is not None or details is not None or "interview" in request.text.lower()
+    # The purpose chosen stands; otherwise an invitation is asked for in so many words, not just a mention
+    # ("thank them for interviewing" is a message).
+    invitation = (
+        intent.purpose == "interview_invitation"
+        if intent.purpose
+        else intent.interview is not None or details is not None or rules.invites(request.text)
+    )
     return await _propose_outreach(
         session, recruiter, row_id, targets, invitation, request, details, keep, provider, email, calendar
     )

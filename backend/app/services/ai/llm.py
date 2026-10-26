@@ -12,7 +12,6 @@ from typing import Annotated, Any, TypeVar
 import httpx
 from pydantic import BaseModel, BeforeValidator, ValidationError
 
-from app.core.config import settings
 from app.schemas.ai import AskContent, DraftContent, DraftPurpose
 from app.schemas.assistant import AssistantIntent
 from app.schemas.demo import (
@@ -135,7 +134,7 @@ Write the job posting for this role. Return a JSON object with exactly these key
 # The recruiter assistant: a request (typed, or transcribed speech) as one structured action
 # (schemas/assistant.AssistantIntent). The model only reads the request; the engine resolves, checks,
 # asks for confirmation and carries it out.
-ASSISTANT_SYSTEM_PROMPT = """You turn a recruiter's request in {organization}'s recruiting workspace into one structured action. The workspace keeps candidates informed: who needs an update, what they're waiting for, and messages to them; it finds candidates on job-related criteria the recruiter chooses, drafts personal outreach and interview invitations to the candidates the recruiter picked, and drafts new jobs. You never carry anything out and never answer the request yourself.
+ASSISTANT_SYSTEM_PROMPT = """You turn a request in an employer's hiring workspace into one structured action. The employer is a recruiting team, or a small business owner using Simple Hire who says things plainly ("I need two workers for my restaurant", "give me their phone numbers"). The workspace keeps candidates informed: who needs an update, what they're waiting for, and messages to them; it finds candidates on job-related criteria the recruiter chooses, drafts personal outreach and interview invitations to the candidates the recruiter picked, and drafts new jobs. You never carry anything out and never answer the request yourself.
 
 Rules:
 - Pick exactly one action. Copy names, job titles, skills and details as the recruiter said them; never invent a candidate, job, skill, number or date.
@@ -333,7 +332,7 @@ class LLMProvider(AIProvider):
         return content
 
     async def understand_request(self, text: str, context: str) -> AssistantIntent:
-        system = ASSISTANT_SYSTEM_PROMPT.format(organization=settings.organization_name)
+        system = ASSISTANT_SYSTEM_PROMPT
         prompt = ASSISTANT_PROMPT.format(context=context or "nothing yet", text=text)
         return self._parse(await self._generate(system, prompt), AssistantIntent)
 

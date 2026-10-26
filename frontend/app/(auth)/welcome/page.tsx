@@ -11,12 +11,13 @@ import { getServerAccessToken } from "@/lib/supabase-server";
 import { ApiError } from "@/services/api";
 import { getCurrentUser } from "@/services/me";
 
-export const metadata: Metadata = { title: "Set up your candidate portal" };
+export const metadata: Metadata = { title: "Create your TalentBridge password" };
 
-// Where a candidate portal invitation lands, once /auth/callback (Supabase's default invitation email)
-// or /auth/confirm (a customised one) has turned the one-time link into a session. The API says whose
-// account it is: only a candidate linked to this sign-in chooses a password here, and the page names
-// the address it's for, so nobody sets up an account that isn't theirs without seeing it.
+// Where the activation link lands (in the careers site's confirmation email, or Supabase's invitation), once
+// /auth/callback or /auth/confirm has turned the one-time link into a session. The API says whose account it
+// is: only a candidate linked to this sign-in creates a password here, and the page names the address it's
+// for, so nobody sets up an account that isn't theirs without seeing it. Creating the password activates the
+// account; their applications are already in it.
 export default async function WelcomePage() {
   if (!(await getServerAccessToken())) return <InvitationExpired />;
   const user = await getCurrentUser().catch((error: unknown) => {
@@ -30,20 +31,25 @@ export default async function WelcomePage() {
 
   return (
     <AuthCard
-      title="Welcome to your candidate portal"
+      title="Create your TalentBridge password"
       description={
         <>
-          You&rsquo;re signed in as <strong className="font-medium text-charcoal">{user.email}</strong>. Choose a
-          password if you&rsquo;d like one; you can always sign in with a link we email you instead.
+          Your application has been submitted. Create your TalentBridge password to follow updates from the hiring team.
+          You&rsquo;re signed in as <strong className="font-medium text-charcoal">{user.email}</strong>.
         </>
       }
       footer={
-        <Link href="/candidate" className={authLinkStyles}>
-          Skip for now and open my portal
-        </Link>
+        <span className="text-[13px]">
+          Apply to other roles with this email and they&rsquo;ll be in the same account.
+        </span>
       }
     >
-      <ResetPasswordForm submitLabel="Set password and continue" redirectTo="/candidate" />
+      <ResetPasswordForm
+        submitLabel="Create password and open my portal"
+        redirectTo="/candidate"
+        email={user.email}
+        passwordLabel="Password"
+      />
     </AuthCard>
   );
 }

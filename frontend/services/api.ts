@@ -51,6 +51,8 @@ const AUTH_PAGES = [
   "/login",
   "/signup",
   "/signup/complete",
+  "/signup/employer",
+  "/onboarding/workspace",
   "/forgot-password",
   "/reset-password",
   "/welcome",

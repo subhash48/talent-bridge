@@ -21,6 +21,9 @@ backend/*.db
 .env*
 !.env.example
 
+# End-to-end runs (e2e/README.md)
+e2e/shots/
+
 # Supabase CLI
 supabase/.branches/
 supabase/.temp/

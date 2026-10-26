@@ -9,7 +9,8 @@ from app.core.dependencies import RecruiterDep, SessionDep
 from app.core.enums import ApplicationStage
 from app.schemas.candidate import CandidateCreate, CandidateDetail, CandidateListItem
 from app.schemas.common import Page
-from app.services import candidate_service
+from app.schemas.matching import MatchRequest, MatchResult
+from app.services import candidate_matching, candidate_service
 
 router = APIRouter(prefix="/candidates", tags=["candidates"])
 
@@ -35,6 +36,15 @@ async def list_candidates(
         limit=limit,
         offset=offset,
     )
+
+
+@router.post("/match", response_model=MatchResult, summary="Find candidates matching job-related criteria")
+async def match_candidates(body: MatchRequest, session: SessionDep) -> MatchResult:
+    """Applications showing the most of the criteria given (skills or requirements; without any, the jobs'
+    own listed requirements), each with where it shows them: listed skills, headline or résumé. Ordered by
+    how many criteria match, then the earliest applications, up to limit. No scores, nothing personal is
+    read, and nobody is moved or rejected: the recruiter chooses who to contact."""
+    return await candidate_matching.match(session, body)
 
 
 @router.get("/{candidate_id}", response_model=CandidateDetail, summary="Get a candidate")

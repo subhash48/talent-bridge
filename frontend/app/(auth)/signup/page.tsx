@@ -7,9 +7,9 @@ import { SignupForm } from "@/components/auth/SignupForm";
 import { homePath } from "@/lib/auth";
 import { getSignedInUser } from "@/lib/session";
 
-export const metadata: Metadata = { title: "Create your account" };
+export const metadata: Metadata = { title: "Create your candidate account" };
 
-// Candidates only. Hiring team accounts are set up by an administrator (see README), never here.
+// Candidates only. Employers set up their company's workspace at /signup/employer.
 export default async function SignupPage() {
   const user = await getSignedInUser();
   if (user) redirect(homePath(user));
@@ -17,14 +17,22 @@ export default async function SignupPage() {
   return (
     <AuthCard
       title="Create your candidate account"
-      description="Use the email address you applied with. Once you verify it, your account opens your application."
+      description="Follow your applications, messages from hiring teams, interviews and preparation in one place."
       footer={
-        <>
-          Already have an account?{" "}
-          <Link href="/login" className={authLinkStyles}>
-            Sign in
-          </Link>
-        </>
+        <div className="flex flex-col gap-2">
+          <span>
+            Already have an account?{" "}
+            <Link href="/login?as=candidate" className={authLinkStyles}>
+              Sign in
+            </Link>
+          </span>
+          <span>
+            Hiring?{" "}
+            <Link href="/signup/employer" className={authLinkStyles}>
+              Create a company workspace
+            </Link>
+          </span>
+        </div>
       }
     >
       <SignupForm />

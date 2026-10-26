@@ -8,7 +8,11 @@ const TITLES: Record<ApiUser["role"], string> = { recruiter: "Recruiter", admin:
 // GET /me: whoever the access token belongs to, with the role the API has on record for them.
 export async function getCurrentUser(): Promise<CurrentUser> {
   if (USE_MOCK_API) return mockApi.getCurrentUser();
-  const user = await apiFetch<ApiUser>("/me");
+  return toCurrentUser(await apiFetch<ApiUser>("/me"));
+}
+
+/** The API's description of a signed-in user (/me, and the account set-up endpoints). */
+export function toCurrentUser(user: ApiUser): CurrentUser {
   return {
     id: user.id,
     name: user.full_name,

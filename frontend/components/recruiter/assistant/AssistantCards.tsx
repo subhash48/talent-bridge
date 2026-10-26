@@ -4,6 +4,7 @@ import { ArrowRight, CalendarClock, Inbox, LoaderCircle, Pencil, Send, Sparkles,
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { ContactsCard } from "@/components/recruiter/assistant/ContactsCard";
 import { CandidateMatchList } from "@/components/recruiter/assistant/CandidateMatchList";
 import { Chips, Frame, Superseded } from "@/components/recruiter/assistant/CardFrame";
 import { JobDraftReview } from "@/components/recruiter/assistant/JobDraftReview";
@@ -39,6 +40,8 @@ export type CardActions = {
 /** superseded: a newer version of this card (the same proposal) is further down the conversation. */
 export function AssistantCardView({ card, actions, superseded = false }: { card: AssistantCard; actions: CardActions; superseded?: boolean }) {
   switch (card.type) {
+    case "contacts":
+      return <ContactsCard card={card} />;
     case "message":
       return <MessageProposal card={card} actions={actions} superseded={superseded} />;
     case "follow_ups":

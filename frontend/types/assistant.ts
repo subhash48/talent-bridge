@@ -1,3 +1,4 @@
+import type { Weekday } from "@/lib/days";
 import type { ApplicationStage } from "@/types/application";
 import type { CandidateMatch, InterviewState } from "@/types/matching";
 
@@ -26,6 +27,7 @@ export type SearchState = {
   location: string | null;
   interview: InterviewState | null;
   communication: "needs_attention" | "due_soon" | "on_track" | "closed" | null;
+  available_days?: Weekday[];
   limit: number;
 };
 
@@ -94,6 +96,7 @@ export type CandidateMatchCard = {
   title: string;
   filters: { key: string; label: string }[];
   criteria: string[];
+  available_days?: Weekday[];
   criteria_source: "recruiter" | "job_requirements" | "none";
   considered: number;
   matching: number;
@@ -180,6 +183,11 @@ export type JobDraft = {
   requirements: string[];
   preferred_qualifications: string[];
   description: string | null;
+  /** A small business's job, as the owner said it. */
+  pay?: string | null;
+  shift?: string | null;
+  work_days?: Weekday[];
+  openings?: number | null;
 };
 
 /** A job drafted from what the recruiter said. Not a job until they approve it. */
@@ -188,6 +196,8 @@ export type JobDraftCard = {
   action_id: string;
   status: ActionStatus;
   stage: "draft" | "confirm" | "created";
+  /** simple: Simple Hire's "Ready to post" preview; full: the whole posting to review. */
+  layout?: "full" | "simple";
   draft: JobDraft;
   /** What they didn't say, left for them: "Salary: not given, and never guessed". */
   missing: string[];
@@ -199,6 +209,22 @@ export type JobDraftCard = {
   error: string | null;
 };
 
+/** The contact details applicants gave the employer when they applied: for the ones picked, and nothing else. */
+export type ContactCard = {
+  type: "contacts";
+  items: {
+    application_id: string;
+    candidate_id: string;
+    name: string;
+    /** The role they applied for. */
+    job_title: string;
+    /** Null: they didn't give one. */
+    phone: string | null;
+    email: string;
+  }[];
+  note: string;
+};
+
 export type AssistantCard =
   | MessageCard
   | FollowUpListCard
@@ -206,7 +232,8 @@ export type AssistantCard =
   | InterviewInfoCard
   | CandidateMatchCard
   | OutreachCard
-  | JobDraftCard;
+  | JobDraftCard
+  | ContactCard;
 
 /** The recruiter's edits, sent with an approval. */
 export type ConfirmEdits = {

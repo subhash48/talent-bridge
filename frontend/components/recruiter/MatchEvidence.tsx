@@ -20,13 +20,17 @@ export function MatchEvidence({ match, className }: { match: CandidateMatch; cla
       <ul aria-label={`Why ${match.name} matches`} className="flex flex-wrap items-center gap-1">
         {shown.map((item) => (
           <li
-            key={item.criterion}
-            title={item.source ? `From their ${SOURCE_LABELS[item.source]}` : undefined}
+            key={`${item.kind ?? "criterion"}:${item.criterion}`}
+            title={
+              item.quote ? `“${item.quote}”` : item.source ? `From their ${SOURCE_LABELS[item.source]}` : undefined
+            }
             className="inline-flex min-h-6 items-center gap-1 rounded-[12px] bg-sage/[0.08] px-2 py-0.5 text-xs leading-tight text-sage ring-1 ring-sage/20"
           >
             <Check aria-hidden className="size-3" strokeWidth={2.5} />
-            {item.criterion}
-            {item.source && item.source !== "skills" && <span className="text-sage/75">· {SOURCE_LABELS[item.source]}</span>}
+            {item.label || item.criterion}
+            {item.source && item.source !== "skills" && item.kind !== "availability" && (
+              <span className="text-sage/75">· {SOURCE_LABELS[item.source]}</span>
+            )}
           </li>
         ))}
         {match.experience && (
@@ -40,11 +44,20 @@ export function MatchEvidence({ match, className }: { match: CandidateMatch; cla
           </li>
         )}
         {missing.map((item) => (
-          <li key={item.criterion} className="inline-flex h-6 items-center gap-1 px-1 text-xs text-faint">
+          <li
+            key={`${item.kind ?? "criterion"}:${item.criterion}`}
+            className="inline-flex h-6 items-center gap-1 px-1 text-xs text-faint"
+          >
             <Minus aria-hidden className="size-3" />
             <span>
-              <span className="sr-only">Not shown: </span>
-              {item.criterion}
+              {item.kind === "availability" ? (
+                item.label || item.criterion
+              ) : (
+                <>
+                  <span className="sr-only">Not shown: </span>
+                  {item.criterion}
+                </>
+              )}
             </span>
           </li>
         ))}

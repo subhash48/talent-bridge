@@ -76,6 +76,15 @@ async def get_current_user_submitting_demo(
     return await _signed_in_user(request, session, claims)
 
 
+async def get_token_claims(credentials: BearerDep, verifier: VerifierDep) -> TokenClaims:
+    """Who a valid access token says the caller is, whether or not TalentBridge has an account for them
+    yet: for setting one up (api/accounts.py)."""
+    return await _verify_token(credentials, verifier)
+
+
+ClaimsDep = Annotated[TokenClaims, Depends(get_token_claims)]
+
+
 async def _verify_token(
     credentials: HTTPAuthorizationCredentials | None, verifier: TokenVerifier | None
 ) -> TokenClaims:

@@ -4,6 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.dependencies import SessionDep, get_current_user_submitting_demo, require_recruiter
@@ -17,12 +18,8 @@ from app.services import workspace_service
 router = APIRouter(tags=["auth"])
 
 
-@router.get("/me", response_model=CurrentUserRead, summary="The signed-in user")
-async def me(user: Annotated[User, Depends(get_current_user_submitting_demo)], session: SessionDep) -> CurrentUserRead:
-    """Who the access token belongs to and their role, which decides where the frontend sends them.
-    candidate_id is the candidate's own record, for candidates only; workspace is staff's company and how
-    it hires (the full workspace or Simple Hire), which decides which interface opens. With the demo careers site on
-    (development only), signing in first submits the applications made there with this email."""
+async def current_user_read(session: AsyncSession, user: User) -> CurrentUserRead:
+    """A signed-in user as /me describes them."""
     candidate_id = None
     if user.role == UserRole.CANDIDATE:
         candidate_id = await session.scalar(select(Candidate.id).where(Candidate.user_id == user.id))
@@ -33,6 +30,16 @@ async def me(user: Annotated[User, Depends(get_current_user_submitting_demo)], s
         candidate_id=candidate_id,
         workspace=workspace_service.present(company, user) if company else None,
     )
+
+
+@router.get("/me", response_model=CurrentUserRead, summary="The signed-in user")
+async def me(user: Annotated[User, Depends(get_current_user_submitting_demo)], session: SessionDep) -> CurrentUserRead:
+    """Who the access token belongs to and their role, which decides where the frontend sends them.
+    candidate_id is the candidate's own record, for candidates only; workspace is staff's company and how
+    it hires (the full workspace or Simple Hire), which decides which interface opens. With the demo
+    careers site on (development only), signing in first submits the applications made there with this
+    email."""
+    return await current_user_read(session, user)
 
 
 @router.post(

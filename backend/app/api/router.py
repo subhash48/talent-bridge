@@ -6,6 +6,7 @@ Access is enforced here and in the backend only: hiding a page in the frontend p
 from fastapi import APIRouter, Depends
 
 from app.api import (
+    accounts,
     activities,
     ai,
     applications,
@@ -53,6 +54,8 @@ for module in (candidate,):
 # Guarded route by route: /me is for anyone signed in; the Ashby webhook checks Ashby's signature
 # and the other Ashby routes require a recruiter.
 api_router.include_router(auth.router)
+# Setting up an account: a valid sign-in, not yet linked to anything in TalentBridge.
+api_router.include_router(accounts.router)
 # TalentBridge's careers site: public, no sign-in.
 api_router.include_router(careers.router)
 api_router.include_router(integrations.router)

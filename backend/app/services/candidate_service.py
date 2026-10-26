@@ -168,18 +168,24 @@ async def get_candidate_detail(
 
 
 async def create_candidate(session: AsyncSession, data: CandidateCreate, actor: User | None) -> CandidateDetail:
-    """Create the person and, with a job_id, their application, its first stage and timeline entry."""
+    """Create the person, their application, its first stage and timeline entry."""
     if await session.scalar(select(Candidate.id).where(Candidate.email == data.email)):
         raise ConflictError("A candidate with this email is already in your pipeline.", code="candidate_exists")
+    # Someone another employer already has (or with their own candidate account) isn't copied in by hand: what
+    # they shared elsewhere stays there. They join this pipeline by applying, with what they choose to give.
+    elsewhere = select(Candidate.id).where(Candidate.email == data.email).execution_options(all_workspaces=True)
+    if await session.scalar(elsewhere):
+        raise ConflictError(
+            "This person already has a TalentBridge candidate account. Ask them to apply on your careers page.",
+            code="candidate_has_account",
+        )
 
-    job: Job | None = None
-    if data.job_id is not None:
-        job = await session.get(Job, data.job_id)
-        if job is None:
-            raise NotFoundError("The selected job doesn't exist.")
-        if job.status == JobStatus.CLOSED:
-            raise BadRequestError(f"{job.title} is closed to new candidates.", code="job_closed")
-        check_initial_stage(data.stage)
+    job: Job | None = await session.get(Job, data.job_id)
+    if job is None:
+        raise NotFoundError("The selected job doesn't exist.")
+    if job.status == JobStatus.CLOSED:
+        raise BadRequestError(f"{job.title} is closed to new candidates.", code="job_closed")
+    check_initial_stage(data.stage)
 
     now = utcnow()
     candidate = Candidate(
@@ -190,31 +196,29 @@ async def create_candidate(session: AsyncSession, data: CandidateCreate, actor: 
     session.add(candidate)
     await session.flush()
 
-    application: Application | None = None
-    if job is not None:
-        application = Application(
-            candidate_id=candidate.id,
-            job_id=job.id,
-            stage=data.stage,
-            source=data.source or "Added by recruiter",
-            applied_at=now,
-            updated_at=now,
-        )
-        session.add(application)
-        await session.flush()
-        record_stage(session, application.id, None, application.stage, now, actor)
-        record_activity(
-            session,
-            application.id,
-            ActivityType.APPLICATION_CREATED,
-            "Added to pipeline",
-            metadata={
-                "job": job.title,
-                "stage": data.stage,
-                "source": application.source,
-                "added_by": actor.full_name if actor else None,
-            },
-            at=now,
-        )
+    application = Application(
+        candidate_id=candidate.id,
+        job_id=job.id,
+        stage=data.stage,
+        source=data.source or "Added by recruiter",
+        applied_at=now,
+        updated_at=now,
+    )
+    session.add(application)
+    await session.flush()
+    record_stage(session, application.id, None, application.stage, now, actor)
+    record_activity(
+        session,
+        application.id,
+        ActivityType.APPLICATION_CREATED,
+        "Added to pipeline",
+        metadata={
+            "job": job.title,
+            "stage": data.stage,
+            "source": application.source,
+            "added_by": actor.full_name if actor else None,
+        },
+        at=now,
+    )
     await session.commit()
-    return await get_candidate_detail(session, candidate.id, application.id if application else None)
+    return await get_candidate_detail(session, candidate.id, application.id)

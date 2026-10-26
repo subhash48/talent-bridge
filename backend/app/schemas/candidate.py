@@ -23,7 +23,8 @@ Skills = Annotated[list[Annotated[str, Field(min_length=1, max_length=60)]], Fie
 
 
 class CandidateCreate(APIModel):
-    """Create a person and, when job_id is given, their application to that job."""
+    """Create a person and their application to one of the workspace's jobs. The job is required: a
+    candidate belongs to a workspace through an application, so one without any would be nobody's."""
 
     first_name: Name
     last_name: Name
@@ -36,7 +37,7 @@ class CandidateCreate(APIModel):
     pronouns: OptionalText(40) = None
     skills: Skills = []
 
-    job_id: UUID | None = None
+    job_id: UUID
     stage: ApplicationStage = ApplicationStage.SOURCED
     source: OptionalText(100) = None
 

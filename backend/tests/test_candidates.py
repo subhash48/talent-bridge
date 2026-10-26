@@ -147,14 +147,18 @@ async def test_create_candidate_with_an_application(client: AsyncClient) -> None
     assert listed["items"][0]["application_id"] == detail["application"]["id"]
 
 
-async def test_create_candidate_without_a_job(client: AsyncClient) -> None:
+async def test_a_candidate_is_added_with_the_job_they_are_considered_for(client: AsyncClient) -> None:
+    """A candidate belongs to a workspace through an application, so one without a job would be nobody's."""
     response = await client.post(f"{API}/candidates", json=NEW_CANDIDATE)
-    assert response.status_code == 201
-    assert response.json()["application"] is None
+    assert response.status_code == 422
+    assert response.json()["error"]["details"][0]["field"] == "job_id"
 
 
 async def test_create_rejects_duplicates_and_bad_input(client: AsyncClient) -> None:
-    duplicate = await client.post(f"{API}/candidates", json={**NEW_CANDIDATE, "email": "sophia.martinez@example.com"})
+    duplicate = await client.post(
+        f"{API}/candidates",
+        json={**NEW_CANDIDATE, "email": "sophia.martinez@example.com", "job_id": job_id("Data Scientist")},
+    )
     assert duplicate.status_code == 409
     assert duplicate.json()["error"]["code"] == "candidate_exists"
 

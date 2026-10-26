@@ -426,10 +426,10 @@ async def test_candidate_cannot_change_protected_fields(client: AsyncClient, bod
 async def test_candidate_without_an_application(
     client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
 ) -> None:
-    created = await client.post(
-        f"{API}/candidates", json={"first_name": "Nina", "last_name": "Patel", "email": "nina.patel@example.com"}
-    )
-    assert created.status_code == 201
+    # Someone who made a candidate account before applying anywhere.
+    async with sessions() as session:
+        session.add(Candidate(first_name="Nina", last_name="Patel", email="nina.patel@example.com"))
+        await session.commit()
     nina = await link(sessions, "nina.patel@example.com")
 
     me = (await client.get(f"{API}/candidate/me", headers=nina)).json()

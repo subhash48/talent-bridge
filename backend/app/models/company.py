@@ -3,7 +3,8 @@ from typing import TYPE_CHECKING, Any
 from sqlalchemy import Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import Base, JSONType, Timestamps, UUIDPrimaryKey
+from app.core.enums import WorkspaceMode
+from app.models.base import Base, JSONType, Timestamps, UUIDPrimaryKey, text_enum
 
 if TYPE_CHECKING:
     from app.models.job import Job
@@ -12,6 +13,10 @@ if TYPE_CHECKING:
 class Company(UUIDPrimaryKey, Timestamps, Base):
     """An employer hiring through TalentBridge (migration 017). Every job belongs to one, and a candidate
     learns about a company only through an application to one of its jobs.
+
+    A company is also a workspace (migration 019): the people who hire for it (users.company_id) see its
+    jobs and their applicants and nothing else (core/tenancy.py). workspace_mode is how it hires: the full
+    recruiting workspace, or Simple Hire.
 
     The profile fields are what the employer approved for candidates: the portal's Company page shows
     them and the candidate assistant answers company questions from them and nothing else
@@ -38,5 +43,6 @@ class Company(UUIDPrimaryKey, Timestamps, Base):
     hiring_note: Mapped[str] = mapped_column(Text, default="")
     links: Mapped[list[dict[str, Any]]] = mapped_column(JSONType, default=list)  # [{label, url}]
     source: Mapped[str] = mapped_column(Text, default="")  # where the content came from, and when
+    workspace_mode: Mapped[WorkspaceMode] = mapped_column(text_enum(WorkspaceMode), default=WorkspaceMode.FULL)
 
     jobs: Mapped[list["Job"]] = relationship(back_populates="company")

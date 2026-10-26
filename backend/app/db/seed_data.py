@@ -13,6 +13,7 @@ from app.core.enums import (
     InterviewType,
     JobStatus,
     SenderType,
+    WorkspaceMode,
 )
 
 DAY = 24 * 60
@@ -53,6 +54,7 @@ class CompanySeed:
     hiring_note: str
     links: tuple[tuple[str, str], ...]  # (label, url)
     source: str
+    workspace_mode: WorkspaceMode = WorkspaceMode.FULL  # how it hires: a recruiting team, or Simple Hire
 
 
 COMPANIES: tuple[CompanySeed, ...] = (

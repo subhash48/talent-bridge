@@ -16,6 +16,14 @@ class UserRole(StrEnum):
 STAFF_ROLES: frozenset[UserRole] = frozenset({UserRole.RECRUITER, UserRole.ADMIN})
 
 
+class WorkspaceMode(StrEnum):
+    """How an employer hires (migration 019). The same data and services either way; only the interface
+    and its vocabulary change."""
+
+    FULL = "full"  # a recruiting team: the whole workspace (Today, pipeline, SLA rules, analytics)
+    SIMPLE = "simple"  # Simple Hire, for small businesses: post jobs, see applicants, contact them
+
+
 class JobStatus(StrEnum):
     DRAFT = "draft"
     OPEN = "open"

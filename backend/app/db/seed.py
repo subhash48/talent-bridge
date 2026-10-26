@@ -73,8 +73,8 @@ PIPELINE = [
     ApplicationStage.HIRED,
 ]
 TABLES: list[type[Base]] = [
-    User,
     Company,
+    User,
     Job,
     Candidate,
     Application,
@@ -129,15 +129,23 @@ class Recorder:
 def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
     rows: dict[type[Base], list[dict[str, Any]]] = {table: [] for table in TABLES}
     recruiter_id = seed_id("user", RECRUITER["email"])
-    recruiters = (RECRUITER, 120), (NOVA_RECRUITER, 90), (HARBOR_RECRUITER, 60)
-    recruiters += (OPENAI_RECRUITER, 50), (ANTHROPIC_RECRUITER, 50), (GOOGLE_RECRUITER, 50)
-    for person, days in recruiters:
+    # Each recruiter hires for one company, and sees that company's workspace only.
+    recruiters = (
+        (RECRUITER, "encord", 120),
+        (NOVA_RECRUITER, "nova-ai", 90),
+        (HARBOR_RECRUITER, "harbor-robotics", 60),
+        (OPENAI_RECRUITER, "openai", 50),
+        (ANTHROPIC_RECRUITER, "anthropic", 50),
+        (GOOGLE_RECRUITER, "google", 50),
+    )
+    for person, company, days in recruiters:
         rows[User].append(
             {
                 "id": seed_id("user", person["email"]),
                 "email": person["email"],
                 "full_name": person["full_name"],
                 "role": UserRole.RECRUITER,
+                "company_id": seed_id("company", company),
                 "created_at": Ago(days * DAY),
                 "updated_at": Ago(days * DAY),
             }
@@ -165,6 +173,7 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
                 "hiring_note": company.hiring_note,
                 "links": [{"label": label, "url": url} for label, url in company.links],
                 "source": company.source,
+                "workspace_mode": company.workspace_mode,
                 "created_at": Ago(company.created_days_ago * DAY),
                 "updated_at": Ago(company.created_days_ago * DAY),
             }

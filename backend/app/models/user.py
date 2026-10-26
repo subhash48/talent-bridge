@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Text
+from sqlalchemy import ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.enums import UserRole
@@ -19,3 +19,6 @@ class User(UUIDPrimaryKey, Timestamps, Base):
     full_name: Mapped[str] = mapped_column(Text)
     role: Mapped[UserRole] = mapped_column(db_enum(UserRole, "user_role"), default=UserRole.RECRUITER)
     disabled_at: Mapped[datetime | None]  # set to revoke access at once, without touching Supabase Auth
+    # Staff only: the company whose workspace they hire for (migration 019). Every recruiter request is
+    # scoped to it. Null for candidates, and for staff who haven't set up a workspace yet.
+    company_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("companies.id", ondelete="RESTRICT"), index=True)

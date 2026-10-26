@@ -45,8 +45,22 @@ async def test_five_matching_figma_and_design_systems(client: AsyncClient) -> No
 
     sophia = next(item for item in result["items"] if item["name"] == "Sophia Martinez")
     assert sophia["evidence"] == [
-        {"criterion": "Figma", "matched": True, "source": "skills"},
-        {"criterion": "Design systems", "matched": True, "source": "skills"},
+        {
+            "criterion": "Figma",
+            "matched": True,
+            "source": "skills",
+            "kind": "criterion",
+            "label": "Figma",
+            "quote": None,
+        },
+        {
+            "criterion": "Design systems",
+            "matched": True,
+            "source": "skills",
+            "kind": "criterion",
+            "label": "Design systems",
+            "quote": None,
+        },
     ]
     assert sophia["experience"] == {
         "label": "4 years product design experience",
@@ -83,7 +97,15 @@ async def test_evidence_can_come_from_the_headline_or_the_resume(
         await session.commit()
     result = await find(client, job_ids=[DESIGNER], skills=["Design system", "B2B SaaS"], limit=20)
     by_name = {item["name"]: item for item in result["items"]}
-    assert by_name["Leo Martins"]["evidence"][0] == {"criterion": "Design system", "matched": True, "source": "resume"}
+    # Found in his résumé, with the words it was found in.
+    assert by_name["Leo Martins"]["evidence"][0] == {
+        "criterion": "Design system",
+        "matched": True,
+        "source": "resume",
+        "kind": "criterion",
+        "label": "Design system",
+        "quote": "Shipped a design system in Figma for a retail app.",
+    }
     # "B2B SaaS" is one of James Whitfield's listed skills, and in Sophia's headline only as "B2B tools".
     assert by_name["James Whitfield"]["evidence"][1]["source"] == "skills"
     assert by_name["Sophia Martinez"]["evidence"][1]["matched"] is False
@@ -210,3 +232,75 @@ def test_the_experience_note_is_years_of_that_work_never_an_age_or_time_away() -
         ("Product Designer", "I am 34 years old and have worked as a product designer since 2019."),
     ):
         assert note(title, text) is None, text
+
+
+# Availability and what applicants wrote: a small business's shortlist.
+
+KITCHEN_APPLICANTS = (
+    ("Maria", "Lopez", "Two years as a prep cook in a busy kitchen.", ["friday", "saturday"]),
+    ("John", "Patel", "Three years serving tables at a family restaurant.", ["friday", "saturday"]),
+    ("Aisha", "Khan", "I worked the line in a hotel kitchen for a year.", ["saturday"]),
+    ("Tom", "Becker", "Retail work at a bookshop.", ["friday", "saturday", "sunday"]),
+    ("Lena", "Park", None, ["sunday"]),
+)
+
+
+async def kitchen_job(client: AsyncClient, anonymous: AsyncClient) -> str:
+    from tests.test_careers import application
+
+    job = (
+        await client.post(
+            f"{API}/jobs",
+            json={"title": "Kitchen Assistant", "work_days": ["friday", "saturday", "sunday"], "pay": "$18/hour"},
+        )
+    ).json()
+    for first, last, note, days in KITCHEN_APPLICANTS:
+        body = application(
+            first_name=first,
+            last_name=last,
+            email=f"{first.lower()}.{last.lower()}@inbox.dev",
+            availability=days,
+            experience_note=note,
+            phone="+1 503 555 0100",
+        )
+        assert (await anonymous.post(f"{API}/careers/jobs/{job['id']}/apply", json=body)).status_code == 200
+    return job["id"]
+
+
+async def test_three_with_kitchen_experience_available_friday_and_saturday(
+    client: AsyncClient, anonymous: AsyncClient
+) -> None:
+    job = await kitchen_job(client, anonymous)
+    result = await find(
+        client, job_ids=[job], skills=["Kitchen experience"], available_days=["saturday", "friday"], limit=3
+    )
+    assert (result["criteria"], result["available_days"]) == (["Kitchen experience"], ["friday", "saturday"])
+    shown = {item["name"]: [(e["label"], e["matched"]) for e in item["evidence"]] for item in result["items"]}
+    assert list(shown) == ["Maria Lopez", "John Patel", "Aisha Khan"]  # all three shown first, then earliest
+    assert shown["Maria Lopez"] == [
+        ("Kitchen experience", True),
+        ("Friday available", True),
+        ("Saturday available", True),
+    ]
+    # Restaurant work, said as restaurant work: never claimed as kitchen experience.
+    assert shown["John Patel"] == [
+        ("Restaurant experience", True),
+        ("Friday available", True),
+        ("Saturday available", True),
+    ]
+    assert shown["Aisha Khan"] == [
+        ("Kitchen experience", True),
+        ("No Friday availability given", False),
+        ("Saturday available", True),
+    ]
+    maria = result["items"][0]["evidence"][0]
+    assert (maria["source"], maria["quote"]) == ("application", "Two years as a prep cook in a busy kitchen.")
+    assert result["items"][0]["evidence"][1]["kind"] == "availability"
+    assert result["matching"] == 4  # Lena shows none of them, so she isn't in this list (and is still an applicant)
+
+
+async def test_availability_alone_is_a_criterion(client: AsyncClient, anonymous: AsyncClient) -> None:
+    job = await kitchen_job(client, anonymous)
+    result = await find(client, job_ids=[job], available_days=["sunday"], limit=10)
+    assert sorted(item["name"] for item in result["items"]) == ["Lena Park", "Tom Becker"]
+    assert result["criteria"] == []

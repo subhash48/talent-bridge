@@ -2,11 +2,17 @@
 
 "The top 10 for the ML Engineer role" means the applicants whose applications show the most of the
 criteria the recruiter picked (or, without any, the job's own listed requirements), and each result
-says which ones and where: the candidate's listed skills, their headline or their résumé. Years of
-relevant experience the application states are quoted alongside. Nothing else is read: never
-demographics, pronouns, portal activity, engagement or anything else a person could be judged by,
-and there is no score. Nobody is rejected or moved: candidates who show none of the criteria simply
-aren't in this list, and stay in the pipeline as before. The recruiter decides who to contact.
+says which ones and where: the candidate's listed skills, their headline, what they wrote in this
+application, or their résumé, with the words it was found in. "Available Friday and Saturday" is a
+criterion too, read from the days the applicant said they can work. Years of relevant experience the
+application states are quoted alongside. Nothing else is read: never demographics, pronouns, portal
+activity, engagement or anything else a person could be judged by, and there is no score. Nobody is
+rejected or moved: candidates who show none of the criteria simply aren't in this list, and stay in the
+pipeline as before. The recruiter decides who to contact.
+
+Experience in closely related work counts, and says so: "Kitchen experience" is also found as restaurant
+or cook experience, labelled "Restaurant experience" rather than claiming kitchen work. The related
+words are listed below (RELATED), all job-related.
 """
 
 import re
@@ -17,6 +23,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import contains_eager
 
+from app.core.enums import Weekday
 from app.core.errors import BadRequestError
 from app.models import Application, Candidate, CandidateResume, Job
 from app.models.base import utcnow
@@ -78,6 +85,29 @@ NOT_WORKED_AFTER = re.compile(
 )
 NOT_WORKED_BEFORE = re.compile(r"\b(?:aged?|age of|turning|turned)\s*$", re.IGNORECASE)
 SENTENCE = re.compile(r"(?<=[.!?;])\s+|\n+")
+EXPERIENCE = re.compile(r"\s+experience$", re.IGNORECASE)
+# Closely related work that shows the same experience, by the criterion's core words. Each match is labelled
+# with the word found ("Restaurant experience"), never as the criterion itself.
+RELATED: dict[str, tuple[str, ...]] = {
+    "kitchen": ("restaurant", "line cook", "prep cook", "cook", "chef", "food prep", "catering", "dishwasher"),
+    "customer service": (
+        "cashier",
+        "front of house",
+        "retail",
+        "barista",
+        "server",
+        "waiter",
+        "waitress",
+        "hospitality",
+    ),
+    "restaurant": ("kitchen", "server", "waiter", "waitress", "host", "front of house", "line cook", "cook"),
+    "cashier": ("till", "checkout", "point of sale", "register"),
+    "barista": ("coffee", "espresso", "cafe"),
+    "warehouse": ("forklift", "picking", "packing", "inventory", "stockroom"),
+    "delivery": ("driver", "courier", "driving"),
+    "cleaning": ("cleaner", "janitorial", "housekeeping"),
+    "retail": ("cashier", "sales associate", "shop", "store"),
+}
 
 
 async def match(session: AsyncSession, request: MatchRequest, now: datetime | None = None) -> MatchResult:
@@ -121,12 +151,14 @@ async def match(session: AsyncSession, request: MatchRequest, now: datetime | No
     if not criteria:
         source = "none"
 
+    days = [day for day in Weekday if day in request.available_days]
     resumes = await _resume_texts(session, {app.candidate_id for app in applications})
-    found = [_match(app, criteria, resumes.get(app.candidate_id)) for app in applications]
-    matching = [item for item in found if item.matched] if criteria else found
+    found = [_match(app, criteria, days, resumes.get(app.candidate_id)) for app in applications]
+    matching = [item for item in found if item.matched] if criteria or days else found
     matching.sort(key=lambda item: (-item.matched, item.applied_at, item.name))
     return MatchResult(
         criteria=criteria,
+        available_days=days,
         criteria_source=source,  # type: ignore[arg-type]
         filters=filters,
         considered=len(applications),
@@ -137,9 +169,10 @@ async def match(session: AsyncSession, request: MatchRequest, now: datetime | No
     )
 
 
-def _match(application: Application, criteria: list[str], resume: str | None) -> CandidateMatch:
+def _match(application: Application, criteria: list[str], days: list[Weekday], resume: str | None) -> CandidateMatch:
     candidate: Candidate = application.candidate
-    evidence = [_evidence(term, candidate, resume) for term in criteria]
+    evidence = [_evidence(term, candidate, application.experience_note, resume) for term in criteria]
+    evidence += [_available(day, application) for day in days]
     return CandidateMatch(
         application_id=application.id,
         candidate_id=candidate.id,
@@ -180,17 +213,55 @@ def _mentions(text: str | None, term: str) -> bool:
     return re.search(rf"(?<![\w]){pattern}(?:e?s)?(?![\w])", text.casefold()) is not None
 
 
-def _evidence(term: str, candidate: Candidate, resume: str | None) -> MatchEvidence:
-    """Where the application shows the criterion: a listed skill first, then the headline, then the résumé."""
+def _evidence(term: str, candidate: Candidate, note: str | None, resume: str | None) -> MatchEvidence:
+    """Where the application shows the criterion: a listed skill first, then the headline, then what they wrote
+    in this application, then the résumé; and only then closely related work (RELATED), said as such."""
+    core = EXPERIENCE.sub("", term.strip()) or term
     wanted = _norm(term)
-    source: EvidenceSource | None = None
-    if any(_norm(skill) == wanted or _mentions(skill, term) for skill in candidate.skills or []):
-        source = "skills"
-    elif _mentions(candidate.headline, term):
-        source = "headline"
-    elif _mentions(resume, term):
-        source = "resume"
-    return MatchEvidence(criterion=term, matched=source is not None, source=source)
+    if any(_norm(skill) in (wanted, _norm(core)) or _mentions(skill, core) for skill in candidate.skills or []):
+        return MatchEvidence(criterion=term, matched=True, source="skills", label=term)
+    texts: tuple[tuple[EvidenceSource, str | None], ...] = (
+        ("headline", candidate.headline),
+        ("application", note),
+        ("resume", resume),
+    )
+    for words, label in ((core, term), *((related, _related_label(term, related)) for related in _related(core))):
+        for source, text in texts:
+            if _mentions(text, words):
+                return MatchEvidence(
+                    criterion=term, matched=True, source=source, label=label, quote=_quote(text or "", words)
+                )
+    return MatchEvidence(criterion=term, matched=False, label=term)
+
+
+def _related(core: str) -> tuple[str, ...]:
+    return RELATED.get(_norm(core), ())
+
+
+def _related_label(term: str, related: str) -> str:
+    """ "Restaurant experience" for kitchen experience found as restaurant work."""
+    said = related[:1].upper() + related[1:]
+    return f"{said} experience" if EXPERIENCE.search(term) else said
+
+
+def _quote(text: str, words: str) -> str | None:
+    """The sentence the words were found in, as written, up to 160 characters."""
+    for sentence in SENTENCE.split(text):
+        if _mentions(sentence, words):
+            sentence = sentence.strip()
+            return sentence if len(sentence) <= 160 else f"{sentence[:159].rstrip()}…"
+    return None
+
+
+def _available(day: Weekday, application: Application) -> MatchEvidence:
+    """A day the applicant said they can work, from their application. Never assumed from anything else."""
+    if day.value in (application.availability or []):
+        return MatchEvidence(
+            criterion=day.label, matched=True, source="application", kind="availability", label=f"{day.label} available"
+        )
+    return MatchEvidence(
+        criterion=day.label, matched=False, kind="availability", label=f"No {day.label} availability given"
+    )
 
 
 def experience(job_title: str, headline: str | None, resume: str | None) -> ExperienceNote | None:

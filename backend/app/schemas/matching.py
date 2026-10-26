@@ -10,7 +10,7 @@ from uuid import UUID
 
 from pydantic import BeforeValidator, ConfigDict, Field
 
-from app.core.enums import ApplicationStage, CommunicationStatus
+from app.core.enums import ApplicationStage, CommunicationStatus, Weekday
 from app.schemas.common import APIModel, Timestamp
 from app.schemas.demo import clean_list
 
@@ -22,7 +22,9 @@ MAX_IN_VIEW = 10_000
 MAX_CRITERIA, MAX_CRITERION = 20, 60
 Criterion = Annotated[str, Field(min_length=1, max_length=MAX_CRITERION)]
 Criteria = Annotated[list[Criterion], BeforeValidator(clean_list), Field(max_length=MAX_CRITERIA)]
-EvidenceSource = Literal["skills", "headline", "resume"]
+# Where it was found: the candidate's listed skills, their headline, their résumé, or what they wrote in this
+# application (their experience, and the days they said they can work).
+EvidenceSource = Literal["skills", "headline", "resume", "application"]
 SHORTLIST_SIZES = (5, 10, 20)
 
 
@@ -39,15 +41,22 @@ class MatchRequest(APIModel):
     interview: InterviewState | None = None
     communication: CommunicationStatus | None = None
     messaging: bool | None = None
+    # Days the applicants said they can work (on the application): each one shows, per candidate, as found or not.
+    available_days: Annotated[list[Weekday], Field(max_length=7)] = []
     # Only these applications: the ones the Candidates page shows with its filters.
     application_ids: Annotated[list[UUID], Field(max_length=MAX_IN_VIEW)] | None = None
     limit: Annotated[int, Field(ge=1, le=200)] = 10
 
 
 class MatchEvidence(APIModel):
-    criterion: str
+    criterion: str  # as asked: "Kitchen experience", "Friday"
     matched: bool
     source: EvidenceSource | None = None  # where it was found
+    kind: Literal["criterion", "availability"] = "criterion"
+    # What was found, as a person reads it: "Kitchen experience", "Restaurant experience" (a related kind of
+    # work, said so), "Friday available"; or what wasn't: "No Friday availability given".
+    label: str = ""
+    quote: str | None = None  # the words it was found in, from their application, headline or résumé
 
 
 class ExperienceNote(APIModel):
@@ -80,6 +89,7 @@ class MatchFilter(APIModel):
 
 class MatchResult(APIModel):
     criteria: list[str]
+    available_days: list[Weekday] = []
     criteria_source: Literal["recruiter", "job_requirements", "none"]
     filters: list[MatchFilter]  # every filter applied, besides the criteria
     considered: int  # applications the filters left

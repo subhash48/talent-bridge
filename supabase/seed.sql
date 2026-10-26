@@ -66,7 +66,7 @@ Requirements: Figma, Design systems, Prototyping, Product thinking.', 'draft', '
 Requirements: User research, Interaction design, Accessibility, Figma.', 'draft', 'Full-time', 'Aiko Mori', now() - interval '72000 minutes', now() - interval '72000 minutes');
 
 insert into public.candidates (id, external_id, first_name, last_name, email, phone, location, avatar_url, headline, resume_url, pronouns, skills, created_at, updated_at) values
-  ('6392a87e-e72e-5d60-be2b-d0a1841558f1', null, 'Sophia', 'Martinez', 'sophia.martinez@example.com', '+44 20 7946 0123', 'London, UK', null, 'Product designer focused on design systems for data-heavy B2B tools', null, 'she/her', '["Figma", "Design systems", "Prototyping", "User research"]'::jsonb, now() - interval '17280 minutes', now() - interval '17280 minutes'),
+  ('6392a87e-e72e-5d60-be2b-d0a1841558f1', null, 'Sophia', 'Martinez', 'sophia.martinez@example.com', '+44 20 7946 0123', 'London, UK', null, 'Product designer with 4 years of experience building design systems for data-heavy B2B tools', null, 'she/her', '["Figma", "Design systems", "Prototyping", "User research"]'::jsonb, now() - interval '17280 minutes', now() - interval '17280 minutes'),
   ('3c6ae3e3-9662-5a5a-8215-26ea6aca1d8f', null, 'James', 'Park', 'james.park@example.com', '+1 415 555 0142', 'San Francisco, CA', null, 'ML engineer training large computer vision models', null, null, '["PyTorch", "Computer vision", "Distributed training", "MLOps"]'::jsonb, now() - interval '12960 minutes', now() - interval '12960 minutes'),
   ('accc0fe0-41d0-5f22-a7b3-3507c5c4687c', null, 'Priya', 'Desai', 'priya.desai@example.com', '+1 212 555 0187', 'New York, NY', null, 'Product manager for B2B machine learning platforms', null, null, '["Roadmapping", "B2B SaaS", "ML products", "Analytics"]'::jsonb, now() - interval '21600 minutes', now() - interval '21600 minutes'),
   ('51c9e9ec-a917-57bb-bb94-7f1534901326', null, 'Daniel', 'Lee', 'daniel.lee@example.com', null, 'London, UK', null, 'Backend engineer building Go services on Kubernetes', null, null, '["TypeScript", "Go", "Postgres", "Kubernetes"]'::jsonb, now() - interval '1500 minutes', now() - interval '1500 minutes'),
@@ -98,7 +98,12 @@ insert into public.candidates (id, external_id, first_name, last_name, email, ph
   ('b880c6e2-eb28-5424-9ce3-9486254ff77d', null, 'Sara', 'Lindqvist', 'sara.lindqvist@example.com', null, 'Stockholm, Sweden', null, null, null, null, '["Product design", "Research", "Figma", "Workshops"]'::jsonb, now() - interval '83520 minutes', now() - interval '83520 minutes'),
   ('936f9fb4-0799-5592-8c55-000ac68ecc1e', null, 'Arjun', 'Mehta', 'arjun.mehta@example.com', null, 'London, UK', null, null, null, null, '["Python", "Data pipelines", "Spark", "Airflow"]'::jsonb, now() - interval '19000 minutes', now() - interval '19000 minutes'),
   ('1743b8bb-623e-55ef-af48-6d2bdbcf553d', null, 'Nina', 'Kowalski', 'nina.kowalski@example.com', null, 'Warsaw, Poland', null, null, null, null, '["Bayesian modeling", "Python", "Experimentation", "R"]'::jsonb, now() - interval '115200 minutes', now() - interval '115200 minutes'),
-  ('e37da7a4-b2dc-5c43-b719-66eaa5be2dbf', null, 'Rosa', 'Navarro', 'rosa.navarro@example.com', null, 'Madrid, Spain', null, 'Backend engineer moving into applied machine learning', null, null, '["Python", "Go", "Distributed systems", "Kubernetes", "PyTorch"]'::jsonb, now() - interval '20160 minutes', now() - interval '20160 minutes');
+  ('e37da7a4-b2dc-5c43-b719-66eaa5be2dbf', null, 'Rosa', 'Navarro', 'rosa.navarro@example.com', null, 'Madrid, Spain', null, 'Backend engineer moving into applied machine learning', null, null, '["Python", "Go", "Distributed systems", "Kubernetes", "PyTorch"]'::jsonb, now() - interval '20160 minutes', now() - interval '20160 minutes'),
+  ('29d304e3-1462-5ed6-b89a-54a651651f8a', null, 'Maya', 'Brooks', 'maya.brooks@example.com', null, 'New York, NY', null, 'Product designer with 5 years of experience scaling design systems for fintech teams', null, null, '["Figma", "Design systems", "Accessibility", "Prototyping"]'::jsonb, now() - interval '8640 minutes', now() - interval '8640 minutes'),
+  ('37194c3e-267f-5017-acd7-3ceae6cd06a3', null, 'James', 'Whitfield', 'james.whitfield@example.com', null, 'London, UK', null, 'UX designer with 3 years of experience researching and designing B2B SaaS workflows', null, null, '["Figma", "User research", "Usability testing", "B2B SaaS"]'::jsonb, now() - interval '7200 minutes', now() - interval '7200 minutes'),
+  ('b608d4d0-37dd-5dc1-9d2c-3e4f7eb2b376', null, 'Ana', 'Ruiz', 'ana.ruiz@example.com', null, 'Barcelona, Spain', null, 'Senior product designer, 7 years building design systems and design tokens', null, null, '["Figma", "Design systems", "Motion design", "Design tokens"]'::jsonb, now() - interval '5760 minutes', now() - interval '5760 minutes'),
+  ('05ee9f0f-db11-51ab-af5d-e4d345b05160', null, 'Tom', 'Fischer', 'tom.fischer@example.com', null, 'Berlin, Germany', null, 'Product designer for early-stage startups', null, null, '["Figma", "Webflow", "Prototyping", "Copywriting"]'::jsonb, now() - interval '11520 minutes', now() - interval '11520 minutes'),
+  ('28e8008b-6ead-508f-9030-0ad24dedf998', null, 'Leo', 'Martins', 'leo.martins@example.com', null, 'Lisbon, Portugal', null, 'Visual designer moving into product design', null, null, '["Sketch", "Illustration", "Branding", "Visual design"]'::jsonb, now() - interval '4320 minutes', now() - interval '4320 minutes');
 
 insert into public.applications (id, candidate_id, job_id, stage, source, applied_at, updated_at, archived_at, candidate_messaging_enabled) values
   ('9ba87e3b-2ac4-5432-a823-4e50d03eabc4', '6392a87e-e72e-5d60-be2b-d0a1841558f1', 'd7fa7928-5fd7-5ed0-b7a5-82242a9523c5', 'interview', 'Referral', now() - interval '17280 minutes', now() - interval '120 minutes', null, true),
@@ -134,6 +139,11 @@ insert into public.applications (id, candidate_id, job_id, stage, source, applie
   ('f37db6fa-d19d-574c-bea9-5528211ed300', '936f9fb4-0799-5592-8c55-000ac68ecc1e', 'd80aee5d-3019-5f40-bd21-241fb1a5f3c9', 'sourced', 'GitHub', now() - interval '19000 minutes', now() - interval '19000 minutes', null, false),
   ('6f12e11b-a961-544b-93ce-d7371ce1410a', '1743b8bb-623e-55ef-af48-6d2bdbcf553d', '364db22d-5121-57d6-b74e-f6bdcd94f393', 'hired', 'LinkedIn', now() - interval '115200 minutes', now() - interval '21000 minutes', null, false),
   ('57ad530b-ba59-5753-980c-0655b3f0ffe0', 'e37da7a4-b2dc-5c43-b719-66eaa5be2dbf', 'd80aee5d-3019-5f40-bd21-241fb1a5f3c9', 'interview', 'Careers site', now() - interval '20160 minutes', now() - interval '2000 minutes', null, true),
+  ('a0fd87be-41de-5ce8-8d7d-3edce846c06e', '29d304e3-1462-5ed6-b89a-54a651651f8a', 'd7fa7928-5fd7-5ed0-b7a5-82242a9523c5', 'screening', 'Careers site', now() - interval '8640 minutes', now() - interval '5200 minutes', null, false),
+  ('544f2e85-abb2-5f28-8e5c-411c14ae5fb0', '37194c3e-267f-5017-acd7-3ceae6cd06a3', 'd7fa7928-5fd7-5ed0-b7a5-82242a9523c5', 'screening', 'LinkedIn', now() - interval '7200 minutes', now() - interval '7200 minutes', null, false),
+  ('edb8865d-e783-5a79-9e4a-c6db84e0f822', 'b608d4d0-37dd-5dc1-9d2c-3e4f7eb2b376', 'd7fa7928-5fd7-5ed0-b7a5-82242a9523c5', 'sourced', 'Referral', now() - interval '5760 minutes', now() - interval '5760 minutes', null, false),
+  ('c94a6b80-edca-5686-bdf1-18bc3f8a61e2', '05ee9f0f-db11-51ab-af5d-e4d345b05160', 'd7fa7928-5fd7-5ed0-b7a5-82242a9523c5', 'screening', 'LinkedIn', now() - interval '11520 minutes', now() - interval '11520 minutes', null, false),
+  ('6dd60c9d-a043-596b-acbc-d28905c8d683', '28e8008b-6ead-508f-9030-0ad24dedf998', 'd7fa7928-5fd7-5ed0-b7a5-82242a9523c5', 'sourced', 'Careers site', now() - interval '4320 minutes', now() - interval '4320 minutes', null, false),
   ('7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'e37da7a4-b2dc-5c43-b719-66eaa5be2dbf', 'f1e625f8-e4b3-5808-8cf1-5e4b512386c3', 'interview', 'Careers site', now() - interval '23040 minutes', now() - interval '4300 minutes', null, true),
   ('6d6a41f3-12e8-5505-b163-142d4973ad66', 'e37da7a4-b2dc-5c43-b719-66eaa5be2dbf', 'af2a49b5-253b-5127-ab5f-d4316d97e806', 'screening', 'Careers site', now() - interval '8640 minutes', now() - interval '2900 minutes', null, false),
   ('644b45ed-6e16-58fa-a9a3-c2648b32fc95', '6392a87e-e72e-5d60-be2b-d0a1841558f1', 'b77334f5-95de-5fe8-8bb0-3e258a14fc6f', 'screening', 'Careers site', now() - interval '12960 minutes', now() - interval '1000 minutes', null, false),
@@ -232,17 +242,25 @@ insert into public.candidate_stage_history (id, application_id, previous_stage, 
   ('0f7014f3-6452-555d-b7fa-9fe75d4beec9', '57ad530b-ba59-5753-980c-0655b3f0ffe0', null, 'sourced', '7029e685-fea9-5ce3-9750-8a3f04fb2f2e', now() - interval '20160 minutes'),
   ('fe1c0659-71d1-57b3-baed-c2dc04273e19', '57ad530b-ba59-5753-980c-0655b3f0ffe0', 'sourced', 'screening', '7029e685-fea9-5ce3-9750-8a3f04fb2f2e', now() - interval '16000 minutes'),
   ('d389b9e9-018c-5f0c-85d8-c909c3e77351', '57ad530b-ba59-5753-980c-0655b3f0ffe0', 'screening', 'interview', '7029e685-fea9-5ce3-9750-8a3f04fb2f2e', now() - interval '8800 minutes'),
-  ('aca7e34e-1a00-5146-85d4-943f5580feaa', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', null, 'sourced', '38ce73f3-9425-5f05-bb27-02e58acc0e12', now() - interval '23040 minutes'),
-  ('63faf441-f87b-5598-89f4-ad52b61ec173', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'sourced', 'screening', '38ce73f3-9425-5f05-bb27-02e58acc0e12', now() - interval '15000 minutes'),
-  ('0935ac45-d9bf-57f9-b40d-cda0a4d69282', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'screening', 'interview', '38ce73f3-9425-5f05-bb27-02e58acc0e12', now() - interval '8800 minutes'),
-  ('6f005a7f-c0f9-5271-abc8-cc4b18bc9bec', '6d6a41f3-12e8-5505-b163-142d4973ad66', null, 'sourced', '4cc9d9ed-4c7f-51af-a7d7-a0ac1dda6812', now() - interval '8640 minutes'),
-  ('fad3bb1b-5a70-58a2-ba35-a17e8b196681', '6d6a41f3-12e8-5505-b163-142d4973ad66', 'sourced', 'screening', '4cc9d9ed-4c7f-51af-a7d7-a0ac1dda6812', now() - interval '4400 minutes'),
-  ('86b089c7-9619-5d6c-adfe-f9bd3dff7f6f', '644b45ed-6e16-58fa-a9a3-c2648b32fc95', null, 'sourced', '4b3f4cc6-51e5-5454-a48c-27be4e8a8174', now() - interval '12960 minutes'),
-  ('fbe2439b-29cb-51bf-851b-9ee195a9f42c', '644b45ed-6e16-58fa-a9a3-c2648b32fc95', 'sourced', 'screening', '4b3f4cc6-51e5-5454-a48c-27be4e8a8174', now() - interval '1500 minutes'),
-  ('816270ca-d081-5f98-8af3-5ef264962811', 'd8c2aea0-be73-55af-a1bf-d8e43b59ff5d', null, 'sourced', 'aca25b5b-cca4-581c-b768-01ca9e88ba21', now() - interval '2880 minutes'),
-  ('3d61909f-14e5-52e4-a001-9b7a4d81da47', '66ce4a5a-eb68-5fac-9ef2-3d6737a82db4', null, 'sourced', '8c47c381-cbb1-5c04-a904-902f02228414', now() - interval '28800 minutes'),
-  ('5e60cb1e-8e6e-5069-a0cc-53cc44af6e3e', '66ce4a5a-eb68-5fac-9ef2-3d6737a82db4', 'sourced', 'screening', '8c47c381-cbb1-5c04-a904-902f02228414', now() - interval '22000 minutes'),
-  ('8fc87f15-bbcb-590d-8c08-7a15525182f8', '66ce4a5a-eb68-5fac-9ef2-3d6737a82db4', 'screening', 'interview', '8c47c381-cbb1-5c04-a904-902f02228414', now() - interval '9000 minutes');
+  ('16e65f92-6d35-5dd6-8260-df67682cf287', 'a0fd87be-41de-5ce8-8d7d-3edce846c06e', null, 'sourced', '7029e685-fea9-5ce3-9750-8a3f04fb2f2e', now() - interval '8640 minutes'),
+  ('6109e9a7-aeec-543a-bf9a-f77c26b93c08', 'a0fd87be-41de-5ce8-8d7d-3edce846c06e', 'sourced', 'screening', '7029e685-fea9-5ce3-9750-8a3f04fb2f2e', now() - interval '5600 minutes'),
+  ('cc59cba9-df89-5a94-bd3c-3b79a100d751', '544f2e85-abb2-5f28-8e5c-411c14ae5fb0', null, 'sourced', '7029e685-fea9-5ce3-9750-8a3f04fb2f2e', now() - interval '7200 minutes'),
+  ('3f2fabc4-21ef-50f1-8d1d-f1d7c141b0ed', '544f2e85-abb2-5f28-8e5c-411c14ae5fb0', 'sourced', 'screening', '7029e685-fea9-5ce3-9750-8a3f04fb2f2e', now() - interval '4300 minutes'),
+  ('d5100ab6-7d59-5a30-9dce-03f996f5ec12', 'edb8865d-e783-5a79-9e4a-c6db84e0f822', null, 'sourced', '7029e685-fea9-5ce3-9750-8a3f04fb2f2e', now() - interval '5760 minutes'),
+  ('1ff65337-80a9-5977-bce9-9c5b4cd9190b', 'c94a6b80-edca-5686-bdf1-18bc3f8a61e2', null, 'sourced', '7029e685-fea9-5ce3-9750-8a3f04fb2f2e', now() - interval '11520 minutes'),
+  ('839dcfbd-82fb-5c8b-9e9e-800b234421bd', 'c94a6b80-edca-5686-bdf1-18bc3f8a61e2', 'sourced', 'screening', '7029e685-fea9-5ce3-9750-8a3f04fb2f2e', now() - interval '7000 minutes'),
+  ('312c63ef-b142-5459-ae49-33dd3a63dd7c', '6dd60c9d-a043-596b-acbc-d28905c8d683', null, 'sourced', '7029e685-fea9-5ce3-9750-8a3f04fb2f2e', now() - interval '4320 minutes'),
+  ('aba7aa99-fead-5e24-a51e-76b09f3dbf57', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', null, 'sourced', '38ce73f3-9425-5f05-bb27-02e58acc0e12', now() - interval '23040 minutes'),
+  ('75fa807c-2a98-5757-8283-a6ac8df5bd02', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'sourced', 'screening', '38ce73f3-9425-5f05-bb27-02e58acc0e12', now() - interval '15000 minutes'),
+  ('c661dbcf-ec43-56d7-ae5d-ba030796d9b9', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'screening', 'interview', '38ce73f3-9425-5f05-bb27-02e58acc0e12', now() - interval '8800 minutes'),
+  ('31f35ede-bf87-5007-8112-893c3a61ac1b', '6d6a41f3-12e8-5505-b163-142d4973ad66', null, 'sourced', '4cc9d9ed-4c7f-51af-a7d7-a0ac1dda6812', now() - interval '8640 minutes'),
+  ('da3edb2a-f44c-5a41-b494-2cf8f7ab402f', '6d6a41f3-12e8-5505-b163-142d4973ad66', 'sourced', 'screening', '4cc9d9ed-4c7f-51af-a7d7-a0ac1dda6812', now() - interval '4400 minutes'),
+  ('6c12c679-92fd-5990-94aa-f7ac9e7e54b2', '644b45ed-6e16-58fa-a9a3-c2648b32fc95', null, 'sourced', '4b3f4cc6-51e5-5454-a48c-27be4e8a8174', now() - interval '12960 minutes'),
+  ('df981a4f-4f98-53ab-b423-b269f6399c57', '644b45ed-6e16-58fa-a9a3-c2648b32fc95', 'sourced', 'screening', '4b3f4cc6-51e5-5454-a48c-27be4e8a8174', now() - interval '1500 minutes'),
+  ('0c059ddf-8456-5208-ae4e-5dab9a246f22', 'd8c2aea0-be73-55af-a1bf-d8e43b59ff5d', null, 'sourced', 'aca25b5b-cca4-581c-b768-01ca9e88ba21', now() - interval '2880 minutes'),
+  ('273e55fc-c134-58e5-b3f9-6874ca4091a9', '66ce4a5a-eb68-5fac-9ef2-3d6737a82db4', null, 'sourced', '8c47c381-cbb1-5c04-a904-902f02228414', now() - interval '28800 minutes'),
+  ('32b2b2db-e77d-5b41-8fd4-fe43f8c6ec93', '66ce4a5a-eb68-5fac-9ef2-3d6737a82db4', 'sourced', 'screening', '8c47c381-cbb1-5c04-a904-902f02228414', now() - interval '22000 minutes'),
+  ('5557b23c-7a97-5c96-8a04-d02c8dfda9fa', '66ce4a5a-eb68-5fac-9ef2-3d6737a82db4', 'screening', 'interview', '8c47c381-cbb1-5c04-a904-902f02228414', now() - interval '9000 minutes');
 
 insert into public.interviews (id, application_id, title, interview_type, scheduled_at, duration_minutes, status, meeting_url, notes, interviewers, confirmed_at, created_at, updated_at) values
   ('812585a6-2bfb-50e2-a3c2-7801f0704487', '9ba87e3b-2ac4-5432-a823-4e50d03eabc4', 'Design interview', 'video', date_trunc('day', now()) + interval '1 days 10 hours 0 minutes', 60, 'scheduled', 'https://meet.example.com/sophia-martinez', null, '["Maya Okafor", "Leo Brandt"]'::jsonb, now() - interval '120 minutes', now() - interval '4320 minutes', now() - interval '4320 minutes'),
@@ -623,7 +641,55 @@ Alex', now() - interval '58560 minutes', now() - interval '58500 minutes'),
 Welcome to Encord! Your onboarding details are on their way.
 
 Best,
-Alex', now() - interval '39720 minutes', now() - interval '39660 minutes');
+Alex', now() - interval '39720 minutes', now() - interval '39660 minutes'),
+  ('f99c982f-2d56-5b0c-b0ba-c8a942bd2dcb', 'a0fd87be-41de-5ce8-8d7d-3edce846c06e', 'recruiter', 'Hi Maya,
+
+Thanks for applying for the Product Designer role. Your application has moved to screening, and I''ll be in touch about next steps within a few days.
+
+Best,
+Alex', now() - interval '5480 minutes', now() - interval '5420 minutes'),
+  ('7b7c58da-e644-5cd6-9632-638046a77826', 'a0fd87be-41de-5ce8-8d7d-3edce846c06e', 'recruiter', 'Hi Maya,
+
+A quick update on your Product Designer application: the team is still reviewing applications, and I''ll be back in touch with next steps soon.
+
+Best,
+Alex', now() - interval '2160 minutes', now() - interval '2100 minutes'),
+  ('476d8eb5-fd64-52e5-8775-dd08b96365be', '544f2e85-abb2-5f28-8e5c-411c14ae5fb0', 'recruiter', 'Hi James,
+
+Thanks for applying for the Product Designer role. Your application has moved to screening, and I''ll be in touch about next steps within a few days.
+
+Best,
+Alex', now() - interval '4180 minutes', now() - interval '4120 minutes'),
+  ('32916d93-8037-5731-ae45-3c4f095a1224', 'edb8865d-e783-5a79-9e4a-c6db84e0f822', 'recruiter', 'Hi Ana,
+
+Thanks for applying for the Product Designer role. We''ve received your application and the team is reviewing it. I''ll update you within a week.
+
+Best,
+Alex', now() - interval '5040 minutes', now() - interval '4980 minutes'),
+  ('83492bc3-d4f5-5379-bcea-e0e7dbb70848', 'edb8865d-e783-5a79-9e4a-c6db84e0f822', 'recruiter', 'Hi Ana,
+
+A quick update on your Product Designer application: the team is still reviewing applications, and I''ll be back in touch with next steps soon.
+
+Best,
+Alex', now() - interval '2160 minutes', now() - interval '2100 minutes'),
+  ('14905c0a-6923-56ab-843d-7e747a73c0ed', 'c94a6b80-edca-5686-bdf1-18bc3f8a61e2', 'recruiter', 'Hi Tom,
+
+Thanks for applying for the Product Designer role. Your application has moved to screening, and I''ll be in touch about next steps within a few days.
+
+Best,
+Alex', now() - interval '6880 minutes', now() - interval '6820 minutes'),
+  ('ece34367-31d2-528c-886c-ea34e091914b', 'c94a6b80-edca-5686-bdf1-18bc3f8a61e2', 'recruiter', 'Hi Tom,
+
+A quick update on your Product Designer application: the team is still reviewing applications, and I''ll be back in touch with next steps soon.
+
+Best,
+Alex', now() - interval '2160 minutes', now() - interval '2100 minutes'),
+  ('61cd5514-c2af-5802-bd47-7d06e8dd4fc3', '6dd60c9d-a043-596b-acbc-d28905c8d683', 'recruiter', 'Hi Leo,
+
+Thanks for applying for the Product Designer role. We''ve received your application and the team is reviewing it. I''ll update you within a week.
+
+Best,
+Alex', now() - interval '3600 minutes', now() - interval '3540 minutes');
 
 insert into public.candidate_activity (id, application_id, activity_type, title, description, metadata, created_at) values
   ('0c60669b-ee24-5dbc-a0d6-3f93a89064f4', '9ba87e3b-2ac4-5432-a823-4e50d03eabc4', 'application_created', 'Added to pipeline', null, '{"source": "Referral"}'::jsonb, now() - interval '17280 minutes'),
@@ -761,21 +827,30 @@ insert into public.candidate_activity (id, application_id, activity_type, title,
   ('efd43e1a-5409-5b8e-aae4-6fb48a8ffef1', '57ad530b-ba59-5753-980c-0655b3f0ffe0', 'stage_changed', 'Moved to Interview', null, '{"from": "screening", "to": "interview"}'::jsonb, now() - interval '8800 minutes'),
   ('4f875522-7d4f-52fc-ae8b-3e26a34fa0ce', '57ad530b-ba59-5753-980c-0655b3f0ffe0', 'interview_completed', 'Recruiter screen completed', null, null, now() - interval '9000 minutes'),
   ('85fc98cc-5134-5b17-9d98-cdb0bf46d3ba', '57ad530b-ba59-5753-980c-0655b3f0ffe0', 'interview_scheduled', 'Systems design interview scheduled', null, null, now() - interval '2000 minutes'),
-  ('ce89a3ed-0615-5874-8e76-6967bfe01dcd', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'application_created', 'Applied on the Nova AI careers site', null, '{"source": "Careers site"}'::jsonb, now() - interval '23040 minutes'),
-  ('efbdc0b3-f5e2-5158-b4df-21ce8e96ab93', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'stage_changed', 'Moved to Screening', null, '{"from": "sourced", "to": "screening"}'::jsonb, now() - interval '15000 minutes'),
-  ('a84c2a2f-5e86-516d-8961-3dde2aeb5eda', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'stage_changed', 'Moved to Interview', null, '{"from": "screening", "to": "interview"}'::jsonb, now() - interval '8800 minutes'),
-  ('0162ff02-b51a-52ef-9f7e-ee6f8b001ce9', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'interview_completed', 'Recruiter screen completed', null, null, now() - interval '12900 minutes'),
-  ('5b74a984-7abc-5ea5-84f5-7e3b624c2e6c', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'interview_scheduled', 'Technical interview scheduled', null, null, now() - interval '4300 minutes'),
-  ('2f3ef8f2-e87a-5db2-b792-8e596414d0d1', '6d6a41f3-12e8-5505-b163-142d4973ad66', 'application_created', 'Applied on the Harbor Robotics careers site', null, '{"source": "Careers site"}'::jsonb, now() - interval '8640 minutes'),
-  ('50c323c6-8a14-55bc-9b2e-fae3359db1a0', '6d6a41f3-12e8-5505-b163-142d4973ad66', 'stage_changed', 'Moved to Screening', null, '{"from": "sourced", "to": "screening"}'::jsonb, now() - interval '4400 minutes'),
-  ('def083a7-c5a7-53e1-bc3a-a1759f7d4a53', '6d6a41f3-12e8-5505-b163-142d4973ad66', 'message_sent', 'Screening update sent', null, null, now() - interval '2900 minutes'),
-  ('b106c080-81d0-5013-b7e5-d021694179d2', '644b45ed-6e16-58fa-a9a3-c2648b32fc95', 'application_created', 'Applied on the OpenAI careers site', null, '{"source": "Careers site"}'::jsonb, now() - interval '12960 minutes'),
-  ('7ff34a75-7159-5416-84fa-14f3d905c3c8', '644b45ed-6e16-58fa-a9a3-c2648b32fc95', 'stage_changed', 'Moved to Screening', null, '{"from": "sourced", "to": "screening"}'::jsonb, now() - interval '1500 minutes'),
-  ('c1d3bc0e-c1fa-5c79-ab5d-f7ecb2a5b245', '644b45ed-6e16-58fa-a9a3-c2648b32fc95', 'message_sent', 'Screening update sent', null, null, now() - interval '1000 minutes'),
-  ('3e39b152-84ae-55db-b61d-d60dacec5adb', 'd8c2aea0-be73-55af-a1bf-d8e43b59ff5d', 'application_created', 'Applied on the Anthropic careers site', null, '{"source": "Careers site"}'::jsonb, now() - interval '2880 minutes'),
-  ('b2fdf0ea-2bb9-5bea-9dac-a815a1bb780f', '66ce4a5a-eb68-5fac-9ef2-3d6737a82db4', 'application_created', 'Applied on the Google careers site', null, '{"source": "Careers site"}'::jsonb, now() - interval '28800 minutes'),
-  ('a0e58df3-70b6-5466-918d-a8e44119447e', '66ce4a5a-eb68-5fac-9ef2-3d6737a82db4', 'stage_changed', 'Moved to Screening', null, '{"from": "sourced", "to": "screening"}'::jsonb, now() - interval '22000 minutes'),
-  ('e22bbc6c-2c31-50c9-a438-df175456a18a', '66ce4a5a-eb68-5fac-9ef2-3d6737a82db4', 'stage_changed', 'Moved to Interview', null, '{"from": "screening", "to": "interview"}'::jsonb, now() - interval '9000 minutes'),
-  ('e8ff9358-3906-5e7d-864a-0d004d64f9da', '66ce4a5a-eb68-5fac-9ef2-3d6737a82db4', 'interview_scheduled', 'Design exercise scheduled', null, null, now() - interval '3500 minutes');
+  ('077090d9-d895-5e4b-a73d-9ffd2c2d3ecd', 'a0fd87be-41de-5ce8-8d7d-3edce846c06e', 'application_created', 'Applied on the careers site', null, '{"source": "Careers site"}'::jsonb, now() - interval '8640 minutes'),
+  ('5d95847b-5dc3-5934-8769-978a6c8eacfd', 'a0fd87be-41de-5ce8-8d7d-3edce846c06e', 'stage_changed', 'Moved to Screening', null, '{"from": "sourced", "to": "screening"}'::jsonb, now() - interval '5600 minutes'),
+  ('78fa5850-1b82-5c11-9573-924ef0094391', 'a0fd87be-41de-5ce8-8d7d-3edce846c06e', 'document_shared', 'Shared portfolio', null, null, now() - interval '5200 minutes'),
+  ('16b71d4e-6d25-5b88-969d-2b13d3c9f020', '544f2e85-abb2-5f28-8e5c-411c14ae5fb0', 'application_created', 'Added to pipeline', null, '{"source": "LinkedIn"}'::jsonb, now() - interval '7200 minutes'),
+  ('f850c774-5e33-5f18-a2b1-b35833a814a7', '544f2e85-abb2-5f28-8e5c-411c14ae5fb0', 'stage_changed', 'Moved to Screening', null, '{"from": "sourced", "to": "screening"}'::jsonb, now() - interval '4300 minutes'),
+  ('c2dd36ff-a5a5-59f5-ab8b-5a94cbac8629', 'edb8865d-e783-5a79-9e4a-c6db84e0f822', 'application_created', 'Added to pipeline', null, '{"source": "Referral"}'::jsonb, now() - interval '5760 minutes'),
+  ('9db928dd-1e01-50a2-97a0-692240d39404', 'c94a6b80-edca-5686-bdf1-18bc3f8a61e2', 'application_created', 'Added to pipeline', null, '{"source": "LinkedIn"}'::jsonb, now() - interval '11520 minutes'),
+  ('0450038d-50c7-54f8-bb0d-0923e89df76e', 'c94a6b80-edca-5686-bdf1-18bc3f8a61e2', 'stage_changed', 'Moved to Screening', null, '{"from": "sourced", "to": "screening"}'::jsonb, now() - interval '7000 minutes'),
+  ('2792eaef-dcf1-5fff-8a5d-fc9856b78ce9', '6dd60c9d-a043-596b-acbc-d28905c8d683', 'application_created', 'Applied on the careers site', null, '{"source": "Careers site"}'::jsonb, now() - interval '4320 minutes'),
+  ('d8a35bb2-ee87-53be-9272-e020cf0aec15', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'application_created', 'Applied on the Nova AI careers site', null, '{"source": "Careers site"}'::jsonb, now() - interval '23040 minutes'),
+  ('0c6083e1-17bb-5b3a-aa08-38491c1b5e76', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'stage_changed', 'Moved to Screening', null, '{"from": "sourced", "to": "screening"}'::jsonb, now() - interval '15000 minutes'),
+  ('19198f37-17b9-527c-b4bd-3550dddb4762', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'stage_changed', 'Moved to Interview', null, '{"from": "screening", "to": "interview"}'::jsonb, now() - interval '8800 minutes'),
+  ('f11320ac-06e2-574a-9322-1185bdc39516', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'interview_completed', 'Recruiter screen completed', null, null, now() - interval '12900 minutes'),
+  ('32d20c35-e877-5608-bacb-cf19ffa93908', '7b6a49e9-59bc-53f1-bf85-d1b3e3160201', 'interview_scheduled', 'Technical interview scheduled', null, null, now() - interval '4300 minutes'),
+  ('bb05aa2a-228b-5dc1-a3b8-76a3680bd0e6', '6d6a41f3-12e8-5505-b163-142d4973ad66', 'application_created', 'Applied on the Harbor Robotics careers site', null, '{"source": "Careers site"}'::jsonb, now() - interval '8640 minutes'),
+  ('6beffe57-fdbd-5a00-9e25-0e4ad1f61687', '6d6a41f3-12e8-5505-b163-142d4973ad66', 'stage_changed', 'Moved to Screening', null, '{"from": "sourced", "to": "screening"}'::jsonb, now() - interval '4400 minutes'),
+  ('73177f50-e860-5ee5-b5fb-fc97c0c6c314', '6d6a41f3-12e8-5505-b163-142d4973ad66', 'message_sent', 'Screening update sent', null, null, now() - interval '2900 minutes'),
+  ('42f40980-f610-5bc9-b7f0-2698476d3f24', '644b45ed-6e16-58fa-a9a3-c2648b32fc95', 'application_created', 'Applied on the OpenAI careers site', null, '{"source": "Careers site"}'::jsonb, now() - interval '12960 minutes'),
+  ('a4f16ca0-8d1a-5867-a32e-725de3323d9d', '644b45ed-6e16-58fa-a9a3-c2648b32fc95', 'stage_changed', 'Moved to Screening', null, '{"from": "sourced", "to": "screening"}'::jsonb, now() - interval '1500 minutes'),
+  ('40637bfd-792d-554b-9782-7ca0fa2c0544', '644b45ed-6e16-58fa-a9a3-c2648b32fc95', 'message_sent', 'Screening update sent', null, null, now() - interval '1000 minutes'),
+  ('a13ccfcc-5ee0-5463-9e19-f28fbf9e89d3', 'd8c2aea0-be73-55af-a1bf-d8e43b59ff5d', 'application_created', 'Applied on the Anthropic careers site', null, '{"source": "Careers site"}'::jsonb, now() - interval '2880 minutes'),
+  ('db71f106-b23e-524d-8461-43e081e69c2d', '66ce4a5a-eb68-5fac-9ef2-3d6737a82db4', 'application_created', 'Applied on the Google careers site', null, '{"source": "Careers site"}'::jsonb, now() - interval '28800 minutes'),
+  ('5c12f771-b79f-53bb-94ef-6b0bcb2f174d', '66ce4a5a-eb68-5fac-9ef2-3d6737a82db4', 'stage_changed', 'Moved to Screening', null, '{"from": "sourced", "to": "screening"}'::jsonb, now() - interval '22000 minutes'),
+  ('4884f84e-beef-58ae-bef9-44fec12ef049', '66ce4a5a-eb68-5fac-9ef2-3d6737a82db4', 'stage_changed', 'Moved to Interview', null, '{"from": "screening", "to": "interview"}'::jsonb, now() - interval '9000 minutes'),
+  ('be862250-3c45-584f-998a-770bd8929cd5', '66ce4a5a-eb68-5fac-9ef2-3d6737a82db4', 'interview_scheduled', 'Design exercise scheduled', null, null, now() - interval '3500 minutes');
 
 commit;

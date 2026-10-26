@@ -12,7 +12,7 @@ import re
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.enums import JobStatus
+from app.core.enums import WEEKEND, JobStatus, Weekday
 from app.models import Company, Job
 from app.schemas.assistant import JobChanges, JobDraft
 from app.schemas.demo import JobPostingBrief, clean_list
@@ -34,13 +34,19 @@ DEPARTMENTS = (
 )
 
 
+EXPERIENCE = re.compile(r"\S\s+experience$", re.IGNORECASE)
 TRAILING = re.compile(r"(?:\s+(?:experience|skills?|knowledge|background|too|as well|also|please))+$", re.IGNORECASE)
 
 
-def skill_names(said: list[str]) -> list[str]:
+def skill_names(said: list[str], *, keep_experience: bool = False) -> list[str]:
     """Skills as said, tidied like the editor's chips: "talent research" becomes "Talent research", and
-    "B2B SaaS experience" "B2B SaaS", as a hosted model may pass them."""
-    tidy = [TRAILING.sub("", skill.strip()) for skill in said]
+    "B2B SaaS experience" "B2B SaaS", as a hosted model may pass them. keep_experience: a kind of work as
+    said, "Kitchen experience" (Simple Hire's requirements, and a search's criteria, which match on the
+    work either way)."""
+    tidy = [
+        skill.strip() if keep_experience and EXPERIENCE.search(skill) else TRAILING.sub("", skill.strip())
+        for skill in said
+    ]
     return clean_list([skill[:1].upper() + skill[1:] if skill[:1].islower() else skill for skill in tidy if skill])
 
 
@@ -103,6 +109,83 @@ async def draft(
     return job, checks(job, department_said=bool(changes.department)), generated.model_name
 
 
+def simple_draft(changes: JobChanges, company: Company, *, title_suggested: bool) -> tuple[JobDraft, list[str]]:
+    """Simple Hire's draft: the few facts the owner said, at the business's own location unless they said
+    another, and a short plain description built from those facts only. No AI writes anything into it, so
+    nothing is invented; what wasn't said stays empty and is listed to add."""
+    assert changes.title
+    location = changes.location or (company.locations[0] if company.locations else None)
+    shift_work = bool(changes.shift or changes.work_days)
+    job = JobDraft(
+        title=changes.title,
+        location=location,
+        employment_type=changes.employment_type or ("Part-time" if _part_time(changes) else "Full-time"),
+        skills=skill_names(changes.skills_add, keep_experience=True)[:20],
+        pay=changes.pay,
+        shift=changes.shift,
+        work_days=changes.work_days,
+        openings=changes.openings,
+    )
+    job = job.model_copy(update={"summary": simple_summary(job, company.name), "requirements": job.skills})
+    notes = [f"Title: “{job.title}” is a suggestion from what you said"] if title_suggested else []
+    if not job.pay:
+        notes.append("Pay: not given")
+    if not shift_work:
+        notes.append("Shift and days: not given")
+    if not job.location:
+        notes.append("Location: not given")
+    if not changes.employment_type:
+        notes.append(
+            "Part-time, from the days you gave"
+            if _part_time(changes)
+            else "Full-time or part-time: not given, shown as full-time"
+        )
+    return job, notes
+
+
+def _part_time(changes: JobChanges) -> bool:
+    """A few set days a week is part-time work, as the owner described it."""
+    return 0 < len(changes.work_days) <= 4
+
+
+SHIFT_WORDS = {
+    "Evenings": "evening shifts",
+    "Mornings": "morning shifts",
+    "Afternoons": "afternoon shifts",
+    "Overnight": "overnight shifts",
+    "Lunchtimes": "lunchtime shifts",
+    "Weekends": "weekend shifts",
+}
+
+
+def simple_summary(job: JobDraft, company: str) -> str:
+    """ "Sam's Cafe is hiring 2 Kitchen Assistants in Portland, OR: evening shifts on Friday and Saturday,
+    $18/hour." From the facts only."""
+    if job.openings and job.openings > 1:
+        who = f"{job.openings} {_plural(job.title)}"
+    else:
+        who = f"{'an' if job.title[:1].upper() in 'AEIOU' else 'a'} {job.title}"
+    when = []
+    if job.shift:
+        when.append(SHIFT_WORDS.get(job.shift, job.shift.lower()))
+    if job.work_days and not (job.shift == "Weekends" and set(job.work_days) == set(WEEKEND)):
+        when.append(f"on {_days(job.work_days)}")
+    facts = ", ".join(part for part in (" ".join(when), job.pay) if part)
+    where = f" in {job.location}" if job.location else ""
+    return f"{company} is hiring {who}{where}" + (f": {facts}." if facts else ".")
+
+
+def _plural(title: str) -> str:
+    return title if title.endswith("s") else f"{title}es" if title.endswith(("sh", "ch", "x")) else f"{title}s"
+
+
+def _days(days: list[Weekday]) -> str:
+    names = [day.label for day in Weekday if day in days]
+    if set(days) == set(WEEKEND):
+        return "weekends"
+    return names[0] if len(names) == 1 else f"{', '.join(names[:-1])} and {names[-1]}"
+
+
 def checks(job: JobDraft, *, department_said: bool = True) -> list[str]:
     """What the recruiter should look at before creating it: what they didn't say."""
     notes = []
@@ -145,6 +228,14 @@ def update(job: JobDraft, changes: JobChanges) -> tuple[JobDraft, list[str]]:
         if (low, high) != (job.salary_min, job.salary_max):
             values.update(salary_min=low, salary_max=high)
             described.append(f"Salary: {salary_label(low, high, job.salary_currency)}")
+    for field, label in (("pay", "Pay"), ("shift", "Shift"), ("openings", "Openings")):
+        value = getattr(changes, field)
+        if value and value != getattr(job, field):
+            values[field] = value
+            described.append(f"{label}: {value}")
+    if changes.work_days and changes.work_days != job.work_days:
+        values["work_days"] = changes.work_days
+        described.append(f"Days: {_days(changes.work_days)}")
     removed = {skill.casefold() for skill in changes.skills_remove}
     kept = [skill for skill in job.skills if skill.casefold() not in removed]
     skills = clean_list([*kept, *skill_names(changes.skills_add)])[:20]
@@ -174,6 +265,10 @@ async def create(session: AsyncSession, job: JobDraft) -> Job:
             description=render_description(job),
             status=JobStatus.OPEN,
             employment_type=job.employment_type,
+            pay=job.pay,
+            shift=job.shift,
+            work_days=job.work_days,
+            openings=job.openings,
         ),
     )
     stored = await session.get(Job, created.id)

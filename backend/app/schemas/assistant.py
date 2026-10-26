@@ -130,6 +130,7 @@ class SearchState(APIModel):
     location: ShortText | None = None
     interview: InterviewState | None = None
     communication: CommunicationStatus | None = None
+    available_days: Annotated[list[Weekday], Field(max_length=7)] = []
     limit: Annotated[int, Field(ge=1, le=200)] = 10
 
 
@@ -208,6 +209,11 @@ class JobDraft(APIModel):
     requirements: Items = []
     preferred_qualifications: Items = []
     description: OptionalText(3000) = None  # about the role
+    # A small business's job: as the owner said it, or empty.
+    pay: Annotated[str, Field(max_length=100)] | None = None
+    shift: Annotated[str, Field(max_length=100)] | None = None
+    work_days: Annotated[list[Weekday], Field(max_length=7)] = []
+    openings: Annotated[int, Field(ge=1, le=500)] | None = None
 
 
 class OutreachRequest(APIModel):
@@ -322,6 +328,7 @@ class CandidateMatchCard(APIModel):
     title: str
     filters: list[MatchFilter]
     criteria: list[str]
+    available_days: list[Weekday] = []  # days asked for, shown per candidate as evidence
     criteria_source: Literal["recruiter", "job_requirements", "none"]
     considered: int
     matching: int
@@ -402,6 +409,8 @@ class JobDraftCard(APIModel):
     action_id: UUID
     status: AssistantActionStatus
     stage: Literal["draft", "confirm", "created"] = "draft"
+    # simple: Simple Hire's "Ready to post" preview of a few facts; full: the whole posting to review.
+    layout: Literal["full", "simple"] = "full"
     draft: JobDraft
     missing: list[str] = []  # what the recruiter didn't say, left empty for them: "Department", "Salary"
     changes: list[str] = []  # what the last request changed
@@ -412,8 +421,35 @@ class JobDraftCard(APIModel):
     error: str | None = None
 
 
+class ContactItem(APIModel):
+    """One applicant's contact details, exactly as they gave them with their application to this job."""
+
+    application_id: UUID
+    candidate_id: UUID
+    name: str
+    job_title: str  # the role they applied for
+    phone: str | None = None  # null: they didn't give one
+    email: str
+
+
+class ContactCard(APIModel):
+    """The contact details applicants gave the employer when they applied: for the applications the employer
+    picked, in its own workspace, and nothing found anywhere else."""
+
+    type: Literal["contacts"] = "contacts"
+    items: list[ContactItem]
+    note: str = "What each applicant gave you when they applied. Use it to contact them about this job only."
+
+
 AssistantCard = Annotated[
-    MessageCard | FollowUpListCard | ClarifyCard | InterviewInfoCard | CandidateMatchCard | OutreachCard | JobDraftCard,
+    MessageCard
+    | FollowUpListCard
+    | ClarifyCard
+    | InterviewInfoCard
+    | CandidateMatchCard
+    | OutreachCard
+    | JobDraftCard
+    | ContactCard,
     Field(discriminator="type"),
 ]
 

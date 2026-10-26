@@ -59,11 +59,12 @@ async def state_for(
         previous = SearchState()
     return SearchState(
         job_ids=job_ids[:20],
-        skills=skill_names(intent.skills) or previous.skills,
+        skills=skill_names(intent.skills, keep_experience=True) or previous.skills,
         stage=intent.stage or previous.stage,
         location=intent.location or previous.location,
         interview=intent.interview_state or previous.interview,
         communication=intent.communication or previous.communication,
+        available_days=intent.available_days or previous.available_days,
         limit=intent.limit or previous.limit,
     )
 
@@ -78,6 +79,7 @@ async def run(session: AsyncSession, state: SearchState, selected: list[uuid.UUI
             location=state.location,
             interview=state.interview,
             communication=state.communication,
+            available_days=state.available_days,
             limit=state.limit,
         ),
     )
@@ -85,6 +87,7 @@ async def run(session: AsyncSession, state: SearchState, selected: list[uuid.UUI
         title=_title(result),
         filters=result.filters,
         criteria=result.criteria,
+        available_days=result.available_days,
         criteria_source=result.criteria_source,
         considered=result.considered,
         matching=result.matching,
@@ -102,10 +105,11 @@ def reply(card: CandidateMatchCard, *, ranked: bool = False) -> str:
     filters = ", ".join(item.label for item in card.filters) or "no filters"
     if card.considered == 0:
         return f"{lead}No active candidates fit these filters ({filters}). Remove one to see more."
-    if card.criteria:
+    asked = [*card.criteria, *(f"available {day.label}" for day in card.available_days)]
+    if asked:
         source = "the job's listed requirements" if card.criteria_source == "job_requirements" else "your criteria"
         text = (
-            f"{lead}**{shown} of {card.matching}** candidates showing {source} ({', '.join(card.criteria)}), "
+            f"{lead}**{shown} of {card.matching}** candidates showing {source} ({', '.join(asked)}), "
             f"from {card.considered} who fit {filters}. Most criteria first, then the earliest applications; "
             "each one shows why it's there."
         )

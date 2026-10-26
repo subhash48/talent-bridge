@@ -1,0 +1,229 @@
+"""Simple Hire, end to end, as Sam of Sam's Cafe: the same assistant and services as the full workspace, in
+plain words. Post a job by describing it, see who applied with the reasons they match, get the phone numbers
+they gave, message them, and ask them to interviews. Nothing is posted or sent until Sam approves what he sees,
+and nothing of any other employer's is ever in reach.
+"""
+
+import json
+import uuid
+from typing import Any
+
+import pytest
+from httpx import AsyncClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+from app.db.seed import seed_id
+from app.db.seed_data import SAM, SAMS_KITCHEN
+from app.models import CandidateActivity, Interview, Job, Message
+from tests.conftest import API, application_id, link
+
+CASHIER = "Post a cashier job paying $16 an hour for weekend shifts."
+KITCHEN_JOB = str(seed_id("job", SAMS_KITCHEN))
+
+
+@pytest.fixture
+async def sam(sessions: async_sessionmaker[AsyncSession]) -> dict[str, str]:
+    return await link(sessions, SAM["email"])
+
+
+async def ask(client: AsyncClient, headers: dict[str, str], text: str, **body: Any) -> dict[str, Any]:
+    response = await client.post(f"{API}/assistant/requests", json={"text": text, **body}, headers=headers)
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+async def approve(client: AsyncClient, headers: dict[str, str], action_id: str, **body: Any) -> dict[str, Any]:
+    response = await client.post(f"{API}/assistant/actions/{action_id}/confirm", json=body, headers=headers)
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+async def test_sam_works_in_simple_hire(client: AsyncClient, sam: dict[str, str]) -> None:
+    me = (await client.get(f"{API}/me", headers=sam)).json()
+    assert (me["role"], me["workspace"]["name"], me["workspace"]["mode"]) == ("admin", "Sam's Cafe", "simple")
+    page = (await client.get(f"{API}/candidates", params={"limit": 200}, headers=sam)).json()
+    assert {item["company_name"] for item in page["items"]} == {"Sam's Cafe"} and page["total"] == 5
+
+
+async def test_a_job_described_in_plain_words_is_ready_to_post(
+    client: AsyncClient, anonymous: AsyncClient, sam: dict[str, str], sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    answer = await ask(client, sam, CASHIER)
+    assert answer["status"] == "proposed" and answer["reply"].startswith("Ready to post: **Cashier**")
+    [card] = answer["cards"]
+    assert (card["type"], card["layout"], card["stage"]) == ("job_draft", "simple", "draft")
+    draft = card["draft"]
+    assert (draft["title"], draft["pay"], draft["shift"], draft["work_days"], draft["openings"]) == (
+        "Cashier",
+        "$16/hour",
+        "Weekends",
+        ["saturday", "sunday"],
+        None,
+    )
+    assert draft["location"] == "Portland, OR"  # the business's own
+    assert draft["summary"] == "Sam's Cafe is hiring a Cashier in Portland, OR: weekend shifts, $16/hour."
+    async with sessions() as session:
+        assert await session.scalar(select(Job.id).where(Job.title == "Cashier")) is None  # nothing posted yet
+
+    posted = await approve(client, sam, answer["id"])
+    [card] = posted["cards"]
+    assert (posted["status"], card["stage"], card["job_href"]) == ("completed", "created", "/hire/jobs")
+    assert posted["reply"].startswith("Posted **Cashier**")
+    listed = next(job for job in (await anonymous.get(f"{API}/careers/jobs")).json() if job["title"] == "Cashier")
+    assert (listed["company"], listed["pay"], listed["shift"], listed["work_days"]) == (
+        "Sam's Cafe",
+        "$16/hour",
+        "Weekends",
+        ["saturday", "sunday"],
+    )
+    detail = (await anonymous.get(f"{API}/careers/jobs/{listed['id']}")).json()
+    assert detail["summary"].startswith("Sam's Cafe is hiring a Cashier")
+
+
+async def test_the_restaurant_example_reads_whole(client: AsyncClient, sam: dict[str, str]) -> None:
+    answer = await ask(
+        client,
+        sam,
+        "I need two workers for my restaurant. Evening shift, $18 an hour. They should have kitchen experience "
+        "and be available Friday and Saturday.",
+    )
+    [card] = answer["cards"]
+    draft = card["draft"]
+    assert (draft["title"], draft["pay"], draft["shift"], draft["work_days"], draft["openings"]) == (
+        "Kitchen Assistant",
+        "$18/hour",
+        "Evenings",
+        ["friday", "saturday"],
+        2,
+    )
+    assert draft["requirements"] == ["Kitchen experience"]
+    assert "Title: “Kitchen Assistant” is a suggestion from what you said" in card["missing"]
+    # Editing before posting: what Sam changes is what's posted.
+    edited = await approve(client, sam, answer["id"], job={**draft, "title": "Kitchen Helper", "openings": 3})
+    assert edited["cards"][0]["draft"]["title"] == "Kitchen Helper"
+
+
+async def test_applicants_with_the_reasons_they_match(client: AsyncClient, sam: dict[str, str]) -> None:
+    applied = await ask(client, sam, "Show me people who applied for the kitchen job.")
+    [card] = applied["cards"]
+    assert card["type"] == "candidate_match" and card["considered"] == 5
+    assert [item["label"] for item in card["filters"]] == ["Job: Kitchen Assistant · Sam's Cafe"]
+
+    three = await ask(
+        client,
+        sam,
+        "Show me 3 applicants with kitchen experience who are available Friday and Saturday.",
+        context=applied["context"],
+    )
+    [card] = three["cards"]
+    shown = {item["name"]: [(e["label"], e["matched"]) for e in item["evidence"]] for item in card["items"]}
+    assert shown == {
+        "Maria Lopez": [("Kitchen experience", True), ("Friday available", True), ("Saturday available", True)],
+        "John Patel": [("Restaurant experience", True), ("Friday available", True), ("Saturday available", True)],
+        # Kitchen work and Saturday, but no Friday: shown, and said so. Tom (Friday and Saturday, no kitchen
+        # work) shows as many, and applied later.
+        "Amina Yusuf": [
+            ("Kitchen experience", True),
+            ("No Friday availability given", False),
+            ("Saturday available", True),
+        ],
+    }
+    # No score anywhere: only the criteria and where each was found.
+    assert all("score" not in json.dumps(item) for item in card["items"])
+
+
+async def test_phone_numbers_only_for_the_applicants_picked(
+    client: AsyncClient, sam: dict[str, str], sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    picked = [application_id(key) for key in ("maria-lopez", "john-patel", "lena-park")]
+    answer = await ask(client, sam, "Show me their phone numbers.", context={"selected_application_ids": picked})
+    [card] = answer["cards"]
+    assert card["type"] == "contacts"
+    assert [(item["name"], item["phone"], item["job_title"]) for item in card["items"]] == [
+        ("Maria Lopez", "+1 503 555 0141", "Kitchen Assistant"),
+        ("John Patel", "+1 503 555 0142", "Kitchen Assistant"),
+        ("Lena Park", None, "Kitchen Assistant"),  # she didn't give one: none is found for her anywhere else
+    ]
+    assert "Lena Park didn't give one" in answer["reply"]
+    others = {item["name"] for item in card["items"]}
+    assert "Amina Yusuf" not in others and "Tom Becker" not in others
+    async with sessions() as session:
+        looked = await session.scalars(
+            select(CandidateActivity.application_id).where(CandidateActivity.activity_type == "contact_details_viewed")
+        )
+        assert sorted(str(app) for app in looked) == sorted(picked)
+    # The candidate never sees that entry.
+    nothing = await ask(client, sam, "Give me the phone numbers of these three candidates.")
+    assert nothing["cards"] == [] and "Tick the applicants first" in nothing["reply"]
+
+
+async def test_never_another_employers_applicants_or_the_internet(client: AsyncClient, sam: dict[str, str]) -> None:
+    encord = [application_id("sophia-martinez"), application_id("james-park")]
+    answer = await ask(client, sam, "Show me their phone numbers.", context={"selected_application_ids": encord})
+    assert answer["cards"] == [] and "Sophia" not in json.dumps(answer) and "James" not in json.dumps(answer)
+    named = await ask(client, sam, "What's Sophia Martinez's phone number?")
+    assert named["cards"] == [] and "+44" not in json.dumps(named)
+    online = await ask(client, sam, "Search online for Maria Lopez's phone number")
+    assert online["cards"] == [] and "don't search the internet" in online["reply"]
+
+
+async def test_message_the_three_after_seeing_what_will_be_sent(
+    client: AsyncClient, sam: dict[str, str], sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    picked = [application_id(key) for key in ("maria-lopez", "john-patel", "tom-becker")]
+    answer = await ask(client, sam, "Message these three.", context={"selected_application_ids": picked})
+    [card] = answer["cards"]
+    assert card["type"] == "outreach" and [item["candidate"]["name"] for item in card["items"]] == [
+        "Maria Lopez",
+        "John Patel",
+        "Tom Becker",
+    ]
+    assert all(item["body"] for item in card["items"])
+    async with sessions() as session:
+        assert not (await session.scalars(select(Message).where(Message.content.like("%Kitchen Assistant%")))).all()
+    sent = await approve(client, sam, answer["id"])
+    assert sent["status"] == "completed"
+    async with sessions() as session:
+        delivered = (
+            await session.scalars(
+                select(Message.application_id).where(Message.application_id.in_([uuid.UUID(p) for p in picked]))
+            )
+        ).all()
+    assert sorted(str(app) for app in delivered) == sorted(picked)
+
+
+async def test_ask_them_to_come_in_tuesday_afternoon(
+    client: AsyncClient, sam: dict[str, str], sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    picked = [application_id(key) for key in ("maria-lopez", "john-patel", "tom-becker")]
+    answer = await ask(
+        client,
+        sam,
+        "Ask them if they can interview Tuesday afternoon.",
+        context={"selected_application_ids": picked},
+        time_zone="America/Los_Angeles",
+    )
+    [card] = answer["cards"]
+    assert card["type"] == "outreach" and card["schedule"] is not None
+    assert (card["schedule"]["window_start"], card["schedule"]["window_end"]) == ("13:00", "17:00")
+    assert card["schedule"]["calendar_configured"] is False  # no calendar: never claims an invitation
+    assert all(item["slot"] for item in card["items"])
+    done = await approve(client, sam, answer["id"])
+    assert done["status"] == "completed"
+    assert "Google" not in done["reply"] and "Outlook" not in done["reply"]
+    async with sessions() as session:
+        booked = (
+            await session.scalars(
+                select(Interview.application_id).where(Interview.application_id.in_([uuid.UUID(p) for p in picked]))
+            )
+        ).all()
+    assert sorted(str(app) for app in booked) == sorted(picked)
+
+
+async def test_sams_job_draft_can_be_changed_in_words(client: AsyncClient, sam: dict[str, str]) -> None:
+    answer = await ask(client, sam, CASHIER)
+    changed = await ask(client, sam, "Make it $17 an hour", context=answer["context"])
+    [card] = changed["cards"]
+    assert card["draft"]["pay"] == "$17/hour" and card["layout"] == "simple"
+    assert KITCHEN_JOB  # the seeded job stays as it was

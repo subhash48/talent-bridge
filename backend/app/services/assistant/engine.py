@@ -32,7 +32,7 @@ from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.enums import MANUAL_DRAFT, AssistantActionStatus, EmailStatus
+from app.core.enums import MANUAL_DRAFT, AssistantActionStatus, EmailStatus, WorkspaceMode
 from app.core.errors import AppError, ConflictError, NotFoundError
 from app.integrations.calendar import CalendarProvider, DisabledCalendar
 from app.integrations.email import DisabledEmail, EmailProvider
@@ -63,7 +63,7 @@ from app.schemas.assistant import (
 from app.schemas.message import MessageRead
 from app.services import ai_service, application_service, message_service
 from app.services.ai.client import AIProvider
-from app.services.assistant import answers, jobs, outreach, rules, search
+from app.services.assistant import answers, contacts, jobs, outreach, rules, search, simple
 from app.services.assistant import schedule as times
 from app.services.assistant.resolve import Resolution, resolve_candidate
 from app.services.assistant.understand import asks_for_top, policy_refusal, understand
@@ -198,6 +198,14 @@ async def handle(
             proposal_kind=context.proposal_kind if context.proposal is not None else None,  # type: ignore[arg-type]
             has_selection=bool(context.selected),
         )
+        # Plain words (a job described, an availability filter, "their phone numbers", "ask them if they can
+        # come Tuesday") read the same way whichever reader came first.
+        intent = simple.refine(
+            intent,
+            request.text,
+            has_selection=bool(context.selected),
+            proposal_kind=context.proposal_kind if context.proposal is not None else None,
+        )
     try:
         outcome = await _plan(session, recruiter, row_id, intent, request, context, provider, email, calendar)
     except AppError as exc:
@@ -261,6 +269,8 @@ async def _plan(
     keep = context.keep()
     if refusal:
         return Outcome(reply=refusal, context=keep)
+    if simple.asks_online_lookup(request.text):
+        return Outcome(reply=simple.ONLINE_REFUSAL, context=keep)
     # "No", "not yet", "don't send them to Maya": nothing happens, and what's waiting stays waiting.
     held = keep.model_copy(update={"action_id": context.proposal.id}) if context.proposal is not None else keep
     if context.proposal is not None and rules.declines(request.text):
@@ -277,7 +287,9 @@ async def _plan(
         return await _cancel_in_context(session, recruiter, context, keep)
     if action == "create_job":
         company = await session.get(Company, recruiter.company_id) if recruiter.company_id else None
-        return await _create_job(row_id, intent.job or JobChanges(), keep, provider, company)
+        return await _create_job(row_id, intent.job or JobChanges(), keep, provider, company, request.text)
+    if action == "show_contacts":
+        return await _show_contacts(session, recruiter, intent, context, keep)
     if action == "update_job":
         return await _update_job(session, intent.job or JobChanges(), context, keep)
     if action == "search_candidates":
@@ -564,8 +576,15 @@ async def _cancel_in_context(
 
 
 async def _create_job(
-    row_id: uuid.UUID, changes: JobChanges, keep: AssistantContext, provider: AIProvider, company: Company | None
+    row_id: uuid.UUID,
+    changes: JobChanges,
+    keep: AssistantContext,
+    provider: AIProvider,
+    company: Company | None,
+    text: str = "",
 ) -> Outcome:
+    if company is not None and company.workspace_mode == WorkspaceMode.SIMPLE:
+        return _create_simple_job(row_id, changes, keep, company, text)
     if not changes.title:
         return Outcome(
             reply='What\'s the job called? For example: "Create a Senior Product Designer role in New York, hybrid."',
@@ -575,6 +594,29 @@ async def _create_job(
     card = JobDraftCard(action_id=row_id, status=S.PROPOSED, draft=draft, missing=checks, model_name=model_name)
     return Outcome(
         reply=f"I drafted the **{draft.title}** role. Review it before creating: no job exists until you approve it.",
+        status=S.PROPOSED,
+        cards=[card],
+        context=keep.model_copy(update={"action_id": row_id}),
+        target_type="job_draft",
+        target_label=draft.title,
+        payload={"kind": "job", "card": card.model_dump(mode="json"), "final": False},
+    )
+
+
+def _create_simple_job(
+    row_id: uuid.UUID, changes: JobChanges, keep: AssistantContext, company: Company, text: str
+) -> Outcome:
+    """Simple Hire: "Ready to post", with the few facts the owner said. Nothing is posted until they press
+    Post Job."""
+    changes, suggested = simple.job_changes(text, changes)
+    if not changes.title:
+        return Outcome(
+            reply='What kind of job is it? For example: "a cashier", "a cook" or "a delivery driver".', context=keep
+        )
+    draft, checks = jobs.simple_draft(changes, company, title_suggested=suggested)
+    card = JobDraftCard(action_id=row_id, status=S.PROPOSED, layout="simple", draft=draft, missing=checks)
+    return Outcome(
+        reply=f"Ready to post: **{draft.title}**. Check it, then press Post Job. Nothing is posted until you do.",
         status=S.PROPOSED,
         cards=[card],
         context=keep.model_copy(update={"action_id": row_id}),
@@ -716,6 +758,22 @@ async def _select(session: AsyncSession, intent: AssistantIntent, context: Conte
         else "Nobody is selected now."
     )
     return Outcome(reply=reply, cards=[card], context=keep)
+
+
+async def _show_contacts(
+    session: AsyncSession, recruiter: User, intent: AssistantIntent, context: Context, keep: AssistantContext
+) -> Outcome:
+    """The contact details the applicants named or ticked gave when they applied: nothing else."""
+    targets = await _targets(session, intent, context)
+    if isinstance(targets, str):
+        return Outcome(
+            reply=targets
+            if targets != PICK_FIRST
+            else 'Tick the applicants first, or say who: "Show me Maria Lopez\'s phone number".',
+            context=keep,
+        )
+    card = await contacts.for_applications(session, targets, recruiter)
+    return Outcome(reply=contacts.reply(card), cards=[card], context=keep)
 
 
 # Outreach and interviews
@@ -1024,14 +1082,16 @@ async def confirm(
                     "missing": [],
                     "changes": [],
                     "job_id": job.id,
-                    "job_href": f"/recruiter/jobs/{job.id}",
+                    "job_href": "/hire/jobs" if draft_card.layout == "simple" else f"/recruiter/jobs/{job.id}",
                     "careers_href": f"/careers/{job.id}",
                 }
             )
             created = ("job", job.id, job.title)
-            summary = f"Created the {job.title} job"
+            summary = f"Posted the {job.title} job" if draft_card.layout == "simple" else f"Created the {job.title} job"
             reply = (
-                f"Created **{job.title}**. It's open on your careers site now, and you can find its applicants here."
+                f"Posted **{job.title}**. It's on your careers page now, taking applications."
+                if draft_card.layout == "simple"
+                else f"Created **{job.title}**. It's open on your careers site now, and you can find its applicants here."
             )
             result_context = AssistantContext(job_id=job.id)
             status = S.COMPLETED

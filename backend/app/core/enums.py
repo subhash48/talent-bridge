@@ -114,6 +114,8 @@ class ActivityType(StrEnum):
     # Internal: a recruiter let the candidate write to the hiring team about the application, or stopped it.
     MESSAGING_ENABLED = "candidate_messaging_enabled"
     MESSAGING_DISABLED = "candidate_messaging_disabled"
+    # Internal: someone in the hiring team looked at the contact details the applicant gave.
+    CONTACT_DETAILS_VIEWED = "contact_details_viewed"
 
 
 class ApplicationBucket(StrEnum):

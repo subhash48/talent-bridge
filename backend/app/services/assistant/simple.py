@@ -293,8 +293,18 @@ def refine(intent: AssistantIntent, text: str, *, has_selection: bool, proposal_
     time: a job described in plain words, an availability filter, a request for phone numbers, and asking
     applicants to come in on a day."""
     text = text.replace("’", "'")
-    if intent.action in ("confirm", "cancel") or (proposal_kind == "job" and intent.action == "update_job"):
+    if intent.action in ("confirm", "cancel"):
         return intent
+    if proposal_kind == "job" and intent.action == "update_job":
+        # "Make it $19 an hour", "change the days to Saturday and Sunday": the draft's facts, as said.
+        job = intent.job or JobChanges()
+        facts = {
+            "pay": job.pay or pay(text),
+            "shift": job.shift or shift(text),
+            "work_days": job.work_days or days(text),
+            "openings": job.openings or openings(text),
+        }
+        return intent.model_copy(update={"job": job.model_copy(update=facts)})
     if asks_for_contacts(text):
         names = [match.group("name") for match in _POSSESSIVE.finditer(text)] or intent.candidate_names
         if not names and intent.candidate_name:

@@ -1586,7 +1586,7 @@ SAMS_APPLICANTS: tuple[CandidateSeed, ...] = tuple(
             2 * DAY,
             "+1 503 555 0144",
             ("friday", "saturday"),
-            "Retail work at a bookshop, and I'm keen to learn kitchen work.",
+            "Two years of retail work at a bookshop, mostly on the till.",
         ),
         ("lena-park", "Lena", "Park", DAY, None, ("friday",), None),
     )

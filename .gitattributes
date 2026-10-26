@@ -1,0 +1,2 @@
+# Shell scripts run under bash everywhere, Git Bash included: keep them LF on every checkout.
+*.sh text eol=lf

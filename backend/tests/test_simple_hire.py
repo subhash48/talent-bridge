@@ -321,3 +321,17 @@ async def test_help_is_about_what_a_small_business_does(client: AsyncClient, sam
     answer = await ask(client, sam, "hello there")
     assert answer["intent"] == "help" and answer["reply"].startswith("I can post a job, show you who applied")
     assert "candidate" not in answer["reply"].lower()
+
+
+async def test_an_applicant_hears_from_the_business_they_applied_to(
+    client: AsyncClient, anonymous: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    """Found in the end-to-end run: Sam's Cafe's applicant was told "Alex will be in touch", Encord's recruiter."""
+    from tests.test_careers import application
+
+    body = application(first_name="Nora", last_name="Quinn", email="nora.quinn@inbox.dev", availability=["friday"])
+    assert (await anonymous.post(f"{API}/careers/jobs/{KITCHEN_JOB}/apply", json=body)).status_code == 200
+    nora = await link(sessions, "nora.quinn@inbox.dev")
+    me = (await client.get(f"{API}/candidate/me", headers=nora)).json()
+    assert me["recruiter"]["name"] == "Sam Rivera"
+    assert "Alex" not in json.dumps(me)

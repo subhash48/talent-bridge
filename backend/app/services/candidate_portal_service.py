@@ -29,7 +29,7 @@ from app.core.enums import (
     UserRole,
 )
 from app.core.errors import NotFoundError
-from app.models import Application, Candidate, CandidateStageHistory, Interview, User
+from app.models import Application, Candidate, CandidateStageHistory, Interview, Job, User
 from app.models.base import utcnow
 from app.schemas.portal import (
     CandidateApplicationDetail,
@@ -248,17 +248,22 @@ async def require_record(
 
 
 async def recruiter_for(session: AsyncSession, application_id: uuid.UUID) -> PortalRecruiter | None:
-    """The recruiter who last moved the application, else the workspace's first recruiter."""
+    """Who hires for the application's employer: the one of its staff who last moved the application, else its
+    first. Never anyone from another company, whoever else uses TalentBridge."""
+    company_id = await session.scalar(
+        select(Job.company_id).join(Application, Application.job_id == Job.id).where(Application.id == application_id)
+    )
+    if company_id is None:
+        return None
+    staff = (User.company_id == company_id) & User.role.in_(STAFF_ROLES)
     user = await session.scalar(
         select(User)
         .join(CandidateStageHistory, CandidateStageHistory.changed_by == User.id)
-        .where(CandidateStageHistory.application_id == application_id)
+        .where(CandidateStageHistory.application_id == application_id, staff)
         .order_by(CandidateStageHistory.changed_at.desc())
         .limit(1)
     )
-    user = user or await session.scalar(
-        select(User).where(User.role.in_(STAFF_ROLES)).order_by(User.created_at).limit(1)
-    )
+    user = user or await session.scalar(select(User).where(staff).order_by(User.created_at).limit(1))
     if user is None:
         return None
     return PortalRecruiter(

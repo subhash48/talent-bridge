@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { NightSky } from "@/components/shared/NightSky";
 import { AboutSection } from "@/components/site/AboutSection";
 import { CandidatesSection } from "@/components/site/CandidatesSection";
+import { ContactSection } from "@/components/site/ContactSection";
 import { HowItWorks } from "@/components/site/HowItWorks";
 import { RecruitersSection } from "@/components/site/RecruitersSection";
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -13,12 +14,13 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { buttonStyles } from "@/components/ui/Button";
 import { homePath } from "@/lib/auth";
 import { getSignedInUser } from "@/lib/session";
+import { getContactEmail } from "@/services/contact";
 
 export const metadata: Metadata = { title: { absolute: "TalentBridge: never leave a candidate wondering" } };
 
 // Signed in: straight to your workspace, by the role the API has on record. Signed out: what TalentBridge is.
 export default async function Home() {
-  const user = await getSignedInUser();
+  const [user, contactEmail] = await Promise.all([getSignedInUser(), getContactEmail()]);
   if (user) redirect(homePath(user));
 
   return (
@@ -53,6 +55,7 @@ export default async function Home() {
         <SmallBusinessSection />
         <CandidatesSection />
         <AboutSection />
+        <ContactSection email={contactEmail} />
       </main>
       <SiteFooter />
     </div>

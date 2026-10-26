@@ -21,10 +21,12 @@ export type AssistantRequest = {
   context: AssistantContext;
   /** Random per request: sending the same one twice (a double click, a retry) runs it once. */
   clientRequestId: string;
+  /** What the recruiter changed on the card of the proposal in context, so "yes" approves what they see. */
+  edits?: ConfirmEdits;
   signal?: AbortSignal;
 };
 
-export async function askAssistant({ text, inputType, context, clientRequestId, signal }: AssistantRequest): Promise<AssistantResponse> {
+export async function askAssistant({ text, inputType, context, clientRequestId, edits, signal }: AssistantRequest): Promise<AssistantResponse> {
   if (USE_MOCK_API) throw NEEDS_API;
   return apiFetch<AssistantResponse>("/assistant/requests", {
     method: "POST",
@@ -35,6 +37,7 @@ export async function askAssistant({ text, inputType, context, clientRequestId, 
       client_request_id: clientRequestId,
       utc_offset_minutes: -new Date().getTimezoneOffset(),
       time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      ...(edits ? { edits } : {}),
     }),
     signal,
   });

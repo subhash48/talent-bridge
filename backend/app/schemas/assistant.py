@@ -149,6 +149,9 @@ class AssistantRequest(APIModel):
     utc_offset_minutes: UTCOffset = 0
     # The browser's named time zone ("America/Chicago"), so interview times are right after a clock change.
     time_zone: Annotated[str, Field(max_length=64)] | None = None
+    # What the recruiter has changed on the card of the proposal in context (context.action_id): who's
+    # unticked, edited messages, the job's fields. "Yes" approves exactly what they see.
+    edits: "ConfirmActionRequest | None" = None
 
 
 class OutreachItemEdit(APIModel):
@@ -441,3 +444,6 @@ class AssistantStatus(APIModel):
 class TranscriptionRead(APIModel):
     text: str
     model_name: str
+
+
+AssistantRequest.model_rebuild()

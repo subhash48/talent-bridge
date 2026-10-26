@@ -2,7 +2,7 @@
 
 import { BriefcaseBusiness, Check, ExternalLink, LoaderCircle, Pencil, TriangleAlert, X } from "lucide-react";
 import Link from "next/link";
-import { useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 
 import { Chips, Frame, Superseded } from "@/components/recruiter/assistant/CardFrame";
 import { Button, buttonStyles } from "@/components/ui/Button";
@@ -21,38 +21,50 @@ type JobDraftReviewProps = {
   card: JobDraftCard;
   onApprove: (actionId: string, draft: JobDraft) => Promise<unknown>;
   onCancel: (actionId: string) => Promise<unknown>;
+  /** The recruiter edited the draft: reported so a typed or spoken "approve" creates it as it is now. */
+  onEdits?: (actionId: string, draft: JobDraft) => void;
   superseded?: boolean;
 };
 
 const lines = (text: string) => text.split("\n").map((line) => line.replace(/^\s*[-•]\s*/, "").trim()).filter(Boolean);
+const skillList = (text: string) => text.split(",").map((skill) => skill.trim()).filter(Boolean);
 
 /**
  * "AI Job Draft": the job the assistant drafted from what the recruiter said, every field there to check
  * and edit, with what they didn't say flagged rather than invented. Nothing exists until Approve & Create.
  */
-export function JobDraftReview({ card, onApprove, onCancel, superseded = false }: JobDraftReviewProps) {
+export function JobDraftReview({ card, onApprove, onCancel, onEdits, superseded = false }: JobDraftReviewProps) {
   const id = useId();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<JobDraft>(card.draft);
+  // The skills as typed; the draft holds them as a list, so the card shows what will be created.
   const [skills, setSkills] = useState(card.draft.skills.join(", "));
   const [saving, setSaving] = useState(false);
   const [problem, setProblem] = useState<string>();
+  const edited = useRef(false);
+  const open = card.status === "proposed";
+  const live = open && !superseded;
+  useEffect(() => {
+    if (edited.current && live) onEdits?.(card.action_id, { ...draft, title: draft.title.trim() });
+  }, [draft, live, card.action_id, onEdits]);
 
-  if (superseded && card.status === "proposed") return <Superseded label={`AI Job Draft · ${card.draft.title}`} />;
+  if (superseded) return <Superseded label={`AI Job Draft · ${card.draft.title}`} />;
 
   const created = card.stage === "created";
-  const open = card.status === "proposed";
-  const job = editing ? draft : card.stage === "created" ? card.draft : draft;
+  // Once it's handled, the card shows what the server has, not this copy's edits.
+  const job = open ? draft : card.draft;
   const salary = formatSalary(job.salary_min, job.salary_max, job.salary_currency);
-  const set = <K extends keyof JobDraft>(key: K, value: JobDraft[K]) => setDraft((current) => ({ ...current, [key]: value }));
+  const set = <K extends keyof JobDraft>(key: K, value: JobDraft[K]) => {
+    edited.current = true;
+    setDraft((current) => ({ ...current, [key]: value }));
+  };
 
   async function approve() {
     if (saving || !draft.title.trim()) return;
     setSaving(true);
     setProblem(undefined);
     try {
-      const final = { ...draft, title: draft.title.trim(), skills: skills.split(",").map((skill) => skill.trim()).filter(Boolean) };
-      await onApprove(card.action_id, final);
+      await onApprove(card.action_id, { ...draft, title: draft.title.trim() });
     } catch (error) {
       setProblem(errorMessage(error));
     } finally {
@@ -128,7 +140,14 @@ export function JobDraftReview({ card, onApprove, onCancel, superseded = false }
             </div>
           </Field>
           <Field id={`${id}-skills`} label="Skills (comma-separated)" className="sm:col-span-2">
-            <Input id={`${id}-skills`} value={skills} onChange={(event) => setSkills(event.target.value)} />
+            <Input
+              id={`${id}-skills`}
+              value={skills}
+              onChange={(event) => {
+                setSkills(event.target.value);
+                set("skills", skillList(event.target.value));
+              }}
+            />
           </Field>
           <Field id={`${id}-summary`} label="Summary" className="sm:col-span-2">
             <Textarea id={`${id}-summary`} value={draft.summary ?? ""} maxLength={600} onChange={(event) => set("summary", event.target.value || null)} className="field-sizing-content min-h-16 text-[13px]" />

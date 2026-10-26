@@ -29,8 +29,10 @@ const EMPTY_CONTEXT: AssistantContext = {
  * One conversation with the recruiter assistant. Typed and spoken requests both go through send(); the
  * context the API returns (the candidate, list, job or proposal being discussed) goes back with the next
  * request, with the candidates the recruiter has ticked, so "send them" means the drafts just made and
- * "these candidates" the ones ticked. One request at a time, and each has its own id, so a double click
- * or a repeated voice result can't run anything twice.
+ * "these candidates" the ones ticked. What the recruiter changed on that proposal's card (who's unticked,
+ * an edited message or job) goes too, so a typed or spoken "yes" approves exactly what they see. One
+ * request at a time, and each has its own id, so a double click or a repeated voice result can't run
+ * anything twice.
  */
 export function useAssistant(initialApplicationId?: string) {
   const [turns, setTurns] = useState<AssistantTurn[]>([]);
@@ -38,6 +40,9 @@ export function useAssistant(initialApplicationId?: string) {
   const [pending, setPending] = useState(false);
   const [history, setHistory] = useState<AssistantHistoryItem[]>([]);
   const busy = useRef(false);
+  // Card edits not yet sent, by proposal; and the recruiter's ticks, counted so a reply can't undo newer ones.
+  const edits = useRef(new Map<string, ConfirmEdits>());
+  const selection = useRef({ version: 0, ids: context.selected_application_ids ?? [] });
   const contextRef = useRef(context);
   useEffect(() => {
     contextRef.current = context;
@@ -62,6 +67,24 @@ export function useAssistant(initialApplicationId?: string) {
     };
   }, []);
 
+  /** Show a selection: in the context sent next, and as the ticks in every candidate list. */
+  const applySelection = useCallback((ids: string[]) => {
+    setContext((current) => ({ ...current, selected_application_ids: ids }));
+    setTurns((list) =>
+      list.map((turn) =>
+        turn.role === "assistant" && turn.status === "done"
+          ? {
+              ...turn,
+              response: {
+                ...turn.response,
+                cards: turn.response.cards.map((card) => (card.type === "candidate_match" ? { ...card, selected: ids } : card)),
+              },
+            }
+          : turn,
+      ),
+    );
+  }, []);
+
   /** Ask. Returns the response, or null when it failed (the error is shown in the conversation). */
   const send = useCallback(
     async (text: string, inputType: InputType = "text", override?: Partial<AssistantContext>): Promise<AssistantResponse | null> => {
@@ -75,15 +98,23 @@ export function useAssistant(initialApplicationId?: string) {
         { id: crypto.randomUUID(), role: "user", text: words, inputType },
         { id: answerId, role: "assistant", status: "thinking" },
       ]);
+      const sent = { ...contextRef.current, ...override };
+      const changes = sent.action_id ? edits.current.get(sent.action_id) : undefined;
+      const ticks = selection.current.version;
       try {
         const response = await askAssistant({
           text: words,
           inputType,
-          context: { ...contextRef.current, ...override },
+          context: sent,
           clientRequestId: crypto.randomUUID(),
+          edits: changes,
         });
+        // The server has them now; anything edited while it answered is still to send.
+        if (sent.action_id && edits.current.get(sent.action_id) === changes) edits.current.delete(sent.action_id);
         setTurns((list) => list.map((turn) => (turn.id === answerId ? { id: answerId, role: "assistant", status: "done", response } : turn)));
         setContext(response.context);
+        // Ticked or cleared while it answered: the recruiter's newer choice stands.
+        if (selection.current.version !== ticks) applySelection(selection.current.ids);
         if (response.status === "completed") void refreshHistory();
         return response;
       } catch (error) {
@@ -95,7 +126,7 @@ export function useAssistant(initialApplicationId?: string) {
         setPending(false);
       }
     },
-    [refreshHistory],
+    [applySelection, refreshHistory],
   );
 
   /** Replace a proposal's card everywhere it appears with its latest version. */
@@ -117,9 +148,10 @@ export function useAssistant(initialApplicationId?: string) {
 
   /** Run a proposal with the recruiter's edits. The result replaces the proposal's card. */
   const confirm = useCallback(
-    async (actionId: string, edits?: ConfirmEdits): Promise<AssistantResponse> => {
+    async (actionId: string, changes?: ConfirmEdits): Promise<AssistantResponse> => {
       try {
-        const result = await confirmAction(actionId, edits);
+        const result = await confirmAction(actionId, changes);
+        edits.current.delete(actionId);
         if (result.cards[0]) updateCards(actionId, { ...result.cards[0], action_id: actionId } as AssistantCard);
         setContext((current) => ({ ...current, action_id: null, ...withoutNulls(result.context) }));
         void refreshHistory();
@@ -137,6 +169,7 @@ export function useAssistant(initialApplicationId?: string) {
   const cancel = useCallback(
     async (actionId: string, card: AssistantCard) => {
       await cancelAction(actionId);
+      edits.current.delete(actionId);
       updateCards(actionId, { ...card, status: "cancelled" } as AssistantCard);
       setContext((current) => (current.action_id === actionId ? { ...current, action_id: null } : current));
     },
@@ -145,25 +178,19 @@ export function useAssistant(initialApplicationId?: string) {
 
   const clearFocus = useCallback(() => setContext((current) => ({ ...current, application_id: null })), []);
 
-  /** The recruiter's own ticks in a candidate list: what "these candidates" means next. */
-  const setSelection = useCallback((ids: string[]) => {
-    setContext((current) => ({ ...current, selected_application_ids: ids }));
-    setTurns((list) =>
-      list.map((turn) =>
-        turn.role === "assistant" && turn.status === "done"
-          ? {
-              ...turn,
-              response: {
-                ...turn.response,
-                cards: turn.response.cards.map((card) => (card.type === "candidate_match" ? { ...card, selected: ids } : card)),
-              },
-            }
-          : turn,
-      ),
-    );
+  /** The recruiter changed a proposal's card: sent with the next request while it's the one in context. */
+  const reportEdits = useCallback((actionId: string, changes: ConfirmEdits) => {
+    edits.current.set(actionId, changes);
   }, []);
 
-  return { turns, context, pending, history, send, confirm, cancel, clearFocus, setSelection };
+  /** The recruiter's own ticks in a candidate list: what "these candidates" means next. */
+  const setSelection = useCallback((ids: string[]) => {
+    selection.current = { version: selection.current.version + 1, ids };
+    applySelection(ids);
+  }, [applySelection]);
+
+
+  return { turns, context, pending, history, send, confirm, cancel, clearFocus, setSelection, reportEdits };
 }
 
 function withoutNulls(context: AssistantContext): Partial<AssistantContext> {

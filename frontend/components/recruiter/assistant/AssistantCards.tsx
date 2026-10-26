@@ -2,10 +2,10 @@
 
 import { ArrowRight, CalendarClock, Inbox, LoaderCircle, Pencil, Send, Sparkles, X } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { CandidateMatchList } from "@/components/recruiter/assistant/CandidateMatchList";
-import { Chips, Frame } from "@/components/recruiter/assistant/CardFrame";
+import { Chips, Frame, Superseded } from "@/components/recruiter/assistant/CardFrame";
 import { JobDraftReview } from "@/components/recruiter/assistant/JobDraftReview";
 import { OutreachReview } from "@/components/recruiter/assistant/OutreachReview";
 import { Button, buttonStyles } from "@/components/ui/Button";
@@ -30,6 +30,8 @@ export type CardActions = {
   onSend: (text: string, context?: { application_id?: string | null }) => void;
   /** The recruiter ticked candidates in a list. */
   onSelect: (ids: string[]) => void;
+  /** The recruiter changed a proposal's card, so a typed or spoken "yes" approves it as it is now. */
+  onEdits: (actionId: string, edits: ConfirmEdits) => void;
   busy: boolean;
 };
 
@@ -37,7 +39,7 @@ export type CardActions = {
 export function AssistantCardView({ card, actions, superseded = false }: { card: AssistantCard; actions: CardActions; superseded?: boolean }) {
   switch (card.type) {
     case "message":
-      return <MessageProposal card={card} actions={actions} />;
+      return <MessageProposal card={card} actions={actions} superseded={superseded} />;
     case "follow_ups":
       return <FollowUpList card={card} actions={actions} />;
     case "clarify":
@@ -53,6 +55,7 @@ export function AssistantCardView({ card, actions, superseded = false }: { card:
           superseded={superseded}
           onConfirm={(actionId, edits) => actions.onConfirm(actionId, edits)}
           onCancel={(actionId) => actions.onCancel(actionId, card)}
+          onEdits={actions.onEdits}
         />
       );
     case "job_draft":
@@ -62,6 +65,7 @@ export function AssistantCardView({ card, actions, superseded = false }: { card:
           superseded={superseded}
           onApprove={(actionId, draft) => actions.onConfirm(actionId, { job: draft })}
           onCancel={(actionId) => actions.onCancel(actionId, card)}
+          onEdits={(actionId, draft) => actions.onEdits(actionId, { job: draft })}
         />
       );
   }
@@ -69,13 +73,20 @@ export function AssistantCardView({ card, actions, superseded = false }: { card:
 
 // Messages
 
-function MessageProposal({ card, actions }: { card: MessageCard; actions: CardActions }) {
+function MessageProposal({ card, actions, superseded }: { card: MessageCard; actions: CardActions; superseded: boolean }) {
   const [mode, setMode] = useState(card.mode);
   const [editing, setEditing] = useState(false);
   const [body, setBody] = useState(card.body);
   const [sending, setSending] = useState(false);
   const [problem, setProblem] = useState<string>();
   const open = card.status === "proposed";
+  const edited = useRef(false);
+  const { onEdits } = actions;
+  useEffect(() => {
+    if (edited.current && open && !superseded) onEdits(card.action_id, { body });
+  }, [body, open, superseded, card.action_id, onEdits]);
+
+  if (superseded) return <Superseded label={`${card.purpose} for ${card.candidate.name}`} />;
   const first = card.candidate.name.split(" ")[0];
 
   async function confirm() {
@@ -118,7 +129,10 @@ function MessageProposal({ card, actions }: { card: MessageCard; actions: CardAc
             id={`body-${card.action_id}`}
             value={body}
             maxLength={5000}
-            onChange={(event) => setBody(event.target.value)}
+            onChange={(event) => {
+              edited.current = true;
+              setBody(event.target.value);
+            }}
             className="field-sizing-content max-h-80 min-h-40 text-[13px]"
           />
         </div>

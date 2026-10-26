@@ -313,6 +313,109 @@ async def test_the_candidates_page_drafts_the_same_proposal_and_only_for_who_is_
     assert nothing.json()["status"] == "failed" and "Tick at least one candidate" in nothing.json()["reply"]
 
 
+# What the recruiter changed on a card is what a typed or spoken "yes" approves
+
+
+async def test_a_spoken_yes_sends_the_outreach_as_the_recruiter_left_it(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    proposal = (
+        await client.post(f"{API}/assistant/outreach", json={"application_ids": [MAYA, JAMES], "purpose": "message"})
+    ).json()
+    sent_before = await count(sessions, Message, Message.sender_type == SenderType.RECRUITER)
+    # James unticked and replies kept off on the card, then "Send them."
+    unticked = {"items": [{"application_id": MAYA, "include": True}, {"application_id": JAMES, "include": False}]}
+    final = await ask(client, "Send them.", proposal["context"], edits={**unticked, "enable_replies": False})
+    [card] = final["cards"]
+    assert card["stage"] == "final" and [item["include"] for item in card["items"]] == [True, False]
+    assert card["enable_replies"] is False
+    assert final["reply"].startswith("Ready to send 1 personalized message to Maya Brooks.")
+    assert "James Whitfield is left out." in final["reply"]
+    assert "Maya Brooks can't reply in the portal: candidate messaging stays off." in final["reply"]
+
+    # Maya's message rewritten on the final card, then "Yes".
+    edited = "Hi Maya,\n\nThanks for your patience. We'll have news for you on Thursday.\n\nBest,\nAlex"
+    items = [{"application_id": MAYA, "include": True, "body": edited}, {"application_id": JAMES, "include": False}]
+    done = await ask(client, "Yes", final["context"], edits={"items": items, "enable_replies": False})
+    assert done["cards"][0]["status"] == "completed"
+    assert done["reply"].startswith("Sent 1 personalized message to Maya Brooks")
+    assert await count(sessions, Message, Message.sender_type == SenderType.RECRUITER) == sent_before + 1
+    async with sessions() as session:
+        maya = (
+            await session.scalars(
+                select(Message).where(Message.application_id == uuid.UUID(MAYA)).order_by(Message.created_at)
+            )
+        ).all()
+        assert maya[-1].content == edited
+        for application in (MAYA, JAMES):
+            opened = await session.get(Application, uuid.UUID(application))
+            assert opened is not None and not opened.candidate_messaging_enabled
+        james = (
+            await session.scalars(
+                select(CommunicationDraft.status).where(CommunicationDraft.application_id == uuid.UUID(JAMES))
+            )
+        ).all()
+        assert DraftStatus.SENT not in james
+
+
+async def test_rescheduling_keeps_who_the_recruiter_left_out(client: AsyncClient) -> None:
+    drafted = await ask(client, "Draft interview invitations.", {"selected_application_ids": [SOPHIA, MAYA, JAMES]})
+    unticked = [
+        {"application_id": SOPHIA, "include": True},
+        {"application_id": MAYA, "include": True},
+        {"application_id": JAMES, "include": False},
+    ]
+    scheduled = await ask(
+        client, "Make these 30-minute interviews next Tuesday afternoon.", drafted["context"], edits={"items": unticked}
+    )
+    [card] = scheduled["cards"]
+    assert card["schedule"] is not None and [item["include"] for item in card["items"]] == [True, True, False]
+    final = await ask(client, "Send them.", scheduled["context"])
+    assert final["reply"].startswith("Ready to send 2 personalized interview invitations to Sophia Martinez and Maya")
+    assert "James Whitfield is left out." in final["reply"]
+
+
+async def test_a_spoken_send_and_yes_send_the_message_as_edited(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    drafted = await ask(client, "Draft Maya an update.")
+    [card] = drafted["cards"]
+    assert card["type"] == "message" and card["candidate"]["application_id"] == MAYA
+    edited = "Hi Maya,\n\nA quick note: we'll be in touch by Friday.\n\nBest,\nAlex"
+    escalated = await ask(client, "Send it.", drafted["context"], edits={"body": edited})
+    assert escalated["cards"][0]["mode"] == "execute" and escalated["cards"][0]["body"] == edited
+    done = await ask(client, "Yes", escalated["context"])
+    assert done["cards"][0]["status"] == "completed"
+    async with sessions() as session:
+        thread = (
+            await session.scalars(
+                select(Message).where(Message.application_id == uuid.UUID(MAYA)).order_by(Message.created_at)
+            )
+        ).all()
+        assert thread[-1].content == edited
+
+
+async def test_a_spoken_approve_creates_the_job_as_edited(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    drafted = await ask(client, "Create a Product Designer role in London. Hybrid, mid-level, requiring Figma.")
+    draft = {**drafted["cards"][0]["draft"], "title": "Product Designer, Platform", "salary_min": 70000}
+    # An on-card edit, then a change in words: the change is made to the edited draft.
+    changed = await ask(client, "Add Kubernetes.", drafted["context"], edits={"job": draft})
+    [card] = changed["cards"]
+    assert card["draft"]["title"] == "Product Designer, Platform" and "Kubernetes" in card["draft"]["skills"]
+    assert any(note.startswith("Department: “") for note in card["missing"])  # still only a suggestion
+    edited = {**card["draft"], "skills": ["Figma", "Design systems", "Kubernetes"], "salary_max": 90000}
+    created = await ask(client, "Approve", changed["context"], edits={"job": edited})
+    [card] = created["cards"]
+    assert card["stage"] == "created" and card["draft"]["skills"] == ["Figma", "Design systems", "Kubernetes"]
+    async with sessions() as session:
+        job = await session.get(Job, uuid.UUID(card["job_id"]))
+        assert job is not None and job.title == "Product Designer, Platform"
+        assert "Requirements: Figma, Design systems, Kubernetes" in (job.description or "")
+        assert "70K" in (job.description or "") and "90K" in (job.description or "")
+
+
 async def test_outreach_needs_candidates_and_approve_still_shows_the_final_look(client: AsyncClient) -> None:
     nobody = await ask(client, "Draft interview invitations for the selected candidates.")
     assert nobody["reply"].startswith("Tick the candidates first")

@@ -34,8 +34,10 @@ from app.schemas.assistant import (
     ConfirmActionRequest,
     OutreachCard,
     OutreachItem,
+    OutreachItemEdit,
     OutreachResult,
     ScheduleDetails,
+    ScheduleEdit,
     ScheduleProposal,
 )
 from app.schemas.interview import InterviewCreate
@@ -184,6 +186,55 @@ async def propose(
     )
 
 
+def apply_edits(card: OutreachCard, edits: ConfirmActionRequest) -> OutreachCard:
+    """The card as the recruiter left it: who's ticked, each subject and message, whether to open replies,
+    and the interviewers, format and meeting link."""
+    by_id = {item.application_id: item for item in edits.items or []}
+    items = []
+    for item in card.items:
+        change = by_id.get(item.candidate.application_id)
+        if change is not None:
+            item = item.model_copy(
+                update={
+                    "include": change.include,
+                    "subject": change.subject or item.subject,
+                    "body": change.body or item.body,
+                }
+            )
+        items.append(item)
+    update: dict[str, object] = {"items": items}
+    if edits.enable_replies is not None:
+        update["enable_replies"] = edits.enable_replies
+    if card.schedule is not None and edits.schedule is not None:
+        changes = edits.schedule.model_dump(exclude_unset=True, exclude_none=True)
+        if "meeting_url" in edits.schedule.model_fields_set:
+            changes["meeting_url"] = edits.schedule.meeting_url
+        update["schedule"] = card.schedule.model_copy(update=changes)
+    return card.model_copy(update=update)
+
+
+def as_confirmation(card: OutreachCard) -> ConfirmActionRequest:
+    """Approving the card exactly as it is."""
+    plan = card.schedule
+    return ConfirmActionRequest(
+        items=[
+            OutreachItemEdit(
+                application_id=item.candidate.application_id, include=item.include, subject=item.subject, body=item.body
+            )
+            for item in card.items
+        ],
+        enable_replies=card.enable_replies,
+        schedule=ScheduleEdit(
+            title=plan.title,
+            interview_type=plan.interview_type,
+            interviewers=plan.interviewers,
+            meeting_url=plan.meeting_url,
+        )
+        if plan is not None
+        else None,
+    )
+
+
 async def execute(
     session: AsyncSession,
     recruiter: User,
@@ -194,22 +245,14 @@ async def execute(
 ) -> tuple[OutreachCard, str, str, AssistantActionStatus]:
     """Run what the recruiter approved, once: for each candidate still ticked, the interview, then the
     message. Returns the card with each outcome, the reply, the summary for Recent actions and the status."""
-    edits = {edit.application_id: edit for edit in request.items or []}
-    included = [item for item in card.items if edits.get(item.candidate.application_id, item).include]
-    if not included:
+    card = apply_edits(card, request)
+    if not any(item.include for item in card.items):
         raise BadRequestError("Tick at least one candidate to send to.", code="nothing_selected")
-    plan = card.schedule
-    if plan is not None and request.schedule is not None:
-        changes = request.schedule.model_dump(exclude_unset=True, exclude_none=True)
-        if "meeting_url" in request.schedule.model_fields_set:
-            changes["meeting_url"] = request.schedule.meeting_url
-        plan = plan.model_copy(update=changes)
-    replies = card.enable_replies if request.enable_replies is None else request.enable_replies
+    plan, replies = card.schedule, card.enable_replies
 
     items: list[OutreachItem] = []
     for item in card.items:
-        edit = edits.get(item.candidate.application_id)
-        if item not in included:
+        if not item.include:
             try:
                 await drafts.discard_draft(session, item.draft_id)
             except AppError:
@@ -253,14 +296,7 @@ async def execute(
                     )
                 )
                 result.calendar = event.status
-            sent = await drafts.send_draft(
-                session,
-                item.draft_id,
-                edit.subject if edit else None,
-                edit.body if edit else None,
-                recruiter,
-                email,
-            )
+            sent = await drafts.send_draft(session, item.draft_id, item.subject, item.body, recruiter, email)
             result.message_sent = True
             delivery = sent.message.delivery
             result.email = (delivery.email_status if delivery else EmailStatus.NOT_CONFIGURED).value  # type: ignore[assignment]
@@ -272,12 +308,12 @@ async def execute(
         except AppError as exc:
             await _recover(session, recruiter)
             result.error = exc.message
-            body, subject = (edit.body if edit and edit.body else item.body), item.subject
+            body, subject = item.body, item.subject
         except Exception:
             logger.exception("assistant.outreach_item_failed application=%s", application_id)
             await _recover(session, recruiter)
             result.error = UNEXPECTED
-            body, subject = (edit.body if edit and edit.body else item.body), item.subject
+            body, subject = item.body, item.subject
         items.append(item.model_copy(update={"result": result, "body": body, "subject": subject}))
 
     done = [item for item in items if item.result and item.result.message_sent]

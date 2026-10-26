@@ -97,6 +97,7 @@ export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: strin
     onCancel: assistant.cancel,
     onSend: (text, context) => void assistant.send(text, "text", context),
     onSelect: assistant.setSelection,
+    onEdits: assistant.reportEdits,
     busy: assistant.pending,
   };
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, CalendarClock, CalendarX2, Check, ChevronDown, CircleAlert, LoaderCircle, Mail, Send, X } from "lucide-react";
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import { Frame, Superseded } from "@/components/recruiter/assistant/CardFrame";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -28,6 +28,8 @@ type OutreachReviewProps = {
   /** Approve, with the recruiter's edits: runs once. */
   onConfirm: (actionId: string, edits: ConfirmEdits) => Promise<unknown>;
   onCancel: (actionId: string) => Promise<unknown>;
+  /** The recruiter changed the card: reported so a typed or spoken "yes" approves it as it is now. */
+  onEdits?: (actionId: string, edits: ConfirmEdits) => void;
   /** A newer version of this proposal is further down the conversation. */
   superseded?: boolean;
 };
@@ -43,7 +45,7 @@ export function slotLabel(slot: { starts_at: string; ends_at: string }): string 
  * messages and times together; only "Confirm & send" there sends anything or creates any interview.
  * Afterwards it says, for each candidate, exactly what happened and what didn't (no email, no calendar).
  */
-export function OutreachReview({ card, onConfirm, onCancel, superseded = false }: OutreachReviewProps) {
+export function OutreachReview({ card, onConfirm, onCancel, onEdits, superseded = false }: OutreachReviewProps) {
   const id = useId();
   const [edits, setEdits] = useState<Record<string, Edit>>(() =>
     Object.fromEntries(card.items.map((item) => [item.candidate.application_id, { include: item.include, subject: item.subject, body: item.body }])),
@@ -56,9 +58,19 @@ export function OutreachReview({ card, onConfirm, onCancel, superseded = false }
   const [format, setFormat] = useState<InterviewFormat>(card.schedule?.interview_type ?? "video");
   const [sending, setSending] = useState(false);
   const [problem, setProblem] = useState<string>();
+  // Only what the recruiter changed is reported, never a card's first state (an older copy could undo newer edits).
+  const edited = useRef(false);
+  const change = <T,>(set: (value: T) => void) => (value: T) => {
+    edited.current = true;
+    set(value);
+  };
+  const live = card.status === "proposed" && !superseded;
+  useEffect(() => {
+    if (edited.current && live) onEdits?.(card.action_id, asEdits(card, { edits, replies, interviewers, meetingUrl, format }));
+  }, [card, edits, replies, interviewers, meetingUrl, format, live, onEdits]);
 
   const label = `${pluralize(card.items.length, "personalized draft")}`;
-  if (superseded && card.status === "proposed") return <Superseded label={label} />;
+  if (superseded) return <Superseded label={label} />;
 
   const done = card.stage === "done" || card.status === "completed" || card.status === "failed";
   const cancelled = card.status === "cancelled";
@@ -71,29 +83,8 @@ export function OutreachReview({ card, onConfirm, onCancel, superseded = false }
     if (sending || chosen.length === 0 || linkError) return;
     setSending(true);
     setProblem(undefined);
-    const payload: ConfirmEdits = {
-      items: card.items.map((item) => {
-        const edit = edits[item.candidate.application_id];
-        return {
-          application_id: item.candidate.application_id,
-          include: edit.include,
-          ...(edit.subject !== item.subject ? { subject: edit.subject } : {}),
-          ...(edit.body !== item.body ? { body: edit.body } : {}),
-        };
-      }),
-      enable_replies: replies,
-      ...(card.schedule
-        ? {
-            schedule: {
-              interview_type: format,
-              interviewers: interviewers.split(",").map((name) => name.trim()).filter(Boolean),
-              meeting_url: meetingUrl.trim() || null,
-            },
-          }
-        : {}),
-    };
     try {
-      await onConfirm(card.action_id, payload);
+      await onConfirm(card.action_id, asEdits(card, { edits, replies, interviewers, meetingUrl, format }));
     } catch (error) {
       setProblem(errorMessage(error));
     } finally {
@@ -166,7 +157,7 @@ export function OutreachReview({ card, onConfirm, onCancel, superseded = false }
                     className="mt-0.5"
                     checked={edit.include}
                     disabled={cancelled}
-                    onCheckedChange={(value) => setEdits((current) => ({ ...current, [key]: { ...edit, include: value === true } }))}
+                    onCheckedChange={change((value) => setEdits((all) => ({ ...all, [key]: { ...edit, include: value === true } })))}
                     aria-label={`Include ${item.candidate.name}`}
                   />
                   <div className="min-w-0 flex-1">
@@ -205,7 +196,7 @@ export function OutreachReview({ card, onConfirm, onCancel, superseded = false }
                       id={`${id}-${key}-subject`}
                       value={edit.subject}
                       maxLength={200}
-                      onChange={(event) => setEdits((current) => ({ ...current, [key]: { ...edit, subject: event.target.value } }))}
+                      onChange={change((event) => setEdits((all) => ({ ...all, [key]: { ...edit, subject: event.target.value } })))}
                       className="h-8 text-[13px]"
                     />
                     <label className="text-xs text-stone" htmlFor={`${id}-${key}-body`}>
@@ -215,7 +206,7 @@ export function OutreachReview({ card, onConfirm, onCancel, superseded = false }
                       id={`${id}-${key}-body`}
                       value={edit.body}
                       maxLength={5000}
-                      onChange={(event) => setEdits((current) => ({ ...current, [key]: { ...edit, body: event.target.value } }))}
+                      onChange={change((event) => setEdits((all) => ({ ...all, [key]: { ...edit, body: event.target.value } })))}
                       className="field-sizing-content max-h-80 min-h-36 text-[13px]"
                     />
                   </div>
@@ -232,13 +223,13 @@ export function OutreachReview({ card, onConfirm, onCancel, superseded = false }
             <label htmlFor={`${id}-interviewers`} className="text-xs text-stone">
               Interviewers
             </label>
-            <Input id={`${id}-interviewers`} value={interviewers} onChange={(event) => setInterviewers(event.target.value)} className="h-8 text-[13px]" />
+            <Input id={`${id}-interviewers`} value={interviewers} onChange={change((event) => setInterviewers(event.target.value))} className="h-8 text-[13px]" />
           </div>
           <div className="flex flex-col gap-1">
             <label htmlFor={`${id}-format`} className="text-xs text-stone">
               Format
             </label>
-            <Select id={`${id}-format`} value={format} onChange={(event) => setFormat(event.target.value as InterviewFormat)} className="h-8 text-[13px]">
+            <Select id={`${id}-format`} value={format} onChange={change((event) => setFormat(event.target.value as InterviewFormat))} className="h-8 text-[13px]">
               {FORMATS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -257,7 +248,7 @@ export function OutreachReview({ card, onConfirm, onCancel, superseded = false }
               placeholder="https://"
               value={meetingUrl}
               aria-invalid={linkError ? true : undefined}
-              onChange={(event) => setMeetingUrl(event.target.value)}
+              onChange={change((event) => setMeetingUrl(event.target.value))}
               className="h-8 text-[13px]"
             />
           </div>
@@ -267,7 +258,7 @@ export function OutreachReview({ card, onConfirm, onCancel, superseded = false }
         </div>
       )}
 
-      {!done && !cancelled && view === "review" && <Notes card={card} replies={replies} closedReplies={closedReplies.length} onReplies={setReplies} />}
+      {!done && !cancelled && view === "review" && <Notes card={card} replies={replies} closedReplies={closedReplies.length} onReplies={change(setReplies)} />}
 
       {(problem || card.error) && <p className="mt-2 text-xs text-danger">{problem ?? card.error}</p>}
 
@@ -295,6 +286,34 @@ export function OutreachReview({ card, onConfirm, onCancel, superseded = false }
       )}
     </Frame>
   );
+}
+
+/** The card as the recruiter has it: who's in, each changed subject and message, replies, the interview details. */
+function asEdits(
+  card: OutreachCard,
+  state: { edits: Record<string, Edit>; replies: boolean; interviewers: string; meetingUrl: string; format: InterviewFormat },
+): ConfirmEdits {
+  return {
+    items: card.items.map((item) => {
+      const edit = state.edits[item.candidate.application_id];
+      return {
+        application_id: item.candidate.application_id,
+        include: edit.include,
+        ...(edit.subject !== item.subject ? { subject: edit.subject } : {}),
+        ...(edit.body !== item.body ? { body: edit.body } : {}),
+      };
+    }),
+    enable_replies: state.replies,
+    ...(card.schedule
+      ? {
+          schedule: {
+            interview_type: state.format,
+            interviewers: state.interviewers.split(",").map((name) => name.trim()).filter(Boolean),
+            meeting_url: state.meetingUrl.trim() || null,
+          },
+        }
+      : {}),
+  };
 }
 
 function ScheduleSummary({ card }: { card: OutreachCard }) {

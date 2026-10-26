@@ -52,6 +52,7 @@ from app.schemas.assistant import (
     ConfirmActionRequest,
     InterviewDetails,
     JobChanges,
+    JobDraft,
     JobDraftCard,
     MessageCard,
     OutreachCard,
@@ -99,7 +100,8 @@ class Outcome:
 
 @dataclass
 class Context:
-    """The conversation's context, checked: ids the workspace sent that still mean something."""
+    """The conversation's context, checked: ids the workspace sent that still mean something. The
+    proposal's stored card already has the recruiter's on-card edits applied (see _context)."""
 
     application: Application | None = None
     proposal: AssistantAction | None = None
@@ -178,7 +180,7 @@ async def handle(
         return _replay(existing)
     row_id = row.id
 
-    context = await _context(session, recruiter, request.context)
+    context = await _context(session, recruiter, request.context, request.edits)
     if intent is not None:
         model_name = "workspace"  # chosen with the workspace's controls, not read from words
     else:
@@ -461,7 +463,8 @@ async def _confirm_in_context(
     payload = dict(proposal.payload or {})
     kind = payload.get("kind", "message")
     if payload.get("final") or (kind == "job" and intent.mode == "execute"):
-        result = await confirm(session, recruiter, proposal.id, ConfirmActionRequest(), email, calendar)
+        # Exactly the card the recruiter sees, with their unticks and edits.
+        result = await confirm(session, recruiter, proposal.id, _as_shown(payload), email, calendar)
         return Outcome(
             reply=result.reply, cards=result.cards, context=keep.model_copy(update=_without_none(result.context))
         )
@@ -480,11 +483,31 @@ async def _confirm_in_context(
     return Outcome(reply=reply, cards=[card], context=keep)
 
 
+def _as_shown(payload: dict[str, Any]) -> ConfirmActionRequest:
+    """Approving the stored proposal exactly as the recruiter last left it on its card."""
+    kind = payload.get("kind", "message")
+    if kind == "outreach":
+        return outreach.as_confirmation(OutreachCard.model_validate(payload["card"]))
+    if kind == "job":
+        return ConfirmActionRequest(job=JobDraftCard.model_validate(payload["card"]).draft)
+    return ConfirmActionRequest(body=MessageCard.model_validate(payload["card"]).body)
+
+
 def _final_summary(card: OutreachCard) -> str:
     chosen = [item for item in card.items if item.include]
     names = _names([item.candidate.name for item in chosen])
     what = "interview invitation" if card.purpose == outreach.INVITATION else "message"
     lines = [f"Ready to send {len(chosen)} personalized {what}{'s' if len(chosen) != 1 else ''} to {names}."]
+    left_out = [item.candidate.name for item in card.items if not item.include]
+    if left_out:
+        lines.append(f"{_names(left_out)} {'is' if len(left_out) == 1 else 'are'} left out.")
+    closed = [item.candidate.name for item in chosen if not item.replies_open]
+    if closed:
+        lines.append(
+            f"Candidate messaging will be turned on for {_names(closed)}, so they can reply."
+            if card.enable_replies
+            else f"{_names(closed)} can't reply in the portal: candidate messaging stays off."
+        )
     if card.schedule is not None:
         scheduled = [item for item in chosen if item.slot is not None]
         lines.append(
@@ -546,7 +569,7 @@ async def _update_job(session: AsyncSession, changes: JobChanges, context: Conte
             context=keep,
         )
     card = card.model_copy(
-        update={"draft": draft, "changes": described, "missing": jobs.checks(draft), "stage": "draft"}
+        update={"draft": draft, "changes": described, "missing": _job_checks(card, draft), "stage": "draft"}
     )
     await _save_payload(session, proposal.id, {**payload, "card": card.model_dump(mode="json"), "final": False})
     return Outcome(
@@ -554,6 +577,12 @@ async def _update_job(session: AsyncSession, changes: JobChanges, context: Conte
         cards=[card],
         context=keep,
     )
+
+
+def _job_checks(card: JobDraftCard, draft: JobDraft) -> list[str]:
+    """The checks for a changed draft, still flagging a department the title suggested until it's changed."""
+    suggested = any(note.startswith("Department: “") for note in card.missing)
+    return jobs.checks(draft, department_said=not suggested or draft.department != card.draft.department)
 
 
 # Candidates
@@ -684,6 +713,7 @@ async def _schedule(
         payload = dict(context.proposal.payload or {})
         ids = [uuid.UUID(value) for value in payload.get("application_ids", [])]
         previous = OutreachCard.model_validate(payload["card"])
+        left_out = {item.candidate.application_id for item in previous.items if not item.include}
         if previous.schedule is not None and not details.interview_type:
             details = details.model_copy(update={"interview_type": previous.schedule.title})
         return await _propose_outreach(
@@ -700,6 +730,7 @@ async def _schedule(
             calendar,
             instructions=payload.get("instructions"),
             existing=context.proposal,
+            left_out=left_out,
         )
     if not context.selected:
         return Outcome(reply=PICK_FIRST, context=keep)
@@ -723,6 +754,7 @@ async def _propose_outreach(
     *,
     instructions: str | None = None,
     existing: AssistantAction | None = None,
+    left_out: set[uuid.UUID] | None = None,
 ) -> Outcome:
     applications = await outreach.applications_for(session, targets)
     words = instructions if instructions is not None else request.text
@@ -741,6 +773,11 @@ async def _propose_outreach(
         calendar=calendar,
         now=utcnow(),
     )
+    if left_out:
+        items = [
+            item.model_copy(update={"include": item.candidate.application_id not in left_out}) for item in card.items
+        ]
+        card = card.model_copy(update={"items": items})
     payload = {
         "kind": "outreach",
         "card": card.model_dump(mode="json"),
@@ -1002,7 +1039,25 @@ async def history(session: AsyncSession, recruiter: User, limit: int = 20) -> li
 # Internals
 
 
-async def _context(session: AsyncSession, recruiter: User, context: AssistantContext) -> Context:
+def _with_edits(payload: dict[str, Any], edits: ConfirmActionRequest) -> dict[str, Any]:
+    """The stored proposal with the recruiter's on-card edits applied."""
+    kind = payload.get("kind", "message")
+    if kind == "outreach":
+        card: AssistantCard = outreach.apply_edits(OutreachCard.model_validate(payload["card"]), edits)
+    elif kind == "job":
+        card = JobDraftCard.model_validate(payload["card"])
+        if edits.job is not None:
+            card = card.model_copy(update={"draft": edits.job, "missing": _job_checks(card, edits.job)})
+    else:
+        card = MessageCard.model_validate(payload["card"])
+        if edits.body:
+            card = card.model_copy(update={"body": edits.body})
+    return {**payload, "card": card.model_dump(mode="json")}
+
+
+async def _context(
+    session: AsyncSession, recruiter: User, context: AssistantContext, edits: ConfirmActionRequest | None = None
+) -> Context:
     application = await session.get(Application, context.application_id) if context.application_id else None
     if application is not None and application.archived_at is not None:
         application = None
@@ -1011,6 +1066,10 @@ async def _context(session: AsyncSession, recruiter: User, context: AssistantCon
         proposal = await session.get(AssistantAction, context.action_id)
         if proposal is None or proposal.recruiter_id != recruiter.id or proposal.status != S.PROPOSED:
             proposal = None
+        elif edits is not None:
+            # What the recruiter changed on the card is what every later step works from.
+            proposal.payload = _with_edits(dict(proposal.payload or {}), edits)
+            await _save_payload(session, proposal.id, proposal.payload)
     if application is not None:
         await session.refresh(application, ["candidate", "job"])
     job = await session.get(Job, context.job_id) if context.job_id else None

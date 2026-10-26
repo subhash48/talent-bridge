@@ -19,15 +19,17 @@ const FADE_PX = 28;
 const scrollBehavior = (): ScrollBehavior =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
 
+/** Only ever the candidate's own applications: the company, the job title or the stage they see. */
 function matches(application: CandidateApplicationSummary, query: string): boolean {
-  return [application.company, application.jobTitle].some((text) => text.toLowerCase().includes(query));
+  return [application.company, application.jobTitle, application.stageLabel].some((text) => text.toLowerCase().includes(query));
 }
 
 /**
  * The dashboard's row of the candidate's applications, one card each: employer, role and the stage they
  * may see. Choosing a card makes it the application the whole portal shows (application -> job ->
- * company). The row scrolls sideways: arrows on wider screens, touch on phones, and a search by company
- * or role. Keyboard: the cards are one radio group, so Tab reaches the chosen one and the arrow keys move.
+ * company). The row scrolls sideways with the arrows or by touch, and a search narrows it by company, role
+ * or stage. It's always there, with its search and arrows, however many applications there are.
+ * Keyboard: the cards are one radio group, so Tab reaches the chosen one and the arrow keys move.
  */
 export function ApplicationSelector() {
   const { me, selectedId, selectApplication } = useCandidatePortal();
@@ -40,8 +42,6 @@ export function ApplicationSelector() {
   const labelId = useId();
   const rowId = useId();
 
-  const any = applications.length > 0;
-  const many = applications.length > 1;
   const search = query.trim().toLowerCase();
   const shown = search ? applications.filter((application) => matches(application, search)) : applications;
   const tabStop = shown.some((application) => application.id === selectedId) ? selectedId : shown[0]?.id;
@@ -65,7 +65,7 @@ export function ApplicationSelector() {
       resized.disconnect();
       box.removeEventListener("scroll", measure);
     };
-  }, [any]);
+  }, []);
 
   // The chosen card is always in view (at a snap point): straight away on arrival, smoothly after a change.
   useEffect(() => {
@@ -79,8 +79,6 @@ export function ApplicationSelector() {
     const hidden = target.left < view.left + FADE_PX - 1 || target.right > view.right - FADE_PX + 1;
     if (hidden) box.scrollBy({ left: target.left - view.left - FADE_PX, behavior });
   }, [selectedId]);
-
-  if (!any) return null;
 
   const page = (direction: 1 | -1) => {
     const box = scroller.current;
@@ -117,58 +115,56 @@ export function ApplicationSelector() {
 
   return (
     <section aria-labelledby={labelId} className="flex flex-col gap-2.5">
-      <div className="flex items-center gap-2">
+      {/* Phones: the title and arrows on one line, the search full width under them. */}
+      <div className="flex flex-wrap items-center gap-2">
         <h2 id={labelId} className="shrink-0 text-[13px] font-semibold text-ink">
-          {many ? "My applications" : "My application"}
-          {many && <span className="ml-1.5 font-normal text-stone tabular-nums">{applications.length}</span>}
+          My applications
+          <span className="ml-1.5 font-normal text-stone tabular-nums">{applications.length}</span>
         </h2>
-        {many && (
-          <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-1.5">
-            <div className="relative min-w-0 flex-1 sm:max-w-64">
-              <Search aria-hidden className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-faint" />
-              <Input
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Escape" && query) {
-                    event.preventDefault();
-                    setQuery("");
-                  }
-                }}
-                placeholder="Search company or role"
-                aria-label="Search your applications by company or role"
-                aria-controls={rowId}
-                autoComplete="off"
-                className="h-8 pl-8 text-[13px]"
-              />
-            </div>
-            <div className="hidden items-center gap-1 sm:flex">
-              <Button
-                variant="secondary"
-                size="icon-sm"
-                aria-label="Scroll back through your applications"
-                aria-controls={rowId}
-                disabled={!edges.back}
-                onClick={() => page(-1)}
-                className="size-8"
-              >
-                <ChevronLeft />
-              </Button>
-              <Button
-                variant="secondary"
-                size="icon-sm"
-                aria-label="Scroll on through your applications"
-                aria-controls={rowId}
-                disabled={!edges.forward}
-                onClick={() => page(1)}
-                className="size-8"
-              >
-                <ChevronRight />
-              </Button>
-            </div>
-          </div>
-        )}
+        <div className="relative order-last w-full sm:order-none sm:ml-auto sm:w-64">
+          <Search aria-hidden className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-faint" />
+          <Input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape" && query) {
+                event.preventDefault();
+                setQuery("");
+              }
+            }}
+            placeholder="Search applications…"
+            aria-label="Search your applications by company, role or stage"
+            aria-controls={rowId}
+            autoComplete="off"
+            disabled={applications.length === 0}
+            className="h-8 pl-8 text-[13px]"
+          />
+        </div>
+        <div className="ml-auto flex items-center gap-1 sm:ml-0">
+          <Button
+            variant="secondary"
+            size="icon-sm"
+            aria-label="Scroll back through your applications"
+            aria-controls={rowId}
+            disabled={!edges.back}
+            onClick={() => page(-1)}
+            className="size-8"
+          >
+            <ChevronLeft />
+          </Button>
+          <Button
+            variant="secondary"
+            size="icon-sm"
+            aria-label="Scroll on through your applications"
+            aria-controls={rowId}
+            disabled={!edges.forward}
+            onClick={() => page(1)}
+            className="size-8"
+          >
+            <ChevronRight />
+          </Button>
+        </div>
       </div>
 
       <p role="status" className="sr-only">
@@ -186,7 +182,11 @@ export function ApplicationSelector() {
         }}
       >
         <div ref={row} className="w-max min-w-full">
-          {shown.length > 0 ? (
+          {applications.length === 0 ? (
+            <p className="flex min-h-[78px] items-center rounded-[12px] border border-dashed border-border-strong px-4 text-[13px] text-stone">
+              No applications yet. When you apply for a role, it appears here.
+            </p>
+          ) : shown.length > 0 ? (
             <div role="radiogroup" aria-labelledby={labelId} onKeyDown={onKeyDown} className="flex gap-2.5">
               {shown.map((application) => (
                 <ApplicationCard

@@ -523,6 +523,48 @@ async def test_a_models_confirm_stands_only_for_a_plain_approval(
     assert await count(sessions, Message, Message.sender_type == SenderType.RECRUITER) == sent_before
 
 
+# Read as said, without a model
+
+
+async def test_with_candidates_ticked_a_question_is_answered_and_the_ticks_stay(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    ticked = {"selected_application_ids": [SOPHIA, MAYA, JAMES]}
+    drafts = await count(sessions, CommunicationDraft, CommunicationDraft.status == DraftStatus.DRAFTED)
+    for question, intent in (
+        ("Who needs an update today?", "who_needs_update"),
+        ("Which candidates have unanswered messages?", "unanswered"),
+        ("What did Maya say in her last message?", "candidate_info"),
+        ("Check whether Maya replied", "candidate_info"),
+    ):
+        answer = await ask(client, question, ticked)
+        assert answer["intent"] == intent, question
+        assert answer["context"]["selected_application_ids"] == [SOPHIA, MAYA, JAMES], question
+    assert await count(sessions, CommunicationDraft, CommunicationDraft.status == DraftStatus.DRAFTED) == drafts
+    picked = await ask(client, "Pick a time for Sophia", ticked)
+    assert picked["context"]["selected_application_ids"] == [SOPHIA, MAYA, JAMES]
+
+
+async def test_every_name_listed_gets_their_own_invitation(client: AsyncClient) -> None:
+    invited = await ask(client, "Invite Maya and Priya to a 30-minute interview next Tuesday")
+    assert invited["intent"] == "draft_outreach"
+    [card] = invited["cards"]
+    assert [item["candidate"]["application_id"] for item in card["items"]] == [MAYA, application_id("priya-desai")]
+    assert card["schedule"]["duration_minutes"] == 30 and all(item["slot"] for item in card["items"])
+
+
+async def test_the_prompts_own_search_examples_work_without_a_model(client: AsyncClient) -> None:
+    listed = await ask(client, "Show candidates for Product Designer.")
+    narrowed = await ask(client, "Filter for Figma and design systems", listed["context"])
+    assert narrowed["intent"] == "search_candidates" and "couldn't find a job" not in narrowed["reply"]
+    assert narrowed["cards"][0]["criteria"] == ["Figma", "Design systems"]
+    created = await ask(client, "Approve", (await ask(client, "Create a Staff Data Scientist role"))["context"])
+    top = await ask(client, "Show the top 10 for this role", created["context"])
+    [card] = top["cards"]
+    assert card["type"] == "candidate_match" and card["limit"] == 10
+    assert card["filters"][0]["key"] == f"job:{created['context']['job_id']}"
+
+
 async def test_outreach_needs_candidates_and_approve_still_shows_the_final_look(client: AsyncClient) -> None:
     nobody = await ask(client, "Draft interview invitations for the selected candidates.")
     assert nobody["reply"].startswith("Tick the candidates first")

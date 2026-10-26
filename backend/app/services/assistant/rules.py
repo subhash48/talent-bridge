@@ -140,6 +140,8 @@ _NOT_DAY = re.compile(
     _I,
 )
 _QUESTION = re.compile(r"^\s*(what|when|which|where|how|who|does|did|is|are|has|have|do|can you tell|show|list)\b", _I)
+# Only a question, never a request to do something: "Did Maya reply?", "Which candidates have unanswered messages?"
+_ASKS = re.compile(r"^\s*(what|when|which|where|how|who|why|does|did|is|are|has|have|was|were|do)\b", _I)
 # The communication questions, checked before anything that sends.
 _NO_FOLLOW_UP = re.compile(
     r"\binterview\w*\b.{0,60}\b(no|not|without|never|haven'?t|hasn'?t|didn'?t)\b.{0,40}\bfollow[- ]?(up|ed up)"
@@ -181,7 +183,9 @@ _SEARCH = re.compile(
     _I,
 )
 _CANDIDATE_INFO = re.compile(
-    r"\b(tell me about|summar\w*|how is|what about|status of|update on|where is|background|application)\b", _I
+    r"\b(tell me about|summar\w*|how is|what about|status of|update on|where is|background|application)\b"
+    r"|^\s*check (whether|if|on)\b",
+    _I,
 )
 _DRAFT_WORDS = re.compile(r"\b(draft|write|prepare|preview|compose)\b", _I)
 # Several candidates at once: the ones ticked, or "these five".
@@ -191,9 +195,8 @@ _GROUP = re.compile(
     _I,
 )
 _OUTREACH = re.compile(r"\b(personali[sz]ed|outreach|individual (drafts?|messages?|invit\w*))\b", _I)
-_SELECT = re.compile(
-    r"^\s*(?:please\s+)?(?:also\s+)?(select|pick|tick|choose|check|deselect|unselect|untick|uncheck)\b", _I
-)
+_SELECT = re.compile(r"^\s*(?:please\s+)?(?:also\s+)?(select|tick|deselect|unselect|untick|uncheck)\b", _I)
+_SELECT_IF_NAMES = re.compile(r"^\s*(?:please\s+)?(?:also\s+)?(?:pick|choose|check)\s+(?P<rest>.+)$", _I)
 # Leaving someone out, by name: "Remove James", "drop Maya", "leave James out", "don't include Liam".
 _LEAVE_OUT = re.compile(
     r"^\s*(?i:please\s+)?(?i:remove|drop|exclude|skip|leave out|take out|don'?t include|do not include)\s+(?:[Mm]s\.? |[Mm]r\.? )?[A-Z]"
@@ -213,7 +216,8 @@ _SCHEDULE = re.compile(
 # Who a request names: a capitalised name after a verb or preposition ("Send Sophia", "for Priya"). Only a
 # hint: the engine checks it against the pipeline, and reads the whole request when it matches nobody.
 _NAME = re.compile(
-    r"\b(?i:send|email|ask|invite|message|tell|telling|let|for|to|about|with|does|is|has|draft|remind|update|write)\s+"
+    r"\b(?i:send|email|ask|invite|message|tell|telling|let|for|to|about|with|does|did|is|was|has|had|draft|remind|update"
+    r"|write|whether|if)\s+"
     r"(?P<name>[A-Z][a-zà-ÿ'\-]+(?:\s+[A-Z][a-zà-ÿ'\-]+)?)"
 )
 _NOT_NAMES = frozenset(
@@ -290,12 +294,14 @@ _INTERVIEW_STATES = (
 )
 _LIMIT = re.compile(
     r"\b(?:top|first|show(?: me)?|find|list|give me|only)?\s*(?P<count>\d{1,3})\s+(?:matching\s+|best\s+|strongest\s+)?"
-    r"(?:candidates|applicants|people|matches|profiles)\b",
+    r"(?:candidates|applicants|people|matches|profiles)\b"
+    r"|\b(?:the\s+)?(?:top|first)\s+(?P<top>\d{1,3})\b",
     _I,
 )
 _CRITERIA = re.compile(
     r"\b(?:matching|with|who (?:have|has|know|knows|list|lists)|skilled in|that have|requiring|skills?:?)\s+"
-    r"(?P<skills>[^.;!?]+)",
+    r"(?P<skills>[^.;!?]+)"
+    r"|^\s*(?:filter|narrow)(?: (?:it|them|the list))?(?: down)? (?:by|for|on|to)\s+(?P<filter>[^.;!?]+)",
     _I,
 )
 _CRITERIA_END = re.compile(
@@ -454,21 +460,23 @@ def classify(
         return "update_job"
     if is_create(text):
         return "create_job"
-    if _SELECT.search(text) or _CLEAR_SELECTION.search(text) or _LEAVE_OUT.search(text):
+    if _SELECT.search(text) or _CLEAR_SELECTION.search(text) or _LEAVE_OUT.search(text) or _picks_names(text):
         return "select_candidates"
+    # A question is answered, never turned into drafts for everyone ticked.
+    asks = bool(_ASKS.search(text))
     # "Perfect, but make them Wednesday morning instead": new times for the outreach on screen.
     if kind == "outreach" and _RESCHEDULE.search(text):
         return "schedule_interviews"
     group = bool(_GROUP.search(text)) or len(names_listed(text)) > 1
-    if (kind == "outreach" or group) and _SCHEDULE.search(text) and not _OUTREACH.search(text):
+    if not asks and (kind == "outreach" or group) and _SCHEDULE.search(text) and not _OUTREACH.search(text):
         return "schedule_interviews" if kind == "outreach" or not _MESSAGE_VERB.search(text) else "draft_outreach"
     named = name_hint(text) is not None
     # "Send Sophia a personalized email" is one message; "draft personalized outreach" is one each.
-    if (_OUTREACH.search(text) and not named) or (group and _MESSAGE_VERB.search(text)):
+    if not asks and ((_OUTREACH.search(text) and not named) or (group and _MESSAGE_VERB.search(text))):
         return "draft_outreach"
-    if has_selection and not named and _MESSAGE_VERB.search(text):
+    if has_selection and not named and not asks and _MESSAGE_VERB.search(text):
         return "draft_outreach"  # "Draft interview invitations", with candidates ticked
-    if has_selection and not named and _SCHEDULE.search(text):
+    if has_selection and not named and not asks and _SCHEDULE.search(text):
         return "schedule_interviews"
     asking = bool(_QUESTION.search(text))
     # About one person ("Is Priya's interview confirmed?"): their status, not a list.
@@ -487,12 +495,12 @@ def classify(
             return "who_needs_update"
     if _QUESTION.search(text) and _NEXT_INTERVIEW.search(text):
         return "next_interview"
-    if _MESSAGE_VERB.search(text):
+    if _MESSAGE_VERB.search(text) and not asks:
         return "send_interview_email" if _INVITATION.search(text) else "draft_message"
     if _SEARCH.search(text) or _LIMIT.search(text):
         return "search_candidates"
-    if _CANDIDATE_INFO.search(text):
-        return "candidate_info"
+    if _CANDIDATE_INFO.search(text) or (asks and named):
+        return "candidate_info"  # "What did Maya say in her last message?"
     return "help"
 
 
@@ -581,22 +589,47 @@ def name_hint(text: str) -> str | None:
     return None
 
 
+_LISTING = re.compile(
+    r"\b(?:select|pick|tick|choose|check|deselect|unselect|untick|uncheck|remove|drop|exclude|skip|include|send|invite"
+    r"|email|message|remind|for|to)\s+(?P<rest>.+)$",
+    _I,
+)
+_LEADING_NAME = re.compile(r"(?:[A-Z][\w'\-]*)(?:\s+[A-Z][\w'\-]*){0,2}")
+_BEFORE_NAMES = re.compile(r"^(?:both|only|just|also|candidates?|applicants?|people)\s+", _I)
+
+
 def names_listed(text: str) -> list[str]:
-    """ "Select Sophia, Maya and James" is three names: capitalised words after the verb, as said."""
-    match = re.search(
-        r"\b(?:select|pick|tick|choose|check|deselect|unselect|untick|uncheck|remove|drop|exclude|skip|include|for|to)"
-        r"\s+(?P<rest>.+)$",
-        text,
-        _I,
-    )
+    """ "Select Sophia, Maya and James" is three names, and "Invite Sophia and Maya to an interview" two:
+    the names right after a verb or "for"/"to", each one as said. A verb followed by something else
+    ("Send an update to Sophia and Maya") is skipped for the next one."""
+    at = 0
+    while (match := _LISTING.search(text, at)) is not None:
+        names = []
+        for part in re.split(
+            r"\s*(?:,|\band\b|&|\bplus\b)\s*", _BEFORE_NAMES.sub("", match.group("rest").strip(" .!?"))
+        ):
+            name = _LEADING_NAME.match(part)
+            if name is None or name.group(0).split()[0].lower() in _NOT_NAMES:
+                break
+            names.append(name.group(0).removesuffix("'s"))
+        if names:
+            return names
+        at = match.start("rest")
+    return []
+
+
+def _picks_names(text: str) -> bool:
+    """ "Pick Sophia and Maya", "Check James": the verb, then only names."""
+    match = _SELECT_IF_NAMES.match(text)
     if not match:
-        return []
-    names = []
-    for part in re.split(r"\s*(?:,|\band\b|&|\bplus\b)\s*", match.group("rest").strip(" .!?")):
-        words = [word for word in part.split() if word[:1].isupper()]
-        if words and words[0].lower() not in _NOT_NAMES and len(words) <= 3:
-            names.append(" ".join(words).removesuffix("'s"))
-    return names
+        return False
+    parts = re.split(
+        r"\s*(?:,|\band\b|&)\s*", re.sub(r"\s+(?:too|as well|also)$", "", match.group("rest").strip(" .!?"))
+    )
+    return all(
+        (name := _LEADING_NAME.fullmatch(part)) is not None and name.group(0).split()[0].lower() not in _NOT_NAMES
+        for part in parts
+    )
 
 
 def is_create(text: str) -> bool:
@@ -632,12 +665,19 @@ def search_details(text: str) -> dict[str, Any]:
     without_progress = re.sub(r"\binterview\w*\b.*$", "", text, flags=_I) if state else text
     fields["stage"] = next((stage for pattern, stage in _STAGES if pattern.search(without_progress)), None)
     limit = _LIMIT.search(text)
-    if limit and 1 <= int(limit.group("count")) <= 200:
-        fields["limit"] = int(limit.group("count"))
+    count = int(limit.group("count") or limit.group("top")) if limit else 0
+    if 1 <= count <= 200:
+        fields["limit"] = count
     criteria = _CRITERIA.search(text)
+    rest = text
     if criteria:
-        fields["skills"] = _skill_list(_CRITERIA_END.sub("", criteria.group("skills")))
-    title = _search_job(text)
+        said = criteria.group("skills") or criteria.group("filter")
+        skills = _CRITERIA_END.sub("", said)
+        fields["skills"] = _skill_list(skills)
+        # The skills are never also read as the job ("Filter for Python and AWS" isn't a job called Python).
+        start = criteria.start("skills" if criteria.group("skills") else "filter")
+        rest = text[: criteria.start()] + text[start + len(skills) :]
+    title = _search_job(rest)
     if title:
         fields["job_title"] = title
     place = _PLACE.search(text)

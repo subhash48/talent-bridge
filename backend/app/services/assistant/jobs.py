@@ -116,6 +116,8 @@ def checks(job: JobDraft, *, department_said: bool = True) -> list[str]:
         notes.append("Seniority: not given")
     if job.salary_min is None and job.salary_max is None:
         notes.append("Salary: not given, and never guessed")
+    if job.responsibilities or job.requirements or job.description:
+        notes.append("Description, responsibilities and requirements: written by the AI from what you said; check them")
     return notes
 
 

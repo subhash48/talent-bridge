@@ -48,6 +48,8 @@ export type PipelineCandidate = CandidateRef & {
   source?: string;
   /** What they've heard from us: the SLA rules' view of this application. */
   communication: CommunicationSummary;
+  /** The recruiter has turned on messaging, so the candidate can write to the hiring team about it. */
+  candidateMessagingEnabled: boolean;
   nextStep?: { title: string; date: string };
   skills: string[];
   addedAt: string;

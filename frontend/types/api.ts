@@ -99,6 +99,7 @@ export type ApiCandidateListItem = {
   applied_at: string;
   updated_at: string;
   archived_at: string | null;
+  candidate_messaging_enabled: boolean;
   last_activity: ApiActivityBrief | null;
   communication: ApiCommunicationSummary;
   next_interview: ApiInterviewBrief | null;
@@ -127,6 +128,7 @@ export type ApiApplication = {
   applied_at: string;
   updated_at: string;
   archived_at: string | null;
+  candidate_messaging_enabled: boolean;
   external_id: string | null;
   external_status: string | null;
   /** Ashby's own name for the stage, e.g. "Hiring Manager Screen". */
@@ -200,6 +202,8 @@ export type ApiPortalApplication = {
   updated_at: string;
   steps: { stage: ApiStage; label: string; state: "complete" | "current" | "upcoming"; reached_at: string | null }[];
   next_step: string;
+  /** The hiring team has turned on messaging, so the candidate can write to them about it. */
+  messaging_enabled: boolean;
 };
 
 export type ApiPortalInterview = ApiInterviewBrief & {
@@ -288,7 +292,12 @@ export type ApiCandidateApplicationDetail = {
   timeline: ApiPortalActivity[];
 };
 
-export type ApiMessageThread = { recruiter: ApiPortalRecruiter | null; unread: number; messages: ApiPortalMessage[] };
+export type ApiMessageThread = {
+  recruiter: ApiPortalRecruiter | null;
+  unread: number;
+  messages: ApiPortalMessage[];
+  can_message: boolean;
+};
 
 export type ApiCandidatePrep = {
   interview: ApiPortalInterview | null;

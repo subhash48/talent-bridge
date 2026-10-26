@@ -51,10 +51,12 @@ export function FourQuestions({ me, application }: { me: CandidateMeResponse; ap
     };
   } else if (active && application.stage === "offer") {
     action = {
-      answer: "Yes: review your offer, and reply to the team with any questions.",
+      answer: application.messagingEnabled
+        ? "Yes: review your offer, and reply to the team with any questions."
+        : "Yes: review your offer. The team's updates about it arrive in your messages.",
       control: (
         <Link href="/candidate/messages" className={buttonStyles({ size: "sm" })}>
-          Message the team <ArrowRight />
+          {application.messagingEnabled ? "Message the team" : "Open messages"} <ArrowRight />
         </Link>
       ),
     };

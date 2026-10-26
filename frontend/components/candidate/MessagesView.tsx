@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircle, Mail, MessageSquareText, SendHorizontal } from "lucide-react";
+import { Lock, LoaderCircle, Mail, MessageSquareText, SendHorizontal } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { useToast } from "@/components/ui/Toaster";
 import { useLiveQuery } from "@/hooks/useLiveQuery";
 import { firstName, formatDayLabel } from "@/lib/format";
-import { errorMessage } from "@/services/api";
+import { ApiError, errorMessage } from "@/services/api";
 import { getMessageThread, markMessagesRead, sendCandidateMessage } from "@/services/portal";
 import { cn } from "@/lib/utils";
 import type { CandidateMessage, CandidateMessageThread, MessageKind } from "@/types/portal";
@@ -116,21 +116,33 @@ function MessagesView({ applicationId, initialThread }: { applicationId: string 
             </a>
           )}
         </header>
-        <MessageList messages={thread.messages} firstUnreadId={firstUnreadId} recruiterFirst={recruiterFirst} />
-        <Composer
-          applicationId={applicationId}
+        <MessageList
+          messages={thread.messages}
+          firstUnreadId={firstUnreadId}
           recruiterFirst={recruiterFirst}
-          onSent={(message) => {
-            setData((current) => current && { ...current, messages: [...current.messages, message] });
-            void refreshPortal(); // the dashboard's activity and the recruiter-facing timeline
-          }}
+          canMessage={thread.canMessage}
         />
+        {thread.canMessage ? (
+          <Composer
+            applicationId={applicationId}
+            recruiterFirst={recruiterFirst}
+            onSent={(message) => {
+              setData((current) => current && { ...current, messages: [...current.messages, message] });
+              void refreshPortal(); // the dashboard's activity and the recruiter-facing timeline
+            }}
+            onClosed={() => setData((current) => current && { ...current, canMessage: false })}
+          />
+        ) : (
+          <MessagingClosed />
+        )}
       </section>
     </>
   );
 }
 
-function MessageList({ messages, firstUnreadId, recruiterFirst }: { messages: CandidateMessage[]; firstUnreadId?: string; recruiterFirst: string }) {
+type MessageListProps = { messages: CandidateMessage[]; firstUnreadId?: string; recruiterFirst: string; canMessage: boolean };
+
+function MessageList({ messages, firstUnreadId, recruiterFirst, canMessage }: MessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -145,7 +157,11 @@ function MessageList({ messages, firstUnreadId, recruiterFirst }: { messages: Ca
           <MessageSquareText aria-hidden className="size-4 text-stone" />
         </span>
         <p className="text-[15px] font-medium text-ink">No messages yet.</p>
-        <p className="max-w-xs text-sm text-stone">Questions about your application or interviews? Write to {recruiterFirst} below.</p>
+        <p className="max-w-xs text-sm text-stone">
+          {canMessage
+            ? `Questions about your application or interviews? Write to ${recruiterFirst} below.`
+            : `When ${recruiterFirst} sends you an update about this application, it appears here.`}
+        </p>
       </div>
     );
   }
@@ -179,9 +195,25 @@ function MessageList({ messages, firstUnreadId, recruiterFirst }: { messages: Ca
   );
 }
 
-type ComposerProps = { applicationId: string | null; recruiterFirst: string; onSent: (message: CandidateMessage) => void };
+/** In place of the composer until the hiring team turns on messaging for this application. */
+function MessagingClosed() {
+  return (
+    <p role="status" className="flex items-center gap-2.5 border-t border-border px-4 py-4 text-sm text-stone sm:px-5">
+      <Lock aria-hidden className="size-4 shrink-0 text-faint" />
+      Messaging will become available when the hiring team enables it.
+    </p>
+  );
+}
 
-function Composer({ applicationId, recruiterFirst, onSent }: ComposerProps) {
+type ComposerProps = {
+  applicationId: string | null;
+  recruiterFirst: string;
+  onSent: (message: CandidateMessage) => void;
+  /** The hiring team turned messaging off since the thread loaded. */
+  onClosed: () => void;
+};
+
+function Composer({ applicationId, recruiterFirst, onSent, onClosed }: ComposerProps) {
   const toast = useToast();
   const composerId = useId();
   const [draft, setDraft] = useState("");
@@ -197,6 +229,7 @@ function Composer({ applicationId, recruiterFirst, onSent }: ComposerProps) {
       setDraft("");
       setKind("message");
     } catch (error) {
+      if (error instanceof ApiError && error.code === "messaging_disabled") onClosed();
       toast({ title: "Message not sent", description: errorMessage(error, "Check your connection and try again."), tone: "error" });
     } finally {
       setSending(false);

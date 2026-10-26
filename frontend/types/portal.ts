@@ -59,6 +59,8 @@ export type CandidateApplication = {
   updatedAt: string;
   steps: ApplicationStep[];
   nextStep: string;
+  /** The hiring team has turned on messaging: the candidate can write to them about this application. */
+  messagingEnabled: boolean;
 };
 
 export type CandidateInterview = {
@@ -174,6 +176,8 @@ export type CandidateMessageThread = {
   unread: number;
   /** Oldest first. */
   messages: CandidateMessage[];
+  /** Off until the hiring team turns on messaging for this application; the thread stays readable. */
+  canMessage: boolean;
 };
 
 export type CandidatePrep = {

@@ -85,6 +85,7 @@ export const mockApi = {
       lastActivity: "Added to pipeline",
       lastActivityAt: now,
       communication: { status: "on_track", daysSinceUpdate: 0 },
+      candidateMessagingEnabled: false,
       skills: [],
       addedAt: now,
     };

@@ -34,7 +34,7 @@ export function LastUpdateCard({ me }: { me: CandidateMeResponse }) {
       )}
       <div className="mt-auto pt-5">
         <Link href="/candidate/messages" className={buttonStyles({ variant: "secondary", size: "sm" })}>
-          {message ? "Open messages" : "Message the team"} <ArrowRight />
+          {message || !me.application?.messagingEnabled ? "Open messages" : "Message the team"} <ArrowRight />
         </Link>
       </div>
     </Card>

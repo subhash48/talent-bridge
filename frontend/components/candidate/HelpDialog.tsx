@@ -19,7 +19,8 @@ const FAQ = [
   },
   {
     question: "What if I need to reschedule?",
-    answer: "Send your recruiter a message with a few times that work for you.",
+    answer:
+      "Send your recruiter a message with a few times that work for you. If you can't write in Messages yet, the hiring team hasn't turned on messaging for that application; use your recruiter's email instead.",
   },
   {
     question: "Who sees what I ask the AI assistant?",
@@ -54,7 +55,7 @@ export function HelpDialog({ open, onClose, onNavigate }: { open: boolean; onClo
           }}
           className={buttonStyles({ variant: "secondary" })}
         >
-          Message {recruiter}
+          {me.application?.messagingEnabled ? `Message ${recruiter}` : "Open messages"}
         </Link>
       </div>
     </Modal>

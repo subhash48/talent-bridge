@@ -154,7 +154,7 @@ export function ApplicationView({ applicationId, initialDetail }: ApplicationVie
                   <Mail aria-hidden className="size-4 text-stone" /> {recruiter.email}
                 </a>
                 <Link href="/candidate/messages" className={buttonStyles({ variant: "secondary", size: "sm", className: "mt-3 w-full" })}>
-                  Message {firstName(recruiter.name)} <ArrowRight />
+                  {application.messagingEnabled ? `Message ${firstName(recruiter.name)}` : "Open messages"} <ArrowRight />
                 </Link>
               </Card>
             )}

@@ -100,7 +100,7 @@ export async function confirmInterview(interviewId: string): Promise<CandidateIn
 
 export async function getMessageThread(applicationId?: string | null): Promise<CandidateMessageThread> {
   const thread = await apiFetch<ApiMessageThread>(`/candidate/messages${forApplication(applicationId)}`);
-  return { recruiter: thread.recruiter, unread: thread.unread, messages: thread.messages.map(fromMessage) };
+  return { recruiter: thread.recruiter, unread: thread.unread, messages: thread.messages.map(fromMessage), canMessage: thread.can_message };
 }
 
 /** POST /candidate/messages. It arrives unread in the recruiter's inbox, labelled with the kind chosen. */
@@ -265,6 +265,7 @@ function fromApplication(application: ApiPortalApplication): CandidateApplicatio
     updatedAt: application.updated_at,
     steps: application.steps.map((step) => ({ stage: step.stage, label: step.label, state: step.state, reachedAt: step.reached_at })),
     nextStep: application.next_step,
+    messagingEnabled: application.messaging_enabled,
   };
 }
 

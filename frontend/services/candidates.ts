@@ -179,6 +179,7 @@ function fromListItem(item: ApiCandidateListItem): PipelineCandidate {
       daysSinceUpdate: item.communication.days_since_update,
       reason: item.communication.reason ?? undefined,
     },
+    candidateMessagingEnabled: item.candidate_messaging_enabled,
     nextStep: item.next_interview ? { title: item.next_interview.title, date: item.next_interview.scheduled_at } : undefined,
     skills: item.candidate.skills,
     addedAt: item.applied_at,
@@ -200,6 +201,7 @@ function fromDetail(detail: ApiCandidateDetail): PipelineCandidate {
     applied_at: application.applied_at,
     updated_at: application.updated_at,
     archived_at: application.archived_at,
+    candidate_messaging_enabled: application.candidate_messaging_enabled,
     last_activity: detail.activity[0] ?? null,
     communication: {
       status: communication.status,

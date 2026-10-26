@@ -339,7 +339,8 @@ def _proposal(context: CandidateContext, instructions: str) -> DraftContent:
 
 
 _TELL = re.compile(
-    r"^.*?\b(?:telling|tell|letting|let|informing|inform)\s+[A-Z][\w'-]*(?:\s+know)?(?:\s+that)?\s+", re.DOTALL
+    r"^.*?\b(?i:telling|tell|letting|let|informing|inform)\s+(?:[A-Z][\w'-]*|them|him|her)(?:\s+know)?(?:\s+that)?\s+",
+    re.DOTALL,
 )
 _BE = {"is": "are", "was": "were", "has": "have"}
 _SWAPS: tuple[tuple[re.Pattern[str], str | Callable[[re.Match[str]], str]], ...] = (

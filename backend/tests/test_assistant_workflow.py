@@ -270,6 +270,7 @@ async def test_the_candidates_page_drafts_the_same_proposal_and_only_for_who_is_
     proposal = response.json()
     [card] = proposal["cards"]
     assert proposal["status"] == "proposed" and card["purpose"] == "Message" and len(card["items"]) == 2
+    assert all("we're reviewing portfolios this week" in item["body"] for item in card["items"])  # as asked
     sent_before = await count(sessions, Message, Message.sender_type == SenderType.RECRUITER)
     # Approve with Maya left out and James's message edited; replies stay off.
     edited = "Hi James,\n\nWe're reviewing portfolios this week and will be in touch by Friday.\n\nBest,\nAlex"

@@ -16,6 +16,7 @@ from app.api import (
     candidates,
     careers,
     communication,
+    contact,
     dashboard,
     demo_careers,
     demo_jobs,
@@ -56,8 +57,9 @@ for module in (candidate,):
 api_router.include_router(auth.router)
 # Setting up an account: a valid sign-in, not yet linked to anything in TalentBridge.
 api_router.include_router(accounts.router)
-# TalentBridge's careers site: public, no sign-in.
+# TalentBridge's careers site and its website's contact form: public, no sign-in.
 api_router.include_router(careers.router)
+api_router.include_router(contact.router)
 api_router.include_router(integrations.router)
 # Development only (ENABLE_ASHBY_DEMO=true, never in production). The flag is checked first, so
 # elsewhere these answer 404 to everyone: demo jobs and résumés for recruiters, and the public demo

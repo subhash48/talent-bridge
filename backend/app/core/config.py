@@ -78,6 +78,9 @@ class Settings(BaseSettings):
     resend_api_key: SecretStr | None = None
     email_from: str | None = None
     email_timeout_seconds: float = 10.0
+    # TalentBridge's own contact address: shown in the website's Contact section, and where its contact
+    # form's messages are emailed (with an email provider). Unset, the site shows no address.
+    contact_email: str | None = None
 
     # Supabase Auth admin access, for candidate portal invitations only. Server-side; never sent to
     # the browser. Either name works (the dashboard calls it the secret or the service role key).

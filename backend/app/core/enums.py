@@ -205,6 +205,16 @@ class SexualOrientation(StrEnum):
     PREFER_NOT_TO_SAY = "prefer_not_to_say"
 
 
+class ContactTopic(StrEnum):
+    """What a message sent with the website's contact form is about (migration 021)."""
+
+    PRODUCT = "product"
+    PILOT = "pilot"  # a pilot or design partnership
+    SUPPORT = "support"
+    PARTNERSHIPS = "partnerships"
+    GENERAL = "general"
+
+
 class AssistantInputType(StrEnum):
     TEXT = "text"
     VOICE = "voice"  # transcribed speech; the recording itself is never kept

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { NightSky } from "@/components/shared/NightSky";
 import { HowItWorks } from "@/components/site/HowItWorks";
+import { RecruitersSection } from "@/components/site/RecruitersSection";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { buttonStyles } from "@/components/ui/Button";
@@ -45,6 +46,7 @@ export default async function Home() {
           </div>
         </section>
         <HowItWorks />
+        <RecruitersSection />
       </main>
       <SiteFooter />
     </div>

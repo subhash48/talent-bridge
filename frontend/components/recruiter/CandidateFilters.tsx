@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ListFilter } from "lucide-react";
+import { ChevronDown, ListFilter, X } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { FilterChip } from "@/components/ui/FilterChip";
@@ -13,35 +13,34 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/DropdownMenu";
 import {
+  APPLIED_OPTIONS,
+  COMMUNICATION_OPTIONS,
   EMPTY_FILTERS,
+  INTERVIEW_OPTIONS,
+  MESSAGING_OPTIONS,
+  PORTAL_OPTIONS,
   SORT_OPTIONS,
   activeFilterCount,
+  describeFilters,
+  type AppliedFilter,
   type CandidateFilters as Filters,
-  type PortalFilter,
+  type JobOption,
   type SortKey,
   type StageFilter,
 } from "@/lib/candidate-query";
 import { cn } from "@/lib/utils";
 import { STAGE_LABELS } from "@/types/application";
-import type { CommunicationStatus } from "@/types/communication";
 import { PIPELINE_STAGES } from "@/types/workspace";
 
 const STAGE_CHIPS: { value: StageFilter; label: string }[] = [
   { value: "all", label: "All" },
   ...PIPELINE_STAGES.map((stage) => ({ value: stage, label: STAGE_LABELS[stage] })),
-];
-
-const COMMUNICATION_OPTIONS: { value: CommunicationStatus; label: string }[] = [
-  { value: "needs_attention", label: "Needs an update" },
-  { value: "due_soon", label: "Update due within a day" },
-  { value: "on_track", label: "On track" },
-];
-const PORTAL_OPTIONS: { value: PortalFilter; label: string }[] = [
-  { value: "active", label: "Portal activated" },
-  { value: "invited", label: "Invited, not signed in yet" },
 ];
 
 type CandidateFiltersProps = {
@@ -52,7 +51,12 @@ type CandidateFiltersProps = {
   onSortChange: (sort: SortKey) => void;
   filters: Filters;
   onFiltersChange: (filters: Filters) => void;
-  roles: string[];
+  /** The search box's words, shown as a chip too. */
+  query: string;
+  onClearQuery: () => void;
+  jobs: JobOption[];
+  skills: string[];
+  locations: string[];
 };
 
 export function CandidateFilters({
@@ -63,11 +67,36 @@ export function CandidateFilters({
   onSortChange,
   filters,
   onFiltersChange,
-  roles,
+  query,
+  onClearQuery,
+  jobs,
+  skills,
+  locations,
 }: CandidateFiltersProps) {
   const filterCount = activeFilterCount(filters);
+  const active = describeFilters(filters, jobs);
   const toggle = <T,>(list: T[], value: T) => (list.includes(value) ? list.filter((item) => item !== value) : [...list, value]);
   const keepOpen = (event: Event) => event.preventDefault();
+
+  function checklist<K extends "jobs" | "skills" | "locations" | "interview" | "communication" | "messaging" | "portal">(
+    key: K,
+    options: { value: Filters[K][number]; label: string }[],
+  ) {
+    const selected = filters[key] as string[];
+    return options.map((option) => (
+      <DropdownMenuCheckboxItem
+        key={option.value}
+        checked={selected.includes(option.value)}
+        onSelect={keepOpen}
+        onCheckedChange={() => onFiltersChange({ ...filters, [key]: toggle(selected, option.value) })}
+      >
+        {option.label}
+      </DropdownMenuCheckboxItem>
+    ));
+  }
+
+  const count = (list: unknown[]) => (list.length ? <span className="ml-auto pl-3 text-xs text-brand-ink tabular-nums">{list.length}</span> : null);
+  const submenu = "max-h-[min(60vh,var(--radix-dropdown-menu-content-available-height))] w-[248px] overflow-y-auto";
 
   return (
     <div className="flex flex-col gap-4 px-4 pt-4 sm:px-5 sm:pt-5">
@@ -112,44 +141,60 @@ export function CandidateFilters({
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="max-h-[min(70vh,var(--radix-dropdown-menu-content-available-height))] w-[240px] overflow-y-auto">
-              <DropdownMenuLabel>Communication</DropdownMenuLabel>
-              {COMMUNICATION_OPTIONS.map((option) => (
-                <DropdownMenuCheckboxItem
-                  key={option.value}
-                  checked={filters.communication.includes(option.value)}
-                  onSelect={keepOpen}
-                  onCheckedChange={() =>
-                    onFiltersChange({ ...filters, communication: toggle(filters.communication, option.value) })
-                  }
-                >
-                  {option.label}
-                </DropdownMenuCheckboxItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Candidate portal</DropdownMenuLabel>
-              {PORTAL_OPTIONS.map((option) => (
-                <DropdownMenuCheckboxItem
-                  key={option.value}
-                  checked={filters.portal.includes(option.value)}
-                  onSelect={keepOpen}
-                  onCheckedChange={() => onFiltersChange({ ...filters, portal: toggle(filters.portal, option.value) })}
-                >
-                  {option.label}
-                </DropdownMenuCheckboxItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Role</DropdownMenuLabel>
-              {roles.map((role) => (
-                <DropdownMenuCheckboxItem
-                  key={role}
-                  checked={filters.roles.includes(role)}
-                  onSelect={keepOpen}
-                  onCheckedChange={() => onFiltersChange({ ...filters, roles: toggle(filters.roles, role) })}
-                >
-                  {role}
-                </DropdownMenuCheckboxItem>
-              ))}
+            <DropdownMenuContent className="w-[232px]">
+              <DropdownMenuLabel>Filter by</DropdownMenuLabel>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Job {count(filters.jobs)}</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className={submenu}>
+                  {jobs.length ? checklist("jobs", jobs.map((job) => ({ value: job.id, label: job.label }))) : <Empty />}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Skills {count(filters.skills)}</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className={submenu}>
+                  <DropdownMenuLabel>Has every skill ticked</DropdownMenuLabel>
+                  {skills.length ? checklist("skills", skills.map((skill) => ({ value: skill, label: skill }))) : <Empty />}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Location {count(filters.locations)}</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className={submenu}>
+                  {locations.length ? checklist("locations", locations.map((place) => ({ value: place, label: place }))) : <Empty />}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  Application date {filters.applied !== "any" && <span className="ml-auto pl-3 text-xs text-brand-ink">1</span>}
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className={submenu}>
+                  <DropdownMenuRadioGroup
+                    value={filters.applied}
+                    onValueChange={(value) => onFiltersChange({ ...filters, applied: value as AppliedFilter })}
+                  >
+                    {APPLIED_OPTIONS.map((option) => (
+                      <DropdownMenuRadioItem key={option.value} value={option.value} onSelect={keepOpen}>
+                        {option.label}
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Interview status {count(filters.interview)}</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className={submenu}>{checklist("interview", INTERVIEW_OPTIONS)}</DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Communication {count(filters.communication)}</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className={submenu}>{checklist("communication", COMMUNICATION_OPTIONS)}</DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Candidate messaging {count(filters.messaging)}</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className={submenu}>{checklist("messaging", MESSAGING_OPTIONS)}</DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Candidate portal {count(filters.portal)}</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className={submenu}>{checklist("portal", PORTAL_OPTIONS)}</DropdownMenuSubContent>
+              </DropdownMenuSub>
               <DropdownMenuSeparator />
               <DropdownMenuItem disabled={filterCount === 0} onSelect={() => onFiltersChange(EMPTY_FILTERS)}>
                 Clear filters
@@ -166,6 +211,43 @@ export function CandidateFilters({
           </FilterChip>
         ))}
       </div>
+
+      {(active.length > 0 || query.trim()) && (
+        <div className="flex flex-wrap items-center gap-1.5" aria-label="Filters in use">
+          <span className="text-xs text-stone">Showing only:</span>
+          <ul className="contents">
+            {query.trim() && <ActiveChip label={`Search: “${query.trim()}”`} onRemove={onClearQuery} />}
+            {active.map((filter) => (
+              <ActiveChip key={filter.key} label={filter.label} onRemove={() => onFiltersChange(filter.remove(filters))} />
+            ))}
+          </ul>
+          {active.length > 1 && (
+            <button type="button" onClick={() => onFiltersChange(EMPTY_FILTERS)} className="rounded-sm px-1 text-xs text-brand-ink hover:text-ink">
+              Clear filters
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
+}
+
+function ActiveChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <li className="inline-flex h-7 items-center gap-1 rounded-full bg-brand-soft pr-1 pl-2.5 text-xs text-ink ring-1 ring-brand-ink/25">
+      {label}
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={`Remove filter ${label}`}
+        className="flex size-5 items-center justify-center rounded-full text-stone transition-colors hover:bg-ink/10 hover:text-ink"
+      >
+        <X aria-hidden className="size-3" />
+      </button>
+    </li>
+  );
+}
+
+function Empty() {
+  return <p className="px-2 py-1.5 text-[13px] text-stone">Nothing to filter by yet.</p>;
 }

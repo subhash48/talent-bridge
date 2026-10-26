@@ -185,6 +185,7 @@ function fromListItem(item: ApiCandidateListItem): PipelineCandidate {
     id: item.application_id,
     candidateId: item.candidate.id,
     jobId: item.job.id,
+    company: item.company_name,
     name: item.candidate.full_name,
     avatarUrl: item.candidate.avatar_url ?? undefined,
     role: item.job.title,
@@ -207,6 +208,7 @@ function fromListItem(item: ApiCandidateListItem): PipelineCandidate {
     },
     candidateMessagingEnabled: item.candidate_messaging_enabled,
     nextStep: item.next_interview ? { title: item.next_interview.title, date: item.next_interview.scheduled_at } : undefined,
+    lastInterviewAt: item.last_interview_at ?? undefined,
     skills: item.candidate.skills,
     addedAt: item.applied_at,
   };
@@ -221,6 +223,7 @@ function fromDetail(detail: ApiCandidateDetail): PipelineCandidate {
     application_id: application.id,
     candidate: detail.candidate,
     job,
+    company_name: detail.company_name ?? "",
     stage,
     source: application.source,
     origin: application.origin,
@@ -236,6 +239,7 @@ function fromDetail(detail: ApiCandidateDetail): PipelineCandidate {
       reason: communication.attention[0]?.title ?? null,
     },
     next_interview: detail.next_interview,
+    last_interview_at: detail.last_interview_at,
   });
 }
 

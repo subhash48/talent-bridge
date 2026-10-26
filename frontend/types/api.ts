@@ -93,6 +93,8 @@ export type ApiCandidateListItem = {
   application_id: string;
   candidate: ApiCandidate;
   job: ApiJobBrief;
+  /** The employer: two companies can have a job with the same title. */
+  company_name: string;
   stage: ApiStage;
   source: string | null;
   origin: ApiOrigin;
@@ -103,6 +105,8 @@ export type ApiCandidateListItem = {
   last_activity: ApiActivityBrief | null;
   communication: ApiCommunicationSummary;
   next_interview: ApiInterviewBrief | null;
+  /** The latest interview that took place; cancelled ones are left out. */
+  last_interview_at: string | null;
 };
 
 export type ApiMessage = {
@@ -140,9 +144,11 @@ export type ApiCandidateDetail = {
   candidate: ApiCandidate;
   application: ApiApplication | null;
   job: ApiJob | null;
+  company_name: string | null;
   stage: ApiStage | null;
   communication: ApiCommunicationHealth | null;
   next_interview: ApiInterview | null;
+  last_interview_at: string | null;
   activity: ApiActivity[];
   interviews: ApiInterview[];
   messages: ApiMessage[];

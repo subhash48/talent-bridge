@@ -32,6 +32,8 @@ export type PipelineCandidate = CandidateRef & {
   /** The person; one person can have applications to several jobs. */
   candidateId: string;
   jobId?: string;
+  /** The application's employer. */
+  company?: string;
   email?: string;
   phone?: string;
   /** An http(s) link, or an API path (/api/v1/...) to a file only signed-in recruiters can download. */
@@ -51,6 +53,8 @@ export type PipelineCandidate = CandidateRef & {
   /** The recruiter has turned on messaging, so the candidate can write to the hiring team about it. */
   candidateMessagingEnabled: boolean;
   nextStep?: { title: string; date: string };
+  /** When their latest interview took place, if they've had one. */
+  lastInterviewAt?: string;
   skills: string[];
   addedAt: string;
 };

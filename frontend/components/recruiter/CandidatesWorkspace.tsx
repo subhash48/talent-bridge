@@ -32,10 +32,13 @@ import {
   NEEDS_UPDATE,
   activeFilterCount,
   countByStage,
+  facetValues,
+  jobOptions,
   matchesFilters,
   matchesQuery,
   sortCandidates,
   type CandidateFilters as Filters,
+  type CandidateView,
   type SortKey,
   type StageFilter,
 } from "@/lib/candidate-query";
@@ -52,21 +55,23 @@ type CandidatesWorkspaceProps = {
   greeting: string;
   /** From ?candidate=, so notifications and other pages can deep-link a candidate. */
   initialCandidateId?: string;
+  /** Search and filters from the link (the AI Assistant's "Open in Candidates"), shown like any others. */
+  initialView?: CandidateView;
 };
 
 function needsUpdateOnly(filters: Filters): boolean {
   return filters.communication.length === 1 && filters.communication[0] === "needs_attention";
 }
 
-export function CandidatesWorkspace({ greeting, initialCandidateId }: CandidatesWorkspaceProps) {
+export function CandidatesWorkspace({ greeting, initialCandidateId, initialView }: CandidatesWorkspaceProps) {
   const { user, candidates, jobs, revision, moveCandidate, setMessaging } = useWorkspace();
   const toast = useToast();
   const panelInline = useMediaQuery(PANEL_QUERY);
 
-  const [query, setQuery] = useState("");
-  const [stage, setStage] = useState<StageFilter>("all");
+  const [query, setQuery] = useState(initialView?.query ?? "");
+  const [stage, setStage] = useState<StageFilter>(initialView?.stage ?? "all");
   const [sort, setSort] = useState<SortKey>("recent");
-  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [filters, setFilters] = useState<Filters>(initialView?.filters ?? EMPTY_FILTERS);
   const [page, setPage] = useState(1);
   const [checkedIds, setCheckedIds] = useState<ReadonlySet<string>>(new Set());
   const [selectedId, setSelectedId] = useState(initialCandidateId);
@@ -81,7 +86,9 @@ export function CandidatesWorkspace({ greeting, initialCandidateId }: Candidates
     if (initialCandidateId) setSelectedId(initialCandidateId);
   }
 
-  const roles = useMemo(() => [...new Set(candidates.map((candidate) => candidate.role))].sort(), [candidates]);
+  const jobChoices = useMemo(() => jobOptions(candidates), [candidates]);
+  const skillChoices = useMemo(() => facetValues(candidates.flatMap((candidate) => candidate.skills)), [candidates]);
+  const locationChoices = useMemo(() => facetValues(candidates.map((candidate) => candidate.location)), [candidates]);
   const searched = useMemo(
     () => candidates.filter((candidate) => matchesQuery(candidate, query) && matchesFilters(candidate, filters)),
     [candidates, query, filters],
@@ -233,7 +240,11 @@ export function CandidatesWorkspace({ greeting, initialCandidateId }: Candidates
               onSortChange={(value) => changeView(() => setSort(value))}
               filters={filters}
               onFiltersChange={(value) => changeView(() => setFilters(value))}
-              roles={roles}
+              query={query}
+              onClearQuery={() => changeView(() => setQuery(""))}
+              jobs={jobChoices}
+              skills={skillChoices}
+              locations={locationChoices}
             />
 
             {checked.length > 0 && (

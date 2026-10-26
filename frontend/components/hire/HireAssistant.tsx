@@ -61,7 +61,7 @@ const CHOICES: Choice[] = [
  * so a job, a list of applicants, their phone numbers, messages and interview requests all come back for the
  * owner to see, and nothing is posted or sent until they press the button that does it.
  */
-export function HireAssistant() {
+export function HireAssistant({ start = null }: { start?: "post" | null }) {
   const { user, refresh } = useWorkspace();
   const router = useRouter();
   const showChanges = useCallback(
@@ -80,6 +80,18 @@ export function HireAssistant() {
   useEffect(() => {
     getAssistantStatus().then(setStatus, () => setStatus(null));
   }, []);
+
+  // From the Jobs page's Post a job: ready to describe it.
+  const started = useRef(false);
+  useEffect(() => {
+    if (start !== "post" || started.current) return;
+    started.current = true;
+    queueMicrotask(() => {
+      setOpen(true);
+      setHint(CHOICES[0].hint);
+      queueMicrotask(() => textarea.current?.focus());
+    });
+  }, [start]);
 
   const voice = useVoiceInput({
     serverTranscription: status?.voice_transcription ?? false,

@@ -47,7 +47,15 @@ async function accessToken(): Promise<string | null> {
   return data.session?.access_token ?? null;
 }
 
-const AUTH_PAGES = ["/login", "/signup", "/forgot-password", "/reset-password", "/welcome", "/signin"];
+const AUTH_PAGES = [
+  "/login",
+  "/signup",
+  "/signup/complete",
+  "/forgot-password",
+  "/reset-password",
+  "/welcome",
+  "/signin",
+];
 /** 403s that refuse one thing, not the session (messaging the hiring team turned off): the page explains them. */
 const REFUSALS = new Set(["messaging_disabled"]);
 

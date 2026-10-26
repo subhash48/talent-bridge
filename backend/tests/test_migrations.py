@@ -36,6 +36,8 @@ BEFORE_COMPANIES = [m for m in MIGRATIONS if m.name < "017"]
 COMPANIES = [m for m in MIGRATIONS if m.name.startswith("017")]
 BEFORE_MESSAGING = [m for m in MIGRATIONS if m.name < "018"]
 MESSAGING = [m for m in MIGRATIONS if m.name.startswith("018")]
+WORKSPACES = [m for m in MIGRATIONS if m.name.startswith("019")]
+LATER = [m for m in MIGRATIONS if m.name >= "020"]
 ENCORD = seed_id("company", "encord")
 
 Apply = Callable[[list[Path]], Awaitable[None]]
@@ -130,6 +132,11 @@ async def test_the_pipeline_works_on_a_database_upgraded_through_the_latest(
             with pytest.raises(ProgrammingError, match="candidate_messaging_enabled"):
                 await list_pipeline(session, limit=200)
         await apply(MESSAGING)
+        # And it reads which company a recruiter hires for: deploying it before 019 fails too.
+        async with sessions() as session:
+            with pytest.raises(ProgrammingError, match="company_id does not exist"):
+                await link_account(session, ALEX_EMAIL, ALEX_AUTH)
+        await apply([*WORKSPACES, *LATER])
         async with sessions() as session:
             await link_account(session, ALEX_EMAIL, ALEX_AUTH)
 
@@ -148,8 +155,9 @@ async def test_the_pipeline_works_on_a_database_upgraded_through_the_latest(
         assert item["job"]["title"] == "Product Designer" and item["stage"] == "interview"
         assert item["last_activity"]["title"] == "Moved to Interview"
         assert item["next_interview"]["title"] == "Design interview"
-        # The existing job now belongs to the workspace's company.
+        # The existing job now belongs to the workspace's company, and so does Alex.
         assert await connection.fetchval(f"select company_id from public.jobs where id = '{JOB}'") == ENCORD
+        assert await connection.fetchval(f"select company_id from public.users where email = '{ALEX_EMAIL}'") == ENCORD
         assert item["candidate_messaging_enabled"] is False  # no conversation yet, so it waits for a recruiter
     finally:
         await engine.dispose()
@@ -203,3 +211,46 @@ async def test_with_no_company_at_all_a_job_without_one_is_refused(
     await apply(MIGRATIONS)
     with pytest.raises(asyncpg.NotNullViolationError):
         await connection.execute("insert into public.jobs (title, status) values ('QA tester', 'open')")
+
+
+async def test_019_gives_todays_staff_and_rule_changes_the_oldest_company_and_keeps_their_times(
+    database: tuple[str, asyncpg.Connection, Apply],
+) -> None:
+    _, connection, apply = database
+    await apply(BEFORE_COMPANIES)
+    await connection.execute(LEGACY_ROWS)
+    await apply([*COMPANIES, *MESSAGING])
+    await connection.execute(
+        """
+        insert into public.users (email, full_name, role, updated_at)
+          values ('sophia@example.com', 'Sophia Martinez', 'candidate', now() - interval '9 days');
+        update public.users set updated_at = now() - interval '30 days' where role = 'recruiter';
+        insert into public.communication_rules (key, enabled, threshold_hours, updated_at)
+          values ('no_recent_update', false, 48, now() - interval '3 days');
+        """
+    )
+    before = dict(await connection.fetch("select email, updated_at from public.users"))
+    rule_before = await connection.fetchval("select updated_at from public.communication_rules")
+    await apply(WORKSPACES)
+
+    staff = dict(await connection.fetch("select email, company_id from public.users"))
+    assert staff == {ALEX_EMAIL: ENCORD, "sophia@example.com": None}
+    assert dict(await connection.fetch("select email, updated_at from public.users")) == before
+    rule = await connection.fetchrow(
+        "select company_id, enabled, threshold_hours, updated_at from public.communication_rules"
+    )
+    assert (rule["company_id"], rule["enabled"], rule["threshold_hours"]) == (ENCORD, False, 48)
+    assert rule["updated_at"] == rule_before
+    assert await connection.fetchval("select workspace_mode from public.companies where id = $1", ENCORD) == "full"
+    # A candidate never hires for a company.
+    with pytest.raises(asyncpg.CheckViolationError):
+        await connection.execute("update public.users set company_id = $1 where email = 'sophia@example.com'", ENCORD)
+    # Two workspaces can each change the same rule.
+    other = await connection.fetchval(
+        "insert into public.companies (slug, name, workspace_mode) values ('sams-cafe', 'Sam''s Cafe', 'simple') returning id"
+    )
+    await connection.execute(
+        "insert into public.communication_rules (company_id, key, threshold_hours) values ($1, 'no_recent_update', 24)",
+        other,
+    )
+    assert await connection.fetchval("select count(*) from public.communication_rules") == 2

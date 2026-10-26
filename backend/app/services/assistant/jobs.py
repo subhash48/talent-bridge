@@ -13,7 +13,7 @@ import re
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import JobStatus
-from app.models import Job
+from app.models import Company, Job
 from app.schemas.assistant import JobChanges, JobDraft
 from app.schemas.demo import JobPostingBrief, clean_list
 from app.schemas.job import JobCreate
@@ -64,9 +64,11 @@ def suggest_department(title: str) -> str | None:
     return next((name for pattern, name in DEPARTMENTS if pattern.search(title)), None)
 
 
-async def draft(changes: JobChanges, provider: AIProvider) -> tuple[JobDraft, list[str], str]:
-    """A draft from what the recruiter said, the things for them to check, and the model that wrote it.
-    Nothing is saved."""
+async def draft(
+    changes: JobChanges, provider: AIProvider, company: Company | None = None
+) -> tuple[JobDraft, list[str], str]:
+    """A draft from what the recruiter said, for their company, the things for them to check, and the model
+    that wrote it. Nothing is saved."""
     assert changes.title
     said_skills = skill_names(changes.skills_add)
     brief = JobPostingBrief(
@@ -79,7 +81,7 @@ async def draft(changes: JobChanges, provider: AIProvider) -> tuple[JobDraft, li
         skills=said_skills,
         notes=changes.notes,
     )
-    generated = await demo_jobs.write_posting(brief, provider)
+    generated = await demo_jobs.write_posting(brief, provider, company)
     content = generated.draft
     department = changes.department or suggest_department(changes.title)
     job = JobDraft(

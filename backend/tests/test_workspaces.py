@@ -193,3 +193,16 @@ async def test_unscoped_sessions_are_unchanged(sessions: async_sessionmaker[Asyn
     async with sessions() as session:
         companies = {job.company.name for job in await session.scalars(select(Job))}
     assert {"Encord", "OpenAI"} <= companies
+
+
+async def test_a_job_draft_is_written_for_the_recruiters_own_company(
+    client: AsyncClient, julia: dict[str, str]
+) -> None:
+    answer = (
+        await client.post(
+            f"{API}/assistant/requests", json={"text": "Create a Research Engineer role in London"}, headers=julia
+        )
+    ).json()
+    [card] = answer["cards"]
+    assert card["type"] == "job_draft" and "OpenAI" in (card["draft"]["summary"] or "")
+    assert leaked(card) == []

@@ -1,11 +1,11 @@
 """Development only: demo jobs for recruiters, and the AI job writer that drafts their postings. Mounted by
-router.py behind require_demo_enabled, then require_recruiter."""
+router.py behind require_demo_enabled, then require_workspace."""
 
 from uuid import UUID
 
 from fastapi import APIRouter
 
-from app.core.dependencies import AIProviderDep, RecruiterDep, SessionDep
+from app.core.dependencies import AIProviderDep, RecruiterDep, SessionDep, WorkspaceDep
 from app.schemas.demo import DemoJobCreate, DemoJobRead, DemoJobUpdate, GeneratedJobPosting, JobPostingBrief
 from app.services import demo_jobs
 
@@ -26,10 +26,12 @@ async def create_demo_job(body: DemoJobCreate, session: SessionDep, user: Recrui
 
 # Before the /demo/jobs/{job_id} routes.
 @router.post("/demo/jobs/generate", response_model=GeneratedJobPosting, summary="Draft a job posting with AI")
-async def generate_job_posting(body: JobPostingBrief, provider: AIProviderDep) -> GeneratedJobPosting:
-    """A draft for the recruiter to review and edit. Nothing is saved, and nothing is published until the
-    recruiter publishes it."""
-    return await demo_jobs.write_posting(body, provider)
+async def generate_job_posting(
+    body: JobPostingBrief, provider: AIProviderDep, workspace: WorkspaceDep
+) -> GeneratedJobPosting:
+    """A draft for the recruiter to review and edit, written for their own company. Nothing is saved, and
+    nothing is published until the recruiter publishes it."""
+    return await demo_jobs.write_posting(body, provider, workspace.company)
 
 
 @router.get("/demo/jobs/{job_id}", response_model=DemoJobRead, summary="Get a demo job")

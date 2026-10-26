@@ -21,7 +21,7 @@ from app.core.config import settings
 from app.core.enums import DemoApplicationStatus, DemoPostingStatus, JobStatus
 from app.core.errors import AppError, BadRequestError, ConflictError, NotFoundError
 from app.integrations.ashby.demo_ids import demo_id
-from app.models import Application, DemoApplication, DemoJobPosting, Job, User
+from app.models import Application, Company, DemoApplication, DemoJobPosting, Job, User
 from app.models.base import utcnow
 from app.schemas.demo import DemoJobCreate, DemoJobRead, DemoJobUpdate, GeneratedJobPosting, JobPostingBrief
 from app.services.ai.client import AIProvider
@@ -140,13 +140,15 @@ async def close(session: AsyncSession, job_id: uuid.UUID) -> DemoJobRead:
     return await _read(session, posting)
 
 
-async def write_posting(brief: JobPostingBrief, provider: AIProvider) -> GeneratedJobPosting:
-    """A draft from the AI job writer for the recruiter to review and edit. Nothing is saved or published,
-    and the posting policy leaves out anything that refers to a personal characteristic."""
-    content, model_name = await with_fallback(
-        provider,
-        lambda p: p.write_job_posting(brief, settings.organization_name, settings.organization_overview),
-    )
+async def write_posting(
+    brief: JobPostingBrief, provider: AIProvider, company: Company | None = None
+) -> GeneratedJobPosting:
+    """A draft from the AI job writer for the recruiter to review and edit, for their own company (its name
+    and overview). Nothing is saved or published, and the posting policy leaves out anything that refers to
+    a personal characteristic."""
+    name = company.name if company else settings.organization_name
+    overview = company.overview if company else settings.organization_overview
+    content, model_name = await with_fallback(provider, lambda p: p.write_job_posting(brief, name, overview))
     content, removed = apply_policy(content)
     return GeneratedJobPosting(draft=content, model_name=model_name, removed=removed)
 

@@ -36,7 +36,7 @@ from app.core.enums import MANUAL_DRAFT, AssistantActionStatus, EmailStatus
 from app.core.errors import AppError, ConflictError, NotFoundError
 from app.integrations.calendar import CalendarProvider, DisabledCalendar
 from app.integrations.email import DisabledEmail, EmailProvider
-from app.models import Application, AssistantAction, Job, User
+from app.models import Application, AssistantAction, Company, Job, User
 from app.models.base import utcnow
 from app.schemas.ai import AISource, DraftPurpose
 from app.schemas.assistant import (
@@ -276,7 +276,8 @@ async def _plan(
     if action == "cancel":
         return await _cancel_in_context(session, recruiter, context, keep)
     if action == "create_job":
-        return await _create_job(row_id, intent.job or JobChanges(), keep, provider)
+        company = await session.get(Company, recruiter.company_id) if recruiter.company_id else None
+        return await _create_job(row_id, intent.job or JobChanges(), keep, provider, company)
     if action == "update_job":
         return await _update_job(session, intent.job or JobChanges(), context, keep)
     if action == "search_candidates":
@@ -562,13 +563,15 @@ async def _cancel_in_context(
 # Jobs
 
 
-async def _create_job(row_id: uuid.UUID, changes: JobChanges, keep: AssistantContext, provider: AIProvider) -> Outcome:
+async def _create_job(
+    row_id: uuid.UUID, changes: JobChanges, keep: AssistantContext, provider: AIProvider, company: Company | None
+) -> Outcome:
     if not changes.title:
         return Outcome(
             reply='What\'s the job called? For example: "Create a Senior Product Designer role in New York, hybrid."',
             context=keep,
         )
-    draft, checks, model_name = await jobs.draft(changes, provider)
+    draft, checks, model_name = await jobs.draft(changes, provider, company)
     card = JobDraftCard(action_id=row_id, status=S.PROPOSED, draft=draft, missing=checks, model_name=model_name)
     return Outcome(
         reply=f"I drafted the **{draft.title}** role. Review it before creating: no job exists until you approve it.",

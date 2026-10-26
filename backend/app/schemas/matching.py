@@ -15,8 +15,13 @@ from app.schemas.common import APIModel, Timestamp
 from app.schemas.demo import clean_list
 
 InterviewState = Literal["upcoming", "interviewed", "awaiting_update", "none"]
-Criterion = Annotated[str, Field(min_length=1, max_length=60)]
-Criteria = Annotated[list[Criterion], BeforeValidator(clean_list), Field(max_length=20)]
+# The candidates in view on the Candidates page, when it's narrowed: up to this many (everyone in view is
+# sent as no list at all).
+MAX_IN_VIEW = 10_000
+# What the request takes as criteria, and so what's ever returned as the jobs' own requirements.
+MAX_CRITERIA, MAX_CRITERION = 20, 60
+Criterion = Annotated[str, Field(min_length=1, max_length=MAX_CRITERION)]
+Criteria = Annotated[list[Criterion], BeforeValidator(clean_list), Field(max_length=MAX_CRITERIA)]
 EvidenceSource = Literal["skills", "headline", "resume"]
 SHORTLIST_SIZES = (5, 10, 20)
 
@@ -35,7 +40,7 @@ class MatchRequest(APIModel):
     communication: CommunicationStatus | None = None
     messaging: bool | None = None
     # Only these applications: the ones the Candidates page shows with its filters.
-    application_ids: Annotated[list[UUID], Field(max_length=2000)] | None = None
+    application_ids: Annotated[list[UUID], Field(max_length=MAX_IN_VIEW)] | None = None
     limit: Annotated[int, Field(ge=1, le=200)] = 10
 
 

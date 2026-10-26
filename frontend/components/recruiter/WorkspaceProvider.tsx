@@ -37,6 +37,8 @@ type WorkspaceValue = {
 };
 
 const WorkspaceContext = createContext<WorkspaceValue | null>(null);
+/** POST /applications/messaging takes up to this many applications at a time. */
+const MESSAGING_BATCH = 200;
 
 type WorkspaceProviderProps = {
   user: CurrentUser;
@@ -112,10 +114,18 @@ export function WorkspaceProvider({
 
   const setMessaging = useCallback(
     async (ids: string[], enabled: boolean) => {
-      const updated = await setCandidateMessaging(ids, enabled);
-      const byId = new Map(updated.map((candidate) => [candidate.id, candidate]));
-      setCandidates((current) => current.map((candidate) => byId.get(candidate.id) ?? candidate));
-      changed();
+      // In batches the API takes (200 at a time); each batch shows as soon as it's done.
+      const updated: PipelineCandidate[] = [];
+      try {
+        for (let start = 0; start < ids.length; start += MESSAGING_BATCH) {
+          const batch = await setCandidateMessaging(ids.slice(start, start + MESSAGING_BATCH), enabled);
+          updated.push(...batch);
+          const byId = new Map(batch.map((candidate) => [candidate.id, candidate]));
+          setCandidates((current) => current.map((candidate) => byId.get(candidate.id) ?? candidate));
+        }
+      } finally {
+        if (updated.length) changed();
+      }
       return updated;
     },
     [changed],

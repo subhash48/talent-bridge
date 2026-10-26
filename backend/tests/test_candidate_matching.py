@@ -149,6 +149,25 @@ async def test_only_job_related_criteria_can_be_asked(client: AsyncClient) -> No
         assert (await client.post(f"{API}/candidates/match", json={"skills": criteria})).status_code == 200
 
 
+async def test_the_jobs_requirements_are_criteria_a_request_can_send_back(client: AsyncClient) -> None:
+    listed = [f"Skill {number}" for number in range(25)]
+    long = "Comfortable presenting design rationale to senior stakeholders across several time zones"
+    description = f"Requirements: Figma, {long}, native English speaker, {', '.join(listed)}"
+    job = (await client.post(f"{API}/jobs", json={"title": "Platform Designer", "description": description})).json()
+    found = await find(client, job_ids=[job["id"]])
+    assert found["criteria_source"] == "job_requirements"
+    assert found["criteria"][:2] == ["Figma", "Skill 0"] and len(found["criteria"]) == 20
+    assert long not in found["criteria"] and "native English speaker" not in found["criteria"]
+    # The Shortlist panel offers them to edit: sent back as they are, they're accepted.
+    assert (await find(client, job_ids=[job["id"]], skills=found["criteria"]))["criteria"] == found["criteria"]
+
+
+async def test_a_narrowed_view_of_thousands_can_be_shortlisted(client: AsyncClient) -> None:
+    in_view = [application_id("maya-brooks"), *(str(uuid.uuid4()) for _ in range(2500))]
+    found = await find(client, application_ids=in_view, skills=["Figma"])
+    assert [item["name"] for item in found["items"]] == ["Maya Brooks"]
+
+
 def test_short_names_and_double_s_words_match_only_themselves() -> None:
     assert _mentions("Backend services in Go and Rust", "Go")
     assert _mentions("Statistics in R and Python", "R")

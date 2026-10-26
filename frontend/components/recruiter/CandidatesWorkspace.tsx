@@ -114,8 +114,12 @@ export function CandidatesWorkspace({ greeting, initialCandidateId, initialView,
   }, [searched, stage, stageCandidates, query, filters, sort]);
   const openJobs = useMemo(() => jobs.filter((job) => job.status === "open"), [jobs]);
 
-  // The shortlist works on exactly the candidates in view, so every filter it uses is one on screen.
-  const visibleIds = useMemo(() => visible.map((candidate) => candidate.id), [visible]);
+  // The shortlist works on exactly the candidates in view, so every filter it uses is one on screen. With
+  // everyone in view there's no list to send, however many there are.
+  const visibleIds = useMemo(
+    () => (visible.length === candidates.length ? null : visible.map((candidate) => candidate.id)),
+    [visible, candidates.length],
+  );
   const match = useShortlist(shortlist, visibleIds, filters.jobs);
   const matches = useMemo(() => new Map(match.result?.items.map((item) => [item.application_id, item]) ?? []), [match.result]);
   const listed = useMemo(

@@ -21,6 +21,8 @@ from app.core.errors import BadRequestError
 from app.models import Application, Candidate, CandidateResume, Job
 from app.models.base import utcnow
 from app.schemas.matching import (
+    MAX_CRITERIA,
+    MAX_CRITERION,
     CandidateMatch,
     EvidenceSource,
     ExperienceNote,
@@ -111,8 +113,10 @@ async def match(session: AsyncSession, request: MatchRequest, now: datetime | No
     if not criteria and request.job_ids:
         jobs = await session.scalars(select(Job).where(Job.id.in_(request.job_ids)))
         listed = (item for job in jobs for item in parse_requirements(job.description))
-        # A posting's line that's about a person rather than the work is never matched on.
-        criteria = list(dict.fromkeys(item for item in listed if not personal_characteristics.mentions(item)))
+        # A posting's line that's about a person rather than the work is never matched on, and the criteria are
+        # what a request may send back (the Shortlist panel offers them to edit): 20, of 60 characters at most.
+        kept = (item for item in listed if len(item) <= MAX_CRITERION and not personal_characteristics.mentions(item))
+        criteria = list(dict.fromkeys(kept))[:MAX_CRITERIA]
         source = "job_requirements"
     if not criteria:
         source = "none"

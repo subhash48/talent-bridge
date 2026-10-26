@@ -5,18 +5,27 @@ import { errorMessage } from "@/services/api";
 import { matchCandidates } from "@/services/candidates";
 import type { MatchResult } from "@/types/matching";
 
+/** What POST /candidates/match takes: 20 jobs, and 20 criteria of 60 characters. */
+const MAX_JOBS = 20;
+const MAX_CRITERIA = 20;
+const MAX_CRITERION = 60;
+
 /**
- * The shortlist for the candidates in view: POST /candidates/match with exactly those applications, the
- * recruiter's criteria (or, with none, the filtered jobs' own requirements) and the size they chose.
- * Asked again whenever any of them changes; a stale answer never replaces a newer one.
+ * The shortlist for the candidates in view: POST /candidates/match with exactly those applications (none
+ * listed when everyone is in view), the recruiter's criteria (or, with none, the filtered jobs' own
+ * requirements) and the size they chose. Asked again whenever any of them changes; a stale answer never
+ * replaces a newer one.
  */
-export function useShortlist(shortlist: Shortlist | null, applicationIds: string[], jobIds: string[]) {
+export function useShortlist(shortlist: Shortlist | null, applicationIds: string[] | null, jobIds: string[]) {
   const request = useMemo(
     () =>
       shortlist && {
-        application_ids: applicationIds,
-        job_ids: jobIds,
-        skills: shortlist.criteria,
+        ...(applicationIds ? { application_ids: applicationIds } : {}),
+        job_ids: jobIds.slice(0, MAX_JOBS),
+        skills: shortlist.criteria
+          .map((criterion) => criterion.trim().slice(0, MAX_CRITERION))
+          .filter(Boolean)
+          .slice(0, MAX_CRITERIA),
         limit: shortlist.size,
       },
     [shortlist, applicationIds, jobIds],

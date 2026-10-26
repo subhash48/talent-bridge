@@ -165,8 +165,17 @@ async def test_a_new_demo_job_is_a_draft_and_an_ordinary_job(
     assert (await client.get(f"{API}/demo/jobs/{demo_job['id']}")).json() == demo_job
 
 
-async def test_editing_a_demo_job_rerenders_its_description(client: AsyncClient) -> None:
+async def test_editing_a_demo_job_rerenders_its_description(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
     demo_job = await create(client)
+    async with sessions() as session:
+        # A minute back, so the edit's newer updated_at shows even though the API reports milliseconds.
+        posting = await session.get(DemoJobPosting, uuid.UUID(demo_job["id"]))
+        assert posting is not None
+        posting.updated_at -= timedelta(minutes=1)
+        await session.commit()
+        demo_job["updated_at"] = posting.updated_at.isoformat().replace("+00:00", "Z")
     response = await client.patch(
         f"{API}/demo/jobs/{demo_job['id']}",
         json={

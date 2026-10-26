@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, MapPin, UserRound } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
 
@@ -11,6 +11,7 @@ import { useWorkspace } from "@/components/recruiter/WorkspaceProvider";
 import { Avatar } from "@/components/shared/Avatar";
 import { RelativeTime } from "@/components/shared/RelativeTime";
 import { sortCandidates } from "@/lib/candidate-query";
+import { jobFacts } from "@/lib/simple-hire";
 import { STAGE_FILL_STYLES } from "@/lib/stages";
 import { cn } from "@/lib/utils";
 import { STAGE_LABELS } from "@/types/application";
@@ -33,6 +34,7 @@ export function JobPipeline({ job }: { job: JobOpening }) {
     for (const candidate of applicants) result[candidate.stage] += 1;
     return result;
   }, [applicants]);
+  const facts = jobFacts(job);
 
   return (
     <div className="flex flex-col gap-5 pt-1">
@@ -59,6 +61,11 @@ export function JobPipeline({ job }: { job: JobOpening }) {
           <span className="inline-flex items-center gap-1.5">
             <UserRound aria-hidden className="size-4" /> Hiring manager: {job.hiringManager}
           </span>
+          {facts.length > 0 && (
+            <span className="inline-flex items-center gap-1.5">
+              <Clock aria-hidden className="size-4" /> {facts.join(" · ")}
+            </span>
+          )}
           <span>
             Opened <RelativeTime iso={job.openedAt} />
           </span>

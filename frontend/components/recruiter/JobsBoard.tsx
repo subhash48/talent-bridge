@@ -1,6 +1,6 @@
 "use client";
 
-import { BriefcaseBusiness, MapPin, Plus, UserRound } from "lucide-react";
+import { BriefcaseBusiness, Clock, MapPin, Plus, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { RelativeTime } from "@/components/shared/RelativeTime";
 import { buttonStyles } from "@/components/ui/Button";
 import { FilterChip } from "@/components/ui/FilterChip";
+import { jobFacts } from "@/lib/simple-hire";
 import type { DemoJob } from "@/types/demo";
 import type { JobStatus } from "@/types/job";
 import type { JobOpening, PipelineCandidate } from "@/types/workspace";
@@ -104,6 +105,7 @@ export function JobsBoard({ jobs, demoJobs = null, demoError }: JobsBoardProps) 
 
 function JobCard({ job, counts }: { job: JobOpening; counts: StageCounts }) {
   const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+  const facts = jobFacts(job);
 
   return (
     <Link
@@ -125,6 +127,11 @@ function JobCard({ job, counts }: { job: JobOpening; counts: StageCounts }) {
         <span className="inline-flex items-center gap-1.5">
           <UserRound aria-hidden className="size-3.5" /> {job.hiringManager}
         </span>
+        {facts.length > 0 && (
+          <span className="inline-flex items-center gap-1.5">
+            <Clock aria-hidden className="size-3.5" /> {facts.join(" · ")}
+          </span>
+        )}
       </p>
       <StageBreakdown counts={counts} className="mt-4 mb-4" />
       <div className="mt-auto flex items-center justify-between gap-3 border-t border-border pt-3 text-[13px] text-stone">

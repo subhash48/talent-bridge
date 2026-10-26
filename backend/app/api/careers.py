@@ -3,9 +3,10 @@ and a résumé; the applicant gets their candidate portal link by email."""
 
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 from app.core.dependencies import EmailProviderDep, SessionDep, SupabaseAdminDep
+from app.core.rate_limit import client_address
 from app.schemas.careers import ApplicationCreate, ApplicationResult, CareerJobDetail, CareerJobSummary
 from app.services import careers
 
@@ -25,9 +26,16 @@ async def get_job(job_id: UUID, session: SessionDep) -> CareerJobDetail:
 
 @router.post("/jobs/{job_id}/apply", response_model=ApplicationResult, summary="Apply for a role")
 async def apply(
-    job_id: UUID, body: ApplicationCreate, session: SessionDep, admin: SupabaseAdminDep, email: EmailProviderDep
+    job_id: UUID,
+    body: ApplicationCreate,
+    request: Request,
+    session: SessionDep,
+    admin: SupabaseAdminDep,
+    email: EmailProviderDep,
 ) -> ApplicationResult:
     """The application is created straight away, with the résumé, and the applicant is emailed a link
     into their candidate portal: to create their password, or to sign in if they have an account. 404
-    job_not_found, 409 job_closed, 422 invalid_resume, email_not_accepted or availability_required."""
+    job_not_found, 409 job_closed, 422 invalid_resume, email_not_accepted or availability_required, 429
+    too_many_applications after ten in ten minutes from one address."""
+    careers.limiter.check(client_address(request))
     return await careers.apply(session, job_id, body, admin, email)

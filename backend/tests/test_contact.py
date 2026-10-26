@@ -6,7 +6,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import settings
-from app.core.rate_limit import RateLimiter
 from app.models import ContactRequest
 from app.services import contact_service
 from tests.conftest import API, FakeEmail, use_email
@@ -18,12 +17,6 @@ MESSAGE = {
     "topic": "pilot",
     "message": "We'd like to try TalentBridge with our next three hires.",
 }
-
-
-@pytest.fixture(autouse=True)
-def fresh_limit(monkeypatch: pytest.MonkeyPatch) -> None:
-    fresh = RateLimiter(contact_service.PER_WINDOW, contact_service.WINDOW_SECONDS, "Wait.", code="too_many_messages")
-    monkeypatch.setattr(contact_service, "limiter", fresh)
 
 
 async def test_without_a_contact_address_none_is_shown(anonymous: AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:

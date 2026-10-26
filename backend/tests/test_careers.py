@@ -306,3 +306,21 @@ async def test_someone_with_an_account_applies_elsewhere_and_it_joins_their_port
     assert people == 1
     mine = (await client.get(f"{API}/candidate/applications", headers=bearer(SOPHIA_AUTH))).json()
     assert (other["title"], other["company"]) in {(item["job_title"], item["company"]) for item in mine}
+
+
+async def test_one_address_applying_too_often_is_asked_to_wait(anonymous: AsyncClient) -> None:
+    from app.services import careers
+
+    for index in range(careers.APPLY_LIMIT):
+        body = application(email=f"applicant{index}@inbox.dev")
+        assert (await anonymous.post(f"{API}/careers/jobs/{PRODUCT_DESIGNER}/apply", json=body)).status_code == 200
+    refused = await anonymous.post(
+        f"{API}/careers/jobs/{PRODUCT_DESIGNER}/apply", json=application(email="late@inbox.dev")
+    )
+    assert refused.status_code == 429 and refused.json()["error"]["code"] == "too_many_applications"
+    other = await anonymous.post(
+        f"{API}/careers/jobs/{PRODUCT_DESIGNER}/apply",
+        json=application(email="someone.else@inbox.dev"),
+        headers={"X-Forwarded-For": "198.51.100.7"},
+    )
+    assert other.status_code == 200

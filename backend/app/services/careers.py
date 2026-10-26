@@ -27,6 +27,7 @@ from app.core.enums import (
     Weekday,
 )
 from app.core.errors import AppError, ConflictError, NotFoundError
+from app.core.rate_limit import RateLimiter
 from app.integrations.email import DisabledEmail, EmailProvider
 from app.integrations.supabase_admin import SupabaseAdmin, SupabaseAdminError
 from app.models import Application, Candidate, CandidateStageHistory, Job, User
@@ -44,6 +45,16 @@ SOURCE = "Careers site"
 NOT_OPEN = "This role isn't open for applications."
 NOT_EMAILED = "The email service didn't accept it."
 PortalLink = Literal["invitation_sent", "sign_in_link_sent", "unavailable"]
+
+
+# One address applying this often in ten minutes is a script, not a person: it waits (429).
+APPLY_LIMIT, APPLY_WINDOW_SECONDS = 10, 600
+limiter = RateLimiter(
+    APPLY_LIMIT,
+    APPLY_WINDOW_SECONDS,
+    "You've sent several applications just now. Please wait a few minutes and try again.",
+    code="too_many_applications",
+)
 
 
 class EmailNotAccepted(AppError):

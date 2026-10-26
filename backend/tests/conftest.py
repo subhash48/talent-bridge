@@ -213,6 +213,19 @@ async def fresh_engine() -> AsyncEngine:
     return engine
 
 
+@pytest.fixture(autouse=True)
+def fresh_rate_limits(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Every test starts with the public forms' limits unused, as a new visitor would."""
+    from app.core.rate_limit import RateLimiter
+    from app.services import careers, contact_service
+
+    for module in (careers, contact_service):
+        limit = module.limiter
+        monkeypatch.setattr(
+            module, "limiter", RateLimiter(limit.limit, limit.window_seconds, limit.message, limit.code)
+        )
+
+
 @pytest.fixture
 async def sessions() -> AsyncIterator[async_sessionmaker[AsyncSession]]:
     engine = await fresh_engine()

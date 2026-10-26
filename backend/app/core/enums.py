@@ -84,6 +84,9 @@ class ActivityType(StrEnum):
     # are a stage change to rejected instead.
     APPLICATION_CLOSED = "application_closed"
     PORTAL_INVITED = "portal_invited"  # internal: the candidate portal invitation went out
+    # Internal: a recruiter let the candidate write to the hiring team about the application, or stopped it.
+    MESSAGING_ENABLED = "candidate_messaging_enabled"
+    MESSAGING_DISABLED = "candidate_messaging_disabled"
 
 
 class ApplicationBucket(StrEnum):

@@ -89,6 +89,7 @@ class CandidateListItem(APIModel):
     applied_at: Timestamp
     updated_at: Timestamp
     archived_at: Timestamp | None = None
+    candidate_messaging_enabled: bool = False  # the candidate may write to the hiring team about it
     last_activity: ActivityBrief | None = None
     communication: CommunicationSummary
     next_interview: InterviewBrief | None = None

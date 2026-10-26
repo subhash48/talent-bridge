@@ -93,6 +93,7 @@ def to_list_item(snapshot: ApplicationSnapshot, now: datetime, rules: Rules) -> 
         applied_at=application.applied_at,
         updated_at=application.updated_at,
         archived_at=application.archived_at,
+        candidate_messaging_enabled=application.candidate_messaging_enabled,
         last_activity=ActivityBrief.model_validate(snapshot.activities[0]) if snapshot.activities else None,
         communication=summary(assess(snapshot, rules, now), now),
         next_interview=InterviewBrief.model_validate(upcoming) if upcoming else None,

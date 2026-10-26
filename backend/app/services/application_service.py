@@ -1,17 +1,21 @@
-"""Stage changes and archiving.
+"""Stage changes, archiving and candidate messaging.
 
 Every stage change updates the application, appends to candidate_stage_history and records a
-timeline entry, all in one transaction. Only people change stages; the AI never does.
+timeline entry, all in one transaction. Only people change stages; the AI never does. Whether a
+candidate may write to the hiring team is the recruiter's choice too, per application.
 """
 
 import uuid
+from collections.abc import Sequence
 from datetime import datetime
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.enums import ActivityType, ApplicationStage
-from app.core.errors import BadRequestError, InvalidStageTransitionError
-from app.models import CandidateStageHistory, User
+from app.core.errors import BadRequestError, InvalidStageTransitionError, NotFoundError
+from app.models import Application, CandidateStageHistory, User
 from app.models.base import utcnow
 from app.schemas.candidate import CandidateListItem
 from app.services.activity_service import record_activity
@@ -147,3 +151,38 @@ async def restore(session: AsyncSession, application_id: uuid.UUID, actor: User 
         )
         await session.commit()
     return (await build_list_items(session, [application], now))[0]
+
+
+async def set_messaging(
+    session: AsyncSession, application_ids: Sequence[uuid.UUID], enabled: bool, actor: User | None
+) -> list[CandidateListItem]:
+    """Let the candidates write to the hiring team about these applications, or stop them. Only the
+    applications named change, each on its own timeline (internal: candidates see the composer, not an
+    entry). Unknown ids are a 404 and nothing changes. Idempotent."""
+    ids = list(dict.fromkeys(application_ids))
+    applications = (
+        await session.scalars(
+            select(Application)
+            .where(Application.id.in_(ids))
+            .options(selectinload(Application.candidate), selectinload(Application.job))
+            .with_for_update(of=Application)
+        )
+    ).all()
+    if len(applications) != len(ids):
+        raise NotFoundError("Application not found.")
+    now = utcnow()
+    for application in applications:
+        if application.candidate_messaging_enabled == enabled:
+            continue
+        application.candidate_messaging_enabled = enabled
+        record_activity(
+            session,
+            application.id,
+            ActivityType.MESSAGING_ENABLED if enabled else ActivityType.MESSAGING_DISABLED,
+            "Candidate messaging turned on" if enabled else "Candidate messaging turned off",
+            metadata={"by": actor.full_name if actor else None},
+            at=now,
+        )
+    await session.commit()
+    order = {application_id: index for index, application_id in enumerate(ids)}
+    return await build_list_items(session, sorted(applications, key=lambda item: order[item.id]), now)

@@ -46,6 +46,9 @@ class Application(UUIDPrimaryKey, Base):
     updated_at: Mapped[datetime] = mapped_column(default=utcnow, onupdate=utcnow, server_default=func.now())
     # Archived applications leave the active pipeline but keep their history.
     archived_at: Mapped[datetime | None]
+    # Whether the candidate may write to the hiring team about this application (migration 018). Off until
+    # a recruiter turns it on; the candidate can always read what the team sends.
+    candidate_messaging_enabled: Mapped[bool] = mapped_column(default=False, server_default=text("false"))
 
     # Ashby (migration 011). Null for applications created in TalentBridge.
     external_id: Mapped[str | None] = mapped_column(Text, unique=True)

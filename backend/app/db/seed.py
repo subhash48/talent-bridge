@@ -272,6 +272,16 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
                 }
             )
 
+    # As migration 018 left real databases: a conversation the candidate already took part in stays open;
+    # every other application waits for a recruiter to turn messaging on.
+    talking = {
+        application_ids[thread.candidate]
+        for thread in THREADS
+        if any(message.sender == SenderType.CANDIDATE for message in thread.messages)
+    }
+    for row in rows[Application]:
+        row["candidate_messaging_enabled"] = row["id"] in talking
+
     upcoming = {i.candidate for i in INTERVIEWS if i.days > 0 and i.status == InterviewStatus.SCHEDULED}
     threaded = {thread.candidate for thread in THREADS}
     for seed in CANDIDATES:

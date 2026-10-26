@@ -79,6 +79,9 @@ class PortalApplication(APIModel):
     updated_at: Timestamp
     steps: list[PortalStep]
     next_step: str
+    # Whether the candidate may write to the hiring team about it: the team turns it on after reviewing
+    # the application. They can always read what the team sends.
+    messaging_enabled: bool = False
 
 
 class PortalInterview(APIModel):
@@ -200,6 +203,7 @@ class MessageThread(APIModel):
     recruiter: PortalRecruiter | None = None
     unread: int
     messages: list[PortalMessage]  # oldest first
+    can_message: bool = False  # the hiring team has turned on messaging for this application
 
 
 class PortalMessageCreate(APIModel):

@@ -211,6 +211,7 @@ async def load_record(
             updated_at=application.updated_at,
             steps=build_steps(application, history, status.bucket),
             next_step=next_step(application.stage, status, next_interview, unread, recruiter, company, interviewed),
+            messaging_enabled=application.candidate_messaging_enabled,
         ),
         job=present_job(application.job),
         recruiter=recruiter,

@@ -165,6 +165,7 @@ async def test_opening_her_google_interview_makes_google_the_context(client: Asy
 @pytest.mark.usefixtures("sophia_has_seven")
 async def test_a_message_goes_to_the_selected_application(client: AsyncClient) -> None:
     withdrawn = await portal_id(client, "Design Systems Engineer")
+    await client.put(f"{API}/applications/{withdrawn}/messaging", json={"enabled": True})
     sent = await client.post(
         f"{API}/candidate/messages",
         json={"content": "Thanks for your time on this one.", "kind": "thank_you", "application_id": withdrawn},

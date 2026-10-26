@@ -102,8 +102,12 @@ async def test_ashby_applicant_journey(
     recruiter_interviews = (await client.get(f"{API}/applications/{app_id}/interviews")).json()
     assert recruiter_interviews[0]["confirmed_at"] == confirmed.json()["confirmed_at"]
 
-    # 14-16. The recruiter writes; the candidate replies, then thanks them and follows up.
+    # 14-16. The recruiter writes and turns on messaging; the candidate replies, then thanks them and follows up.
     await client.post(f"{API}/applications/{app_id}/messages", json={"content": "Looking forward to Thursday!"})
+    blocked = await anonymous.post(f"{API}/candidate/messages", json={"content": "Hi!"}, headers=first_login)
+    assert blocked.status_code == 403 and blocked.json()["error"]["code"] == "messaging_disabled"
+    opened = await client.put(f"{API}/applications/{app_id}/messaging", json={"enabled": True})
+    assert opened.status_code == 200 and opened.json()["candidate_messaging_enabled"] is True
     thread = (await anonymous.get(f"{API}/candidate/messages", headers=first_login)).json()
     assert thread["messages"][-1]["content"] == "Looking forward to Thursday!" and thread["unread"] == 1
     assert (await anonymous.post(f"{API}/candidate/messages/read", headers=first_login)).status_code == 204

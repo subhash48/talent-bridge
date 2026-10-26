@@ -1,7 +1,9 @@
 """The candidate's message threads with the hiring team, one per application.
 
 It is the same messages table and thread the recruiter's inbox shows: a candidate's message arrives
-there unread, and the recruiter's replies arrive here unread until the candidate opens Messages.
+there unread, and the recruiter's replies arrive here unread until the candidate opens Messages. A
+candidate can always read their thread, but can only write in it once a recruiter has turned on
+messaging for that application (applications.candidate_messaging_enabled).
 What kind of message it is (a thank-you note, a follow-up) is the candidate's own choice in the
 portal; the text is never analysed to guess.
 """
@@ -12,6 +14,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import ActivityType, MessageKind, SenderType
+from app.core.errors import ForbiddenError
 from app.models import Candidate, Message
 from app.models.base import utcnow
 from app.schemas.portal import MessageThread, PortalMessage
@@ -20,6 +23,7 @@ from app.services.candidate_portal_service import current_application, owned_app
 from app.services.candidate_visibility import INCOMING_SENDERS, present_message
 from app.services.message_service import excerpt
 
+MESSAGING_OFF = "Messaging will become available when the hiring team enables it."
 CANDIDATE_UNREAD = Message.sender_type.in_(INCOMING_SENDERS) & Message.read_at.is_(None)
 # The recruiter's timeline entry for a message the candidate started (a reply is "Replied to message").
 TITLES = {
@@ -34,7 +38,12 @@ async def get_thread(
     session: AsyncSession, candidate: Candidate, application_id: uuid.UUID | None = None
 ) -> MessageThread:
     record = await require_record(session, candidate, application_id)
-    return MessageThread(recruiter=record.recruiter, unread=record.unread, messages=record.messages)
+    return MessageThread(
+        recruiter=record.recruiter,
+        unread=record.unread,
+        messages=record.messages,
+        can_message=record.application.messaging_enabled,
+    )
 
 
 async def send_message(
@@ -46,6 +55,8 @@ async def send_message(
     application_id: uuid.UUID | None = None,
 ) -> PortalMessage:
     application = await owned_application(session, candidate, application_id)
+    if not application.candidate_messaging_enabled:
+        raise ForbiddenError(MESSAGING_OFF, code="messaging_disabled")
     is_reply = await session.scalar(
         select(Message.id)
         .where(Message.application_id == application.id, Message.sender_type == SenderType.RECRUITER)

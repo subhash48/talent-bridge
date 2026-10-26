@@ -278,7 +278,7 @@ def _describe(activity: CandidateActivity, interview_titles: Mapping[str, str]) 
             return "profile", "You updated your profile"
         case _:
             # Internal: application_archived, application_restored, resume_viewed, ai_analysis_generated,
-            # portal_invited.
+            # portal_invited, candidate_messaging_enabled and _disabled.
             return None
 
 

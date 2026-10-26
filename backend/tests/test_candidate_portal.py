@@ -41,9 +41,9 @@ def in_days(days: int) -> str:
 
 
 async def portal_snapshot(client: AsyncClient) -> str:
-    """Every candidate-facing read, as one string, for leak checks."""
+    """Every candidate-facing read about Sophia's Encord application, as one string, for leak checks."""
     responses = [
-        await client.get(f"{API}/candidate/{path}")
+        await client.get(f"{API}/candidate/{path}", params={"application_id": SOPHIA_APP})
         for path in ("me", "application", "activity", "interviews", "messages", "profile", "prep", "company")
     ]
     assert all(response.status_code == 200 for response in responses)
@@ -229,7 +229,9 @@ async def test_closed_application_hides_the_reason(client: AsyncClient) -> None:
     closed = await client.patch(f"{API}/applications/{SOPHIA_APP}/stage", json={"stage": "rejected", "reason": reason})
     assert closed.status_code == 200
 
-    me = (await client.get(f"{API}/candidate/me")).json()
+    # Her other applications are still active, so the portal opens on one of those now; she opens this one.
+    assert (await client.get(f"{API}/candidate/me")).json()["application"]["id"] != SOPHIA_APP
+    me = (await client.get(f"{API}/candidate/me", params={"application_id": SOPHIA_APP})).json()
     assert me["application"]["status"] == "no_longer_considered"
     assert me["application"]["stage_label"] == "No longer under consideration"
     # Progress shows how far it got: everything up to Interview.
@@ -239,7 +241,8 @@ async def test_closed_application_hides_the_reason(client: AsyncClient) -> None:
 
     snapshot = await portal_snapshot(client)
     assert reason not in snapshot and "compensation" not in snapshot
-    answer = (await client.post(f"{API}/candidate/ai/ask", json={"message": "Why was I rejected?"})).json()["answer"]
+    ask = {"message": "Why was I rejected?", "application_id": SOPHIA_APP}
+    answer = (await client.post(f"{API}/candidate/ai/ask", json=ask)).json()["answer"]
     assert "compensation" not in answer
 
 

@@ -27,6 +27,10 @@ from tests.conftest import API, SOPHIA_AUTH, application_id, bearer, job_id
 
 SOPHIA_APP = application_id("sophia-martinez")
 INVITE = "Send Sophia a personalized email asking her to schedule a 30-minute recruiter interview next Tuesday."
+# Sophia has applications at four employers, so a request that only names her is about the application the
+# recruiter has open: her Encord one, as from her candidate page. Without it the assistant asks which one
+# (test_one_person_with_several_applications_is_asked_which).
+ON_SOPHIAS_PAGE: dict[str, Any] = {"context": {"application_id": SOPHIA_APP}}
 
 
 async def ask(client: AsyncClient, text: str, **body: Any) -> dict[str, Any]:
@@ -80,8 +84,8 @@ async def test_only_recruiters_reach_the_assistant(anonymous: AsyncClient, clien
 
 
 async def test_typed_and_spoken_requests_take_the_same_path(client: AsyncClient) -> None:
-    typed = await ask(client, INVITE)
-    spoken = await ask(client, INVITE, input_type="voice")
+    typed = await ask(client, INVITE, **ON_SOPHIAS_PAGE)
+    spoken = await ask(client, INVITE, input_type="voice", **ON_SOPHIAS_PAGE)
     assert (
         (typed["intent"], typed["status"])
         == (spoken["intent"], spoken["status"])
@@ -160,7 +164,7 @@ async def test_an_interview_invitation_is_written_and_sent_only_when_confirmed(
     client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
 ) -> None:
     before = len(await messages_to(sessions, SOPHIA_APP))
-    answer = await ask(client, INVITE, input_type="voice", client_request_id="voice-request-0001")
+    answer = await ask(client, INVITE, input_type="voice", client_request_id="voice-request-0001", **ON_SOPHIAS_PAGE)
     [card] = answer["cards"]
     assert card["type"] == "message" and card["status"] == "proposed" and card["mode"] == "execute"
     assert (card["candidate"]["name"], card["candidate"]["job_title"]) == ("Sophia Martinez", "Product Designer")
@@ -202,7 +206,7 @@ async def test_an_interview_invitation_is_written_and_sent_only_when_confirmed(
 async def test_the_recruiters_edit_is_what_gets_sent(
     client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
 ) -> None:
-    answer = await ask(client, INVITE)
+    answer = await ask(client, INVITE, **ON_SOPHIAS_PAGE)
     edited = "Hi Sophia,\n\nCould you do Tuesday at 2 PM?\n\nBest,\nAlex"
     assert (
         await client.post(f"{API}/assistant/actions/{answer['id']}/confirm", json={"body": edited})
@@ -215,7 +219,7 @@ async def test_a_failed_send_is_reported_as_a_failure(
 ) -> None:
     before = len(await messages_to(sessions, SOPHIA_APP))
     # The application is archived after the proposal: the message service refuses, and so says the result.
-    answer = await ask(client, INVITE)
+    answer = await ask(client, INVITE, **ON_SOPHIAS_PAGE)
     async with sessions() as session:
         await session.execute(
             update(Application).where(Application.id == uuid.UUID(SOPHIA_APP)).values(archived_at=utcnow())
@@ -234,7 +238,7 @@ async def test_a_failed_send_is_reported_as_a_failure(
             update(Application).where(Application.id == uuid.UUID(SOPHIA_APP)).values(archived_at=None)
         )
         await session.commit()
-    answer = await ask(client, INVITE)
+    answer = await ask(client, INVITE, **ON_SOPHIAS_PAGE)
 
     async def broken(*_: Any, **__: Any) -> None:
         raise RuntimeError("provider down")
@@ -249,7 +253,7 @@ async def test_drafting_sends_nothing_and_send_it_asks_for_confirmation(
     client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
 ) -> None:
     before = len(await messages_to(sessions, SOPHIA_APP))
-    draft = await ask(client, "Draft an interview email for Sophia.")
+    draft = await ask(client, "Draft an interview email for Sophia.", **ON_SOPHIAS_PAGE)
     assert draft["cards"][0]["mode"] == "draft" and "Nothing has been sent" in draft["reply"]
     escalated = await ask(client, "send it", context=draft["context"])
     assert escalated["intent"] == "confirm"
@@ -288,8 +292,8 @@ async def test_an_ambiguous_name_is_asked_about_never_guessed(
     [card] = answer["cards"]
     assert card["question"] == "I found 2 candidates named Alex. Which one?"
     assert [(option["label"], option["detail"]) for option in card["options"]] == [
-        ("Alex Morgan", "Product Designer · Sourced"),
-        ("Alex Rivera", "ML Engineer · Sourced"),
+        ("Alex Morgan", "Product Designer at Encord · Sourced"),
+        ("Alex Rivera", "ML Engineer at Encord · Sourced"),
     ]
     async with sessions() as session:
         assert (
@@ -309,18 +313,38 @@ async def test_an_ambiguous_name_is_asked_about_never_guessed(
     assert nobody["status"] == "answered" and "couldn't find" in nobody["reply"].lower()
 
 
+async def test_one_person_with_several_applications_is_asked_which(client: AsyncClient) -> None:
+    """Sophia applied to four employers. A request that only names her proposes nothing: the recruiter
+    picks the application, told apart by role, employer and stage."""
+    answer = await ask(client, INVITE)
+    assert answer["status"] == "needs_clarification"
+    [card] = answer["cards"]
+    assert card["question"] == "Sophia Martinez has 4 applications. Which one?"
+    assert sorted(option["detail"] for option in card["options"]) == [
+        "Product Designer at Anthropic · Sourced",
+        "Product Designer at Encord · Interview",
+        "Product Designer at OpenAI · Screening",
+        "UX Designer at Google · Interview",
+    ]
+    google = next(option for option in card["options"] if "Google" in option["detail"])
+    picked = await ask(client, google["reply"], context={"application_id": google["application_id"]})
+    assert picked["status"] == "proposed" and picked["cards"][0]["candidate"]["job_title"] == "UX Designer"
+
+
 async def test_a_name_spelled_as_it_sounds_is_matched_and_said_so(client: AsyncClient) -> None:
     """Speech transcription writes "Sofia" for Sophia; the reply says how it was read, and sending still
     waits for the recruiter."""
-    answer = await ask(client, "Send Sofia a personalized email asking her to schedule an interview next Tuesday.")
+    answer = await ask(
+        client, "Send Sofia a personalized email asking her to schedule an interview next Tuesday.", **ON_SOPHIAS_PAGE
+    )
     assert answer["status"] == "proposed"
     assert answer["cards"][0]["candidate"]["name"] == "Sophia Martinez"
     assert answer["reply"].startswith("I took “Sofia” to mean Sophia Martinez.")
 
 
 async def test_a_repeated_request_runs_once(client: AsyncClient, sessions: async_sessionmaker[AsyncSession]) -> None:
-    first = await ask(client, INVITE, client_request_id="double-click-0001")
-    second = await ask(client, INVITE, client_request_id="double-click-0001")
+    first = await ask(client, INVITE, client_request_id="double-click-0001", **ON_SOPHIAS_PAGE)
+    second = await ask(client, INVITE, client_request_id="double-click-0001", **ON_SOPHIAS_PAGE)
     assert first == second
     async with sessions() as session:
         assert await session.scalar(select(func.count()).select_from(AssistantAction)) == 1
@@ -356,8 +380,10 @@ async def test_unanswered_messages_unconfirmed_interviews_and_missing_follow_ups
     unconfirmed = await ask(client, "Which interviews need confirmation?")
     [card] = unconfirmed["cards"]
     names = {item["candidate"]["name"] for item in card["items"]}
+    applications = {item["candidate"]["application_id"] for item in card["items"]}
     assert unconfirmed["intent"] == "unconfirmed_interviews"
-    assert "Priya Desai" in names and "Sophia Martinez" not in names  # Sophia confirmed hers
+    assert "Priya Desai" in names and SOPHIA_APP not in applications  # Sophia confirmed her Encord one
+    assert application_id("sophia-martinez@google") in applications  # but not yet her Google one
     assert all(item["at"] and item["reason"] == "Not confirmed" for item in card["items"])
 
     followed = await ask(client, "Who interviewed this week and has not received follow-up?")
@@ -371,7 +397,7 @@ async def test_unanswered_messages_unconfirmed_interviews_and_missing_follow_ups
 async def test_draft_an_update_uses_the_drafts_and_sends_once(client: AsyncClient) -> None:
     moved = await client.patch(f"{API}/applications/{SOPHIA_APP}/stage", json={"stage": "offer"})
     assert moved.status_code == 200
-    answer = await ask(client, "Draft Sophia an update.")
+    answer = await ask(client, "Draft Sophia an update.", **ON_SOPHIAS_PAGE)
     [card] = answer["cards"]
     assert (card["purpose"], card["mode"]) == ("Update", "draft")
     assert "finalising the details of your offer" in card["body"]  # written for the stage change
@@ -386,7 +412,7 @@ async def test_draft_an_update_uses_the_drafts_and_sends_once(client: AsyncClien
     assert (await client.post(f"{API}/assistant/actions/{answer['id']}/confirm", json={})).status_code == 409
 
     # Dismissing a proposed update discards its draft.
-    again = await ask(client, "Draft Sophia an update.")
+    again = await ask(client, "Draft Sophia an update.", **ON_SOPHIAS_PAGE)
     assert (await client.post(f"{API}/assistant/actions/{again['id']}/cancel")).status_code == 204
     assert (await client.get(f"{API}/communication/drafts", params={"application_id": SOPHIA_APP})).json() == []
 
@@ -404,11 +430,11 @@ async def test_personal_characteristics_and_ranking_are_refused(client: AsyncCli
 
 
 async def test_candidates_and_interviews(client: AsyncClient) -> None:
-    upcoming = await ask(client, "What interview does Sophia have next?")
+    upcoming = await ask(client, "What interview does Sophia have next?", **ON_SOPHIAS_PAGE)
     assert upcoming["cards"][0]["interview"]["title"] == "Design interview"
     assert "Design interview" in upcoming["reply"] and "confirmed" in upcoming["reply"]
 
-    about = await ask(client, "Tell me about Sophia's application")
+    about = await ask(client, "Tell me about Sophia's application", **ON_SOPHIAS_PAGE)
     assert about["intent"] == "candidate_info" and about["reply"] and about["sources"]
 
     listed = await ask(client, "Show candidates interviewing for Product Designer")

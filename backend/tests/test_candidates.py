@@ -12,16 +12,16 @@ async def test_list_returns_the_pipeline_most_recent_first(client: AsyncClient) 
     response = await client.get(f"{API}/candidates", params={"limit": 7})
     assert response.status_code == 200
     page = response.json()
-    assert page["total"] == 35
+    assert page["total"] == 38
     names = [item["candidate"]["full_name"] for item in page["items"]]
     assert names == [
         "Sophia Martinez",
         "James Park",
+        "Sophia Martinez",  # her OpenAI application
         "Priya Desai",
         "Daniel Lee",
         "Rosa Navarro",
-        "Olivia Chen",
-        "Rosa Navarro",  # her Harbor Robotics application
+        "Sophia Martinez",  # her Anthropic application
     ]
     sophia = page["items"][0]
     assert sophia["application_id"] == application_id(SOPHIA)
@@ -36,7 +36,7 @@ async def test_list_returns_the_pipeline_most_recent_first(client: AsyncClient) 
 async def test_filters_by_stage_on_the_server(client: AsyncClient) -> None:
     response = await client.get(f"{API}/candidates", params={"stage": "interview", "limit": 200})
     items = response.json()["items"]
-    assert len(items) == 10
+    assert len(items) == 11
     assert {item["stage"] for item in items} == {"interview"}
 
 
@@ -222,14 +222,14 @@ async def test_archive_and_restore(client: AsyncClient) -> None:
     archived = await client.post(f"{API}/applications/{application_id(SOPHIA)}/archive")
     assert archived.status_code == 200
     assert archived.json()["archived_at"] is not None
-    assert (await client.get(f"{API}/candidates")).json()["total"] == 34
+    assert (await client.get(f"{API}/candidates")).json()["total"] == 37
 
     blocked = await client.patch(f"{API}/applications/{application_id(SOPHIA)}/stage", json={"stage": "offer"})
     assert blocked.json()["error"]["code"] == "application_archived"
 
     restored = await client.post(f"{API}/applications/{application_id(SOPHIA)}/restore")
     assert restored.json()["archived_at"] is None
-    assert (await client.get(f"{API}/candidates")).json()["total"] == 35
+    assert (await client.get(f"{API}/candidates")).json()["total"] == 38
 
 
 # Activity and messages
@@ -246,7 +246,7 @@ async def test_activity_is_newest_first(client: AsyncClient) -> None:
 
 async def test_messages_inbox_send_and_read(client: AsyncClient) -> None:
     conversations = (await client.get(f"{API}/messages/conversations")).json()
-    assert len(conversations) == 33  # every application the team has written about
+    assert len(conversations) == 35  # every application the team has written about
     assert conversations[0]["candidate"]["full_name"] == "Sophia Martinez"
     assert (await client.get(f"{API}/messages/unread-count")).json() == {"count": 3}
 

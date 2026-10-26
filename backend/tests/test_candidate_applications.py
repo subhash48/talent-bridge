@@ -5,9 +5,10 @@ import uuid
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from tests.ashby_support import FakeSupabaseAdmin, ago, application_event, deliver, fixture, iso
-from tests.conftest import API, SOPHIA_EMAIL, application_id
+from tests.conftest import API, SOPHIA_EMAIL, application_id, link
 
 SOPHIA_APP = application_id("sophia-martinez")
 JAMES_APP = application_id("james-park")
@@ -41,8 +42,9 @@ async def portal_id(client: AsyncClient, title: str) -> str:
 
 
 @pytest.fixture
-async def sophia_has_four(anonymous: AsyncClient, ashby: FakeSupabaseAdmin) -> None:
-    """Product Designer (active, from the seed), plus three Ashby applications that ended differently."""
+async def sophia_has_seven(anonymous: AsyncClient, ashby: FakeSupabaseAdmin) -> None:
+    """Her four seeded applications (Encord's Product Designer the most recent active one), plus three
+    Ashby applications that ended differently."""
     senior = await sophia_applies(anonymous, "Senior Product Designer", updated_at=ago(hours=2))
     rejected = application_event(
         "candidateStageChange", application_id=senior, candidate_id="sophia-ashby-id", email=SOPHIA_EMAIL,
@@ -66,7 +68,7 @@ async def sophia_has_four(anonymous: AsyncClient, ashby: FakeSupabaseAdmin) -> N
     await deliver(anonymous, job)
 
 
-@pytest.mark.usefixtures("sophia_has_four")
+@pytest.mark.usefixtures("sophia_has_seven")
 async def test_applications_are_grouped_by_status(client: AsyncClient) -> None:
     applications = (await client.get(f"{API}/candidate/applications")).json()
     summary = [(item["job_title"], item["status"], item["stage_label"]) for item in applications]
@@ -82,11 +84,11 @@ async def test_applications_are_grouped_by_status(client: AsyncClient) -> None:
     assert product["next_interview_at"] is not None and product["company"] == "Encord"
 
     me = (await client.get(f"{API}/candidate/me")).json()
-    assert me["application"]["id"] == SOPHIA_APP  # opens on the active one
-    assert len(me["applications"]) == 4
+    assert me["application"]["id"] == SOPHIA_APP  # opens on the most recently updated active one
+    assert len(me["applications"]) == 7
 
 
-@pytest.mark.usefixtures("sophia_has_four")
+@pytest.mark.usefixtures("sophia_has_seven")
 async def test_switching_application_context(client: AsyncClient) -> None:
     rejected = await portal_id(client, "Senior Product Designer")
     me = (await client.get(f"{API}/candidate/me", params={"application_id": rejected})).json()
@@ -115,7 +117,52 @@ async def test_switching_application_context(client: AsyncClient) -> None:
     assert (await client.get(f"{API}/candidate/messages", params={"application_id": rejected})).json()["messages"] == []
 
 
-@pytest.mark.usefixtures("sophia_has_four")
+# Sophia's seeded applications, at four employers, as her dashboard's cards show them.
+SOPHIAS = {
+    SOPHIA_APP: ("Encord", "Product Designer", "Interview"),
+    application_id("sophia-martinez@openai"): ("OpenAI", "Product Designer", "Screening"),
+    application_id("sophia-martinez@anthropic"): ("Anthropic", "Product Designer", "Applied"),
+    application_id("sophia-martinez@google"): ("Google", "UX Designer", "Interview"),
+}
+
+
+async def test_every_application_is_listed_and_each_shows_only_its_employer(client: AsyncClient) -> None:
+    me = (await client.get(f"{API}/candidate/me")).json()
+    cards = {item["id"]: (item["company"], item["job_title"], item["stage_label"]) for item in me["applications"]}
+    assert cards == SOPHIAS and list(cards) == list(SOPHIAS)  # all four, most recently updated first
+    assert [item["id"] for item in (await client.get(f"{API}/candidate/applications")).json()] == list(SOPHIAS)
+    assert me["application"]["id"] == SOPHIA_APP
+
+    employers = {company for company, _, _ in SOPHIAS.values()}
+    for application, (company, role, stage) in SOPHIAS.items():
+        params = {"application_id": application}
+        reads = {
+            path: (await client.get(f"{API}/candidate/{path}", params=params)).json()
+            for path in ("me", "application", "interviews", "messages", "company", "prep")
+        }
+        ask = {"message": "What does the company do?", "application_id": application}
+        answer = (await client.post(f"{API}/candidate/ai/ask", json=ask)).json()["answer"]
+        assert reads["me"]["company"]["name"] == reads["company"]["name"] == reads["prep"]["company"] == company
+        assert (reads["me"]["job"]["title"], reads["me"]["application"]["stage_label"]) == (role, stage)
+        assert {item["application_id"] for item in reads["interviews"]} <= {application}
+        assert reads["company"]["overview"] in answer
+
+        del reads["me"]["applications"]  # the list of every application names them all, by design
+        text = json.dumps(reads) + answer
+        assert [other for other in employers - {company} if other in text] == [], company
+
+
+async def test_opening_her_google_interview_makes_google_the_context(client: AsyncClient) -> None:
+    google = application_id("sophia-martinez@google")
+    [interview] = (await client.get(f"{API}/candidate/interviews", params={"application_id": google})).json()
+    assert interview["title"] == "Design exercise" and interview["can_confirm"]
+    params = {"interview_id": interview["id"], "application_id": SOPHIA_APP}  # the portal was showing Encord
+    prep = (await client.get(f"{API}/candidate/prep", params=params)).json()
+    assert (prep["application_id"], prep["company"], prep["role"]) == (google, "Google", "UX Designer")
+    assert "Encord" not in json.dumps(prep)
+
+
+@pytest.mark.usefixtures("sophia_has_seven")
 async def test_a_message_goes_to_the_selected_application(client: AsyncClient) -> None:
     withdrawn = await portal_id(client, "Design Systems Engineer")
     sent = await client.post(
@@ -171,12 +218,14 @@ async def test_old_single_application_route_still_works(client: AsyncClient) -> 
 
 
 async def test_a_candidate_whose_only_application_closed_still_sees_it(
-    anonymous: AsyncClient, client: AsyncClient
+    anonymous: AsyncClient, client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
 ) -> None:
-    moved = await client.patch(f"{API}/applications/{SOPHIA_APP}/stage", json={"stage": "rejected", "reason": REASON})
+    # James has one application (Sophia has four).
+    james = await link(sessions, "james.park@example.com")
+    moved = await client.patch(f"{API}/applications/{JAMES_APP}/stage", json={"stage": "rejected", "reason": REASON})
     assert moved.status_code == 200
-    me = (await client.get(f"{API}/candidate/me")).json()
-    assert me["application"]["id"] == SOPHIA_APP and me["application"]["status"] == "no_longer_considered"
+    me = (await anonymous.get(f"{API}/candidate/me", headers=james)).json()
+    assert me["application"]["id"] == JAMES_APP and me["application"]["status"] == "no_longer_considered"
     assert [item["status"] for item in me["applications"]] == ["no_longer_considered"]
     assert REASON not in json.dumps(me)
     assert "Encord" in me["application"]["next_step"]  # the employer of this application

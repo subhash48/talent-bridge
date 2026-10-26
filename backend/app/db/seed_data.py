@@ -22,6 +22,11 @@ RECRUITER = {"email": "alex.chen@encord.example", "full_name": "Alex Chen"}
 NOVA_RECRUITER = {"email": "mira.hoffmann@nova-ai.example", "full_name": "Mira Hoffmann"}
 # Harbor Robotics' recruiter, for the same reason.
 HARBOR_RECRUITER = {"email": "daan.visser@harbor-robotics.example", "full_name": "Daan Visser"}
+# Sophia's other employers (OpenAI, Anthropic, Google) each answer through a recruiter of their own. The
+# people are fictional, with addresses on the reserved .example domain.
+OPENAI_RECRUITER = {"email": "julia.moreno@openai.example", "full_name": "Julia Moreno"}
+ANTHROPIC_RECRUITER = {"email": "owen.price@anthropic.example", "full_name": "Owen Price"}
+GOOGLE_RECRUITER = {"email": "simone.hart@google.example", "full_name": "Simone Hart"}
 
 
 @dataclass(frozen=True)
@@ -276,6 +281,82 @@ COMPANIES: tuple[CompanySeed, ...] = (
         ),
         source="Fictional demo employer in TalentBridge's seed data.",
     ),
+    # Real companies, so Sophia's portal can show applications at four employers. Their profiles hold only
+    # each company's own public wording about itself (checked on its website, October 2026) and links to
+    # its site: nothing about benefits, locations or hiring, so the assistant says that hasn't been shared
+    # rather than inventing it. No logo files: their cards show the company's initials.
+    CompanySeed(
+        "openai",
+        "OpenAI",
+        100,
+        None,
+        "https://openai.com/",
+        overview="OpenAI is an AI research and deployment company.",
+        mission="To ensure that artificial general intelligence benefits all of humanity.",
+        highlights=(),
+        products=(),
+        values=(),
+        benefits=(),
+        benefits_scope="",
+        benefits_note="",
+        locations=(),
+        locations_note="",
+        hiring_process=(),
+        hiring_note="",
+        links=(("OpenAI website", "https://openai.com/"), ("About OpenAI", "https://openai.com/about/")),
+        source="Demo employer in TalentBridge's seed data, described in OpenAI's own words from openai.com/about.",
+    ),
+    CompanySeed(
+        "anthropic",
+        "Anthropic",
+        100,
+        None,
+        "https://www.anthropic.com/",
+        overview=(
+            "Anthropic is an AI safety and research company that's working to build reliable, interpretable, and "
+            "steerable AI systems."
+        ),
+        mission="",
+        highlights=(),
+        products=(),
+        values=(),
+        benefits=(),
+        benefits_scope="",
+        benefits_note="",
+        locations=(),
+        locations_note="",
+        hiring_process=(),
+        hiring_note="",
+        links=(
+            ("Anthropic website", "https://www.anthropic.com/"),
+            ("About Anthropic", "https://www.anthropic.com/company"),
+        ),
+        source="Demo employer in TalentBridge's seed data, described in Anthropic's own words from anthropic.com/company.",
+    ),
+    CompanySeed(
+        "google",
+        "Google",
+        100,
+        None,
+        "https://about.google/",
+        overview="Google's mission is to organize the world's information and make it universally accessible and useful.",
+        mission="To organize the world's information and make it universally accessible and useful.",
+        highlights=(),
+        products=(),
+        values=(),
+        benefits=(),
+        benefits_scope="",
+        benefits_note="",
+        locations=(),
+        locations_note="",
+        hiring_process=(),
+        hiring_note="",
+        links=(
+            ("About Google", "https://about.google/"),
+            ("Google company info", "https://about.google/company-info/"),
+        ),
+        source="Demo employer in TalentBridge's seed data, described in Google's own words from about.google.",
+    ),
 )
 
 
@@ -290,6 +371,13 @@ class JobSeed:
     requirements: tuple[str, ...]
     status: JobStatus = JobStatus.OPEN
     company: str = "encord"  # a CompanySeed key
+    # Stands in for the title (in its id, and where an application names its job) when another employer
+    # already has a job with that title.
+    seed_key: str | None = None
+
+    @property
+    def key(self) -> str:
+        return self.seed_key or self.title
 
     @property
     def description(self) -> str:
@@ -471,6 +559,43 @@ JOBS: tuple[JobSeed, ...] = (
         "Build and run the cloud platform that plans, routes and monitors Harbor's autonomous fleets.",
         ("Go", "Kubernetes", "Distributed systems", "Observability", "PostgreSQL"),
         company="harbor-robotics",
+    ),
+    # Sophia's other applications. Postings written for the demo, not copied from the companies' own, and
+    # drafts, so the public careers site never lists a job at a real company; Sophia still sees hers.
+    JobSeed(
+        "Product Designer",
+        "Design",
+        "San Francisco, CA · Hybrid",
+        "Clara Weiss",
+        40,
+        "Design clear, approachable product experiences for people using AI in their everyday work.",
+        ("Figma", "Interaction design", "Prototyping", "User research"),
+        status=JobStatus.DRAFT,
+        company="openai",
+        seed_key="openai:Product Designer",
+    ),
+    JobSeed(
+        "Product Designer",
+        "Design",
+        "San Francisco, CA · Hybrid",
+        "Theo Laurent",
+        25,
+        "Design interfaces that help people understand and trust what an AI system is doing for them.",
+        ("Figma", "Design systems", "Prototyping", "Product thinking"),
+        status=JobStatus.DRAFT,
+        company="anthropic",
+        seed_key="anthropic:Product Designer",
+    ),
+    JobSeed(
+        "UX Designer",
+        "User Experience",
+        "London, UK · Hybrid",
+        "Aiko Mori",
+        50,
+        "Research and design experiences for products used by people all over the world.",
+        ("User research", "Interaction design", "Accessibility", "Figma"),
+        status=JobStatus.DRAFT,
+        company="google",
     ),
 )
 
@@ -909,6 +1034,9 @@ CANDIDATES: tuple[CandidateSeed, ...] = (
 
 ROSA_NOVA = "rosa-navarro@nova-ai"
 ROSA_HARBOR = "rosa-navarro@harbor-robotics"
+SOPHIA_OPENAI = "sophia-martinez@openai"
+SOPHIA_ANTHROPIC = "sophia-martinez@anthropic"
+SOPHIA_GOOGLE = "sophia-martinez@google"
 APPLICATIONS: tuple[ApplicationSeed, ...] = (
     ApplicationSeed(
         ROSA_NOVA,
@@ -935,6 +1063,39 @@ APPLICATIONS: tuple[ApplicationSeed, ...] = (
         created_title="Applied on the Harbor Robotics careers site",
         moves=(4400,),
         recruiter=HARBOR_RECRUITER["email"],
+    ),
+    # Sophia applied to four employers: her Encord role (CANDIDATES), and these. Her portal still opens on
+    # the Encord one, the most recently updated; the others follow in the order she sees them.
+    ApplicationSeed(
+        SOPHIA_OPENAI,
+        "sophia-martinez",
+        "openai:Product Designer",
+        S.SCREENING,
+        9 * DAY,
+        events=(Event(A.MESSAGE_SENT, "Screening update sent", 1000),),
+        created_title="Applied on the OpenAI careers site",
+        moves=(1500,),
+        recruiter=OPENAI_RECRUITER["email"],
+    ),
+    ApplicationSeed(
+        SOPHIA_ANTHROPIC,
+        "sophia-martinez",
+        "anthropic:Product Designer",
+        S.SOURCED,  # "Applied", as the candidate sees it
+        2 * DAY,
+        created_title="Applied on the Anthropic careers site",
+        recruiter=ANTHROPIC_RECRUITER["email"],
+    ),
+    ApplicationSeed(
+        SOPHIA_GOOGLE,
+        "sophia-martinez",
+        "UX Designer",
+        S.INTERVIEW,
+        20 * DAY,
+        events=(Event(A.INTERVIEW_SCHEDULED, "Design exercise scheduled", 3500),),
+        created_title="Applied on the Google careers site",
+        moves=(22000, 9000),
+        recruiter=GOOGLE_RECRUITER["email"],
     ),
 )
 
@@ -1023,6 +1184,7 @@ INTERVIEWS: tuple[InterviewSeed, ...] = (
         True,
         "Strong on LLM evaluation; probe system design depth in the technical round.",
     ),
+    InterviewSeed(SOPHIA_GOOGLE, "Design exercise", 3, "16:00", 60, V, ("Aiko Mori",)),
 )
 
 C, R = SenderType.CANDIDATE, SenderType.RECRUITER
@@ -1182,6 +1344,32 @@ THREADS: tuple[ThreadSeed, ...] = (
                 R,
                 2900,
                 "Hi Rosa, thanks for applying for the Platform Engineer role. Femke is reviewing your application this week, and I'll be in touch about a technical screen.",
+            ),
+        ),
+    ),
+    ThreadSeed(
+        SOPHIA_OPENAI,
+        (
+            MessageSeed(
+                R,
+                1000,
+                "Hi Sophia, thanks for applying for the Product Designer role. Your application is in screening now, and I'll be in touch about next steps by the end of the week.",
+            ),
+        ),
+    ),
+    ThreadSeed(
+        SOPHIA_GOOGLE,
+        (
+            MessageSeed(
+                R,
+                9000,
+                "Hi Sophia, thank you for applying for the UX Designer role. We'd like to invite you to interview: a design exercise with Aiko, the hiring manager.",
+            ),
+            MessageSeed(C, 8700, "Thank you Simone, I'd be glad to. Most afternoons work for me."),
+            MessageSeed(
+                R,
+                3500,
+                "Your design exercise with Aiko is booked: 60 minutes on video. Please confirm it in your portal when you can.",
             ),
         ),
     ),

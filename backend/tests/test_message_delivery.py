@@ -80,7 +80,11 @@ async def test_a_message_confirmed_in_the_assistant_takes_the_same_path(client: 
     email = use_email(FakeEmail())
     proposed = await client.post(
         f"{API}/assistant/requests",
-        json={"text": "Send Sophia a message asking her to schedule a 30-minute call next Tuesday."},
+        # From her Encord application's page: she has applications at four employers.
+        json={
+            "text": "Send Sophia a message asking her to schedule a 30-minute call next Tuesday.",
+            "context": {"application_id": SOPHIA_APP},
+        },
     )
     assert proposed.status_code == 200 and proposed.json()["status"] == "proposed"
     confirmed = (await client.post(f"{API}/assistant/actions/{proposed.json()['id']}/confirm", json={})).json()

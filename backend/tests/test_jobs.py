@@ -7,7 +7,7 @@ async def test_list_jobs(client: AsyncClient) -> None:
     response = await client.get(f"{API}/jobs")
     assert response.status_code == 200
     jobs = response.json()
-    assert len(jobs) == 11
+    assert len(jobs) == 14
     assert {"Product Designer", "ML Engineer", "DevOps Engineer"} <= {job["title"] for job in jobs}
 
     open_jobs = (await client.get(f"{API}/jobs", params={"status": "open"})).json()

@@ -269,7 +269,8 @@ def _clarify(resolution: Resolution, request: AssistantRequest) -> Outcome:
     options = [
         ClarifyOption(
             label=app.candidate.full_name,
-            detail=f"{app.job.title} · {app.stage.label}",
+            # The employer too: one person can apply for the same title at two companies.
+            detail=f"{app.job.title} at {app.job.company.name} · {app.stage.label}",
             reply=request.text,
             application_id=app.id,
         )

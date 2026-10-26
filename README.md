@@ -58,14 +58,14 @@ Pages: `/login`, `/signup` (candidates), `/forgot-password`, `/reset-password`, 
 - `frontend/.env.local`: `NEXT_PUBLIC_SUPABASE_URL` (the same URL) and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (`sb_publishable_...`). Never put a secret or service role key in a `NEXT_PUBLIC_` variable.
 - In the dashboard, under Authentication > URL Configuration, set the Site URL to `http://localhost:3000` and add `http://localhost:3000/**` to the Redirect URLs, so confirmation and reset links can return to `/auth/confirm` and invitations to `/auth/callback`. Keep **Confirm email** on (the default).
 
-**Demo accounts.** The demo data has Alex Chen (recruiter), Sophia Martinez (candidate, one application at Encord) and Rosa Navarro (candidate, applications at three companies: Encord, and the fictional Nova AI and Harbor Robotics, so the portal shows its application selector) but no sign-ins. To give each one:
+**Demo accounts.** The demo data has Alex Chen (recruiter), Sophia Martinez (candidate, applications at four companies: Encord, OpenAI, Anthropic and Google) and Rosa Navarro (candidate, applications at three companies: Encord, and the fictional Nova AI and Harbor Robotics, so the portal shows its application selector) but no sign-ins. The OpenAI, Anthropic and Google profiles hold only each company's own public description and links, their recruiters are fictional (`.example` addresses), and their jobs are drafts, so the public careers site never lists them. To give each one:
 
 1. In the Supabase dashboard, open Authentication > Users > Add user > Create new user. Enter `alex.chen@encord.example` and a password of your choice, and tick **Auto Confirm User**. Do the same for `sophia.martinez@example.com` and `rosa.navarro@example.com`. Keep the passwords out of git.
 2. Link each account to its person (from `backend/`):
 
    ```bash
    python -m app.db.accounts link alex.chen@encord.example      # Alex Chen, recruiter
-   python -m app.db.accounts link sophia.martinez@example.com   # Sophia Martinez, candidate
+   python -m app.db.accounts link sophia.martinez@example.com   # Sophia Martinez, candidate at four companies
    python -m app.db.accounts link rosa.navarro@example.com      # Rosa Navarro, candidate at three companies
    python -m app.db.accounts list                               # who can sign in
    ```
@@ -189,7 +189,7 @@ Preparation (`/candidate/prep`) opens once the candidate is invited to interview
 
 ## AI Assistant
 
-`/recruiter/ai` is one assistant for typed and spoken requests about candidate communication, through one action engine (`POST /api/v1/assistant/requests`, `backend/app/services/assistant/`): "Who needs an update today?", "Which candidates have unanswered questions?", "Which interviews need confirmation?", "Who interviewed this week and hasn't had a follow-up?", "Draft Sarah an update" (written for the rule that needs attention, through the drafts ledger), "Send Sophia an interview invitation for next Tuesday", and questions about one candidate's application or next interview. Names are matched against the active pipeline and never guessed. Messages wait as editable proposals until the recruiter confirms, then go through the one send path, exactly once.
+`/recruiter/ai` is one assistant for typed and spoken requests about candidate communication, through one action engine (`POST /api/v1/assistant/requests`, `backend/app/services/assistant/`): "Who needs an update today?", "Which candidates have unanswered questions?", "Which interviews need confirmation?", "Who interviewed this week and hasn't had a follow-up?", "Draft Sarah an update" (written for the rule that needs attention, through the drafts ledger), "Send Sophia an interview invitation for next Tuesday", and questions about one candidate's application or next interview. Names are matched against the active pipeline and never guessed: someone with several applications, like Sophia, gets "Which one?" with each role and employer, unless the request comes from one application's page. Messages wait as editable proposals until the recruiter confirms, then go through the one send path, exactly once.
 
 The AI never evaluates, scores, ranks or rejects candidates, lists strengths or concerns, or recommends a hiring decision; those requests are declined. **Voice** stays inside the assistant (the microphone beside Send): the recording is transcribed (Groq Whisper with `AI_PROVIDER=groq`, else the browser's own recognition) and never stored, and a spoken "send it" only shows the confirmation.
 

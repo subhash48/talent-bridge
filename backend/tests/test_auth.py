@@ -22,7 +22,13 @@ from app.core.enums import UserRole
 from app.core.errors import register_error_handlers
 from app.core.security import TokenVerifier, get_token_verifier
 from app.db.seed import reset_and_seed
-from app.db.seed_data import HARBOR_RECRUITER, NOVA_RECRUITER
+from app.db.seed_data import (
+    ANTHROPIC_RECRUITER,
+    GOOGLE_RECRUITER,
+    HARBOR_RECRUITER,
+    NOVA_RECRUITER,
+    OPENAI_RECRUITER,
+)
 from app.models import Candidate, User
 from app.models.base import utcnow
 from app.services import account_service
@@ -458,8 +464,9 @@ async def test_signup_without_a_safe_match_is_not_linked(
     assert response.json()["error"]["code"] == "account_not_linked"
     async with sessions() as session:
         users = (await session.scalars(select(User.email))).all()
-        recruiters = ["alex.chen@encord.example", HARBOR_RECRUITER["email"], NOVA_RECRUITER["email"]]
-        assert sorted(users) == [*recruiters, "sophia.martinez@example.com"]
+        others = (NOVA_RECRUITER, HARBOR_RECRUITER, OPENAI_RECRUITER, ANTHROPIC_RECRUITER, GOOGLE_RECRUITER)
+        recruiters = ["alex.chen@encord.example", *(person["email"] for person in others)]
+        assert sorted(users) == sorted([*recruiters, "sophia.martinez@example.com"])
 
 
 async def test_demo_reset_keeps_sign_in_links(sessions: async_sessionmaker[AsyncSession]) -> None:

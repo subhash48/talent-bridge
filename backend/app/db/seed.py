@@ -23,17 +23,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import ActivityType, ApplicationStage, InterviewStatus, InterviewType, SenderType, UserRole
 from app.db.seed_data import (
+    ANTHROPIC_RECRUITER,
     APPLICATIONS,
     APPLIED_UPDATE,
     CANDIDATES,
     CHECK_IN,
     COMPANIES,
     DAY,
+    GOOGLE_RECRUITER,
     HARBOR_RECRUITER,
     INTERVIEWS,
     JOBS,
     NO_FOLLOW_UP,
     NOVA_RECRUITER,
+    OPENAI_RECRUITER,
     RECRUITER,
     STAGE_UPDATES,
     THREADS,
@@ -124,7 +127,9 @@ class Recorder:
 def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
     rows: dict[type[Base], list[dict[str, Any]]] = {table: [] for table in TABLES}
     recruiter_id = seed_id("user", RECRUITER["email"])
-    for person, days in ((RECRUITER, 120), (NOVA_RECRUITER, 90), (HARBOR_RECRUITER, 60)):
+    recruiters = (RECRUITER, 120), (NOVA_RECRUITER, 90), (HARBOR_RECRUITER, 60)
+    recruiters += (OPENAI_RECRUITER, 50), (ANTHROPIC_RECRUITER, 50), (GOOGLE_RECRUITER, 50)
+    for person, days in recruiters:
         rows[User].append(
             {
                 "id": seed_id("user", person["email"]),
@@ -165,10 +170,10 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
 
     job_ids: dict[str, uuid.UUID] = {}
     for job in JOBS:
-        job_ids[job.title] = seed_id("job", job.title)
+        job_ids[job.key] = seed_id("job", job.key)
         rows[Job].append(
             {
-                "id": job_ids[job.title],
+                "id": job_ids[job.key],
                 "company_id": seed_id("company", job.company),
                 "external_id": None,
                 "title": job.title,

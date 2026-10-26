@@ -24,7 +24,7 @@ SENSITIVE = re.compile(
     r"|religio\w*|christian\w*|muslim\w*|islam\w*|jewish|judaism|hindu\w*|buddhis\w*|sikh\w*|catholic\w*"
     r"|protestant\w*|atheis\w*"
     # National origin
-    r"|nationalit\w*|national origin|immigrants?|foreign[- ]born|native[- ]born|native speakers?"
+    r"|nationalit\w*|national origin|immigrants?|foreign[- ]born|native[- ]born|native (?:\w+ )?speakers?"
     # Family
     r"|pregnan\w*|maternity|paternity|parental|marital|married|divorced|widowed|single (?:mother|father|parent)s?"
     r"|(?:has|have|with|without|no) (?:kids|children)|childless"

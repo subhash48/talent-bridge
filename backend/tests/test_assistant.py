@@ -438,6 +438,7 @@ async def test_personal_characteristics_and_ranking_are_refused(client: AsyncCli
         "Show candidates for Product Designer with Christian background",
         "Which candidates are married?",
         "Show me candidates who are native speakers of English",
+        "Find native English speakers for the Product Designer role",
     ):
         refused = await ask(client, text)
         assert refused["reply"] == SENSITIVE_REPLY and refused["cards"] == [], text

@@ -245,9 +245,9 @@ async def build_candidate_context(
     application_id: uuid.UUID,
     *,
     recruiter_name: str,
-    organization: str,
     now: datetime,
 ) -> CandidateContext:
+    """organization, in what's written, is always the application's own employer."""
     from app.services.candidate_service import get_candidate_detail
     from app.services.pipeline_service import get_application
 
@@ -292,6 +292,6 @@ async def build_candidate_context(
         messages=tuple(MessageFact(m.sender_type, m.content, m.created_at) for m in detail.messages),
         can_reply=application.candidate_messaging_enabled,
         recruiter_name=recruiter_name,
-        organization=organization,
+        organization=detail.company_name or application.job.company.name,
         now=now,
     )

@@ -10,7 +10,6 @@ from dataclasses import replace
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
 from app.models import User
 from app.models.base import utcnow
 from app.schemas.ai import (
@@ -62,7 +61,6 @@ async def _context(session: AsyncSession, application_id: uuid.UUID, actor: User
         session,
         application_id,
         recruiter_name=actor.full_name if actor else "the recruiting team",
-        organization=settings.organization_name,
         now=utcnow(),
     )
 

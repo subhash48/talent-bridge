@@ -108,9 +108,7 @@ async def test_the_mock_answers_status_questions(context: CandidateContext) -> N
 @pytest.fixture
 async def context(sessions: async_sessionmaker[AsyncSession]) -> CandidateContext:
     async with sessions() as session:
-        return await build_candidate_context(
-            session, uuid.UUID(SOPHIA), recruiter_name="Alex Chen", organization="Encord", now=utcnow()
-        )
+        return await build_candidate_context(session, uuid.UUID(SOPHIA), recruiter_name="Alex Chen", now=utcnow())
 
 
 async def test_gemini_provider_parses_json_mode(context: CandidateContext) -> None:
@@ -152,3 +150,16 @@ async def test_groq_provider_and_error_handling(context: CandidateContext) -> No
         assert "500" in str(exc)
     else:
         raise AssertionError("expected AIProviderError")
+
+
+async def test_a_message_is_written_in_the_applications_own_employers_name(
+    sessions: async_sessionmaker[AsyncSession],
+) -> None:
+    """Sophia's OpenAI application is OpenAI's: a draft for it never says Encord, whatever the
+    deployment's ORGANIZATION_NAME."""
+    async with sessions() as session:
+        context = await build_candidate_context(
+            session, uuid.UUID(application_id("sophia-martinez@openai")), recruiter_name="Julia Moreno", now=utcnow()
+        )
+    assert context.organization == "OpenAI"
+    assert "Encord" not in context.to_prompt()

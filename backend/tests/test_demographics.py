@@ -82,7 +82,6 @@ async def test_no_recruiter_view_of_a_person_carries_their_answers(
             session,
             uuid.UUID(application_id("sophia-martinez")),
             recruiter_name="Alex Chen",
-            organization="Encord",
             now=utcnow(),
         )
     prompt = context.to_prompt().lower()

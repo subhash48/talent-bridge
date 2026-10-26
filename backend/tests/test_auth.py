@@ -21,7 +21,7 @@ from app.core.dependencies import require_admin
 from app.core.enums import UserRole
 from app.core.errors import register_error_handlers
 from app.core.security import TokenVerifier, get_token_verifier
-from app.db.seed import reset_and_seed
+from app.db.seed import reset_and_seed, seed_id
 from app.db.seed_data import (
     ANTHROPIC_RECRUITER,
     GOOGLE_RECRUITER,
@@ -401,7 +401,14 @@ def admin_app(sessions: async_sessionmaker[AsyncSession]) -> FastAPI:
 
 async def test_require_admin(anonymous: AsyncClient, sessions: async_sessionmaker[AsyncSession]) -> None:
     async with sessions() as session:
-        session.add(User(email="ada.admin@encord.example", full_name="Ada Admin", role=UserRole.ADMIN))
+        session.add(
+            User(
+                email="ada.admin@encord.example",
+                full_name="Ada Admin",
+                role=UserRole.ADMIN,
+                company_id=seed_id("company", "encord"),
+            )
+        )
         await session.commit()
     ada = await link(sessions, "ada.admin@encord.example")
 

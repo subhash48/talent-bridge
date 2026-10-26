@@ -1,6 +1,8 @@
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from tests.conftest import API, application_id, candidate_id, job_id
+from app.db.seed_data import ANTHROPIC_RECRUITER
+from tests.conftest import API, application_id, candidate_id, job_id, link
 
 SOPHIA = "sophia-martinez"
 
@@ -12,16 +14,17 @@ async def test_list_returns_the_pipeline_most_recent_first(client: AsyncClient) 
     response = await client.get(f"{API}/candidates", params={"limit": 7})
     assert response.status_code == 200
     page = response.json()
-    assert page["total"] == 43
+    # Encord's pipeline only: Sophia's and Rosa's applications to other employers are theirs.
+    assert page["total"] == 38
     names = [item["candidate"]["full_name"] for item in page["items"]]
     assert names == [
         "Sophia Martinez",
         "James Park",
-        "Sophia Martinez",  # her OpenAI application
         "Priya Desai",
         "Daniel Lee",
         "Rosa Navarro",
-        "Sophia Martinez",  # her Anthropic application
+        "Olivia Chen",
+        "Ethan Walker",
     ]
     sophia = page["items"][0]
     assert sophia["application_id"] == application_id(SOPHIA)
@@ -36,7 +39,7 @@ async def test_list_returns_the_pipeline_most_recent_first(client: AsyncClient) 
 async def test_filters_by_stage_on_the_server(client: AsyncClient) -> None:
     response = await client.get(f"{API}/candidates", params={"stage": "interview", "limit": 200})
     items = response.json()["items"]
-    assert len(items) == 11
+    assert len(items) == 9
     assert {item["stage"] for item in items} == {"interview"}
 
 
@@ -230,14 +233,14 @@ async def test_archive_and_restore(client: AsyncClient) -> None:
     archived = await client.post(f"{API}/applications/{application_id(SOPHIA)}/archive")
     assert archived.status_code == 200
     assert archived.json()["archived_at"] is not None
-    assert (await client.get(f"{API}/candidates")).json()["total"] == 42
+    assert (await client.get(f"{API}/candidates")).json()["total"] == 37
 
     blocked = await client.patch(f"{API}/applications/{application_id(SOPHIA)}/stage", json={"stage": "offer"})
     assert blocked.json()["error"]["code"] == "application_archived"
 
     restored = await client.post(f"{API}/applications/{application_id(SOPHIA)}/restore")
     assert restored.json()["archived_at"] is None
-    assert (await client.get(f"{API}/candidates")).json()["total"] == 43
+    assert (await client.get(f"{API}/candidates")).json()["total"] == 38
 
 
 # Activity and messages
@@ -254,7 +257,7 @@ async def test_activity_is_newest_first(client: AsyncClient) -> None:
 
 async def test_messages_inbox_send_and_read(client: AsyncClient) -> None:
     conversations = (await client.get(f"{API}/messages/conversations")).json()
-    assert len(conversations) == 40  # every application the team has written about
+    assert len(conversations) == 36  # every Encord application the team has written about
     assert conversations[0]["candidate"]["full_name"] == "Sophia Martinez"
     assert (await client.get(f"{API}/messages/unread-count")).json() == {"count": 3}
 
@@ -282,17 +285,25 @@ async def test_dashboard_summary(client: AsyncClient) -> None:
     assert trends["follow_up"] is None
 
 
-async def test_pipeline_rows_name_the_employer_and_the_last_interview(client: AsyncClient) -> None:
+async def test_pipeline_rows_name_the_employer_and_the_last_interview(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    """Sophia applied to four employers. Each one's recruiter sees their own application, never the others."""
     rows = (await client.get(f"{API}/candidates", params={"search": "Sophia Martinez", "limit": 200})).json()["items"]
-    by_company = {row["company_name"]: row for row in rows}
-    assert {"Encord", "OpenAI", "Anthropic", "Google"} <= set(by_company)
+    assert [row["company_name"] for row in rows] == ["Encord"]
     # Sophia's portfolio review at Encord is behind her; her design interview is still ahead.
-    encord = by_company["Encord"]
+    encord = rows[0]
     assert encord["last_interview_at"] is not None and encord["next_interview"] is not None
-    assert by_company["Anthropic"]["last_interview_at"] is None
     detail = (
         await client.get(
             f"{API}/candidates/{encord['candidate']['id']}", params={"application_id": encord["application_id"]}
         )
     ).json()
     assert detail["company_name"] == "Encord" and detail["last_interview_at"] == encord["last_interview_at"]
+    assert [item["id"] for item in detail["applications"]] == [encord["application_id"]]
+
+    anthropic = await link(sessions, ANTHROPIC_RECRUITER["email"])
+    theirs = (
+        await client.get(f"{API}/candidates", params={"search": "Sophia", "limit": 200}, headers=anthropic)
+    ).json()
+    assert [(row["company_name"], row["last_interview_at"]) for row in theirs["items"]] == [("Anthropic", None)]

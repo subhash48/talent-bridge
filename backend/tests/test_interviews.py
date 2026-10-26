@@ -15,14 +15,14 @@ async def test_schedule_lists_interviews_with_the_candidate(client: AsyncClient)
     response = await client.get(f"{API}/interviews")
     assert response.status_code == 200
     interviews = response.json()
-    assert len(interviews) == 19
+    assert len(interviews) == 16  # Encord's
     assert interviews == sorted(interviews, key=lambda i: i["scheduled_at"])
     design = next(i for i in interviews if i["title"] == "Design interview")
     assert design["candidate"]["full_name"] == "Sophia Martinez"
     assert design["candidate"]["job_title"] == "Product Designer"
 
     upcoming = (await client.get(f"{API}/interviews", params={"upcoming": "true"})).json()
-    assert len(upcoming) == 13
+    assert len(upcoming) == 11
 
 
 async def test_schedule_an_interview(client: AsyncClient) -> None:

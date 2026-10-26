@@ -11,10 +11,12 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Query, Request, Response
+from sqlalchemy import select
 
 from app.core.config import settings
 from app.core.dependencies import AIProviderDep, CalendarProviderDep, EmailProviderDep, RecruiterDep, SessionDep
-from app.core.errors import AppError, BadRequestError, ServiceUnavailableError
+from app.core.errors import AppError, BadRequestError, NotFoundError, ServiceUnavailableError
+from app.models import Application
 from app.schemas.assistant import (
     AssistantContext,
     AssistantHistoryItem,
@@ -78,7 +80,10 @@ async def draft_outreach(
 ) -> AssistantResponse:
     """One draft per candidate ticked on the Candidates page (an interview invitation or a message), with
     interview times when a schedule is given: the same proposal the assistant makes, confirmed the same way.
-    Nothing is sent or scheduled here."""
+    Nothing is sent or scheduled here. 404 if any of them isn't in the workspace's pipeline."""
+    ids = set(body.application_ids)
+    if len(set(await session.scalars(select(Application.id).where(Application.id.in_(ids))))) != len(ids):
+        raise NotFoundError("Application not found.")
     invitation = body.purpose == "interview_invitation"
     words = body.instructions or ("Interview invitation" if invitation else "Personalized message")
     request = AssistantRequest(

@@ -12,12 +12,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.enums import ApplicationBucket, ApplicationStage
+from app.db.seed_data import ANTHROPIC_RECRUITER, OPENAI_RECRUITER
 from app.models import Application, CandidateActivity
 from app.schemas.portal import PortalRecruiter
 from app.services.candidate_portal_service import next_step
 from app.services.candidate_visibility import PortalStatus
 from app.services.message_service import email_text
-from tests.conftest import API, SOPHIA_AUTH, application_id, bearer
+from tests.conftest import API, SOPHIA_AUTH, application_id, bearer, link
 
 ENCORD = application_id("sophia-martinez")  # she has written in it, so it's open
 OPENAI = application_id("sophia-martinez@openai")  # off: the hiring team hasn't turned it on
@@ -31,7 +32,10 @@ async def write(client: AsyncClient, application: str, content: str = "Hello!") 
     return {"status": response.status_code, **response.json()}
 
 
-async def test_messaging_is_off_until_the_recruiter_turns_it_on(client: AsyncClient) -> None:
+async def test_messaging_is_off_until_the_recruiter_turns_it_on(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    julia = await link(sessions, OPENAI_RECRUITER["email"])  # OpenAI's recruiter: it's OpenAI's application
     thread = (await client.get(f"{API}/candidate/messages", params={"application_id": OPENAI})).json()
     assert thread["can_message"] is False
     me = (await client.get(f"{API}/candidate/me", params={"application_id": OPENAI})).json()
@@ -41,18 +45,22 @@ async def test_messaging_is_off_until_the_recruiter_turns_it_on(client: AsyncCli
     assert refused["status"] == 403
     assert refused["error"] == {"code": "messaging_disabled", "message": OFF, "details": None}
     # The hiring team can still write, and the candidate still reads it.
-    sent = await client.post(f"{API}/applications/{OPENAI}/messages", json={"content": "Thanks for applying, Sophia."})
+    sent = await client.post(
+        f"{API}/applications/{OPENAI}/messages", json={"content": "Thanks for applying, Sophia."}, headers=julia
+    )
     assert sent.status_code == 201
     thread = (await client.get(f"{API}/candidate/messages", params={"application_id": OPENAI})).json()
     assert thread["messages"][-1]["content"] == "Thanks for applying, Sophia." and thread["can_message"] is False
 
-    opened = await client.put(f"{API}/applications/{OPENAI}/messaging", json={"enabled": True})
+    # Another employer's recruiter can't: to them, it isn't there.
+    assert (await client.put(f"{API}/applications/{OPENAI}/messaging", json={"enabled": True})).status_code == 404
+    opened = await client.put(f"{API}/applications/{OPENAI}/messaging", json={"enabled": True}, headers=julia)
     assert opened.status_code == 200 and opened.json()["candidate_messaging_enabled"] is True
     assert (await client.get(f"{API}/candidate/messages", params={"application_id": OPENAI})).json()["can_message"]
     assert (await write(client, OPENAI, "Thank you! Happy to talk any time."))["status"] == 201
 
     # It reaches the recruiter's existing inbox, on that application's thread.
-    inbox = (await client.get(f"{API}/messages/conversations")).json()
+    inbox = (await client.get(f"{API}/messages/conversations", headers=julia)).json()
     conversation = next(item for item in inbox if item["candidate"]["application_id"] == OPENAI)
     assert conversation["messages"][-1]["content"] == "Thank you! Happy to talk any time."
     assert conversation["unread"] == 1
@@ -68,15 +76,19 @@ async def test_turning_it_off_stops_new_messages_but_keeps_the_thread(client: As
     assert (await write(client, ENCORD))["status"] == 403
 
 
-async def test_one_application_never_opens_another(client: AsyncClient) -> None:
-    await client.put(f"{API}/applications/{ANTHROPIC}/messaging", json={"enabled": True})
+async def test_one_application_never_opens_another(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    owen = await link(sessions, ANTHROPIC_RECRUITER["email"])
+    julia = await link(sessions, OPENAI_RECRUITER["email"])
+    await client.put(f"{API}/applications/{ANTHROPIC}/messaging", json={"enabled": True}, headers=owen)
     assert (await write(client, ANTHROPIC, "A question about the Anthropic role."))["status"] == 201
     assert (await write(client, OPENAI))["status"] == 403  # her other application is still off
 
-    anthropic = (await client.get(f"{API}/applications/{ANTHROPIC}/messages")).json()
+    anthropic = (await client.get(f"{API}/applications/{ANTHROPIC}/messages", headers=owen)).json()
     assert anthropic[-1]["content"] == "A question about the Anthropic role."
-    for other in (ENCORD, OPENAI):
-        thread = (await client.get(f"{API}/applications/{other}/messages")).json()
+    for other, recruiter in ((ENCORD, {}), (OPENAI, julia)):
+        thread = (await client.get(f"{API}/applications/{other}/messages", headers=recruiter)).json()
         assert all(message["content"] != "A question about the Anthropic role." for message in thread)
         portal = (await client.get(f"{API}/candidate/messages", params={"application_id": other})).json()
         assert all(message["content"] != "A question about the Anthropic role." for message in portal["messages"])
@@ -85,13 +97,19 @@ async def test_one_application_never_opens_another(client: AsyncClient) -> None:
 async def test_bulk_changes_only_the_applications_picked(
     client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
 ) -> None:
-    response = await client.post(
+    # Encord's recruiter picking one of OpenAI's applications changes nothing: it isn't in his workspace.
+    mixed = await client.post(
         f"{API}/applications/messaging", json={"application_ids": [OPENAI, GRACE], "enabled": True}
     )
-    assert response.status_code == 200
+    assert mixed.status_code == 404
+    response = await client.post(f"{API}/applications/messaging", json={"application_ids": [GRACE], "enabled": True})
+    julia = await link(sessions, OPENAI_RECRUITER["email"])
+    theirs = await client.post(
+        f"{API}/applications/messaging", json={"application_ids": [OPENAI], "enabled": True}, headers=julia
+    )
+    assert response.status_code == theirs.status_code == 200
     assert [(item["application_id"], item["candidate_messaging_enabled"]) for item in response.json()] == [
-        (OPENAI, True),
-        (GRACE, True),
+        (GRACE, True)
     ]
     async with sessions() as session:
         enabled = {

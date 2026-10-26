@@ -13,7 +13,8 @@ from httpx import AsyncClient
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.core.enums import AssistantActionStatus
+from app.core.enums import ApplicationStage, AssistantActionStatus
+from app.db.seed import seed_id
 from app.main import app
 from app.models import Application, AssistantAction, Message
 from app.models.base import utcnow
@@ -325,22 +326,44 @@ async def test_an_ambiguous_name_is_asked_about_never_guessed(
     assert nobody["status"] == "answered" and "couldn't find" in nobody["reply"].lower()
 
 
-async def test_one_person_with_several_applications_is_asked_which(client: AsyncClient) -> None:
-    """Sophia applied to four employers. A request that only names her proposes nothing: the recruiter
-    picks the application, told apart by role, employer and stage."""
+async def test_one_person_with_several_applications_is_asked_which(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    """Sophia applied to four employers, and Alex's workspace has only her Encord application, so a request
+    that names her is about that one. With two in the same workspace, a request that only names her proposes
+    nothing: the recruiter picks the application, told apart by role, employer and stage."""
+    answer = await ask(client, INVITE)
+    assert answer["status"] == "proposed" and answer["cards"][0]["candidate"]["application_id"] == SOPHIA_APP
+
+    async with sessions() as session:
+        session.add(
+            Application(
+                candidate_id=seed_id("candidate", "sophia-martinez"),
+                job_id=uuid.UUID(job_id("Data Scientist")),
+                stage=ApplicationStage.SCREENING,
+                source="Added by recruiter",
+            )
+        )
+        await session.commit()
     answer = await ask(client, INVITE)
     assert answer["status"] == "needs_clarification"
     [card] = answer["cards"]
-    assert card["question"] == "Sophia Martinez has 4 applications. Which one?"
+    assert card["question"] == "Sophia Martinez has 2 applications. Which one?"
     assert sorted(option["detail"] for option in card["options"]) == [
-        "Product Designer at Anthropic · Sourced",
+        "Data Scientist at Encord · Screening",
         "Product Designer at Encord · Interview",
-        "Product Designer at OpenAI · Screening",
-        "UX Designer at Google · Interview",
     ]
-    google = next(option for option in card["options"] if "Google" in option["detail"])
-    picked = await ask(client, google["reply"], context={"application_id": google["application_id"]})
-    assert picked["status"] == "proposed" and picked["cards"][0]["candidate"]["job_title"] == "UX Designer"
+    data = next(option for option in card["options"] if "Data Scientist" in option["detail"])
+    picked = await ask(client, data["reply"], context={"application_id": data["application_id"]})
+    assert picked["status"] == "proposed" and picked["cards"][0]["candidate"]["job_title"] == "Data Scientist"
+
+
+async def test_another_employers_application_is_never_in_context(client: AsyncClient) -> None:
+    """An application id from another workspace, sent as context, is as if none was sent."""
+    google = application_id("sophia-martinez@google")
+    answer = await ask(client, INVITE, context={"application_id": google})
+    assert answer["status"] == "proposed" and answer["cards"][0]["candidate"]["application_id"] == SOPHIA_APP
+    assert "Google" not in json.dumps(answer)
 
 
 async def test_a_name_spelled_as_it_sounds_is_matched_and_said_so(client: AsyncClient) -> None:
@@ -395,7 +418,8 @@ async def test_unanswered_messages_unconfirmed_interviews_and_missing_follow_ups
     applications = {item["candidate"]["application_id"] for item in card["items"]}
     assert unconfirmed["intent"] == "unconfirmed_interviews"
     assert "Priya Desai" in names and SOPHIA_APP not in applications  # Sophia confirmed her Encord one
-    assert application_id("sophia-martinez@google") in applications  # but not yet her Google one
+    # Her Google interview isn't confirmed either, but it's Google's to follow up, not Encord's.
+    assert application_id("sophia-martinez@google") not in applications
     assert all(item["at"] and item["reason"] == "Not confirmed" for item in card["items"])
 
     followed = await ask(client, "Who interviewed this week and has not received follow-up?")

@@ -5,7 +5,9 @@ verifies it and loads the users row it's linked to; the role on that row, and no
 sends, decides access:
 
     require_candidate  the candidate portal (/candidate/*), scoped to the caller's own record
-    require_recruiter  the recruiter workspace; admins may use it too
+    require_recruiter  a recruiter or admin
+    require_workspace  the recruiter workspace: a recruiter or admin, scoped to their own company's
+                       workspace for the rest of the request (core/tenancy.py)
     require_admin      reserved for admin-only operations
 
 401 means no valid token, 403 a valid token without the right account or role.
@@ -13,6 +15,7 @@ sends, decides access:
 
 import logging
 from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from typing import Annotated
 
 from fastapi import Depends, Request
@@ -22,14 +25,15 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import settings
 from app.core.database import get_session, get_session_factory
-from app.core.enums import STAFF_ROLES, UserRole
+from app.core.enums import STAFF_ROLES, UserRole, WorkspaceMode
 from app.core.errors import ForbiddenError, NotFoundError, ServiceUnavailableError, UnauthorizedError
 from app.core.security import InvalidTokenError, TokenClaims, TokenVerifier, get_token_verifier
+from app.core.tenancy import scope_to
 from app.integrations.ashby.client import AshbyClient, get_ashby_client
 from app.integrations.calendar import CalendarProvider, get_calendar_provider
 from app.integrations.email import EmailProvider, get_email_provider
 from app.integrations.supabase_admin import SupabaseAdmin, get_supabase_admin
-from app.models import Candidate, User
+from app.models import Candidate, Company, User
 from app.services import demo_careers
 from app.services.account_provisioning import mark_portal_active
 from app.services.account_service import user_for_auth_account
@@ -126,6 +130,35 @@ require_recruiter = require_role(*STAFF_ROLES)
 require_admin = require_role(UserRole.ADMIN)
 
 RecruiterDep = Annotated[User, Depends(require_recruiter)]
+AdminDep = Annotated[User, Depends(require_admin)]
+
+WORKSPACE_MISSING = "Set up your company's workspace before using TalentBridge."
+
+
+@dataclass(frozen=True)
+class Workspace:
+    """The signed-in recruiter or admin and the company they hire for."""
+
+    user: User
+    company: Company
+
+    @property
+    def mode(self) -> WorkspaceMode:
+        return self.company.workspace_mode
+
+
+async def require_workspace(session: SessionDep, user: RecruiterDep) -> Workspace:
+    """A recruiter or admin, and from here on every query in this request sees only their company's
+    workspace: its jobs, and the candidates and applications for them. 403 workspace_missing for staff
+    who don't hire for a company yet."""
+    company = await session.get(Company, user.company_id) if user.company_id is not None else None
+    if company is None:
+        raise ForbiddenError(WORKSPACE_MISSING, code="workspace_missing")
+    scope_to(session, company.id)
+    return Workspace(user, company)
+
+
+WorkspaceDep = Annotated[Workspace, Depends(require_workspace)]
 
 
 async def get_current_candidate(session: SessionDep, user: Annotated[User, Depends(require_candidate)]) -> Candidate:

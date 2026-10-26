@@ -14,6 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.tenancy import scoped_company
 from app.models import Company
 
 
@@ -101,7 +102,12 @@ def _items(rows: list[dict[str, Any]] | None) -> tuple[Item, ...]:
 
 async def workspace_company_id(session: AsyncSession) -> uuid.UUID:
     """The employer that owns this workspace: jobs created here (by a recruiter, from Ashby, as demo
-    jobs) belong to it. It's the oldest company; an empty database gets one named ORGANIZATION_NAME."""
+    jobs) belong to it. In a recruiter's request it's their own company (core/tenancy.py). Outside one
+    (the Ashby integration, which is connected for one employer) it's the oldest company; an empty
+    database gets one named ORGANIZATION_NAME."""
+    scoped = scoped_company(session)
+    if scoped is not None:
+        return scoped
     company_id = await session.scalar(select(Company.id).order_by(Company.created_at, Company.id).limit(1))
     if company_id is not None:
         return company_id

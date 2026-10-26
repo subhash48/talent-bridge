@@ -26,10 +26,10 @@ from app.api import (
     portal_access,
     resumes,
 )
-from app.core.dependencies import require_candidate, require_demo_enabled, require_recruiter
+from app.core.dependencies import require_candidate, require_demo_enabled, require_workspace
 
 api_router = APIRouter()
-# The recruiter workspace: recruiters and admins.
+# The recruiter workspace: recruiters and admins, each scoped to their own company's workspace.
 for module in (
     candidates,
     portal_access,
@@ -44,7 +44,7 @@ for module in (
     assistant,
     resumes,
 ):
-    api_router.include_router(module.router, dependencies=[Depends(require_recruiter)])
+    api_router.include_router(module.router, dependencies=[Depends(require_workspace)])
 # The candidate portal: the signed-in candidate, scoped to their own record.
 for module in (candidate,):
     api_router.include_router(module.router, dependencies=[Depends(require_candidate)])
@@ -58,5 +58,5 @@ api_router.include_router(integrations.router)
 # elsewhere these answer 404 to everyone: demo jobs and résumés for recruiters, and the public demo
 # careers site.
 for module in (demo_jobs, demo_resumes):
-    api_router.include_router(module.router, dependencies=[Depends(require_demo_enabled), Depends(require_recruiter)])
+    api_router.include_router(module.router, dependencies=[Depends(require_demo_enabled), Depends(require_workspace)])
 api_router.include_router(demo_careers.router, dependencies=[Depends(require_demo_enabled)])

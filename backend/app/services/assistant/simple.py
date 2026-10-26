@@ -358,6 +358,17 @@ def _generic(said: str) -> bool:
 
 # Simple Hire's words for the assistant's answers: what happened, plainly, with no recruiting terms.
 
+HELP = (
+    "I can post a job, show you who applied, give you their phone numbers, message them, or ask them to come in "
+    "for an interview. Try:\n"
+    '- **"Post a cashier job paying $16 an hour for weekend shifts."** You see it before it\'s posted.\n'
+    '- **"Show me people who applied for the kitchen job."**\n'
+    '- **"Show me 3 applicants with kitchen experience who are available Friday and Saturday."** Then tick the '
+    "people you'd like to contact.\n"
+    '- **"Show me their phone numbers."**, **"Message these three."** or **"Ask them if they can come in Tuesday '
+    'between 2 and 5."** Nothing is sent until you press Send.'
+)
+
 
 def plain_reply(cards: list[AssistantCard], reply: str) -> str:
     """The reply a Simple Hire owner reads with these cards. Answers with no plainer form keep their own."""

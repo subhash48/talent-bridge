@@ -315,3 +315,9 @@ async def test_sam_reads_plain_replies_not_recruiting_terms(client: AsyncClient,
 async def test_recruiting_teams_keep_their_replies(client: AsyncClient) -> None:
     found = await ask(client, {}, "Show 5 candidates for Product Designer matching Figma")
     assert "candidates" in found["reply"]
+
+
+async def test_help_is_about_what_a_small_business_does(client: AsyncClient, sam: dict[str, str]) -> None:
+    answer = await ask(client, sam, "hello there")
+    assert answer["intent"] == "help" and answer["reply"].startswith("I can post a job, show you who applied")
+    assert "candidate" not in answer["reply"].lower()

@@ -220,6 +220,8 @@ async def handle(
 
     if outcome.cards and plain:
         outcome.reply = simple.plain_reply(outcome.cards, outcome.reply)
+    elif plain and outcome.reply == answers.HELP:
+        outcome.reply = simple.HELP
     row = await _reload(session, row_id)
     response = AssistantResponse(
         id=row.id,

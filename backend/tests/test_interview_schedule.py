@@ -16,6 +16,8 @@ def test_days_are_read_from_the_recruiters_today() -> None:
     assert resolve_day("on Monday", MONDAY) == date(2026, 11, 2)  # never today
     assert resolve_day("tomorrow morning", MONDAY) == date(2026, 10, 27)
     assert resolve_day("next week", MONDAY) is None  # vaguer than a day: for the recruiter to pick
+    assert resolve_day("2026-11-04", MONDAY) == date(2026, 11, 4)  # picked on a calendar
+    assert resolve_day("2026-10-26", MONDAY) is None  # never today or earlier
     assert resolve_day(None, MONDAY) is None
 
 

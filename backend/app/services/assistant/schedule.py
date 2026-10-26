@@ -49,9 +49,16 @@ def _clock(hour: int, minute: int, period: str) -> str | None:
 
 
 def resolve_day(timeframe: str | None, today: date) -> date | None:
-    """The day a timeframe names, from the recruiter's today. "next Tuesday" is the Tuesday of next week;
-    "Tuesday" or "this Tuesday" the coming one; "tomorrow" tomorrow. Anything vaguer is for them to pick."""
-    words = (timeframe or "").lower()
+    """The day a timeframe names, from the recruiter's today: a date picked on a calendar ("2026-11-03"), or
+    words. "next Tuesday" is the Tuesday of next week; "Tuesday" or "this Tuesday" the coming one;
+    "tomorrow" tomorrow. Anything vaguer is for them to pick, and a day already past is never proposed."""
+    words = (timeframe or "").lower().strip()
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", words):  # a day picked on a calendar
+        try:
+            picked = date.fromisoformat(words)
+        except ValueError:
+            return None
+        return picked if picked > today else None
     if "tomorrow" in words:
         return today + timedelta(days=1)
     for index, name in enumerate(DAYS):

@@ -1,12 +1,14 @@
 "use client";
 
 import { CandidateActionsMenu } from "@/components/recruiter/CandidateActionsMenu";
+import { MatchEvidence } from "@/components/recruiter/MatchEvidence";
 import { Avatar } from "@/components/shared/Avatar";
 import { CommunicationBadge } from "@/components/recruiter/communication/CommunicationBadge";
 import { RelativeTime } from "@/components/shared/RelativeTime";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { cn } from "@/lib/utils";
+import type { CandidateMatch } from "@/types/matching";
 import type { PipelineCandidate } from "@/types/workspace";
 
 export type CandidateSelectionProps = {
@@ -15,6 +17,8 @@ export type CandidateSelectionProps = {
   checked: boolean;
   onSelect: (id: string) => void;
   onCheckedChange: (id: string, checked: boolean) => void;
+  /** On the shortlist: why they match. */
+  match?: CandidateMatch;
 };
 
 const cell = (className?: string) =>
@@ -24,7 +28,7 @@ const cell = (className?: string) =>
   );
 
 /** Whole row selects the candidate; the name is the keyboard target. Checkbox and menu don't select. */
-export function CandidateRow({ candidate, selected, checked, onSelect, onCheckedChange }: CandidateSelectionProps) {
+export function CandidateRow({ candidate, selected, checked, onSelect, onCheckedChange, match }: CandidateSelectionProps) {
   return (
     <tr data-selected={selected || undefined} onClick={() => onSelect(candidate.id)} className="group cursor-pointer">
       <td className={cell("w-10 pl-3")} onClick={(event) => event.stopPropagation()}>
@@ -50,6 +54,7 @@ export function CandidateRow({ candidate, selected, checked, onSelect, onChecked
               {candidate.name}
             </button>
             <p className="truncate text-[13px] leading-[18px] text-stone @[44rem]:hidden">{candidate.role}</p>
+            {match && <MatchEvidence match={match} className="mt-1.5" />}
           </div>
         </div>
       </td>

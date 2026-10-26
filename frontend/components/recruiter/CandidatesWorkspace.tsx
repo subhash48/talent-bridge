@@ -18,6 +18,7 @@ import { CandidateDetail } from "@/components/recruiter/CandidateDetail";
 import { CandidateFilters } from "@/components/recruiter/CandidateFilters";
 import { CandidateTable } from "@/components/recruiter/CandidateTable";
 import { DashboardMetrics } from "@/components/recruiter/DashboardMetrics";
+import { ShortlistPanel } from "@/components/recruiter/ShortlistPanel";
 import { useWorkspace } from "@/components/recruiter/WorkspaceProvider";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { SearchBar } from "@/components/shared/SearchBar";
@@ -26,6 +27,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Sheet } from "@/components/ui/Sheet";
 import { useToast } from "@/components/ui/Toaster";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useShortlist } from "@/hooks/useShortlist";
 import { useStageCandidates } from "@/hooks/useStageCandidates";
 import {
   EMPTY_FILTERS,
@@ -39,6 +41,7 @@ import {
   sortCandidates,
   type CandidateFilters as Filters,
   type CandidateView,
+  type Shortlist,
   type SortKey,
   type StageFilter,
 } from "@/lib/candidate-query";
@@ -78,6 +81,7 @@ export function CandidatesWorkspace({ greeting, initialCandidateId, initialView 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [shortlist, setShortlist] = useState<Shortlist | null>(initialView?.shortlist ?? null);
 
   // Follow new ?candidate= links while staying on this page (e.g. from the notifications menu).
   const [linkedId, setLinkedId] = useState(initialCandidateId);
@@ -105,9 +109,21 @@ export function CandidatesWorkspace({ greeting, initialCandidateId, initialView 
   }, [searched, stage, stageCandidates, query, filters, sort]);
   const openJobs = useMemo(() => jobs.filter((job) => job.status === "open"), [jobs]);
 
-  const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+  // The shortlist works on exactly the candidates in view, so every filter it uses is one on screen.
+  const visibleIds = useMemo(() => visible.map((candidate) => candidate.id), [visible]);
+  const match = useShortlist(shortlist, visibleIds, filters.jobs);
+  const matches = useMemo(() => new Map(match.result?.items.map((item) => [item.application_id, item]) ?? []), [match.result]);
+  const listed = useMemo(
+    () =>
+      shortlist && match.result
+        ? match.result.items.flatMap((item) => candidates.find((candidate) => candidate.id === item.application_id) ?? [])
+        : visible,
+    [shortlist, match.result, candidates, visible],
+  );
+
+  const pageCount = shortlist ? 1 : Math.max(1, Math.ceil(listed.length / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
-  const pageItems = visible.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const pageItems = shortlist ? listed : listed.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const selected = candidates.find((candidate) => candidate.id === selectedId) ?? sortCandidates(candidates, "recent")[0];
   const checked = candidates.filter((candidate) => checkedIds.has(candidate.id));
@@ -245,7 +261,21 @@ export function CandidatesWorkspace({ greeting, initialCandidateId, initialView 
               jobs={jobChoices}
               skills={skillChoices}
               locations={locationChoices}
+              shortlistOpen={shortlist !== null}
+              onShortlist={() => setShortlist((current) => (current ? null : { criteria: filters.skills, size: 10 }))}
             />
+
+            {shortlist && (
+              <ShortlistPanel
+                shortlist={shortlist}
+                onChange={setShortlist}
+                onClose={() => setShortlist(null)}
+                result={match.result}
+                loading={match.loading}
+                error={match.error}
+                suggestions={skillChoices}
+              />
+            )}
 
             {checked.length > 0 && (
               <BulkActionsBar
@@ -265,6 +295,7 @@ export function CandidatesWorkspace({ greeting, initialCandidateId, initialView 
                 onSelect={openCandidate}
                 onCheckedChange={toggleChecked}
                 onCheckAll={toggleAll}
+                matches={shortlist ? matches : undefined}
                 emptyState={
                   candidates.length === 0 ? (
                     <EmptyState
@@ -295,11 +326,20 @@ export function CandidatesWorkspace({ greeting, initialCandidateId, initialView 
               />
             </div>
 
-            {visible.length > 0 && (
+            {listed.length > 0 && (
               <footer className="flex items-center justify-between gap-3 border-t border-border px-4 py-2.5 text-[13px] text-stone sm:px-5">
                 <p aria-live="polite">
-                  Showing <span className="text-charcoal tabular-nums">{firstShown}–{firstShown + pageItems.length - 1}</span> of{" "}
-                  <span className="text-charcoal tabular-nums">{visible.length}</span>
+                  {shortlist ? (
+                    <>
+                      Shortlist: <span className="text-charcoal tabular-nums">{listed.length}</span> of{" "}
+                      <span className="text-charcoal tabular-nums">{visible.length}</span> in view. Tick who to act on.
+                    </>
+                  ) : (
+                    <>
+                      Showing <span className="text-charcoal tabular-nums">{firstShown}–{firstShown + pageItems.length - 1}</span> of{" "}
+                      <span className="text-charcoal tabular-nums">{listed.length}</span>
+                    </>
+                  )}
                 </p>
                 {pageCount > 1 && (
                   <nav aria-label="Pagination" className="flex items-center gap-1">

@@ -1,13 +1,14 @@
 "use client";
 
 import { CandidateActionsMenu } from "@/components/recruiter/CandidateActionsMenu";
+import { MatchEvidence } from "@/components/recruiter/MatchEvidence";
 import { CommunicationCell, type CandidateSelectionProps } from "@/components/recruiter/CandidateRow";
 import { Avatar } from "@/components/shared/Avatar";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Checkbox } from "@/components/ui/Checkbox";
 
 /** The table row's small-screen counterpart. */
-export function CandidateCard({ candidate, selected, checked, onSelect, onCheckedChange }: CandidateSelectionProps) {
+export function CandidateCard({ candidate, selected, checked, onSelect, onCheckedChange, match }: CandidateSelectionProps) {
   return (
     <div
       data-selected={selected || undefined}
@@ -29,6 +30,7 @@ export function CandidateCard({ candidate, selected, checked, onSelect, onChecke
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium text-ink">{candidate.name}</span>
           <span className="block truncate text-[13px] text-stone">{candidate.role}</span>
+          {match && <MatchEvidence match={match} className="mt-2" />}
           <span className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
             <StatusBadge stage={candidate.stage} />
             <CommunicationCell candidate={candidate} />

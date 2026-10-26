@@ -10,6 +10,7 @@ import type {
   ApiCandidateListItem,
   ApiPage,
 } from "@/types/api";
+import type { MatchRequest, MatchResult } from "@/types/matching";
 import {
   PIPELINE_STAGES,
   type ActivityKind,
@@ -55,6 +56,15 @@ export async function getCandidates(query: CandidateQuery = {}): Promise<Pipelin
     if (query.limit !== undefined || page.items.length === 0 || offset >= page.total) break;
   }
   return [...rows.values()].filter(isPipelineStage).map(fromListItem);
+}
+
+/**
+ * POST /candidates/match: candidates against the recruiter's job-related criteria, each with where their
+ * application shows them. Mock mode answers from the candidates' listed skills.
+ */
+export async function matchCandidates(request: MatchRequest, signal?: AbortSignal): Promise<MatchResult> {
+  if (USE_MOCK_API) return mockApi.matchCandidates(request);
+  return apiFetch<MatchResult>("/candidates/match", { method: "POST", body: JSON.stringify(request), signal });
 }
 
 export async function getCandidate(id: string): Promise<PipelineCandidate | null> {

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ListFilter, X } from "lucide-react";
+import { ChevronDown, ListChecks, ListFilter, X } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { FilterChip } from "@/components/ui/FilterChip";
@@ -57,6 +57,9 @@ type CandidateFiltersProps = {
   jobs: JobOption[];
   skills: string[];
   locations: string[];
+  shortlistOpen: boolean;
+  /** Open or close the shortlist: candidates against job-related criteria the recruiter picks. */
+  onShortlist: () => void;
 };
 
 export function CandidateFilters({
@@ -72,6 +75,8 @@ export function CandidateFilters({
   jobs,
   skills,
   locations,
+  shortlistOpen,
+  onShortlist,
 }: CandidateFiltersProps) {
   const filterCount = activeFilterCount(filters);
   const active = describeFilters(filters, jobs);
@@ -105,6 +110,15 @@ export function CandidateFilters({
           Candidates
         </h2>
         <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            className={cn("px-3.5", shortlistOpen && "border-brand-ink/45 bg-brand-soft")}
+            aria-pressed={shortlistOpen}
+            onClick={onShortlist}
+          >
+            <ListChecks /> <span className="hidden sm:inline">Shortlist</span>
+            <span className="sr-only sm:hidden">Shortlist</span>
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" className="px-3.5" aria-label={`Sort: ${SORT_OPTIONS.find((option) => option.value === sort)?.label}`}>

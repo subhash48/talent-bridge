@@ -136,3 +136,18 @@ test("a link carries the same view, and ignores anything it doesn't know", () =>
   assert.deepEqual(odd.filters.interview, ["upcoming"]);
   assert.deepEqual(odd.filters.portal, []);
 });
+
+test("a link can open the shortlist with its criteria and size", () => {
+  const view = {
+    query: "",
+    stage: "all",
+    filters: { ...EMPTY_FILTERS, jobs: ["job-design"] },
+    shortlist: { size: 5, criteria: ["Figma", "Design systems"] },
+  };
+  const params = viewToParams(view);
+  assert.equal(params.get("shortlist"), "5");
+  assert.deepEqual(viewFromParams(new URLSearchParams(params.toString())), view);
+  assert.equal(viewFromParams(new URLSearchParams("shortlist=0")).shortlist, undefined);
+  assert.equal(viewFromParams(new URLSearchParams("shortlist=500")).shortlist, undefined);
+  assert.deepEqual(viewFromParams(new URLSearchParams("shortlist=12")).shortlist, { size: 12, criteria: [] });
+});

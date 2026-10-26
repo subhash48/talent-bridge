@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { CandidateCard } from "@/components/recruiter/CandidateCard";
 import { CandidateRow } from "@/components/recruiter/CandidateRow";
 import { Checkbox } from "@/components/ui/Checkbox";
+import type { CandidateMatch } from "@/types/matching";
 import type { PipelineCandidate } from "@/types/workspace";
 
 type CandidateTableProps = {
@@ -15,6 +16,8 @@ type CandidateTableProps = {
   onCheckedChange: (id: string, checked: boolean) => void;
   onCheckAll: (checked: boolean) => void;
   emptyState: ReactNode;
+  /** The shortlist's evidence, by application id. */
+  matches?: ReadonlyMap<string, CandidateMatch>;
 };
 
 const headerCell = "border-b border-border pb-2.5 text-[13px] font-normal text-stone";
@@ -28,6 +31,7 @@ export function CandidateTable({
   onCheckedChange,
   onCheckAll,
   emptyState,
+  matches,
 }: CandidateTableProps) {
   if (candidates.length === 0) return <div className="px-4 pb-5 sm:px-5">{emptyState}</div>;
 
@@ -39,6 +43,7 @@ export function CandidateTable({
     checked: checkedIds.has(candidate.id),
     onSelect,
     onCheckedChange,
+    match: matches?.get(candidate.id),
   });
 
   return (

@@ -235,8 +235,11 @@ export function describeFilters(filters: CandidateFilters, jobs: JobOption[]): A
   ];
 }
 
+/** The recruiter's shortlist: the job-related criteria they chose, and how many to show. */
+export type Shortlist = { criteria: string[]; size: number };
+
 /** The page's view, as a link carries it (the AI Assistant's "Open in Candidates"). */
-export type CandidateView = { query: string; stage: StageFilter; filters: CandidateFilters };
+export type CandidateView = { query: string; stage: StageFilter; filters: CandidateFilters; shortlist?: Shortlist };
 
 const LIST = "|"; // skills and places can contain commas
 
@@ -248,7 +251,9 @@ export function viewFromParams(params: URLSearchParams): CandidateView {
   const list = (key: string) => (params.get(key) ?? "").split(LIST).map((value) => value.trim()).filter(Boolean);
   const stage = params.get("stage") ?? "all";
   const applied = params.get("applied") ?? "any";
+  const size = Math.round(Number(params.get("shortlist")));
   return {
+    ...(size >= 1 && size <= 200 ? { shortlist: { size, criteria: list("criteria").slice(0, 20) } } : {}),
     query: params.get("q") ?? "",
     stage: (PIPELINE_STAGES as readonly string[]).includes(stage) ? (stage as CandidateStage) : "all",
     filters: {
@@ -264,7 +269,7 @@ export function viewFromParams(params: URLSearchParams): CandidateView {
   };
 }
 
-export function viewToParams({ query, stage, filters }: CandidateView): URLSearchParams {
+export function viewToParams({ query, stage, filters, shortlist }: CandidateView): URLSearchParams {
   const params = new URLSearchParams();
   if (query.trim()) params.set("q", query.trim());
   if (stage !== "all") params.set("stage", stage);
@@ -279,6 +284,10 @@ export function viewToParams({ query, stage, filters }: CandidateView): URLSearc
   ];
   for (const [key, values] of lists) if (values.length) params.set(key, values.join(LIST));
   if (filters.applied !== "any") params.set("applied", filters.applied);
+  if (shortlist) {
+    params.set("shortlist", String(shortlist.size));
+    if (shortlist.criteria.length) params.set("criteria", shortlist.criteria.join(LIST));
+  }
   return params;
 }
 

@@ -1,6 +1,7 @@
 import { STAGE_LABELS } from "@/types/application";
 import type { CandidateQuery } from "@/services/candidates";
 import type { NewJobInput } from "@/services/jobs";
+import type { MatchRequest, MatchResult } from "@/types/matching";
 import type {
   CandidateActivity,
   CandidateDetail,
@@ -100,6 +101,50 @@ export const mockApi = {
     candidate.stage = stage;
     recordActivity(candidate, "stage", `Moved to ${STAGE_LABELS[stage]}`);
     return clone(candidate);
+  },
+
+  async matchCandidates(request: MatchRequest): Promise<MatchResult> {
+    await mockDelay(200);
+    const wanted = request.skills ?? [];
+    const pool = getMockDb().candidates.filter(
+      (candidate) =>
+        (!request.application_ids || request.application_ids.includes(candidate.id)) &&
+        (!request.job_ids?.length || (candidate.jobId && request.job_ids.includes(candidate.jobId))),
+    );
+    const found = pool.map((candidate) => {
+      const evidence = wanted.map((criterion) => {
+        const matched = candidate.skills.some((skill) => skill.toLowerCase() === criterion.toLowerCase());
+        return { criterion, matched, source: matched ? ("skills" as const) : null };
+      });
+      return {
+        application_id: candidate.id,
+        candidate_id: candidate.candidateId,
+        name: candidate.name,
+        job_id: candidate.jobId ?? "",
+        job_title: candidate.role,
+        company_name: candidate.company ?? "",
+        stage: candidate.stage,
+        location: candidate.location ?? null,
+        applied_at: candidate.addedAt,
+        matched: evidence.filter((item) => item.matched).length,
+        evidence,
+        experience: null,
+      };
+    });
+    const matching = (wanted.length ? found.filter((item) => item.matched > 0) : found).sort(
+      (a, b) => b.matched - a.matched || a.applied_at.localeCompare(b.applied_at),
+    );
+    const limit = request.limit ?? 10;
+    return {
+      criteria: wanted,
+      criteria_source: wanted.length ? "recruiter" : "none",
+      filters: [],
+      considered: pool.length,
+      matching: matching.length,
+      limit,
+      items: matching.slice(0, limit),
+      order: "Most of your criteria first, then the earliest applications. No scores.",
+    };
   },
 
   async setCandidateMessaging(ids: string[], enabled: boolean) {

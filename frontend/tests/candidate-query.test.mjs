@@ -82,6 +82,7 @@ test("each filter keeps exactly what it names", () => {
   assert.deepEqual(keep({ jobs: ["job-design"] }), ["Sophia Martinez", "Maya Brooks"]);
   assert.deepEqual(keep({ skills: ["figma", "Design systems"] }), ["Sophia Martinez"], "every skill ticked, any case");
   assert.deepEqual(keep({ locations: ["New York, NY", "London, UK"] }), ["Sophia Martinez", "Maya Brooks"]);
+  assert.deepEqual(keep({ locations: ["london"] }), ["Sophia Martinez"], "a place as said finds its full name");
   assert.deepEqual(keep({ applied: "7d" }), ["Maya Brooks"]);
   assert.deepEqual(keep({ applied: "30d" }), ["Sophia Martinez", "Maya Brooks"]);
   assert.deepEqual(keep({ communication: ["needs_attention"] }), ["James Park"]);

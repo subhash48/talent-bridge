@@ -138,7 +138,8 @@ export function interviewState(candidate: PipelineCandidate): Set<InterviewFilte
 export function matchesFilters(candidate: PipelineCandidate, filters: CandidateFilters, now = Date.now()): boolean {
   if (filters.jobs.length && !(candidate.jobId && filters.jobs.includes(candidate.jobId))) return false;
   if (filters.skills.length && !filters.skills.every((skill) => candidate.skills.some((own) => same(own, skill)))) return false;
-  if (filters.locations.length && !filters.locations.some((place) => candidate.location && same(candidate.location, place))) return false;
+  // "London" finds "London, UK": the assistant links with the place as said.
+  if (filters.locations.length && !filters.locations.some((place) => candidate.location?.toLowerCase().includes(place.toLowerCase()))) return false;
   const days = APPLIED_OPTIONS.find((option) => option.value === filters.applied)?.days;
   if (days && now - new Date(candidate.addedAt).getTime() > days * DAY_MS) return false;
   if (filters.interview.length) {

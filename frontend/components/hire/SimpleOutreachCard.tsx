@@ -6,7 +6,7 @@ import { useState } from "react";
 import { slotLabel } from "@/components/recruiter/assistant/OutreachReview";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
-import { clockLabel } from "@/lib/days";
+import { calendarDayLabel, clockLabel } from "@/lib/days";
 import { pluralize } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { errorMessage } from "@/services/api";
@@ -78,7 +78,7 @@ export function SimpleOutreachCard({ card, onSend, onEdits, busy, superseded }: 
         {card.schedule && (
           <p className="mt-1 flex items-start gap-1.5 text-sm text-stone">
             <CalendarClock aria-hidden className="mt-0.5 size-4 shrink-0" />
-            {card.schedule.day ? `${card.schedule.day}, ` : ""}
+            {card.schedule.day ? `${calendarDayLabel(card.schedule.day)}, ` : ""}
             between {clockLabel(card.schedule.window_start)} and {clockLabel(card.schedule.window_end)}
             {!card.schedule.calendar_configured &&
               ". No calendar is connected: TalentBridge records each interview and messages them."}

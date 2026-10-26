@@ -27,3 +27,9 @@ test("clock times read the way people say them", async () => {
   assert.equal(clockLabel("12:00"), "12 PM");
   assert.equal(clockLabel("00:15"), "12:15 AM");
 });
+
+test("a calendar day reads as a day", async () => {
+  const { calendarDayLabel } = await import("../lib/days.ts");
+  assert.equal(calendarDayLabel("2026-10-27"), "Tuesday, October 27");
+  assert.equal(calendarDayLabel("next Tuesday"), "next Tuesday");
+});

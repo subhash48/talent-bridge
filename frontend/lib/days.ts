@@ -37,3 +37,12 @@ export function clockLabel(time: string): string {
   const hour = hours % 12 || 12;
   return minutes ? `${hour}:${String(minutes).padStart(2, "0")} ${suffix}` : `${hour} ${suffix}`;
 }
+
+/** A calendar day as the API sends it ("2026-10-27") the way people say it: "Tuesday, October 27". Anything
+ * else is shown as it came. */
+export function calendarDayLabel(day: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
+  if (!match) return day;
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12));
+  return date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
+}

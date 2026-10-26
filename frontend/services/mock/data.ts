@@ -19,6 +19,7 @@ export const SEED_USER: CurrentUser = {
   organization: "Encord",
   role: "recruiter",
   candidateId: null,
+  workspace: { id: "ws-encord", name: "Encord", mode: "full", location: null, canManage: false },
 };
 
 export type CandidateSeed = {

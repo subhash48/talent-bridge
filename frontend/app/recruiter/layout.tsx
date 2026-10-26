@@ -6,7 +6,7 @@ import { RecruiterShell } from "@/components/recruiter/RecruiterShell";
 import { WorkspaceProvider } from "@/components/recruiter/WorkspaceProvider";
 import { ApiUnavailable } from "@/components/shared/ApiUnavailable";
 import { SessionWatcher } from "@/components/shared/SessionWatcher";
-import { requireRole } from "@/lib/session";
+import { requireWorkspace } from "@/lib/session";
 import { errorMessage, isServerUnavailable } from "@/services/api";
 import { getCandidates } from "@/services/candidates";
 import { getEmailDelivery } from "@/services/communication";
@@ -40,8 +40,9 @@ export default async function RecruiterLayout({ children }: { children: ReactNod
 }
 
 async function loadWorkspace() {
-  // Recruiters and admins only; the role comes from the API before any workspace data is loaded.
-  const user = await requireRole("recruiter", "admin");
+  // Recruiters and admins of a full workspace (Simple Hire's go to /hire); the role and the workspace's mode
+  // come from the API before any workspace data is loaded.
+  const user = await requireWorkspace("full");
   const email = getEmailDelivery().catch(() => ({ configured: false })); // optional: portal delivery works without it
   return [user, ...(await Promise.all([getCandidates(), getJobs(), getUnreadThreadCount(), email]))] as const;
 }

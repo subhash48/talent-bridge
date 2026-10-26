@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { NightSky } from "@/components/shared/NightSky";
 import { TalentBridgeLogo } from "@/components/shared/TalentBridgeLogo";
 import { buttonStyles } from "@/components/ui/Button";
-import { roleHomePath } from "@/lib/auth";
+import { homePath } from "@/lib/auth";
 import { getSignedInUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: { absolute: "TalentBridge: never leave a candidate wondering" } };
@@ -32,7 +32,7 @@ const POINTS = [
 // Signed in: straight to your workspace, by the role the API has on record. Signed out: what TalentBridge is.
 export default async function Home() {
   const user = await getSignedInUser();
-  if (user) redirect(roleHomePath(user.role));
+  if (user) redirect(homePath(user));
 
   return (
     <main className="relative isolate flex min-h-dvh flex-col px-4 sm:px-6">

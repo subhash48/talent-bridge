@@ -6,7 +6,7 @@ import { AuthAlert } from "@/components/auth/AuthAlert";
 import { AuthCard, authLinkStyles } from "@/components/auth/AuthCard";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { buttonStyles } from "@/components/ui/Button";
-import { LOGIN_NOTICES, roleHomePath } from "@/lib/auth";
+import { LOGIN_NOTICES, homePath } from "@/lib/auth";
 import { getServerAccessToken } from "@/lib/supabase-server";
 import { ApiError } from "@/services/api";
 import { getCurrentUser } from "@/services/me";
@@ -26,7 +26,7 @@ export default async function WelcomePage() {
   if (user instanceof ApiError) {
     return user.status === 401 ? <InvitationExpired /> : <NotLinked code={user.code} />;
   }
-  if (user.role !== "candidate") redirect(roleHomePath(user.role));
+  if (user.role !== "candidate") redirect(homePath(user));
 
   return (
     <AuthCard

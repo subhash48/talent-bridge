@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { SUPABASE_CONFIGURED, SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "@/lib/supabase";
 import { USE_MOCK_API } from "@/services/api";
 
-const PROTECTED = ["/recruiter", "/candidate"];
+const PROTECTED = ["/recruiter", "/candidate", "/hire"];
 
 /**
  * Runs before every page: refreshes the Supabase session cookies when the access token has expired,

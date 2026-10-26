@@ -21,7 +21,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   if (USE_MOCK_API) redirect("/recruiter");
   // Already signed in with a working account: straight to their workspace.
   const user = await getSignedInUser();
-  if (user) redirect(landingPath(user.role, next));
+  if (user) redirect(landingPath(user.role, next, user.workspace?.mode));
 
   return (
     <LoginCard

@@ -17,5 +17,14 @@ export async function getCurrentUser(): Promise<CurrentUser> {
     organization: user.organization,
     role: user.role,
     candidateId: user.candidate_id,
+    workspace: user.workspace
+      ? {
+          id: user.workspace.id,
+          name: user.workspace.name,
+          mode: user.workspace.mode,
+          location: user.workspace.location,
+          canManage: user.workspace.can_manage,
+        }
+      : null,
   };
 }

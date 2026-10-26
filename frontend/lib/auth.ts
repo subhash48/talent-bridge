@@ -1,10 +1,20 @@
 import type { Role } from "@/types/candidate";
+import type { WorkspaceMode } from "@/types/workspace";
 
 export type { Role };
 
-/** Where each role lands after signing in. Admins use the recruiter workspace until they have their own. */
-export function roleHomePath(role: Role): string {
-  return role === "candidate" ? "/candidate" : "/recruiter";
+/**
+ * Where each person lands after signing in: candidates in their portal; recruiters and admins in their
+ * company's workspace, the full one or Simple Hire, by how it hires.
+ */
+export function roleHomePath(role: Role, mode?: WorkspaceMode | null): string {
+  if (role === "candidate") return "/candidate";
+  return mode === "simple" ? "/hire" : "/recruiter";
+}
+
+/** The same, for a signed-in user from /me. */
+export function homePath(user: { role: Role; workspace?: { mode: WorkspaceMode } | null }): string {
+  return roleHomePath(user.role, user.workspace?.mode);
 }
 
 /** A local path from a query parameter, or null for anything that could lead off the site. */
@@ -13,8 +23,8 @@ export function localPath(value: string | null | undefined): string | null {
 }
 
 /** After signing in: the page they were sent away from if it's in their own area, else their home. */
-export function landingPath(role: Role, next?: string | null): string {
-  const home = roleHomePath(role);
+export function landingPath(role: Role, next?: string | null, mode?: WorkspaceMode | null): string {
+  const home = roleHomePath(role, mode);
   const path = localPath(next);
   return path && (path === home || path.startsWith(`${home}/`) || path.startsWith(`${home}?`)) ? path : home;
 }

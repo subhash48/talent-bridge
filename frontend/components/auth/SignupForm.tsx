@@ -66,7 +66,7 @@ export function SignupForm() {
     // Only when the project skips email confirmation, which proves nothing about the address.
     try {
       const user = await getCurrentUser();
-      window.location.assign(landingPath(user.role));
+      window.location.assign(landingPath(user.role, null, user.workspace?.mode));
     } catch (cause) {
       await supabase.auth.signOut({ scope: "local" });
       setError(cause instanceof ApiError && cause.status === 403 ? cause.message : errorMessage(cause));

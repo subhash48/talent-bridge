@@ -57,7 +57,7 @@ export function LoginForm({ next, reason }: { next: string | null; reason: strin
       // The role comes from the API, never from the browser: it decides which portal opens.
       const user = await getCurrentUser();
       // Still pending: the loading screen stays up until the browser has the workspace to show instead.
-      window.location.assign(landingPath(user.role, next));
+      window.location.assign(landingPath(user.role, next, user.workspace?.mode));
     } catch (cause) {
       await supabase.auth.signOut({ scope: "local" });
       fail(cause instanceof ApiError && cause.status === 403 ? cause.message : errorMessage(cause));

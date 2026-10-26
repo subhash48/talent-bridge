@@ -154,6 +154,14 @@ export type ApiCandidateDetail = {
   messages: ApiMessage[];
 };
 
+export type ApiWorkspace = {
+  id: string;
+  name: string;
+  mode: "full" | "simple";
+  location: string | null;
+  can_manage: boolean;
+};
+
 export type ApiUser = {
   id: string;
   email: string;
@@ -161,6 +169,8 @@ export type ApiUser = {
   role: "recruiter" | "candidate" | "admin";
   organization: string;
   candidate_id: string | null;
+  /** Staff only: the company they hire for, and how it hires. */
+  workspace: ApiWorkspace | null;
   created_at: string;
 };
 

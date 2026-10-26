@@ -141,6 +141,20 @@ export type JobOpening = {
 
 export type MetricKey = "total" | "interviews" | "followUp" | "offers";
 
+/** How an employer hires: the full recruiting workspace, or Simple Hire. Only the interface differs. */
+export type WorkspaceMode = "full" | "simple";
+
+/** The company a recruiter or admin hires for. */
+export type Workspace = {
+  id: string;
+  name: string;
+  mode: WorkspaceMode;
+  /** Where the business is: Simple Hire's new jobs start there. */
+  location: string | null;
+  /** An admin: may change the name, location and mode. */
+  canManage: boolean;
+};
+
 export type CurrentUser = {
   id: string;
   name: string;
@@ -151,6 +165,8 @@ export type CurrentUser = {
   role: Role;
   /** The candidate's own record, for candidates only. */
   candidateId: string | null;
+  /** Staff only. With the role, decides which interface opens: the full workspace or Simple Hire. */
+  workspace: Workspace | null;
   avatarUrl?: string;
 };
 

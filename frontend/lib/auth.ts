@@ -17,9 +17,20 @@ export function homePath(user: { role: Role; workspace?: { mode: WorkspaceMode }
   return roleHomePath(user.role, user.workspace?.mode);
 }
 
-/** A local path from a query parameter, or null for anything that could lead off the site. */
+const SITE = "http://talentbridge.invalid";
+
+/**
+ * A local path from a query parameter, or null for anything that could lead off the site. Browsers drop tabs
+ * and line breaks from a URL and read a backslash as a slash, so "/<tab>/evil.example" would go to
+ * evil.example: those are refused outright, and what's left must stay on this site when resolved.
+ */
 export function localPath(value: string | null | undefined): string | null {
-  return value && value.startsWith("/") && !value.startsWith("//") && !value.includes("\\") ? value : null;
+  if (!value || !value.startsWith("/") || /[\\\u0000-\u001f\u007f]/.test(value)) return null;
+  try {
+    return new URL(value, SITE).origin === SITE ? value : null;
+  } catch {
+    return null;
+  }
 }
 
 /** After signing in: the page they were sent away from if it's in their own area, else their home. */

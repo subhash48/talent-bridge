@@ -31,4 +31,9 @@ test("only local paths are followed", () => {
   assert.equal(localPath("https://evil.example"), null);
   assert.equal(localPath("//evil.example"), null);
   assert.equal(localPath("/\\evil"), null);
+  // A browser drops a tab or a line break, then reads "//evil.example": off the site.
+  for (const sneaky of ["/\t/evil.example", "/\n/evil.example", "/\r//evil.example", "/\u0000/evil.example"]) {
+    assert.equal(localPath(sneaky), null, JSON.stringify(sneaky));
+  }
+  assert.equal(localPath("/candidate?application=a1#messages"), "/candidate?application=a1#messages");
 });

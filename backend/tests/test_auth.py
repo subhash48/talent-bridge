@@ -60,14 +60,16 @@ JAMES_EMAIL = "james.park@example.com"
 
 ALEX = bearer(ALEX_AUTH)
 SOPHIA_TOKEN = bearer(SOPHIA_AUTH)
+# Ids of nothing. Fixed, so every test worker collects the same parametrized tests.
+NOBODY = uuid.UUID("00000000-0000-4000-8000-0000000000aa")
 
 CANDIDATE_ROUTES = [
     ("GET", "/candidate/me"),
     ("GET", "/candidate/application"),
     ("GET", "/candidate/activity"),
     ("GET", "/candidate/interviews"),
-    ("GET", f"/candidate/interviews/{uuid.uuid4()}"),
-    ("PATCH", f"/candidate/interviews/{uuid.uuid4()}/confirm"),
+    ("GET", f"/candidate/interviews/{NOBODY}"),
+    ("PATCH", f"/candidate/interviews/{NOBODY}/confirm"),
     ("GET", "/candidate/messages"),
     ("POST", "/candidate/messages"),
     ("POST", "/candidate/messages/read"),
@@ -76,7 +78,7 @@ CANDIDATE_ROUTES = [
     ("GET", "/candidate/prep"),
     ("POST", "/candidate/ai/ask"),
     ("GET", "/candidate/applications"),
-    ("GET", f"/candidate/applications/{uuid.uuid4()}"),
+    ("GET", f"/candidate/applications/{NOBODY}"),
 ]
 
 RECRUITER_ROUTES = [
@@ -93,7 +95,7 @@ RECRUITER_ROUTES = [
     ("POST", f"/applications/{JAMES_APP}/messages/read"),
     ("GET", f"/applications/{JAMES_APP}/interviews"),
     ("POST", f"/applications/{JAMES_APP}/interviews"),
-    ("PATCH", f"/interviews/{uuid.uuid4()}"),
+    ("PATCH", f"/interviews/{NOBODY}"),
     ("GET", "/interviews"),
     ("GET", "/jobs"),
     ("POST", "/jobs"),
@@ -101,7 +103,7 @@ RECRUITER_ROUTES = [
     ("GET", "/messages/unread-count"),
     ("GET", "/dashboard/summary"),
     ("POST", "/ai/draft-message"),
-    ("GET", f"/resumes/{uuid.uuid4()}"),
+    ("GET", f"/resumes/{NOBODY}"),
     ("GET", "/communication/attention"),
     ("GET", f"/applications/{SOPHIA_APP}/communication"),
     ("GET", "/communication/rules"),

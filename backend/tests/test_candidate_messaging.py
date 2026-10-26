@@ -5,11 +5,18 @@ one application (applications.candidate_messaging_enabled), and a message only e
 the application it was written in.
 """
 
+from types import SimpleNamespace
+
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.core.enums import ApplicationBucket, ApplicationStage
 from app.models import Application, CandidateActivity
+from app.schemas.portal import PortalRecruiter
+from app.services.candidate_portal_service import next_step
+from app.services.candidate_visibility import PortalStatus
+from app.services.message_service import email_text
 from tests.conftest import API, SOPHIA_AUTH, application_id, bearer
 
 ENCORD = application_id("sophia-martinez")  # she has written in it, so it's open
@@ -113,6 +120,27 @@ async def test_bulk_with_an_unknown_application_changes_nothing(client: AsyncCli
     )
     assert response.status_code == 404
     assert (await write(client, ANTHROPIC))["status"] == 403
+
+
+def test_candidates_are_only_told_to_reply_when_they_can() -> None:
+    def application(enabled: bool) -> SimpleNamespace:
+        job = SimpleNamespace(title="Product Designer", company=SimpleNamespace(name="Encord"))
+        return SimpleNamespace(candidate_messaging_enabled=enabled, job=job)
+
+    assert "To reply, or to see where your application stands" in email_text(application(True), "Hi")  # type: ignore[arg-type]
+    assert "\n--\nTo see where your application stands" in email_text(application(False), "Hi")  # type: ignore[arg-type]
+    alex = PortalRecruiter(name="Alex Chen", email="alex@example.com")
+    offer = {
+        "stage": ApplicationStage.OFFER,
+        "status": PortalStatus(bucket=ApplicationBucket.ACTIVE, label="Offer"),
+        "interview": None,
+        "unread": 0,
+        "recruiter": alex,
+        "company": "Encord",
+    }
+    assert next_step(**offer) == "Review your offer, and message Alex with any questions."  # type: ignore[arg-type]
+    closed = next_step(**offer, can_message=False)  # type: ignore[arg-type]
+    assert closed == "Review your offer. Alex will be in touch to talk it through."
 
 
 async def test_only_the_hiring_team_can_change_it(anonymous: AsyncClient) -> None:

@@ -61,7 +61,7 @@ from app.schemas.assistant import (
     SearchState,
 )
 from app.schemas.message import MessageRead
-from app.services import ai_service, message_service
+from app.services import ai_service, application_service, message_service
 from app.services.ai.client import AIProvider
 from app.services.assistant import answers, jobs, outreach, rules, search
 from app.services.assistant import schedule as times
@@ -390,6 +390,7 @@ async def _propose_message(
             context=keep,
         )
     candidate = answers.brief(application)  # before drafting, which reloads the application
+    replies_open = application.candidate_messaging_enabled
     interview = (intent.interview or InterviewDetails()) if intent.action == "send_interview_email" else None
     draft_id: uuid.UUID | None = None
     if interview is None:
@@ -403,6 +404,7 @@ async def _propose_message(
             None if bare else request.text[:500],
             provider,
             recruiter,
+            can_reply=True,  # replies are turned on with the send, unless the recruiter unticks it
         )
         subject, body, draft_id = written.subject, written.body, written.id
     else:
@@ -420,6 +422,7 @@ async def _propose_message(
             ". ".join(part for part in details if part)[:500],
             provider,
             recruiter,
+            can_reply=True,
         )
         subject, body = invitation.subject, invitation.body
     label = "Interview invitation" if interview is not None else ("Update" if bare else "Message")
@@ -434,6 +437,7 @@ async def _propose_message(
         timeframe=interview.timeframe if interview else None,
         body=body,
         delivery=DELIVERY,
+        replies_open=replies_open,
     )
     if intent.mode == "draft":
         reply = f"Here's a draft for **{candidate.name}**. Nothing has been sent."
@@ -491,9 +495,18 @@ async def _confirm_in_context(
         reply = _final_summary(card)
     else:
         card = MessageCard.model_validate({**payload["card"], "mode": "execute"})
-        reply = f"Ready to send to **{card.candidate.name}**. Confirm to send it."
+        reply = f"Ready to send to **{card.candidate.name}**. Confirm to send it." + _replies_note(card)
     await _save_payload(session, proposal.id, {**payload, "card": card.model_dump(mode="json"), "final": True})
     return Outcome(reply=reply, cards=[card], context=keep)
+
+
+def _replies_note(card: MessageCard) -> str:
+    if card.replies_open:
+        return ""
+    first = card.candidate.name.split()[0]
+    if card.enable_replies:
+        return f" Candidate messaging will be turned on so {first} can reply."
+    return f" {first} can't reply in the portal: candidate messaging stays off."
 
 
 def _as_shown(payload: dict[str, Any]) -> ConfirmActionRequest:
@@ -503,7 +516,8 @@ def _as_shown(payload: dict[str, Any]) -> ConfirmActionRequest:
         return outreach.as_confirmation(OutreachCard.model_validate(payload["card"]))
     if kind == "job":
         return ConfirmActionRequest(job=JobDraftCard.model_validate(payload["card"]).draft)
-    return ConfirmActionRequest(body=MessageCard.model_validate(payload["card"]).body)
+    message = MessageCard.model_validate(payload["card"])
+    return ConfirmActionRequest(body=message.body, enable_replies=message.enable_replies)
 
 
 def _final_summary(card: OutreachCard) -> str:
@@ -972,9 +986,28 @@ async def confirm(
                     subject=payload.get("subject"),
                 )
             summary = f"Sent {message.purpose.lower()} to {message.candidate.name}"
-            card = message.model_copy(update={"status": S.COMPLETED, "mode": "execute", "body": sent.content})
+            replies = message.enable_replies if request.enable_replies is None else request.enable_replies
+            opened = replies and not message.replies_open
+            if opened:  # after the send, so they can only reply to a message that was sent
+                await application_service.set_messaging(session, [message.candidate.application_id], True, recruiter)
+            card = message.model_copy(
+                update={
+                    "status": S.COMPLETED,
+                    "mode": "execute",
+                    "body": sent.content,
+                    "enable_replies": replies,
+                    "replies_open": message.replies_open or opened,
+                }
+            )
             payload["message_id"] = str(sent.id)
-            reply = f"Sent to **{message.candidate.name}**. {delivered(sent)}"
+            first = message.candidate.name.split()[0]
+            reply = f"Sent to **{message.candidate.name}**. {delivered(sent)}" + (
+                f" Turned on candidate messaging so {first} can reply."
+                if opened
+                else ""
+                if card.replies_open
+                else f" {first} can't reply in the portal: candidate messaging is off."
+            )
             status: AssistantActionStatus = S.COMPLETED
         elif kind == "job":
             draft_card = JobDraftCard.model_validate(payload["card"])
@@ -1143,6 +1176,8 @@ def _with_edits(payload: dict[str, Any], edits: ConfirmActionRequest) -> dict[st
         card = MessageCard.model_validate(payload["card"])
         if edits.body:
             card = card.model_copy(update={"body": edits.body})
+        if edits.enable_replies is not None:
+            card = card.model_copy(update={"enable_replies": edits.enable_replies})
     return {**payload, "card": card.model_dump(mode="json")}
 
 

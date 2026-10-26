@@ -103,6 +103,8 @@ class CandidateContext:
     recruiter_name: str
     organization: str
     now: datetime
+    # Whether they can write back in the portal (candidate messaging on, or turned on when this is sent).
+    can_reply: bool = True
 
     @property
     def their(self) -> str:
@@ -288,6 +290,7 @@ async def build_candidate_context(
             for i in detail.interviews
         ),
         messages=tuple(MessageFact(m.sender_type, m.content, m.created_at) for m in detail.messages),
+        can_reply=application.candidate_messaging_enabled,
         recruiter_name=recruiter_name,
         organization=organization,
         now=now,

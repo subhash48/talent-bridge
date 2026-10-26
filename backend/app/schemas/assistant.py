@@ -256,6 +256,8 @@ class MessageCard(APIModel):
     body: str
     delivery: str  # where it goes: "Candidate portal messages"
     error: str | None = None
+    replies_open: bool = True  # candidate messaging is on for this application
+    enable_replies: bool = True  # turn it on when this is sent, so they can reply
 
 
 class FollowUpItem(APIModel):

@@ -150,12 +150,14 @@ def default_subject(application: Application) -> str:
 
 
 def email_text(application: Application, content: str) -> str:
-    """The message as an email. Replies go through the portal, where the recruiter reads them."""
+    """The message as an email. Replies go through the portal, where the recruiter reads them (once the hiring
+    team has turned on messaging for this application)."""
     portal = f"{settings.frontend_url.rstrip('/')}/candidate/messages"
+    how = "To reply, or to see" if application.candidate_messaging_enabled else "To see"
     return (
         f"{content}\n\n"
         "--\n"
-        f"To reply, or to see where your application stands, open your candidate portal: {portal}\n"
+        f"{how} where your application stands, open your candidate portal: {portal}\n"
         f"{application.job.company.name} · {application.job.title}"
     )
 

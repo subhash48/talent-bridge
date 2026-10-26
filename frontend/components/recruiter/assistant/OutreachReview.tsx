@@ -369,6 +369,9 @@ function Notes({
               : `${pluralize(closedReplies, "candidate")} can't reply in the portal: candidate messaging stays off.`}
           </p>
         ))}
+      {closedReplies > 0 && !replies && (
+        <p className="text-caution">Check those messages don&apos;t ask for a reply: they can&apos;t write back while messaging is off.</p>
+      )}
       <p className="text-faint">Nothing is sent or scheduled until you confirm.</p>
     </div>
   );

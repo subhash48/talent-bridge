@@ -48,6 +48,10 @@ export type MessageCard = {
   status: ActionStatus;
   candidate: CandidateBrief;
   purpose: string;
+  /** Candidate messaging is on for this application, so they can reply. */
+  replies_open: boolean;
+  /** Turn it on when this is sent. */
+  enable_replies: boolean;
   interview_type: string | null;
   duration_minutes: number | null;
   timeframe: string | null;

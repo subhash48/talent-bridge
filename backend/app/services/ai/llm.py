@@ -54,6 +54,7 @@ Return a JSON object: {{"answer": string, "sources": array of the context sectio
 DRAFT_PROMPT = """{context}
 
 Write a {purpose} message from {recruiter} to {first_name}.{instructions}
+{replies}
 {first_name} will read it: never mention interview feedback, internal notes, scores, rankings, other candidates or the reasons for a decision, and never promise an outcome or invent a date.
 Keep it warm, specific to the context and under 150 words. Start the body with "Hi {first_name}," and end it with "Best,\\n{recruiter_first_name}".
 Return a JSON object: {{"subject": string, "body": string}}."""
@@ -280,6 +281,10 @@ class LLMProvider(AIProvider):
             recruiter_first_name=context.recruiter_first_name,
             first_name=context.first_name,
             instructions=f" Recruiter's instructions: {instructions}" if instructions else "",
+            replies=f"{context.first_name} can reply to it in their candidate portal."
+            if context.can_reply
+            else f"{context.first_name} can't reply in their candidate portal yet: never ask them to reply or write "
+            "back, and point them to their candidate portal for what's next.",
         )
         return self._parse(await self._generate(_system(context), prompt), DraftContent)
 

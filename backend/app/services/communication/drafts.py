@@ -80,8 +80,11 @@ async def create_draft(
     provider: AIProvider,
     actor: User | None,
     now: datetime | None = None,
+    *,
+    can_reply: bool | None = None,
 ) -> DraftRead:
-    """Draft an update. Without a reason: for the first rule needing attention, else a general one."""
+    """Draft an update. Without a reason: for the first rule needing attention, else a general one.
+    can_reply: whether they'll be able to reply once it's sent (by default, whether their messaging is on)."""
     now = now or utcnow()
     application = await get_application(session, application_id)
     if application.archived_at is not None:
@@ -100,7 +103,9 @@ async def create_draft(
         purpose, guidance = brief(reason, health, application, now)
         note = f" The recruiter adds: {instructions}" if instructions else ""
         text = f"{guidance}{note}".strip()
-    written = await ai_service.draft_message(session, application.id, purpose, text or None, provider, actor)
+    written = await ai_service.draft_message(
+        session, application.id, purpose, text or None, provider, actor, can_reply=can_reply
+    )
 
     await session.execute(
         update(CommunicationDraft)
@@ -132,6 +137,8 @@ async def create_personal_drafts(
     provider: AIProvider,
     actor: User | None,
     now: datetime | None = None,
+    *,
+    can_reply: bool | None = None,
 ) -> list[CommunicationDraft]:
     """One draft per application, each written for that candidate from their own record: never one
     message for everyone. briefs gives each application what to write (the purpose, and what to say). The
@@ -144,7 +151,10 @@ async def create_personal_drafts(
                 f"Restore {application.candidate.first_name} to the pipeline before drafting to them.",
                 code="application_archived",
             )
-    contexts = [await ai_service.candidate_context(session, application.id, actor) for application in applications]
+    contexts = [
+        await ai_service.candidate_context(session, application.id, actor, can_reply=can_reply)
+        for application in applications
+    ]
     asks = [briefs[application.id] for application in applications]
     written = await asyncio.gather(
         *(

@@ -238,9 +238,14 @@ def _draft(context: CandidateContext, purpose: DraftPurpose) -> DraftContent:
             f"with {people(upcoming.interviewers)}. It's {upcoming.duration_minutes} minutes "
             f"{FORMATS.get(upcoming.interview_type, '')}, and the conversation will focus on {focus}.\n\n"
             + (
-                "If anything comes up, just reply here."
+                (
+                    "If anything comes up, just reply here."
+                    if context.can_reply
+                    else "You'll find it in your candidate portal."
+                )
                 if upcoming.confirmed
-                else "Could you confirm in your candidate portal that this time still works? If it doesn't, just reply here."
+                else "Could you confirm in your candidate portal that this time still works?"
+                + (" If it doesn't, just reply here." if context.can_reply else "")
             )
         )
     elif purpose == DraftPurpose.OFFER_CHECK_IN:
@@ -309,7 +314,11 @@ def _invitation(context: CandidateContext, instructions: str) -> DraftContent:
     text = (
         f"Thanks again for your interest in the {context.job_title} role. We'd love to continue the conversation "
         f"with {article} {length}{kind}{timing}.\n\n"
-        "Please reply here with a few times that work best for you, and I'll send over a calendar invitation."
+        + (
+            "Please reply here with a few times that work best for you, and I'll send over a calendar invitation."
+            if context.can_reply
+            else "I'll be in touch with some times shortly, and you'll find it all in your candidate portal."
+        )
     )
     body = f"Hi {context.first_name},\n\n{text}\n\nBest,\n{context.recruiter_first_name}"
     return DraftContent(subject=f"Scheduling your {kind} for the {context.job_title} role", body=body)
@@ -337,8 +346,8 @@ def _proposal(context: CandidateContext, instructions: str) -> DraftContent:
     text = (
         f"Thanks again for your interest in the {context.job_title} role. We'd like to move forward with your "
         f"application and invite you to {article} {length}{kind}{when}.\n\n"
-        "You'll find it under Interviews in your candidate portal, where you can confirm it. If the time doesn't "
-        "work for you, reply here and we'll find another."
+        "You'll find it under Interviews in your candidate portal, where you can confirm it."
+        + (" If the time doesn't work for you, reply here and we'll find another." if context.can_reply else "")
     )
     body = f"Hi {context.first_name},\n\n{text}\n\nBest,\n{context.recruiter_first_name}"
     return DraftContent(subject=f"Your {kind} for the {context.job_title} role", body=body)
@@ -367,7 +376,8 @@ def _custom(context: CandidateContext, instructions: str) -> DraftContent:
         text = f"I wanted to let you know {point[0].lower() + point[1:]}."
     else:
         text = f"I wanted to follow up about your application for the {context.job_title} role."
-    text += "\n\nIf you have any questions, just reply here."
+    if context.can_reply:
+        text += "\n\nIf you have any questions, just reply here."
     body = f"Hi {context.first_name},\n\n{text}\n\nBest,\n{context.recruiter_first_name}"
     return DraftContent(subject=f"An update on your {context.job_title} application", body=body)
 

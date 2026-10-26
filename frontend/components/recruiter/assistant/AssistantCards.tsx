@@ -9,6 +9,7 @@ import { Chips, Frame, Superseded } from "@/components/recruiter/assistant/CardF
 import { JobDraftReview } from "@/components/recruiter/assistant/JobDraftReview";
 import { OutreachReview } from "@/components/recruiter/assistant/OutreachReview";
 import { Button, buttonStyles } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Textarea } from "@/components/ui/Textarea";
 import { formatDateTime, formatDuration, formatRelativeTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -77,14 +78,15 @@ function MessageProposal({ card, actions, superseded }: { card: MessageCard; act
   const [mode, setMode] = useState(card.mode);
   const [editing, setEditing] = useState(false);
   const [body, setBody] = useState(card.body);
+  const [replies, setReplies] = useState(card.enable_replies);
   const [sending, setSending] = useState(false);
   const [problem, setProblem] = useState<string>();
   const open = card.status === "proposed";
   const edited = useRef(false);
   const { onEdits } = actions;
   useEffect(() => {
-    if (edited.current && open && !superseded) onEdits(card.action_id, { body });
-  }, [body, open, superseded, card.action_id, onEdits]);
+    if (edited.current && open && !superseded) onEdits(card.action_id, { body, enable_replies: replies });
+  }, [body, replies, open, superseded, card.action_id, onEdits]);
 
   if (superseded) return <Superseded label={`${card.purpose} for ${card.candidate.name}`} />;
   const first = card.candidate.name.split(" ")[0];
@@ -94,7 +96,7 @@ function MessageProposal({ card, actions, superseded }: { card: MessageCard; act
     setSending(true);
     setProblem(undefined);
     try {
-      await actions.onConfirm(card.action_id, body !== card.body ? { body } : undefined);
+      await actions.onConfirm(card.action_id, { ...(body !== card.body ? { body } : {}), enable_replies: replies });
     } catch (error) {
       setProblem(errorMessage(error));
     } finally {
@@ -140,6 +142,22 @@ function MessageProposal({ card, actions, superseded }: { card: MessageCard; act
         <p className="mt-3 rounded-[10px] bg-overlay px-3.5 py-3 text-[13px] leading-relaxed whitespace-pre-wrap text-charcoal ring-1 ring-border">
           {card.status === "completed" ? card.body : body}
         </p>
+      )}
+      {open && !card.replies_open && (
+        <label htmlFor={`replies-${card.action_id}`} className="mt-3 flex items-center gap-2 text-xs text-charcoal">
+          <Checkbox
+            id={`replies-${card.action_id}`}
+            checked={replies}
+            onCheckedChange={(value) => {
+              edited.current = true;
+              setReplies(value === true);
+            }}
+          />
+          Turn on candidate messaging so {first} can reply
+        </label>
+      )}
+      {open && !card.replies_open && !replies && (
+        <p className="mt-1 text-xs text-caution">{first} can&apos;t reply in the portal while messaging is off: check the message doesn&apos;t ask for a reply.</p>
       )}
       <p className="mt-2 text-[11px] text-faint">Delivered to {first}&apos;s {card.delivery.toLowerCase()}. Nothing is sent until you confirm.</p>
       {(problem || card.error) && <p className="mt-2 text-xs text-danger">{problem ?? card.error}</p>}

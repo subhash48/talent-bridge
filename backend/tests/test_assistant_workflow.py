@@ -659,6 +659,40 @@ async def test_a_day_that_cant_be_used_is_said_and_today_can_be_picked(client: A
     assert folder.status_code == 200 and folder.json()["status"] == "proposed"
 
 
+# A message that asks for a reply can be answered
+
+
+async def test_a_single_invitation_turns_on_messaging_so_they_can_reply(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    drafted = await ask(client, "Send Maya an interview invitation for next Tuesday")
+    [card] = drafted["cards"]
+    assert (card["replies_open"], card["enable_replies"]) == (False, True)  # her messaging is off
+    assert "reply here" in card["body"]  # it will be on once it's sent
+    looked = await ask(client, "Send it.", drafted["context"])
+    assert "Candidate messaging will be turned on so Maya can reply." in looked["reply"]
+    done = await ask(client, "Yes", looked["context"])
+    assert done["cards"][0]["status"] == "completed" and done["cards"][0]["replies_open"] is True
+    assert "Turned on candidate messaging so Maya can reply." in done["reply"]
+    async with sessions() as session:
+        maya = await session.get(Application, uuid.UUID(MAYA))
+        assert maya is not None and maya.candidate_messaging_enabled
+
+
+async def test_replies_left_off_on_the_card_stay_off_and_it_says_so(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    drafted = await ask(client, "Send Maya an interview invitation for next Tuesday")
+    looked = await ask(client, "Send it.", drafted["context"], edits={"enable_replies": False})
+    assert "Maya can't reply in the portal: candidate messaging stays off." in looked["reply"]
+    done = await ask(client, "Yes", looked["context"])
+    assert done["cards"][0]["status"] == "completed"
+    assert "Maya can't reply in the portal: candidate messaging is off." in done["reply"]
+    async with sessions() as session:
+        maya = await session.get(Application, uuid.UUID(MAYA))
+        assert maya is not None and not maya.candidate_messaging_enabled
+
+
 async def test_outreach_needs_candidates_and_approve_still_shows_the_final_look(client: AsyncClient) -> None:
     nobody = await ask(client, "Draft interview invitations for the selected candidates.")
     assert nobody["reply"].startswith("Tick the candidates first")

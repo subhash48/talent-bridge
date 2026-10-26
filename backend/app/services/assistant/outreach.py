@@ -165,7 +165,8 @@ async def propose(
             asks[application.id] = (DraftPurpose.OUTREACH, None)
     # Read before drafting, which reloads the applications.
     facts = [(brief(app), app.job.company.name, app.candidate_messaging_enabled) for app in applications]
-    written = await drafts.create_personal_drafts(session, applications, asks, provider, recruiter, now)
+    # Replies are turned on with the send unless the recruiter says otherwise, so the drafts may ask for one.
+    written = await drafts.create_personal_drafts(session, applications, asks, provider, recruiter, now, can_reply=True)
     items = [
         OutreachItem(
             candidate=candidate,

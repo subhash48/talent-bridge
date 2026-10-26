@@ -45,7 +45,9 @@ async def test_each_candidate_gets_their_own_draft_and_nothing_is_sent(
         assert sophia.body.startswith("Hi Sophia,\n\nThanks again for your interest in the Product Designer role.")
         assert "invite you to a 30-minute design interview on Tuesday 3 November, 1:00 PM–1:30 PM (UTC)" in sophia.body
         assert "confirm it" in sophia.body and "reply here" in sophia.body
-        assert maya.body.startswith("Hi Maya,") and "a few times that work" in maya.body  # no time given: asks
+        # No time given, and Maya can't reply yet (her messaging is off): she's told times will follow.
+        assert maya.body.startswith("Hi Maya,") and "I'll be in touch with some times shortly" in maya.body
+        assert "reply" not in maya.body
         assert {draft.status for draft in written} == {DraftStatus.DRAFTED}
         assert len((await session.scalars(select(Message.id))).all()) == messages  # drafts only
 

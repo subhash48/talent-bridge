@@ -6,6 +6,7 @@ people send.
 import logging
 import uuid
 from collections.abc import Awaitable, Callable
+from dataclasses import replace
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -39,15 +40,21 @@ async def draft_message(
     instructions: str | None,
     provider: AIProvider,
     actor: User | None,
+    *,
+    can_reply: bool | None = None,
 ) -> DraftMessageResponse:
-    context = await _context(session, application_id, actor)
+    """can_reply: whether they'll be able to reply when it's sent; by default, whether their messaging is on."""
+    context = await candidate_context(session, application_id, actor, can_reply=can_reply)
     content, model_name = await with_fallback(provider, lambda p: p.draft_message(context, purpose, instructions))
     return DraftMessageResponse(subject=content.subject, body=content.body, purpose=purpose, model_name=model_name)
 
 
-async def candidate_context(session: AsyncSession, application_id: uuid.UUID, actor: User | None) -> CandidateContext:
+async def candidate_context(
+    session: AsyncSession, application_id: uuid.UUID, actor: User | None, *, can_reply: bool | None = None
+) -> CandidateContext:
     """What the AI may know about one application, for drafting and answering about it."""
-    return await _context(session, application_id, actor)
+    context = await _context(session, application_id, actor)
+    return context if can_reply is None else replace(context, can_reply=can_reply)
 
 
 async def _context(session: AsyncSession, application_id: uuid.UUID, actor: User | None) -> CandidateContext:

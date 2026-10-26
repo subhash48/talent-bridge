@@ -210,7 +210,16 @@ async def load_record(
             applied_at=application.applied_at,
             updated_at=application.updated_at,
             steps=build_steps(application, history, status.bucket),
-            next_step=next_step(application.stage, status, next_interview, unread, recruiter, company, interviewed),
+            next_step=next_step(
+                application.stage,
+                status,
+                next_interview,
+                unread,
+                recruiter,
+                company,
+                interviewed,
+                can_message=application.candidate_messaging_enabled,
+            ),
             messaging_enabled=application.candidate_messaging_enabled,
         ),
         job=present_job(application.job),
@@ -267,8 +276,10 @@ def next_step(
     recruiter: PortalRecruiter | None,
     company: str,
     interviewed: bool = False,
+    can_message: bool = True,
 ) -> str:
-    """One sentence on what happens next, in the candidate's words. `interviewed`: they've had an interview."""
+    """One sentence on what happens next, in the candidate's words. `interviewed`: they've had an interview;
+    `can_message`: the hiring team has turned on messaging for this application."""
     who = recruiter.name.split()[0] if recruiter else "Your recruiter"
     if status.bucket == B.NO_LONGER_CONSIDERED:
         return f"This application is {NO_LONGER_CONSIDERED.lower()}. Thank you for the time you spent with {company}."
@@ -290,7 +301,9 @@ def next_step(
         S.SOURCED: f"The team is reviewing your profile. {who} will be in touch about next steps.",
         S.SCREENING: f"The team is reviewing your application. {who} will be in touch about next steps.",
         S.INTERVIEW: f"The team is gathering feedback from your interviews. {who} will update you on next steps.",
-        S.OFFER: f"Review your offer, and message {who} with any questions.",
+        S.OFFER: f"Review your offer, and message {who} with any questions."
+        if can_message
+        else f"Review your offer. {who} will be in touch to talk it through.",
     }[stage]
 
 

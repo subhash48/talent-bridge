@@ -149,13 +149,16 @@ async def get_candidate_detail(
         .order_by(CandidateStageHistory.changed_at.desc(), CandidateStageHistory.id)
     )
     upcoming = snapshot.upcoming_interview(now)
+    held = snapshot.last_interview(now)
     return CandidateDetail(
         candidate=candidate_read,
         application=ApplicationRead.model_validate(focus),
         job=JobRead.model_validate(focus.job),
+        company_name=focus.job.company.name,
         stage=focus.stage,
         communication=health_read(focus, assess(snapshot, await load_rules(session), now), now),
         next_interview=InterviewRead.model_validate(upcoming) if upcoming else None,
+        last_interview_at=held.scheduled_at if held else None,
         activity=[ActivityRead.model_validate(row) for row in snapshot.activities[:DETAIL_ACTIVITY_LIMIT]],
         interviews=[InterviewRead.model_validate(row) for row in snapshot.interviews],
         messages=await message_service.with_deliveries(session, list(snapshot.messages)),

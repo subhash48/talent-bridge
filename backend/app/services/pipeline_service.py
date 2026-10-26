@@ -83,10 +83,12 @@ async def _grouped(session: AsyncSession, query) -> dict[uuid.UUID, list]:  # ty
 def to_list_item(snapshot: ApplicationSnapshot, now: datetime, rules: Rules) -> CandidateListItem:
     application = snapshot.application
     upcoming = snapshot.upcoming_interview(now)
+    held = snapshot.last_interview(now)
     return CandidateListItem(
         application_id=application.id,
         candidate=CandidateRead.model_validate(application.candidate),
         job=JobBrief.model_validate(application.job),
+        company_name=application.job.company.name,
         stage=application.stage,
         source=application.source,
         origin=origin_of(application.external_id),
@@ -97,6 +99,7 @@ def to_list_item(snapshot: ApplicationSnapshot, now: datetime, rules: Rules) -> 
         last_activity=ActivityBrief.model_validate(snapshot.activities[0]) if snapshot.activities else None,
         communication=summary(assess(snapshot, rules, now), now),
         next_interview=InterviewBrief.model_validate(upcoming) if upcoming else None,
+        last_interview_at=held.scheduled_at if held else None,
     )
 
 

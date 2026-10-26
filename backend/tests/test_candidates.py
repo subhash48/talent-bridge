@@ -45,7 +45,11 @@ async def test_filters_by_job_and_search(client: AsyncClient) -> None:
     assert {item["job"]["title"] for item in by_job["items"]} == {"Product Designer"}
 
     by_skill = (await client.get(f"{API}/candidates", params={"search": "pytorch", "stage": "interview"})).json()
-    assert {item["candidate"]["full_name"] for item in by_skill["items"]} == {"Aisha Khan", "Omar Haddad", "Rosa Navarro"}
+    assert {item["candidate"]["full_name"] for item in by_skill["items"]} == {
+        "Aisha Khan",
+        "Omar Haddad",
+        "Rosa Navarro",
+    }
 
 
 async def test_pagination(client: AsyncClient) -> None:
@@ -272,3 +276,19 @@ async def test_dashboard_summary(client: AsyncClient) -> None:
     trends = response.json()["trends"]
     assert set(trends) == {"total", "interviews", "follow_up", "offers"}
     assert trends["follow_up"] is None
+
+
+async def test_pipeline_rows_name_the_employer_and_the_last_interview(client: AsyncClient) -> None:
+    rows = (await client.get(f"{API}/candidates", params={"search": "Sophia Martinez", "limit": 200})).json()["items"]
+    by_company = {row["company_name"]: row for row in rows}
+    assert {"Encord", "OpenAI", "Anthropic", "Google"} <= set(by_company)
+    # Sophia's portfolio review at Encord is behind her; her design interview is still ahead.
+    encord = by_company["Encord"]
+    assert encord["last_interview_at"] is not None and encord["next_interview"] is not None
+    assert by_company["Anthropic"]["last_interview_at"] is None
+    detail = (
+        await client.get(
+            f"{API}/candidates/{encord['candidate']['id']}", params={"application_id": encord["application_id"]}
+        )
+    ).json()
+    assert detail["company_name"] == "Encord" and detail["last_interview_at"] == encord["last_interview_at"]

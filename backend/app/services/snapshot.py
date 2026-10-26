@@ -15,6 +15,15 @@ class ApplicationSnapshot:
     messages: Sequence[Message]  # oldest first
     interviews: Sequence[Interview]  # by scheduled time
 
+    def last_interview(self, now: datetime) -> Interview | None:
+        """The most recent interview that has taken place (or was due to), cancelled ones left out."""
+        held = [
+            interview
+            for interview in self.interviews
+            if interview.status != InterviewStatus.CANCELLED and interview.scheduled_at <= now
+        ]
+        return held[-1] if held else None
+
     def upcoming_interview(self, now: datetime) -> Interview | None:
         return next(
             (

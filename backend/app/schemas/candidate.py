@@ -83,6 +83,7 @@ class CandidateListItem(APIModel):
     application_id: UUID
     candidate: CandidateRead
     job: JobBrief
+    company_name: str  # the employer: two companies can have a job with the same title
     stage: ApplicationStage
     source: str | None = None
     origin: Origin
@@ -93,6 +94,7 @@ class CandidateListItem(APIModel):
     last_activity: ActivityBrief | None = None
     communication: CommunicationSummary
     next_interview: InterviewBrief | None = None
+    last_interview_at: Timestamp | None = None  # the latest interview held, cancelled ones left out
 
 
 class CandidateDetail(APIModel):
@@ -101,9 +103,11 @@ class CandidateDetail(APIModel):
     candidate: CandidateRead
     application: ApplicationRead | None = None
     job: JobRead | None = None
+    company_name: str | None = None  # the application's employer
     stage: ApplicationStage | None = None
     communication: CommunicationHealthRead | None = None  # what they've heard from us; recruiter-only
     next_interview: InterviewRead | None = None
+    last_interview_at: Timestamp | None = None
     activity: list[ActivityRead] = []  # newest first
     interviews: list[InterviewRead] = []  # by scheduled time
     messages: list[MessageRead] = []  # oldest first

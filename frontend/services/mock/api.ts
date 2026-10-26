@@ -102,6 +102,13 @@ export const mockApi = {
     return clone(candidate);
   },
 
+  async setCandidateMessaging(ids: string[], enabled: boolean) {
+    await mockDelay(250);
+    const changed = ids.map(findCandidate);
+    for (const candidate of changed) candidate.candidateMessagingEnabled = enabled;
+    return clone(changed);
+  },
+
   async archiveCandidate(id: string) {
     await mockDelay(250);
     const db = getMockDb();

@@ -1,6 +1,16 @@
 "use client";
 
-import { ArrowRightLeft, ChevronDown, ChevronLeft, ChevronRight, Plus, SearchX, UsersRound } from "lucide-react";
+import {
+  ArrowRightLeft,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  MessageSquareLock,
+  MessageSquareReply,
+  Plus,
+  SearchX,
+  UsersRound,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import { AddCandidateDialog } from "@/components/recruiter/AddCandidateDialog";
@@ -49,7 +59,7 @@ function needsUpdateOnly(filters: Filters): boolean {
 }
 
 export function CandidatesWorkspace({ greeting, initialCandidateId }: CandidatesWorkspaceProps) {
-  const { user, candidates, jobs, revision, moveCandidate } = useWorkspace();
+  const { user, candidates, jobs, revision, moveCandidate, setMessaging } = useWorkspace();
   const toast = useToast();
   const panelInline = useMediaQuery(PANEL_QUERY);
 
@@ -160,6 +170,26 @@ export function CandidatesWorkspace({ greeting, initialCandidateId }: Candidates
     setBulkBusy(false);
   }
 
+  async function messagingChecked(enabled: boolean) {
+    setBulkBusy(true);
+    try {
+      const changed = await setMessaging(
+        checked.map((candidate) => candidate.id),
+        enabled,
+      );
+      toast({
+        title: `Candidate messaging turned ${enabled ? "on" : "off"} for ${pluralize(changed.length, "application")}`,
+        description: enabled
+          ? "They can now write to you about these applications only."
+          : "They can still read everything you send.",
+        tone: "success",
+      });
+    } catch (error) {
+      toast({ title: "Couldn't change candidate messaging", description: errorMessage(error), tone: "error" });
+    }
+    setBulkBusy(false);
+  }
+
   function clearAll() {
     changeView(() => {
       setQuery("");
@@ -211,6 +241,7 @@ export function CandidatesWorkspace({ greeting, initialCandidateId }: Candidates
                 count={checked.length}
                 busy={bulkBusy}
                 onMove={(target) => void moveChecked(target)}
+                onMessaging={(enabled) => void messagingChecked(enabled)}
                 onClear={() => setCheckedIds(new Set())}
               />
             )}
@@ -361,10 +392,12 @@ type BulkActionsBarProps = {
   count: number;
   busy: boolean;
   onMove: (stage: CandidateStage) => void;
+  /** Candidate messaging on or off, for the checked applications only. */
+  onMessaging: (enabled: boolean) => void;
   onClear: () => void;
 };
 
-function BulkActionsBar({ count, busy, onMove, onClear }: BulkActionsBarProps) {
+function BulkActionsBar({ count, busy, onMove, onMessaging, onClear }: BulkActionsBarProps) {
   return (
     <div
       role="region"
@@ -385,6 +418,21 @@ function BulkActionsBar({ count, busy, onMove, onClear }: BulkActionsBarProps) {
               {STAGE_LABELS[stage]}
             </DropdownMenuItem>
           ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="secondary" size="sm" disabled={busy}>
+            <MessageSquareReply /> Candidate messaging <ChevronDown className="text-stone" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem onSelect={() => onMessaging(true)}>
+            <MessageSquareReply /> Enable messaging
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onMessaging(false)}>
+            <MessageSquareLock /> Disable messaging
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <Button variant="ghost" size="sm" onClick={onClear}>

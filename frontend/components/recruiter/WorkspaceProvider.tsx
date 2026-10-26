@@ -8,6 +8,7 @@ import {
   createCandidate,
   getCandidates,
   restoreCandidate as restoreCandidateRequest,
+  setCandidateMessaging,
   updateCandidateStage,
 } from "@/services/candidates";
 import { getUnreadThreadCount } from "@/services/messages";
@@ -26,6 +27,8 @@ type WorkspaceValue = {
   refresh: () => Promise<void>;
   addCandidate: (input: NewCandidateInput) => Promise<PipelineCandidate>;
   moveCandidate: (id: string, stage: CandidateStage) => Promise<PipelineCandidate>;
+  /** Turn candidate messaging on or off for exactly these applications. */
+  setMessaging: (ids: string[], enabled: boolean) => Promise<PipelineCandidate[]>;
   archiveCandidate: (id: string) => Promise<void>;
   restoreCandidate: (id: string) => Promise<void>;
   markThreadRead: () => void;
@@ -107,6 +110,17 @@ export function WorkspaceProvider({
     [replace],
   );
 
+  const setMessaging = useCallback(
+    async (ids: string[], enabled: boolean) => {
+      const updated = await setCandidateMessaging(ids, enabled);
+      const byId = new Map(updated.map((candidate) => [candidate.id, candidate]));
+      setCandidates((current) => current.map((candidate) => byId.get(candidate.id) ?? candidate));
+      changed();
+      return updated;
+    },
+    [changed],
+  );
+
   const archiveCandidate = useCallback(
     async (id: string) => {
       await archiveCandidateRequest(id);
@@ -138,6 +152,7 @@ export function WorkspaceProvider({
       refresh,
       addCandidate,
       moveCandidate,
+      setMessaging,
       archiveCandidate,
       restoreCandidate,
       markThreadRead,
@@ -153,6 +168,7 @@ export function WorkspaceProvider({
       refresh,
       addCandidate,
       moveCandidate,
+      setMessaging,
       archiveCandidate,
       restoreCandidate,
       markThreadRead,

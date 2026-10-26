@@ -77,6 +77,19 @@ export async function updateCandidateStage(id: string, stage: CandidateStage): P
   return fromListItem(row);
 }
 
+/**
+ * Let these candidates write to the hiring team about their applications, or stop them: POST
+ * /applications/messaging with exactly the applications given. They can always read what the team sends.
+ */
+export async function setCandidateMessaging(ids: string[], enabled: boolean): Promise<PipelineCandidate[]> {
+  if (USE_MOCK_API) return mockApi.setCandidateMessaging(ids, enabled);
+  const rows = await apiFetch<ApiCandidateListItem[]>("/applications/messaging", {
+    method: "POST",
+    body: JSON.stringify({ application_ids: ids, enabled }),
+  });
+  return rows.map(fromListItem);
+}
+
 export async function archiveCandidate(id: string): Promise<void> {
   if (USE_MOCK_API) return mockApi.archiveCandidate(id);
   await apiFetch<ApiCandidateListItem>(`/applications/${id}/archive`, { method: "POST" });

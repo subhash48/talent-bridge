@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, ArrowRightLeft, Copy, EllipsisVertical, MessageSquareText, UserRound } from "lucide-react";
+import { Archive, ArrowRightLeft, Copy, EllipsisVertical, MessageSquareLock, MessageSquareReply, MessageSquareText, UserRound } from "lucide-react";
 import Link from "next/link";
 
 import { useWorkspace } from "@/components/recruiter/WorkspaceProvider";
@@ -29,9 +29,9 @@ type CandidateActionsMenuProps = {
   className?: string;
 };
 
-/** Row and panel "⋮" menu: open, message, move stage, copy email, archive (with undo). */
+/** Row and panel "⋮" menu: open, message, candidate messaging, move stage, copy email, archive (with undo). */
 export function CandidateActionsMenu({ candidate, className }: CandidateActionsMenuProps) {
-  const { moveCandidate, archiveCandidate, restoreCandidate } = useWorkspace();
+  const { moveCandidate, setMessaging, archiveCandidate, restoreCandidate } = useWorkspace();
   const toast = useToast();
   const first = firstName(candidate.name);
 
@@ -42,6 +42,22 @@ export function CandidateActionsMenu({ candidate, className }: CandidateActionsM
       toast({ title: `${first} moved to ${STAGE_LABELS[stage]}`, tone: "success" });
     } catch (error) {
       toast({ title: "Couldn't update the stage", description: errorMessage(error), tone: "error" });
+    }
+  }
+
+  async function toggleMessaging() {
+    const enabled = !candidate.candidateMessagingEnabled;
+    try {
+      await setMessaging([candidate.id], enabled);
+      toast({
+        title: enabled ? `${first} can now message you` : `${first} can no longer message you`,
+        description: enabled
+          ? `About their ${candidate.role} application only.`
+          : "They can still read everything you send.",
+        tone: "success",
+      });
+    } catch (error) {
+      toast({ title: "Couldn't change candidate messaging", description: errorMessage(error), tone: "error" });
     }
   }
 
@@ -88,7 +104,7 @@ export function CandidateActionsMenu({ candidate, className }: CandidateActionsM
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="w-52"
+        className="w-60"
         onClick={(event) => event.stopPropagation()}
       >
         <DropdownMenuItem asChild>
@@ -100,6 +116,17 @@ export function CandidateActionsMenu({ candidate, className }: CandidateActionsM
           <Link href={`/recruiter/messages?candidate=${candidate.id}`}>
             <MessageSquareText /> Message {first}
           </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => void toggleMessaging()}>
+          {candidate.candidateMessagingEnabled ? (
+            <>
+              <MessageSquareLock /> Disable candidate messaging
+            </>
+          ) : (
+            <>
+              <MessageSquareReply /> Enable candidate messaging
+            </>
+          )}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuSub>

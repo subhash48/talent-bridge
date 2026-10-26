@@ -33,6 +33,7 @@ class DraftPurpose(StrEnum):
     STATUS_UPDATE = "status_update"
     OFFER_CHECK_IN = "offer_check_in"
     INTERVIEW_INVITATION = "interview_invitation"  # ask them to choose a time for an interview
+    INTERVIEW_PROPOSAL = "interview_proposal"  # invite them to an interview at the time the recruiter proposed
     CUSTOM = "custom"  # whatever the recruiter's instructions say
     QUESTION_REPLY = "question_reply"  # a reply to the candidate's latest message
     STAGE_UPDATE = "stage_update"  # their application moved to a new stage

@@ -7,7 +7,9 @@ here sends on its own. Sending a draft is the recruiter's approval: it goes thro
 has at most one open draft; writing a new one discards the old.
 """
 
+import asyncio
 import uuid
+from collections.abc import Mapping, Sequence
 from datetime import datetime
 
 from sqlalchemy import update
@@ -22,6 +24,7 @@ from app.schemas.ai import DraftPurpose
 from app.schemas.communication import DraftRead, DraftSent
 from app.services import ai_service, message_service
 from app.services.ai.client import AIProvider
+from app.services.ai_service import with_fallback
 from app.services.communication import rules as rule_store
 from app.services.communication.health import Health, assess
 from app.services.communication.present import candidate_status, draft_read
@@ -120,6 +123,60 @@ async def create_draft(
     session.add(draft)
     await session.commit()
     return draft_read(draft)
+
+
+async def create_personal_drafts(
+    session: AsyncSession,
+    applications: Sequence[Application],
+    briefs: Mapping[uuid.UUID, tuple[DraftPurpose, str | None]],
+    provider: AIProvider,
+    actor: User | None,
+    now: datetime | None = None,
+) -> list[CommunicationDraft]:
+    """One draft per application, each written for that candidate from their own record: never one
+    message for everyone. briefs gives each application what to write (the purpose, and what to say). The
+    AI writes them side by side; like any draft they wait for the recruiter, and each replaces that
+    application's open draft. Returned in the order given."""
+    now = now or utcnow()
+    for application in applications:
+        if application.archived_at is not None:
+            raise BadRequestError(
+                f"Restore {application.candidate.first_name} to the pipeline before drafting to them.",
+                code="application_archived",
+            )
+    contexts = [await ai_service.candidate_context(session, application.id, actor) for application in applications]
+    asks = [briefs[application.id] for application in applications]
+    written = await asyncio.gather(
+        *(
+            with_fallback(provider, lambda p, c=context, k=purpose, i=note: p.draft_message(c, k, i))
+            for context, (purpose, note) in zip(contexts, asks, strict=True)
+        )
+    )
+    ids = [application.id for application in applications]
+    await session.execute(
+        update(CommunicationDraft)
+        .where(CommunicationDraft.application_id.in_(ids), CommunicationDraft.status == DraftStatus.DRAFTED)
+        .values(status=DraftStatus.DISCARDED, discarded_at=now, updated_at=now)
+    )
+    drafts = [
+        CommunicationDraft(
+            application_id=application.id,
+            reason=MANUAL_DRAFT,
+            status=DraftStatus.DRAFTED,
+            subject=content.subject,
+            body=content.body,
+            ai_subject=content.subject,
+            ai_body=content.body,
+            model_name=model_name,
+            created_by=actor.id if actor else None,
+            created_at=now,
+            updated_at=now,
+        )
+        for application, (content, model_name) in zip(applications, written, strict=True)
+    ]
+    session.add_all(drafts)
+    await session.commit()
+    return drafts
 
 
 async def _open(session: AsyncSession, draft_id: uuid.UUID) -> CommunicationDraft:

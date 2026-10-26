@@ -67,6 +67,8 @@ class MockProvider(AIProvider):
     ) -> DraftContent:
         if purpose == DraftPurpose.INTERVIEW_INVITATION:
             return _invitation(context, instructions or "")
+        if purpose == DraftPurpose.INTERVIEW_PROPOSAL:
+            return _proposal(context, instructions or "")
         if purpose == DraftPurpose.CUSTOM:
             return _custom(context, instructions or "")
         if purpose == DraftPurpose.QUESTION_REPLY:
@@ -311,6 +313,29 @@ def _invitation(context: CandidateContext, instructions: str) -> DraftContent:
     )
     body = f"Hi {context.first_name},\n\n{text}\n\nBest,\n{context.recruiter_first_name}"
     return DraftContent(subject=f"Scheduling your {kind} for the {context.job_title} role", body=body)
+
+
+_PROPOSED = re.compile(r"Proposed time:\s*(?P<time>[^\n]+?)\.?(?:\n|$)")
+
+
+def _proposal(context: CandidateContext, instructions: str) -> DraftContent:
+    """An invitation to an interview at the time the recruiter proposed, given in the instructions."""
+    from app.services.assistant.rules import interview_details
+
+    details = interview_details(instructions)
+    kind = (details.interview_type or "interview").lower()
+    length = f"{details.duration_minutes}-minute " if details.duration_minutes else ""
+    article = "an" if (length or kind)[0] in "aeiou8" else "a"
+    proposed = _PROPOSED.search(instructions)
+    when = f" on {proposed.group('time').strip()}" if proposed else ""
+    text = (
+        f"Thanks again for your interest in the {context.job_title} role. We'd like to move forward with your "
+        f"application and invite you to {article} {length}{kind}{when}.\n\n"
+        "You'll find it under Interviews in your candidate portal, where you can confirm it. If the time doesn't "
+        "work for you, reply here and we'll find another."
+    )
+    body = f"Hi {context.first_name},\n\n{text}\n\nBest,\n{context.recruiter_first_name}"
+    return DraftContent(subject=f"Your {kind} for the {context.job_title} role", body=body)
 
 
 _TELL = re.compile(

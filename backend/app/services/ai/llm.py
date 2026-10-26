@@ -181,6 +181,12 @@ PURPOSES = {
         "and asks them to reply with a few times that work (never invent a date, time, meeting link or scheduling "
         "link the recruiter didn't give)"
     ),
+    DraftPurpose.INTERVIEW_PROPOSAL: (
+        "interview invitation for the time the recruiter proposed in their instructions: thank them for their interest "
+        "in the role, naming it by its job title; give the interview, its length and the proposed time exactly as "
+        "written; say they can confirm it under Interviews in their candidate portal, and to reply if the time "
+        "doesn't suit them (never invent another time, a meeting link or a scheduling link)"
+    ),
     DraftPurpose.CUSTOM: "short",
     DraftPurpose.STAGE_UPDATE: "status update telling them their application has moved to a new stage",
     DraftPurpose.QUESTION_REPLY: (

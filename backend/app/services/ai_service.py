@@ -45,6 +45,11 @@ async def draft_message(
     return DraftMessageResponse(subject=content.subject, body=content.body, purpose=purpose, model_name=model_name)
 
 
+async def candidate_context(session: AsyncSession, application_id: uuid.UUID, actor: User | None) -> CandidateContext:
+    """What the AI may know about one application, for drafting and answering about it."""
+    return await _context(session, application_id, actor)
+
+
 async def _context(session: AsyncSession, application_id: uuid.UUID, actor: User | None) -> CandidateContext:
     return await build_candidate_context(
         session,

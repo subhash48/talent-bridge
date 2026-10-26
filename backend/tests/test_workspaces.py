@@ -16,10 +16,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.enums import UserRole
+from app.db.seed import seed_id
 from app.db.seed_data import OPENAI_RECRUITER
 from app.main import app
 from app.models import Job, User
-from tests.conftest import API, application_id, candidate_id, job_id, link
+from tests.conftest import API, SOPHIA_AUTH, application_id, bearer, candidate_id, job_id, link
 
 SOPHIA_ENCORD = application_id("sophia-martinez")
 SOPHIA_OPENAI = application_id("sophia-martinez@openai")
@@ -206,3 +207,46 @@ async def test_a_job_draft_is_written_for_the_recruiters_own_company(
     [card] = answer["cards"]
     assert card["type"] == "job_draft" and "OpenAI" in (card["draft"]["summary"] or "")
     assert leaked(card) == []
+
+
+async def test_me_says_where_staff_work_and_how_it_hires(client: AsyncClient) -> None:
+    me = (await client.get(f"{API}/me")).json()
+    assert me["organization"] == "Encord"
+    assert {key: me["workspace"][key] for key in ("name", "mode", "can_manage")} == {
+        "name": "Encord",
+        "mode": "full",
+        "can_manage": False,
+    }
+    sophia = (await client.get(f"{API}/me", headers=bearer(SOPHIA_AUTH))).json()
+    assert sophia["role"] == "candidate" and sophia["workspace"] is None
+
+
+async def test_only_an_admin_changes_how_the_workspace_hires(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    refused = await client.patch(f"{API}/workspace", json={"mode": "simple"})
+    assert refused.status_code == 403 and refused.json()["error"]["code"] == "admins_only"
+
+    async with sessions() as session:
+        session.add(
+            User(
+                email="ada.admin@encord.example",
+                full_name="Ada Admin",
+                role=UserRole.ADMIN,
+                company_id=seed_id("company", "encord"),
+            )
+        )
+        await session.commit()
+    ada = await link(sessions, "ada.admin@encord.example")
+    changed = await client.patch(f"{API}/workspace", json={"mode": "simple", "location": "Leeds, UK"}, headers=ada)
+    assert changed.status_code == 200
+    assert (changed.json()["mode"], changed.json()["location"], changed.json()["can_manage"]) == (
+        "simple",
+        "Leeds, UK",
+        True,
+    )
+    # Everyone in the workspace now gets Simple Hire; their data is just as it was.
+    assert (await client.get(f"{API}/me")).json()["workspace"]["mode"] == "simple"
+    assert (await client.get(f"{API}/candidates")).json()["total"] == 38
+    back = await client.patch(f"{API}/workspace", json={"mode": "full"}, headers=ada)
+    assert back.json()["mode"] == "full" and back.json()["location"] == "Leeds, UK"

@@ -25,6 +25,7 @@ from app.api import (
     messages,
     portal_access,
     resumes,
+    workspace,
 )
 from app.core.dependencies import require_candidate, require_demo_enabled, require_workspace
 
@@ -43,6 +44,7 @@ for module in (
     dashboard,
     assistant,
     resumes,
+    workspace,
 ):
     api_router.include_router(module.router, dependencies=[Depends(require_workspace)])
 # The candidate portal: the signed-in candidate, scoped to their own record.

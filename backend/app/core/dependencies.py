@@ -26,6 +26,7 @@ from app.core.enums import STAFF_ROLES, UserRole
 from app.core.errors import ForbiddenError, NotFoundError, ServiceUnavailableError, UnauthorizedError
 from app.core.security import InvalidTokenError, TokenClaims, TokenVerifier, get_token_verifier
 from app.integrations.ashby.client import AshbyClient, get_ashby_client
+from app.integrations.calendar import CalendarProvider, get_calendar_provider
 from app.integrations.email import EmailProvider, get_email_provider
 from app.integrations.supabase_admin import SupabaseAdmin, get_supabase_admin
 from app.models import Candidate, User
@@ -45,6 +46,7 @@ BearerDep = Annotated[HTTPAuthorizationCredentials | None, Depends(HTTPBearer(au
 VerifierDep = Annotated[TokenVerifier | None, Depends(get_token_verifier)]
 AIProviderDep = Annotated[AIProvider, Depends(get_ai_provider)]
 EmailProviderDep = Annotated[EmailProvider, Depends(get_email_provider)]
+CalendarProviderDep = Annotated[CalendarProvider, Depends(get_calendar_provider)]
 
 
 async def get_current_user(

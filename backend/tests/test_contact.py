@@ -78,3 +78,21 @@ async def test_form_fillers_are_ignored_and_floods_slowed(
     # Someone else isn't held up by it.
     other = await anonymous.post(f"{API}/contact", json=MESSAGE, headers={"X-Forwarded-For": "203.0.113.9"})
     assert other.status_code == 200
+
+
+async def test_operators_can_read_what_wasnt_emailed(
+    anonymous: AsyncClient, sessions: async_sessionmaker[AsyncSession], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.db import contact_requests
+
+    monkeypatch.setattr(settings, "contact_email", None)
+    await anonymous.post(f"{API}/contact", json=MESSAGE)
+    monkeypatch.setattr(settings, "contact_email", "hello@talentbridge.example")
+    use_email(FakeEmail())
+    await anonymous.post(f"{API}/contact", json={**MESSAGE, "name": "Tom Ito", "company": None, "topic": "support"})
+    async with sessions() as session:
+        assert [row.name for row in await contact_requests.newest(session, 10)] == ["Tom Ito", "Priya Nair"]
+        [waiting] = await contact_requests.newest(session, 10, not_emailed=True)
+    shown = contact_requests.describe(waiting)
+    assert "[Pilot / design partnership]  not emailed" in shown
+    assert "From: Priya Nair <priya@northwind.example>, Northwind Labs" in shown and MESSAGE["message"] in shown

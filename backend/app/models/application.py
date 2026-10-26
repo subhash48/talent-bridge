@@ -6,7 +6,7 @@ from sqlalchemy import ForeignKey, Index, Text, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.enums import ApplicationStage
-from app.models.base import Base, UUIDPrimaryKey, db_enum, utcnow
+from app.models.base import Base, JSONType, UUIDPrimaryKey, db_enum, utcnow
 
 if TYPE_CHECKING:
     from app.models.candidate import Candidate
@@ -49,6 +49,12 @@ class Application(UUIDPrimaryKey, Base):
     # Whether the candidate may write to the hiring team about this application (migration 018). Off until
     # a recruiter turns it on; the candidate can always read what the team sends.
     candidate_messaging_enabled: Mapped[bool] = mapped_column(default=False, server_default=text("false"))
+    # What the applicant gave with this application (migration 020): this employer may use it to contact
+    # them about this job, and nothing else sees it.
+    phone: Mapped[str | None] = mapped_column(Text)
+    linkedin_url: Mapped[str | None] = mapped_column(Text)
+    availability: Mapped[list[str]] = mapped_column(JSONType, default=list)  # which of the job's work days
+    experience_note: Mapped[str | None] = mapped_column(Text)  # their relevant experience, in their words
 
     # Ashby (migration 011). Null for applications created in TalentBridge.
     external_id: Mapped[str | None] = mapped_column(Text, unique=True)

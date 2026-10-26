@@ -223,14 +223,16 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
                 "updated_at": Ago(added),
             }
         )
-        _add_application(rows, seed.key, candidate_id, job_ids[seed.job], seed, recruiter_id)
+        _add_application(rows, seed.key, candidate_id, job_ids[seed.job], seed, recruiter_id, seed.phone)
 
     # In this order, so every row's id stays what it was when it was first seeded (see LATER_CANDIDATES).
     for seed in CANDIDATES:
         add_candidate(seed)
+    phones = {seed.key: seed.phone for seed in (*CANDIDATES, *LATER_CANDIDATES)}
     for extra in APPLICATIONS:
         candidate_id = seed_id("candidate", extra.candidate)
-        _add_application(rows, extra.key, candidate_id, job_ids[extra.job], extra, seed_id("user", extra.recruiter))
+        recruiter = seed_id("user", extra.recruiter)
+        _add_application(rows, extra.key, candidate_id, job_ids[extra.job], extra, recruiter, phones[extra.candidate])
     for seed in LATER_CANDIDATES:
         add_candidate(seed)
     for seed in (*CANDIDATES, *LATER_CANDIDATES, *APPLICATIONS):
@@ -325,8 +327,9 @@ def _add_application(
     job_id: uuid.UUID,
     seed: CandidateSeed | ApplicationSeed,
     recruiter_id: uuid.UUID,
+    phone: str | None,
 ) -> None:
-    """One application with its stage history and its timeline."""
+    """One application with its stage history and its timeline. phone: the number it came with."""
     application_id = seed_id("application", key)
     added = seed.added_minutes_ago
     latest = min((event.minutes_ago for event in seed.events), default=added)
@@ -340,6 +343,7 @@ def _add_application(
             "applied_at": Ago(added),
             "updated_at": Ago(latest),
             "archived_at": None,
+            "phone": phone,
         }
     )
     history = Recorder(rows[CandidateStageHistory], "history", key, application_id)

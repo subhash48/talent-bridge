@@ -6,7 +6,7 @@ from sqlalchemy import ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.enums import JobStatus
-from app.models.base import Base, Timestamps, UUIDPrimaryKey, db_enum
+from app.models.base import Base, JSONType, Timestamps, UUIDPrimaryKey, db_enum
 
 if TYPE_CHECKING:
     from app.models.application import Application
@@ -27,6 +27,11 @@ class Job(UUIDPrimaryKey, Timestamps, Base):
     status: Mapped[JobStatus] = mapped_column(db_enum(JobStatus, "job_status"), default=JobStatus.DRAFT)
     employment_type: Mapped[str] = mapped_column(Text, default="Full-time")
     hiring_manager: Mapped[str | None] = mapped_column(Text)
+    # A small business's job, in the employer's own words (migration 020). Empty for most full-workspace jobs.
+    pay: Mapped[str | None] = mapped_column(Text)  # "$18/hour"
+    shift: Mapped[str | None] = mapped_column(Text)  # "Evenings"
+    work_days: Mapped[list[str]] = mapped_column(JSONType, default=list)  # Weekday values, Monday first
+    openings: Mapped[int | None]  # how many people they're hiring
 
     # Joined, so job.company is always there to read, including in async code.
     company: Mapped["Company"] = relationship(back_populates="jobs", lazy="joined")

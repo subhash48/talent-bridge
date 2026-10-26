@@ -24,6 +24,25 @@ class WorkspaceMode(StrEnum):
     SIMPLE = "simple"  # Simple Hire, for small businesses: post jobs, see applicants, contact them
 
 
+class Weekday(StrEnum):
+    """A day of the week, as a job's work days and an applicant's availability are stored (migration 020)."""
+
+    MONDAY = "monday"
+    TUESDAY = "tuesday"
+    WEDNESDAY = "wednesday"
+    THURSDAY = "thursday"
+    FRIDAY = "friday"
+    SATURDAY = "saturday"
+    SUNDAY = "sunday"
+
+    @property
+    def label(self) -> str:
+        return self.value.capitalize()
+
+
+WEEKEND: tuple[Weekday, ...] = (Weekday.SATURDAY, Weekday.SUNDAY)
+
+
 class JobStatus(StrEnum):
     DRAFT = "draft"
     OPEN = "open"

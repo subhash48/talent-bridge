@@ -1,4 +1,4 @@
-"""Supabase Auth's admin API, against a fake HTTP transport: the links TalentBridge emails itself."""
+"""Supabase Auth's admin API, against a fake HTTP transport: the links Kavuntra emails itself."""
 
 import json
 import uuid

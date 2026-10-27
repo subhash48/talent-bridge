@@ -174,14 +174,14 @@ class FakeSupabaseAdmin:
             self.failures -= 1
             raise SupabaseAdminError("Supabase Auth returned HTTP 500.")
         if email in self.existing or email in self.users:
-            raise AuthUserExists("This email already has a TalentBridge sign-in.")
+            raise AuthUserExists("This email already has a Kavuntra sign-in.")
         user_id = uuid.uuid5(uuid.NAMESPACE_URL, f"auth:{email}")
         self.users[email] = user_id
         self.invites.append({"email": email, "redirect_to": redirect_to, "data": data, "emailed_by": "supabase"})
         return InvitedUser(id=user_id, email=email)
 
     async def invite_link(self, email: str, *, redirect_to: str, data: dict[str, Any]) -> InvitedUser:
-        """invite, with the link handed back for TalentBridge to email instead."""
+        """invite, with the link handed back for Kavuntra to email instead."""
         invited = await self.invite(email, redirect_to=redirect_to, data=data)
         self.invites[-1]["emailed_by"] = "talentbridge"
         link = f"https://test-project.supabase.co/auth/v1/verify?type=invite&token=invite-{len(self.invites)}"
@@ -242,7 +242,7 @@ class FakeAshbyAPI:
         if key in self.details:
             return httpx.Response(200, json={"success": True, "results": self.details[key]})
         if endpoint == "apiKey.info":
-            return httpx.Response(200, json={"success": True, "results": {"title": "TalentBridge"}})
+            return httpx.Response(200, json={"success": True, "results": {"title": "Kavuntra"}})
         return httpx.Response(200, json={"success": False, "errorInfo": {"code": "not_found", "message": "Not found"}})
 
     def _list(self, endpoint: str, body: dict[str, Any]) -> dict[str, Any]:

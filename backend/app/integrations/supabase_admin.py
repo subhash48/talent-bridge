@@ -3,7 +3,7 @@
 The secret (service role) key lives in backend/.env only and is sent to Supabase and nowhere else;
 it never reaches the frontend, a log line or an error message. No password is ever created here: the
 candidate gets a one-time link and chooses their own password. Supabase emails that link itself
-(invite, send_sign_in_link), or hands it back for TalentBridge to email with its own message
+(invite, send_sign_in_link), or hands it back for Kavuntra to email with its own message
 (invite_link, sign_in_link_url) when an email provider is configured.
 """
 
@@ -73,7 +73,7 @@ class SupabaseAdmin:
             raise SupabaseAdminError(f"Couldn't reach Supabase Auth ({exc.__class__.__name__}).") from None
 
         if response.status_code in (400, 422) and _is_existing_user(response):
-            raise AuthUserExists("This email already has a TalentBridge sign-in.")
+            raise AuthUserExists("This email already has a Kavuntra sign-in.")
         if response.status_code == 429:
             raise SupabaseAdminError("Supabase is rate limiting invitation emails. It will be retried.")
         if response.status_code in (401, 403):
@@ -88,7 +88,7 @@ class SupabaseAdmin:
 
     async def invite_link(self, email: str, *, redirect_to: str, data: dict[str, Any]) -> InvitedUser:
         """Like invite, but nothing is emailed: the account is created and its one-time invitation link
-        comes back, for TalentBridge's own email. Raises AuthUserExists if the email has an account."""
+        comes back, for Kavuntra's own email. Raises AuthUserExists if the email has an account."""
         body = await self._generate_link({"type": "invite", "email": email, "data": data, "redirect_to": redirect_to})
         try:
             return InvitedUser(
@@ -113,7 +113,7 @@ class SupabaseAdmin:
         except httpx.HTTPError as exc:
             raise SupabaseAdminError(f"Couldn't reach Supabase Auth ({exc.__class__.__name__}).") from None
         if response.status_code in (400, 422) and _is_existing_user(response):
-            raise AuthUserExists("This email already has a TalentBridge sign-in.")
+            raise AuthUserExists("This email already has a Kavuntra sign-in.")
         if response.status_code == 429:
             raise SupabaseAdminError("Supabase is rate limiting sign-in links. It will be retried.")
         if response.status_code in (401, 403):

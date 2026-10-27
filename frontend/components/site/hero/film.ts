@@ -53,8 +53,10 @@ export class Film {
     const { clientWidth: width, clientHeight: height } = this.canvas;
     if (!width || !height) return;
     const ratio = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
-    this.canvas.width = Math.round(width * ratio);
-    this.canvas.height = Math.round(height * ratio);
+    const bufferWidth = Math.round(width * ratio);
+    const bufferHeight = Math.round(height * ratio);
+    if (this.canvas.width !== bufferWidth) this.canvas.width = bufferWidth;
+    if (this.canvas.height !== bufferHeight) this.canvas.height = bufferHeight;
     const set = frameSetFor(width, height);
     if (set !== this.set || this.slots.length === 0) this.useSet(set);
   }

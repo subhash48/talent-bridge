@@ -13,8 +13,8 @@ import type {
   CareersSite,
 } from "@/types/careers";
 
-// The careers sites, public and without sign-in: TalentBridge's own (/careers) lists the open jobs
-// made in TalentBridge; the demo (/demo/careers) is development only. Every demo route
+// The careers sites, public and without sign-in: Kavuntra's own (/careers) lists the open jobs
+// made in Kavuntra; the demo (/demo/careers) is development only. Every demo route
 // answers 404 while the demo is switched off (ENABLE_ASHBY_DEMO isn't set, or in production), and
 // mock mode has no demo at all, so then there's nothing to list and the pages say the site is off.
 

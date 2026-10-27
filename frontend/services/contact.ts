@@ -22,7 +22,7 @@ export type ContactMessage = {
   website: string;
 };
 
-/** TalentBridge's official contact address, when one is configured (CONTACT_EMAIL); never a made-up one. */
+/** Kavuntra's official contact address, when one is configured (CONTACT_EMAIL); never a made-up one. */
 export async function getContactEmail(): Promise<string | null> {
   if (USE_MOCK_API) return null;
   try {

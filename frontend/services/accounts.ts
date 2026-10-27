@@ -5,7 +5,7 @@ import type { CurrentUser, WorkspaceMode } from "@/types/workspace";
 
 // Accounts people make for themselves (backend /accounts): a candidate account, or an employer's workspace.
 // Signed in with Supabase Auth, which keeps the password and verified the email; the API only says what the
-// sign-in is in TalentBridge, and creates nothing until the email is verified.
+// sign-in is in Kavuntra, and creates nothing until the email is verified.
 
 export type AccountStatus = {
   email: string | null;

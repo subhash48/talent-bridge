@@ -65,8 +65,8 @@ export function FourQuestions({ me, application }: { me: CandidateMeResponse; ap
   }
 
   return (
-    <Card className="p-0">
-      <dl className="divide-y divide-border">
+    <Card className="rounded-[24px] p-0 sm:p-0">
+      <dl className="divide-y divide-border/70">
         <Answer icon={MapPin} question="Where am I?">
           <span className="font-medium text-ink">{application.stageLabel}</span>
         </Answer>
@@ -114,13 +114,13 @@ function Answer({
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4 sm:p-5">
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-ink/[0.05] ring-1 ring-ink/10">
-        <Icon aria-hidden strokeWidth={1.75} className="size-4 text-charcoal" />
+    <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:gap-5 sm:px-8 sm:py-6">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-[12px] bg-accent-soft/70">
+        <Icon aria-hidden strokeWidth={1.75} className="size-[18px] text-brand-ink" />
       </span>
       <div className="min-w-0 flex-1">
-        <dt className="text-xs text-stone">{question}</dt>
-        <dd className="mt-0.5 text-[15px] leading-snug text-charcoal">{children}</dd>
+        <dt className="text-xs font-medium text-stone">{question}</dt>
+        <dd className="mt-1 text-[15px] leading-snug text-charcoal">{children}</dd>
       </div>
       {control && <div className="shrink-0">{control}</div>}
     </div>

@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 // Lets services/api.ts send the signed-in user's access token when rendering on the server.
 import "@/lib/supabase-server";
+import { cn } from "@/lib/utils";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 // The home page's headlines over the film: an editorial serif, in its one weight.
@@ -28,7 +29,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="en" className={geist.variable}>
+    <html lang="en" className={cn(geist.variable, instrumentSerif.variable)}>
       <body className="antialiased">{children}</body>
     </html>
   );

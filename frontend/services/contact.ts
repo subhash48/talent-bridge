@@ -4,6 +4,8 @@ import { USE_MOCK_API, apiFetch } from "@/services/api";
 
 export type ContactTopic = "product" | "pilot" | "support" | "partnerships" | "general";
 
+// The form's inquiry types, over the topics the API (and the table's check constraint) allows. Anything else is a
+// general inquiry: there is no "other" topic to store.
 export const CONTACT_TOPICS: { value: ContactTopic; label: string }[] = [
   { value: "general", label: "General inquiry" },
   { value: "product", label: "Product questions" },

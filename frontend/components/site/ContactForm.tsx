@@ -14,7 +14,7 @@ import { CONTACT_TOPICS, sendContactMessage, type ContactMessage } from "@/servi
 const EMPTY: ContactMessage = { name: "", email: "", company: "", topic: "general", message: "", website: "" };
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Contact Kavuntra: name, email, company (optional), topic and message. */
+/** Contact Kavuntra: full name, email, company (optional), the type of inquiry and the message. */
 export function ContactForm() {
   const [form, setForm] = useState<ContactMessage>(EMPTY);
   const [checked, setChecked] = useState(false);
@@ -85,7 +85,7 @@ export function ContactForm() {
         <Field label="Company (optional)" htmlFor="contact-company">
           <Input id="contact-company" autoComplete="organization" value={form.company} onChange={update("company")} />
         </Field>
-        <Field label="Topic" htmlFor="contact-topic">
+        <Field label="Inquiry type" htmlFor="contact-topic">
           <Select id="contact-topic" value={form.topic} onChange={update("topic")}>
             {CONTACT_TOPICS.map((topic) => (
               <option key={topic.value} value={topic.value}>

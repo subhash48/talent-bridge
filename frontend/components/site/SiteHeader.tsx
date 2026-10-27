@@ -155,7 +155,7 @@ export function SiteHeader() {
           </Link>
           <Link
             href="/start"
-            className={buttonStyles({ size: "md", className: "h-9 rounded-full px-[18px] text-[13.5px]" })}
+            className={buttonStyles({ size: "md", className: "hidden h-9 rounded-full px-[18px] text-[13.5px] lg:inline-flex" })}
           >
             Get started
           </Link>

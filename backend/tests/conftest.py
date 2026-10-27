@@ -79,7 +79,7 @@ class FakeEmail(EmailProvider):
 
     name = "fake"
     configured = True
-    sender = "TalentBridge <updates@example.com>"
+    sender = "Kavuntra <updates@example.com>"
 
     def __init__(self, fail: str | None = None) -> None:
         self.sent: list[OutboundEmail] = []
@@ -99,7 +99,7 @@ def use_email(provider: EmailProvider) -> EmailProvider:
 
 
 async def seed_historic_analysis(sessions: async_sessionmaker[AsyncSession], application: str) -> None:
-    """An AI analysis written before TalentBridge stopped evaluating candidates: the table and its
+    """An AI analysis written before Kavuntra stopped evaluating candidates: the table and its
     timeline entry are kept, and must reach neither the recruiter API nor the candidate."""
     from app.core.enums import ActivityType
     from app.models import AIAnalysis, CandidateActivity

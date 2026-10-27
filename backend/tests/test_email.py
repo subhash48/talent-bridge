@@ -34,7 +34,7 @@ async def test_resend_sends_the_email() -> None:
         seen.append(request)
         return httpx.Response(200, json={"id": "4ef9a417-02e9-4d39-ad75-9611e0fcc33c"})
 
-    provider = ResendEmail(KEY, "TalentBridge <updates@example.com>", transport=httpx.MockTransport(handler))
+    provider = ResendEmail(KEY, "Kavuntra <updates@example.com>", transport=httpx.MockTransport(handler))
     result = await provider.send(EMAIL)
     assert (result.status, result.provider, result.provider_message_id) == (
         EmailStatus.SENT,
@@ -46,7 +46,7 @@ async def test_resend_sends_the_email() -> None:
     assert request.headers["authorization"] == f"Bearer {KEY}"
     assert request.headers["idempotency-key"] == "msg-1"
     assert json.loads(request.content) == {
-        "from": "TalentBridge <updates@example.com>",
+        "from": "Kavuntra <updates@example.com>",
         "to": ["sophia@example.com"],
         "subject": "Your interview",
         "text": "Hi Sophia",
@@ -82,9 +82,9 @@ def test_resend_is_used_only_when_both_settings_are_set(monkeypatch: pytest.Monk
     monkeypatch.setattr(settings, "resend_api_key", SecretStr(KEY))
     monkeypatch.setattr(settings, "email_from", None)
     assert isinstance(get_email_provider(), DisabledEmail)
-    monkeypatch.setattr(settings, "email_from", "TalentBridge <updates@example.com>")
+    monkeypatch.setattr(settings, "email_from", "Kavuntra <updates@example.com>")
     provider = get_email_provider()
-    assert isinstance(provider, ResendEmail) and provider.sender == "TalentBridge <updates@example.com>"
+    assert isinstance(provider, ResendEmail) and provider.sender == "Kavuntra <updates@example.com>"
 
 
 async def test_recruiters_can_see_whether_email_is_configured(client: AsyncClient) -> None:
@@ -93,7 +93,7 @@ async def test_recruiters_can_see_whether_email_is_configured(client: AsyncClien
         "provider": None,
         "sender": None,
     }
-    app.dependency_overrides[get_email_provider] = lambda: ResendEmail(KEY, "TalentBridge <updates@example.com>")
+    app.dependency_overrides[get_email_provider] = lambda: ResendEmail(KEY, "Kavuntra <updates@example.com>")
     shown = (await client.get(f"{API}/communication/email")).json()
-    assert shown == {"configured": True, "provider": "resend", "sender": "TalentBridge <updates@example.com>"}
+    assert shown == {"configured": True, "provider": "resend", "sender": "Kavuntra <updates@example.com>"}
     assert KEY not in json.dumps(shown)

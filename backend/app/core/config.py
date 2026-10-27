@@ -38,7 +38,7 @@ def normalize_database_url(raw: str) -> str:
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", env_ignore_empty=True)
 
-    app_name: str = "TalentBridge API"
+    app_name: str = "Kavuntra API"
     environment: Literal["development", "test", "production"] = "development"
     organization_name: str = "Encord"
 
@@ -74,11 +74,11 @@ class Settings(BaseSettings):
 
     # Email to candidates (Resend). Recruiter-approved messages always reach the candidate portal; with
     # both of these set they're also emailed. EMAIL_FROM is a sender on a domain verified in Resend,
-    # e.g. "TalentBridge <updates@yourcompany.com>".
+    # e.g. "Kavuntra <updates@yourcompany.com>".
     resend_api_key: SecretStr | None = None
     email_from: str | None = None
     email_timeout_seconds: float = 10.0
-    # TalentBridge's own contact address: shown in the website's Contact section, and where its contact
+    # Kavuntra's own contact address: shown in the website's Contact section, and where its contact
     # form's messages are emailed (with an email provider). Unset, the site shows no address.
     contact_email: str | None = None
 
@@ -98,11 +98,11 @@ class Settings(BaseSettings):
     # The reconciliation sync invites applicants it finds only if they applied this recently, so a
     # first sync never emails a backlog of past candidates.
     ashby_sync_invite_max_age_days: int = 14
-    # Custom Ashby stage titles to TalentBridge stages, as JSON: {"Take-home": "screening"}.
+    # Custom Ashby stage titles to Kavuntra stages, as JSON: {"Take-home": "screening"}.
     # Stages not listed map by their Ashby type (integrations/ashby/mapping.py).
     ashby_stage_title_map: dict[str, ApplicationStage] = {}
     # Development only: recruiter-created demo jobs and the public demo careers site (/demo/careers),
-    # whose applications reach TalentBridge through the Ashby simulator. Every demo route answers 404
+    # whose applications reach Kavuntra through the Ashby simulator. Every demo route answers 404
     # unless this is true, and always when ENVIRONMENT=production.
     enable_ashby_demo: bool = False
 

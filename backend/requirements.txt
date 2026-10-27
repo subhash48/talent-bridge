@@ -1,4 +1,4 @@
-# Talent Bridge API: pinned dependencies (Python 3.12)
+# Kavuntra API: pinned dependencies (Python 3.12)
 fastapi==0.142.2
 uvicorn[standard]==0.54.0
 pydantic==2.13.5

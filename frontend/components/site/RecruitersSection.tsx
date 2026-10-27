@@ -58,14 +58,15 @@ const FEATURES = [
 export function RecruitersSection() {
   return (
     <Section
+      level="h1"
       id="recruiters"
       eyebrow="For recruiters"
       title="A workspace that keeps every candidate informed."
       intro="For recruiting teams and growing companies: your pipeline, with the communication around it, so no candidate is left waiting without a word. Matching uses only job-related criteria you choose, with the reasons shown, and never a score."
     >
-      <ul className="mt-10 grid grid-cols-1 gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="mt-16 grid grid-cols-1 gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
         {FEATURES.map(({ icon: Icon, title, text }) => (
-          <li key={title} className="flex gap-3.5">
+          <li key={title} className="reveal flex gap-4">
             <FeatureIcon>
               <Icon aria-hidden strokeWidth={1.75} />
             </FeatureIcon>
@@ -76,11 +77,11 @@ export function RecruitersSection() {
           </li>
         ))}
       </ul>
-      <div className="mt-10 flex flex-wrap gap-3">
-        <Link href="/login?as=employer" className={buttonStyles({ size: "lg" })}>
+      <div className="mt-16 flex flex-wrap gap-3">
+        <Link href="/login?as=employer" className={buttonStyles({ size: "xl" })}>
           Recruiter sign in
         </Link>
-        <Link href="/signup/employer?mode=full" className={buttonStyles({ variant: "secondary", size: "lg" })}>
+        <Link href="/signup/employer?mode=full" className={buttonStyles({ variant: "secondary", size: "xl" })}>
           Create company workspace
         </Link>
       </div>

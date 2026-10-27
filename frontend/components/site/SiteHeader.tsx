@@ -61,7 +61,7 @@ export function SiteHeader() {
   const close = () => setOpen(null);
   const current = (href: string) => (pathname === href ? "page" : undefined);
 
-  // Escape closes what's open and gives focus back to its button; so does a click anywhere outside the pill.
+  // Escape closes what's open and gives focus back to its button; so does a click, or focus moving, outside the pill.
   useEffect(() => {
     if (!open) return;
     const button = open === "solutions" ? solutionsButton : menuButton;
@@ -75,9 +75,11 @@ export function SiteHeader() {
     };
     window.addEventListener("keydown", onKey);
     window.addEventListener("pointerdown", outside);
+    window.addEventListener("focusin", outside);
     return () => {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("pointerdown", outside);
+      window.removeEventListener("focusin", outside);
     };
   }, [open]);
 

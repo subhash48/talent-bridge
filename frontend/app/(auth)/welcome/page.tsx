@@ -11,7 +11,7 @@ import { getServerAccessToken } from "@/lib/supabase-server";
 import { ApiError } from "@/services/api";
 import { getCurrentUser } from "@/services/me";
 
-export const metadata: Metadata = { title: "Create your TalentBridge password" };
+export const metadata: Metadata = { title: "Create your Kavuntra password" };
 
 // Where the activation link lands (in the careers site's confirmation email, or Supabase's invitation), once
 // /auth/callback or /auth/confirm has turned the one-time link into a session. The API says whose account it
@@ -31,10 +31,10 @@ export default async function WelcomePage() {
 
   return (
     <AuthCard
-      title="Create your TalentBridge password"
+      title="Create your Kavuntra password"
       description={
         <>
-          Your application has been submitted. Create your TalentBridge password to follow updates from the hiring team.
+          Your application has been submitted. Create your Kavuntra password to follow updates from the hiring team.
           You&rsquo;re signed in as <strong className="font-medium text-charcoal">{user.email}</strong>.
         </>
       }
@@ -67,7 +67,7 @@ function InvitationExpired() {
   );
 }
 
-// Signed in, but not as a candidate TalentBridge knows. /login ends that session before anyone signs in.
+// Signed in, but not as a candidate Kavuntra knows. /login ends that session before anyone signs in.
 function NotLinked({ code }: { code: string }) {
   const reason = code in LOGIN_NOTICES ? code : "account_not_linked";
   return (

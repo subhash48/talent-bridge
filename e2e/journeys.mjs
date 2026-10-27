@@ -81,8 +81,9 @@ async function website(browser) {
   await page.waitForTimeout(3000); // the film starts loading once the page is idle
   check("only the first frames load before scrolling", frames.size > 0 && frames.size <= 6, `${frames.size} frames`);
   check("no gallery of frame images", (await page.evaluate(() => document.images.length)) <= 2);
-  for (const label of ["Product", "Recruiters", "Small Businesses", "Candidates", "About"]) {
-    check(`nav: ${label}`, await page.getByRole("navigation", { name: "Website" }).getByRole("link", { name: label, exact: true }).first().isVisible());
+  const nav = page.getByRole("navigation", { name: "Website" });
+  for (const label of ["Product", "About", "Careers", "Contact"]) {
+    check(`nav: ${label}`, await nav.getByRole("link", { name: label, exact: true }).first().isVisible());
   }
   // The whole home page is told over the film: one pinned screen whose scenes take turns as it scrolls.
   // How shown a scene is: its words' opacity (scenes fade by their words and cards, never as a whole).

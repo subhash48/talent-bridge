@@ -98,6 +98,7 @@ export function SignupForm() {
             id="first-name"
             autoComplete="given-name"
             required
+            maxLength={100}
             autoFocus
             value={form.firstName}
             onChange={update("firstName")}
@@ -110,6 +111,7 @@ export function SignupForm() {
             id="last-name"
             autoComplete="family-name"
             required
+            maxLength={100}
             value={form.lastName}
             onChange={update("lastName")}
             aria-invalid={Boolean(shown.lastName)}

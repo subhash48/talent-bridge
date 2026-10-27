@@ -92,6 +92,7 @@ export function EmployerSignupForm({ mode }: { mode: WorkspaceMode | null }) {
           id="full-name"
           autoComplete="name"
           required
+          maxLength={100}
           autoFocus
           value={form.fullName}
           onChange={update("fullName")}

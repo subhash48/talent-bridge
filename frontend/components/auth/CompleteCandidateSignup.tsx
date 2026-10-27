@@ -49,8 +49,9 @@ export function CompleteCandidateSignup() {
       const meta = data.user.user_metadata ?? {};
       const first = typeof meta.first_name === "string" ? meta.first_name.trim() : "";
       const last = typeof meta.last_name === "string" ? meta.last_name.trim() : "";
-      if (first && last) await finish(first, last);
-      else setState({ kind: "names", first, last });
+      // Names saved at sign-up longer than an account takes (100) are asked again, never sent to fail forever.
+      if (first && last && first.length <= 100 && last.length <= 100) await finish(first, last);
+      else setState({ kind: "names", first: first.slice(0, 100), last: last.slice(0, 100) });
     })();
   }, [finish]);
 
@@ -107,6 +108,7 @@ function Names({ initial, onDone }: NamesProps) {
             id="first-name"
             autoComplete="given-name"
             required
+            maxLength={100}
             autoFocus
             value={first}
             onChange={(e) => setFirst(e.target.value)}
@@ -117,6 +119,7 @@ function Names({ initial, onDone }: NamesProps) {
             id="last-name"
             autoComplete="family-name"
             required
+            maxLength={100}
             value={last}
             onChange={(e) => setLast(e.target.value)}
           />

@@ -178,6 +178,7 @@ export function WorkspaceSetupForm({ initialMode }: { initialMode: WorkspaceMode
         <Input
           id="company"
           autoComplete="organization"
+          maxLength={120}
           value={company}
           onChange={(event) => setCompany(event.target.value)}
           aria-invalid={Boolean(shown.company)}
@@ -188,6 +189,7 @@ export function WorkspaceSetupForm({ initialMode }: { initialMode: WorkspaceMode
         <Input
           id="location"
           autoComplete="address-level2"
+          maxLength={200}
           placeholder="City, State"
           value={location}
           onChange={(event) => setLocation(event.target.value)}

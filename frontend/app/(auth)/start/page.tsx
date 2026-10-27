@@ -1,72 +1,94 @@
-import { BriefcaseBusiness, ChevronRight, Store, UserRound } from "lucide-react";
+import { Store, UserRound, Users, type LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { AuthCard, authLinkStyles } from "@/components/auth/AuthCard";
+import { KavuntraLogo } from "@/components/shared/KavuntraLogo";
 import { homePath } from "@/lib/auth";
 import { getSignedInUser } from "@/lib/session";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Get started" };
 
-const CHOICES = [
+// Who it's for decides which account is made, so Get started asks first. Each is one card over the valley.
+const ROLES: { href: string; icon: LucideIcon; tile: string; title: string; text: string; action: string }[] = [
+  {
+    href: "/signup",
+    icon: UserRound,
+    tile: "bg-[#dce5cf]",
+    title: "Candidate",
+    text: "Track your applications and stay informed.",
+    action: "Continue as Candidate",
+  },
   {
     href: "/signup/employer?mode=full",
-    icon: BriefcaseBusiness,
-    title: "A recruiting team",
-    text: "The full workspace: pipeline, interviews, messages and the AI assistant.",
+    icon: Users,
+    tile: "bg-[#dbe3ea]",
+    title: "Recruiter",
+    text: "Manage candidates and hire faster.",
+    action: "Continue as Recruiter",
   },
   {
     href: "/signup/employer?mode=simple",
     icon: Store,
-    title: "A small business",
-    text: "Simple Hire: say who you need, and Kavuntra does the rest with you.",
-  },
-  {
-    href: "/signup",
-    icon: UserRound,
-    title: "Looking for a job",
-    text: "One account for every application, with clear next steps.",
+    tile: "bg-[#f1e6d3]",
+    title: "Small Business",
+    text: "Post jobs and find great talent.",
+    action: "Continue as Small Business",
   },
 ];
 
-// The website's Get started: who it's for decides which account is made, so it asks first.
+// Tinted glass over the landscape: a deep teal tint the valley shows through, with a hairline of light at its edge.
+const CARD =
+  "bg-[rgb(32_58_55/0.34)] ring-1 ring-[rgb(235_239_226/0.28)] shadow-[0_12px_35px_rgb(16_40_44/0.22)] backdrop-blur-[14px]";
+
+/**
+ * The website's Get started: one still of the valley, the mark, and three cards of the same size, one per way of
+ * using Kavuntra. The whole card is the link.
+ */
 export default async function GetStartedPage() {
   const user = await getSignedInUser();
   if (user) redirect(homePath(user));
 
   return (
-    <AuthCard
-      title="How will you use Kavuntra?"
-      description="Choose one. You can always sign in to the others later."
-      footer={
-        <>
-          Already have an account?{" "}
-          <Link href="/signin" className={authLinkStyles}>
-            Sign in
-          </Link>
-        </>
-      }
-    >
-      <ul className="flex flex-col gap-3">
-        {CHOICES.map(({ href, icon: Icon, title, text }) => (
-          <li key={href}>
-            <Link
-              href={href}
-              className="group sky-card flex items-center gap-4 rounded-[18px] p-4 transition-[background-color,transform] duration-200 hover:-translate-y-px hover:bg-overlay/75"
-            >
-              <span className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-accent-soft/80 text-brand-ink">
-                <Icon aria-hidden className="size-5" strokeWidth={1.75} />
-              </span>
-              <span className="flex-1">
-                <span className="block text-[15px] font-semibold text-ink">{title}</span>
-                <span className="mt-0.5 block text-[13px] leading-snug text-stone">{text}</span>
-              </span>
-              <ChevronRight aria-hidden className="size-4 text-faint transition-transform group-hover:translate-x-0.5" />
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </AuthCard>
+    <div className="relative flex min-h-dvh flex-col">
+      <div aria-hidden className="fixed inset-0 -z-10 overflow-hidden bg-[#c9c6b3]">
+        <picture>
+          <source media="(max-aspect-ratio: 20/21)" srcSet="/hero/mobile/01.webp" />
+          <img src="/hero/desktop/01.webp" alt="" fetchPriority="high" className="absolute inset-0 size-full object-cover" />
+        </picture>
+        <div className="sky-grade absolute inset-0" />
+      </div>
+
+      <main className="mx-auto flex w-full max-w-[1080px] flex-1 flex-col items-center justify-center px-5 py-10 text-center sm:px-8">
+        <Link href="/" aria-label="Kavuntra home" className="rounded-md">
+          <KavuntraLogo className="gap-3 [&>svg:first-child]:h-8 [&>svg:last-child]:h-[14px]" />
+        </Link>
+        <h1 className="mt-9 text-[clamp(36px,4.4vw,60px)] leading-[1.05] font-semibold tracking-[-0.035em] text-[#10282b]">
+          Let&rsquo;s get started
+        </h1>
+        <p className="mt-3 text-[clamp(16px,1.3vw,20px)] leading-relaxed text-[#2b4044]">Choose how you want to use Kavuntra</p>
+
+        <ul className="mt-10 grid w-full max-w-[960px] grid-cols-1 gap-5 sm:grid-cols-3 sm:gap-6">
+          {ROLES.map(({ href, icon: Icon, tile, title, text }) => (
+            <li key={href} className="flex">
+              <Link
+                href={href}
+                className={cn(
+                  "group flex w-full flex-col items-center rounded-[22px] px-6 pt-9 pb-7 text-center sm:min-h-[280px]",
+                  CARD,
+                )}
+              >
+                <span className={cn("flex size-[72px] items-center justify-center rounded-full text-brand-deep", tile)}>
+                  <Icon aria-hidden className="size-8" strokeWidth={1.6} />
+                </span>
+                <span className="mt-6 text-[24px] leading-tight font-semibold tracking-[-0.02em] text-on-brand">{title}</span>
+                <span className="mt-2 max-w-[22ch] text-[15px] leading-snug text-on-brand/85">{text}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </main>
+    </div>
   );
 }

@@ -2,6 +2,7 @@ import { ArrowRight, ListChecks, MessageSquareText, NotebookPen, Radar, Store, t
 import Link from "next/link";
 
 import { FeatureIcon, Section } from "@/components/site/Section";
+import { buttonStyles } from "@/components/ui/Button";
 
 // What Kavuntra does, in the order it happens to a hire: the gap is noticed, the update drafted, the candidate kept
 // in the picture and prepared; and Simple Hire, the whole of it for a small business.
@@ -64,6 +65,16 @@ export function ProductSection() {
           </li>
         ))}
       </ul>
+
+      <div className="mt-16 flex flex-wrap items-center gap-3">
+        <Link href="/start" className={buttonStyles({ size: "xl", className: "group" })}>
+          Get started
+          <ArrowRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5" />
+        </Link>
+        <Link href="/#product" className={buttonStyles({ variant: "glass", size: "xl" })}>
+          See how it works
+        </Link>
+      </div>
     </Section>
   );
 }

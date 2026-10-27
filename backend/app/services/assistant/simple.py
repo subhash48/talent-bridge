@@ -52,15 +52,20 @@ _DAY = re.compile(
 )
 _EVERY_DAY = re.compile(r"\b(every day|daily|7 days a week|seven days a week|all week)\b", _I)
 
-# "$18 an hour", "$18/hr", "18 dollars an hour", "£11.50 per hour", "$600 a week".
+# "$18 an hour", "$18/hr", "$18 hourly", "18 dollars an hour", "£11.50 per hour", "$1000 a week", and a range:
+# "$15-18 an hour", "$15 to $18 an hour", "between $15 and $18 an hour".
+_AMOUNT = r"\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?"
 _PAY = re.compile(
-    r"(?P<symbol>[$£€])\s?(?P<amount>\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)(?:\s*(?:dollars|bucks))?"
-    r"(?:\s*(?:an?|per|/|each|every)\s*(?P<period>hour|hr|h|day|shift|week|wk|month|year|yr))?\b"
+    rf"(?P<symbol>[$£€])\s?(?P<amount>{_AMOUNT})(?:\s*(?:-|–|to|and)\s*[$£€]?\s?(?P<high>{_AMOUNT}))?"
+    r"(?:\s*(?:dollars|bucks))?"
+    r"(?:\s*(?:an?|per|/|each|every)\s*(?P<period>hour|hr|h|day|shift|week|wk|month|year|yr)"
+    r"|\s*(?P<ly>hourly|daily|weekly|monthly|yearly|annually))?\b"
     r"|(?P<bare>\d{1,3}(?:\.\d{1,2})?)\s*(?:dollars|bucks)\s*(?:an?|per|/)\s*(?P<bare_period>hour|hr|day|shift|week)\b",
     _I,
 )
 _PERIODS = {"hour": "hour", "hr": "hour", "h": "hour", "day": "day", "shift": "shift", "week": "week", "wk": "week"}
-_PERIODS |= {"month": "month", "year": "year", "yr": "year"}
+_PERIODS |= {"month": "month", "year": "year", "yr": "year", "hourly": "hour", "daily": "day", "weekly": "week"}
+_PERIODS |= {"monthly": "month", "yearly": "year", "annually": "year"}
 _PAY_WORDS = re.compile(r"\b(pay|paying|pays|wage|rate|salary|an hour|per hour|/h(ou)?r)\b", _I)
 
 _SHIFTS = (
@@ -218,14 +223,18 @@ def days(text: str) -> list[Weekday]:
 
 
 def pay(text: str) -> str | None:
-    """The pay as the owner said it, written plainly: "$18/hour", "£11.50/hour", "$600/week", "$18"."""
+    """The pay as the owner said it, written plainly: "$18/hour", "£11.50/hour", "$600/week", "$15–$18/hour",
+    "$18"."""
     for match in _PAY.finditer(text):
         if match.group("bare"):
             return f"${match.group('bare')}/{_PERIODS[match.group('bare_period').lower()]}"
-        period = match.group("period")
+        period = match.group("period") or match.group("ly")
         if period is None and not _PAY_WORDS.search(text):
             continue  # a number with a currency sign isn't pay unless the request is about pay
-        amount = f"{match.group('symbol')}{match.group('amount')}"
+        symbol = match.group("symbol")
+        amount = f"{symbol}{match.group('amount')}"
+        if match.group("high"):
+            amount += f"–{symbol}{match.group('high')}"
         return f"{amount}/{_PERIODS[period.lower()]}" if period else amount
     return None
 

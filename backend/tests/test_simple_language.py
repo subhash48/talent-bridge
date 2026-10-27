@@ -63,6 +63,12 @@ def test_days(said: str, expected: list[Weekday]) -> None:
         ("paying £11.50 per hour", "£11.50/hour"),
         ("18 dollars an hour", "$18/hour"),
         ("$600 a week", "$600/week"),
+        ("$1000 a week", "$1000/week"),
+        ("$1,200 a month", "$1,200/month"),
+        ("$18 hourly", "$18/hour"),
+        ("$15-18 an hour", "$15–$18/hour"),
+        ("$15 to $18 an hour", "$15–$18/hour"),
+        ("between $15 and $18 an hour", "$15–$18/hour"),
         ("the pay is $20", "$20"),
         ("we sold $40 of coffee", None),  # money, but not pay
         ("no pay mentioned", None),

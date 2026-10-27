@@ -187,6 +187,10 @@ export function SiteHeader() {
                 </li>
               ))}
             </ul>
+            <p className="mt-1 border-t border-ink/[0.07] px-3.5 pt-3 pb-1 text-[11px] font-semibold tracking-[0.16em] text-stone uppercase">
+              Solutions
+            </p>
+            <SolutionRows pathname={pathname} onPick={close} />
           </nav>
         )}
       </div>

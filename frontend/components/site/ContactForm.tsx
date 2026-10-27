@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { errorMessage } from "@/services/api";
 import { CONTACT_TOPICS, sendContactMessage, type ContactMessage } from "@/services/contact";
 
-const EMPTY: ContactMessage = { name: "", email: "", company: "", topic: "product", message: "", website: "" };
+const EMPTY: ContactMessage = { name: "", email: "", company: "", topic: "general", message: "", website: "" };
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** Contact Kavuntra: name, email, company (optional), topic and message. */

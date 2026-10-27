@@ -235,6 +235,20 @@ def test_other_numbers_are_not_a_request_for_theirs(said: str) -> None:
     assert not simple.asks_for_contacts(said)
 
 
+@pytest.mark.parametrize(
+    ("said", "names"),
+    [
+        ("Get Maria's phone number", ["Maria"]),
+        ("Send me Maria Lopez's phone number", ["Maria Lopez"]),
+        ("Show Tom Becker's number", ["Tom Becker"]),
+        ("What's Maria Lopez's phone number?", ["Maria Lopez"]),
+    ],
+)
+def test_whose_number_is_the_name_alone(said: str, names: list[str]) -> None:
+    asked = intent(said)
+    assert (asked.action, asked.candidate_names) == ("show_contacts", names)
+
+
 def test_a_message_with_the_owners_number_is_a_message() -> None:
     assert intent("Message these three and give them my phone number", has_selection=True).action == "draft_outreach"
 

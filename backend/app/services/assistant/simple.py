@@ -185,6 +185,8 @@ _ONLINE = re.compile(
     _I,
 )
 _POSSESSIVE = re.compile(r"\b(?P<name>[A-Z][a-zà-ÿ'\-]+(?:\s+[A-Z][a-zà-ÿ'\-]+)?)'s\s+(?:phone|number|contact)")
+# A request's first word is capitalized too: "Get Maria's number" is about Maria.
+_LEADING_VERB = re.compile(r"^(?:get|give|send|show|share|find|text|call|email|tell|list|what|whats)\s+", _I)
 # "Ask these three if they can come Tuesday between 2 and 5", "ask them if they can interview Tuesday afternoon".
 _MEET = re.compile(
     r"\b(ask|see|check|find out)\b.{0,40}\b(if|whether)\b.{0,40}\b(can|could|are able to|would|available to)\b.{0,20}"
@@ -336,7 +338,8 @@ def refine(intent: AssistantIntent, text: str, *, has_selection: bool, proposal_
         }
         return intent.model_copy(update={"job": job.model_copy(update=facts)})
     if asks_for_contacts(text):
-        names = [match.group("name") for match in _POSSESSIVE.finditer(text)] or intent.candidate_names
+        names = [_LEADING_VERB.sub("", match.group("name")) for match in _POSSESSIVE.finditer(text)]
+        names = names or intent.candidate_names
         if not names and intent.candidate_name:
             names = [intent.candidate_name]
         return AssistantIntent(action="show_contacts", candidate_names=names, instructions=text[:1000])

@@ -35,12 +35,13 @@ const APPLICATIONS = [
 export function CandidatesSection() {
   return (
     <Section
+      level="h1"
       id="candidates"
       eyebrow="For candidates"
       title="One place for your hiring journey."
-      intro="Apply to a role on a TalentBridge careers page, or create your account first. Either way, everything about your applications is in one portal: where you stand, what happens next, and how to prepare."
+      intro="Apply to a role on a Kavuntra careers page, or create your account first. Either way, everything about your applications is in one portal: where you stand, what happens next, and how to prepare."
     >
-      <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-[1.3fr_1fr]">
+      <div className="mt-16 grid grid-cols-1 gap-12 lg:grid-cols-[1.3fr_1fr]">
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {FEATURES.map(({ icon: Icon, label }) => (
             <li key={label} className="flex items-center gap-3">
@@ -51,18 +52,18 @@ export function CandidatesSection() {
             </li>
           ))}
         </ul>
-        <div className="glass self-start rounded-[18px] border border-border p-5" aria-label="An example account">
+        <div className="reveal sky-card self-start rounded-[24px] p-6" aria-label="An example account">
           <p className="text-[13px] font-semibold text-ink">My Applications</p>
           <ul className="mt-3 flex flex-col gap-2">
             {APPLICATIONS.map((application) => (
               <li
                 key={application.company}
-                className="flex items-center justify-between gap-3 rounded-[12px] border border-border bg-surface-raised px-3.5 py-3"
+                className="flex items-center justify-between gap-3 rounded-[14px] bg-overlay px-4 py-3 ring-1 ring-ink/[0.06]"
               >
                 <span className="text-sm text-charcoal">
                   <span className="font-semibold text-ink">{application.company}</span> — {application.role}
                 </span>
-                <span className="rounded-full bg-brand-soft px-2.5 py-0.5 text-xs font-medium text-brand-ink">
+                <span className="rounded-full bg-accent-soft/80 px-2.5 py-0.5 text-xs font-medium text-brand-ink">
                   {application.stage}
                 </span>
               </li>
@@ -73,11 +74,11 @@ export function CandidatesSection() {
           </p>
         </div>
       </div>
-      <div className="mt-10 flex flex-wrap gap-3">
-        <Link href="/signup" className={buttonStyles({ size: "lg" })}>
+      <div className="mt-16 flex flex-wrap gap-3">
+        <Link href="/signup" className={buttonStyles({ size: "xl" })}>
           Create candidate account
         </Link>
-        <Link href="/login?as=candidate" className={buttonStyles({ variant: "secondary", size: "lg" })}>
+        <Link href="/login?as=candidate" className={buttonStyles({ variant: "secondary", size: "xl" })}>
           Already applied? Sign in
         </Link>
       </div>

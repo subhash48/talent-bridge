@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Instrument_Serif } from "next/font/google";
 import type { ReactNode } from "react";
 
 import "./globals.css";
@@ -7,6 +7,8 @@ import "./globals.css";
 import "@/lib/supabase-server";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
+// The home page's headlines over the film: an editorial serif, in its one weight.
+const instrumentSerif = Instrument_Serif({ weight: "400", subsets: ["latin"], variable: "--font-instrument-serif" });
 
 const DESCRIPTION = "Kavuntra keeps recruiters responsive and candidates informed throughout the hiring process.";
 

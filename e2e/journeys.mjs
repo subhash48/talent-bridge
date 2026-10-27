@@ -71,28 +71,104 @@ async function website(browser) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await context.newPage();
   const errors = [];
+  const frames = new Set();
   page.on("pageerror", (error) => errors.push(error.message));
+  page.on("request", (request) => request.url().includes("/hero/") && frames.add(new URL(request.url()).pathname));
   await page.goto(WEB);
-  check("hero headline kept", await page.getByRole("heading", { name: "Never leave another candidate wondering what's happening." }).isVisible());
-  for (const label of ["Product", "For Recruiters", "For Small Businesses", "For Candidates", "About", "Contact"]) {
+  check("hero headline", await page.getByRole("heading", { name: "Hiring shouldn't feel like a black box." }).isVisible());
+  check("hero subheadline", await page.getByText("Kavuntra keeps recruiters responsive and candidates informed").isVisible());
+  check("hero CTAs", (await page.getByRole("link", { name: "Get started" }).count()) >= 2 && (await page.getByRole("link", { name: "See how it works" }).isVisible()));
+  await page.waitForTimeout(3000); // the film starts loading once the page is idle
+  check("only the first frames load before scrolling", frames.size > 0 && frames.size <= 6, `${frames.size} frames`);
+  check("no gallery of frame images", (await page.evaluate(() => document.images.length)) <= 2);
+  for (const label of ["Product", "Recruiters", "Small Businesses", "Candidates", "About"]) {
     check(`nav: ${label}`, await page.getByRole("navigation", { name: "Website" }).getByRole("link", { name: label, exact: true }).first().isVisible());
   }
-  for (const id of ["product", "recruiters", "small-business", "candidates", "about", "contact"]) {
-    check(`section #${id}`, (await page.locator(`section#${id}`).count()) === 1);
+  // The whole home page is told over the film: one pinned screen whose scenes take turns as it scrolls.
+  // How shown a scene is: its words' opacity (scenes fade by their words and cards, never as a whole).
+  const sceneOpacity = (target, label) =>
+    target.evaluate(
+      (name) => Number(getComputedStyle(document.querySelector(`[data-scene][aria-label="${name}"] .scene-fade`)).opacity),
+      label,
+    );
+  const scrollTo = async (target, y) => {
+    for (let at = await target.evaluate(() => scrollY); Math.abs(y - at) > 2; ) {
+      at += Math.sign(y - at) * Math.min(200, Math.abs(y - at));
+      await target.evaluate((top) => window.scrollTo(0, top), at);
+      await target.waitForTimeout(25);
+    }
+    await target.waitForTimeout(900);
+  };
+  const productAt = await page.evaluate(() => document.getElementById("product").getBoundingClientRect().top + scrollY);
+  const pixels = () =>
+    page.evaluate(() => {
+      const canvas = document.querySelector("canvas");
+      return canvas.dataset.ready ? [...canvas.getContext("2d").getImageData(canvas.width / 2, canvas.height * 0.8, 8, 1).data] : null;
+    });
+  await scrollTo(page, Math.round(productAt * 0.35)); // the middle of the first statement
+  check("hero film draws on its canvas once scrolled", await shows(page.locator("canvas[data-ready]")));
+  const before = await pixels();
+  check("a statement takes over from the opening", (await sceneOpacity(page, "Know who needs an update")) > 0.95);
+  check("the opening steps aside", (await sceneOpacity(page, "Introduction")) < 0.05);
+  await scrollTo(page, Math.round(productAt * 0.6));
+  const after = await pixels();
+  check("the film plays as the page scrolls", before && after && before.some((value, index) => Math.abs(value - after[index]) > 8));
+  check("the rest of the frames load while scrolling", frames.size > 6, `${frames.size} frames`);
+
+  for (const id of ["product", "recruiters", "candidates", "small-business"]) {
+    check(`anchor #${id}`, (await page.locator(`#${id}`).count()) === 1);
   }
-  check("how it works steps", (await page.locator("#product li").count()) === 3);
-  check("Know who needs attention", await page.getByText("Know who needs attention").isVisible());
-  check("small business headline", await page.getByText("Hiring shouldn't require learning recruiting software.").isVisible());
-  check("candidates headline", await page.getByText("One place for your hiring journey.").isVisible());
-  check("about headline", await page.getByText("Hiring should feel better on both sides.").isVisible());
-  check("official contact email shown", await page.getByRole("link", { name: "hello@talentbridge.example" }).isVisible());
-  check("footer copyright", await page.getByText("© 2026 TalentBridge").isVisible());
+  await page.getByRole("navigation", { name: "Website" }).getByRole("link", { name: "Product", exact: true }).click();
+  await page.waitForTimeout(1500);
+  check("Product in the nav shows the two sides", (await sceneOpacity(page, "Product")) > 0.95);
+  for (const [hash, label, headline] of [
+    ["recruiters", "For recruiters", "Never lose track of a candidate conversation."],
+    ["candidates", "For candidates", "No more wondering what happens next."],
+    ["small-business", "Simple Hire, for small businesses", "Just tell Kavuntra who you need."],
+  ]) {
+    await page.goto(`${WEB}/#${hash}`);
+    await page.waitForTimeout(1500);
+    check(`/#${hash} opens on its scene`, (await sceneOpacity(page, label)) > 0.95 && (await page.getByText(headline).count()) === 1);
+  }
+  check("hidden scenes take no clicks", (await page.evaluate(() => getComputedStyle(document.querySelector('[data-scene][aria-label="Introduction"]')).pointerEvents)) === "none");
+  await scrollTo(page, await page.evaluate(() => document.documentElement.scrollHeight));
+  check("footer copyright", await page.getByText("© 2026 Kavuntra").isVisible());
   check("no made-up claims", !(await page.content()).match(/customers love|trusted by|backed by|funding|market leader/i));
 
+  const reduced = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: "reduce" });
+  const still = await reduced.newPage();
+  await still.goto(WEB);
+  await still.waitForTimeout(1500);
+  const stillScenes = await still.evaluate(() =>
+    [...document.querySelectorAll("[data-scene]")].map((scene) =>
+      getComputedStyle(scene).display === "none" ? "hidden" : getComputedStyle(scene.querySelector(".scene-fade")).opacity,
+    ),
+  );
+  check(
+    "reduced motion: every content scene shown in turn, no film",
+    stillScenes.filter((value) => value === "1").length === 5 && (await still.locator("canvas[data-ready]").count()) === 0,
+    stillScenes.join(","),
+  );
+  await reduced.close();
+
+  await page.goto(`${WEB}/for-small-businesses`);
+  check("small business page", await page.getByRole("heading", { name: "Hiring shouldn't require learning recruiting software." }).isVisible());
+  await page.goto(`${WEB}/for-candidates`);
+  check("candidates page", await page.getByRole("heading", { name: "One place for your hiring journey." }).isVisible());
+  await page.goto(`${WEB}/for-recruiters`);
+  check("recruiters page", await page.getByRole("heading", { name: "A workspace that keeps every candidate informed." }).isVisible());
+  await page.goto(`${WEB}/about`);
+  check("about page", await page.getByRole("heading", { name: "Hiring should feel better on both sides." }).isVisible());
+  await page.goto(`${WEB}/start`);
+  check("Get started asks how you'll use it", await page.getByRole("heading", { name: "How will you use Kavuntra?" }).isVisible());
+  check("Get started offers three ways in", (await page.locator('main a[href^="/signup"]').count()) === 3);
+
+  await page.goto(`${WEB}/contact`);
+  check("official contact email shown", await page.getByRole("link", { name: "hello@kavuntra.example" }).isVisible());
   await page.fill("#contact-name", "Priya Nair");
   await page.fill("#contact-email", "priya@northwind.example");
   await page.selectOption("#contact-topic", "pilot");
-  await page.fill("#contact-message", "We'd like to pilot TalentBridge.");
+  await page.fill("#contact-message", "We'd like to pilot Kavuntra.");
   await page.getByRole("button", { name: "Send message" }).click();
   await page.getByText("Thanks, Priya.").waitFor({ timeout: 10000 });
   const stored = await sql("select topic, email from contact_requests order by created_at desc limit 1");
@@ -107,7 +183,7 @@ async function website(browser) {
   await page.goto(WEB);
   await page.getByRole("banner").getByRole("link", { name: "Sign in" }).click();
   await page.waitForURL("**/signin");
-  check("sign in asks who you are", await page.getByRole("heading", { name: "How are you using TalentBridge?" }).isVisible());
+  check("sign in asks who you are", await page.getByRole("heading", { name: "How are you using Kavuntra?" }).isVisible());
   check("candidate choice", await page.getByRole("link", { name: /Candidate/ }).first().isVisible());
   check("employer choice", await page.getByRole("link", { name: /Employer \/ Recruiter/ }).isVisible());
 
@@ -183,7 +259,7 @@ async function applyFirst(browser) {
   check("days are required for this job", await page.getByText("Choose the days you can work.").isVisible());
   await page.getByLabel("Friday").check();
   await page.getByRole("button", { name: "Submit application" }).click();
-  await page.getByText("Your application has been submitted. Create your TalentBridge password").waitFor({ timeout: 15000 });
+  await page.getByText("Your application has been submitted. Create your Kavuntra password").waitFor({ timeout: 15000 });
   check("submitted, with the create-your-password message", true);
   const application = await sql(
     "select a.phone, a.availability, a.experience_note, a.linkedin_url from applications a join candidates c on c.id = a.candidate_id where c.email = $1",
@@ -194,7 +270,7 @@ async function applyFirst(browser) {
   check("activation link emailed", Boolean(link));
   await page.goto(link);
   await page.waitForURL("**/welcome", { timeout: 20000 });
-  check("activation opens Create your TalentBridge password", await page.getByRole("heading", { name: "Create your TalentBridge password" }).isVisible());
+  check("activation opens Create your Kavuntra password", await page.getByRole("heading", { name: "Create your Kavuntra password" }).isVisible());
   await page.fill("#password", "Kitchen-2026");
   await page.fill("#confirm-password", "Kitchen-2026");
   await page.getByRole("button", { name: "Create password and open my portal" }).click();
@@ -224,7 +300,7 @@ async function sophiaElsewhere(browser) {
   await page.setInputFiles("#apply-resume", PDF);
   await page.getByRole("button", { name: "Submit application" }).click();
   // A first run: she already has an account. A rerun: she already applied to this one.
-  await page.getByText(/You already have a TalentBridge account|You've applied for/).first().waitFor({ timeout: 15000 });
+  await page.getByText(/You already have a Kavuntra account|You've applied for/).first().waitFor({ timeout: 15000 });
   check("Sophia is told she already has an account", true);
   const people = await sql("select count(*)::int as n from candidates where email = 'sophia.martinez@example.com'");
   const accounts = await sql("select count(*)::int as n from users where email = 'sophia.martinez@example.com'");

@@ -5,7 +5,7 @@ The shapes follow Ashby's webhook reference (developers.ashbyhq.com, API version
 fields the integration reads (schemas.py) plus the envelope around them. Fields Ashby sends that the
 integration deliberately ignores (the hiring team, offer details, the submitter's IP, feedback links)
 are left out. The simulator's jobs share one interview plan, STAGES; mapping.py decides what each
-stage becomes in TalentBridge, exactly as for a real delivery.
+stage becomes in Kavuntra, exactly as for a real delivery.
 """
 
 from datetime import UTC, datetime, timedelta
@@ -52,7 +52,7 @@ def application_event(
 ) -> dict[str, Any]:
     """An application webhook: applicationSubmit, applicationUpdate, candidateStageChange or candidateHire.
 
-    A blank name, and no phone, leave the person's details in TalentBridge as they are.
+    A blank name, and no phone, leave the person's details in Kavuntra as they are.
     """
     stage_id, stage_type = STAGES[stage]
     candidate: dict[str, Any] = {

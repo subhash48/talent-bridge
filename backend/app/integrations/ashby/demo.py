@@ -1,4 +1,4 @@
-"""Development only: simulate Ashby events, to see the Ashby -> TalentBridge flow without an Ashby account.
+"""Development only: simulate Ashby events, to see the Ashby -> Kavuntra flow without an Ashby account.
 
     python -m app.integrations.ashby.demo apply --email testcandidate1@example.com --first-name Maya --last-name Patel --job "TEST - ML Engineer"
     python -m app.integrations.ashby.demo stage --email testcandidate1@example.com --stage interview
@@ -88,7 +88,7 @@ NO_EMAIL_NOTE = "Simulator: no invitation email was sent. Run apply again with -
 
 # --stage NAME -> the Ashby webhook that puts an application there: action, the Ashby stage (a title in
 # demo_payloads.STAGES), the application status and the archive reason type. mapping.py decides
-# what each becomes in TalentBridge, exactly as for a real delivery.
+# what each becomes in Kavuntra, exactly as for a real delivery.
 STAGE_EVENTS: dict[str, tuple[str, str, str, str | None]] = {
     "screening": ("candidateStageChange", "Application Review", "Active", None),
     "interview": ("candidateStageChange", "Technical Interview", "Active", None),
@@ -117,7 +117,7 @@ class Submitted:
 
     outcome: Outcome
     follow_ups: FollowUps
-    application_id: uuid.UUID | None = None  # None if no application in TalentBridge came of it
+    application_id: uuid.UUID | None = None  # None if no application in Kavuntra came of it
     candidate_id: uuid.UUID | None = None
 
 
@@ -237,7 +237,7 @@ async def stage(
     action, ashby_stage, status, reason_type = STAGE_EVENTS[stage]
     async with factory() as session:
         application, candidate, job = await _demo_application(session, _email(email), job_title)
-    # Someone TalentBridge had before they applied on the demo careers site has no Ashby id. The import
+    # Someone Kavuntra had before they applied on the demo careers site has no Ashby id. The import
     # links them by email to the simulator's id, which is put back to none below.
     candidate_id = candidate.external_id or demo_id("candidate", candidate.email)
     payload = application_event(
@@ -396,7 +396,7 @@ async def describe(session: AsyncSession, email: str) -> list[str]:
     ).all()
     for application, job in rows:
         portal = portal_status(application, job.status)
-        origin = "Ashby" if application.external_id else "TalentBridge"
+        origin = "Ashby" if application.external_id else "Kavuntra"
         lines.append(
             f"  {job.title}: stage {application.stage} (Ashby: {application.external_stage_title}, {application.external_status}),"
             f" source {origin} / {application.source}"
@@ -508,7 +508,7 @@ async def _check_unclaimed(session: AsyncSession, email: str) -> None:
         raise DemoError(f"{email} belongs to a candidate who isn't simulator data. Use another address.")
     user = await session.scalar(select(User).where(User.email == email))
     if user is not None and (candidate is None or candidate.user_id != user.id):
-        raise DemoError(f"{email} belongs to a TalentBridge sign-in that isn't simulator data. Use another address.")
+        raise DemoError(f"{email} belongs to a Kavuntra sign-in that isn't simulator data. Use another address.")
 
 
 async def _demo_application(

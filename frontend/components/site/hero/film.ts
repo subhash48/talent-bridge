@@ -119,8 +119,10 @@ export class Film {
 
   private paint(bitmap: ImageBitmap, zoom: number): void {
     const rect = coverRect(bitmap, this.canvas, zoom);
-    // Bilinear: the frames are soft photographs, and a cheaper resample keeps scrubbing smooth on phones.
-    this.context.imageSmoothingQuality = "medium";
+    // The frame is nearly always resampled (the box is rarely its exact size, and the shot closes in), so the
+    // best interpolation the browser has: the cheaper ones blur the grass and the water visibly on dense screens.
+    this.context.imageSmoothingEnabled = true;
+    this.context.imageSmoothingQuality = "high";
     this.context.drawImage(bitmap, rect.x, rect.y, rect.width, rect.height);
   }
 

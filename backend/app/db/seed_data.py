@@ -237,7 +237,7 @@ COMPANIES: tuple[CompanySeed, ...] = (
             ("Nova AI website", "https://nova-ai.example/"),
             ("Engineering blog", "https://nova-ai.example/blog/"),
         ),
-        source="Fictional demo employer in TalentBridge's seed data.",
+        source="Fictional demo employer in Kavuntra's seed data.",
     ),
     # Fictional: a third employer, so the portal's application selector can be seen (and tested) with
     # applications at three companies. Its links use the reserved .example domain.
@@ -284,7 +284,7 @@ COMPANIES: tuple[CompanySeed, ...] = (
             ("Harbor Robotics website", "https://harbor-robotics.example/"),
             ("Engineering at Harbor", "https://harbor-robotics.example/engineering/"),
         ),
-        source="Fictional demo employer in TalentBridge's seed data.",
+        source="Fictional demo employer in Kavuntra's seed data.",
     ),
     # Real companies, so Sophia's portal can show applications at four employers. Their profiles hold only
     # each company's own public wording about itself (checked on its website, October 2026) and links to
@@ -309,7 +309,7 @@ COMPANIES: tuple[CompanySeed, ...] = (
         hiring_process=(),
         hiring_note="",
         links=(("OpenAI website", "https://openai.com/"), ("About OpenAI", "https://openai.com/about/")),
-        source="Demo employer in TalentBridge's seed data, described in OpenAI's own words from openai.com/about.",
+        source="Demo employer in Kavuntra's seed data, described in OpenAI's own words from openai.com/about.",
     ),
     CompanySeed(
         "anthropic",
@@ -336,7 +336,7 @@ COMPANIES: tuple[CompanySeed, ...] = (
             ("Anthropic website", "https://www.anthropic.com/"),
             ("About Anthropic", "https://www.anthropic.com/company"),
         ),
-        source="Demo employer in TalentBridge's seed data, described in Anthropic's own words from anthropic.com/company.",
+        source="Demo employer in Kavuntra's seed data, described in Anthropic's own words from anthropic.com/company.",
     ),
     CompanySeed(
         "google",
@@ -360,7 +360,7 @@ COMPANIES: tuple[CompanySeed, ...] = (
             ("About Google", "https://about.google/"),
             ("Google company info", "https://about.google/company-info/"),
         ),
-        source="Demo employer in TalentBridge's seed data, described in Google's own words from about.google.",
+        source="Demo employer in Kavuntra's seed data, described in Google's own words from about.google.",
     ),
     CompanySeed(
         "sams-cafe",
@@ -381,7 +381,7 @@ COMPANIES: tuple[CompanySeed, ...] = (
         hiring_process=("Apply", "A short chat with Sam", "A trial shift"),
         hiring_note="",
         links=(),
-        source="Fictional small business in TalentBridge's local demo data.",
+        source="Fictional small business in Kavuntra's local demo data.",
         workspace_mode=WorkspaceMode.SIMPLE,
     ),
 )

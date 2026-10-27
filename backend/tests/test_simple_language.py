@@ -206,6 +206,39 @@ def test_approvals_and_draft_edits_are_left_alone() -> None:
     assert simple.refine(yes, "yes, post it", has_selection=False, proposal_kind="job") == yes
 
 
+@pytest.mark.parametrize(
+    "said",
+    [
+        "Show me their phone numbers.",
+        "Give me the phone numbers of these three candidates.",
+        "I need the phone numbers of the people who applied",
+        "What's Maria Lopez's phone number?",
+        "Send me Maria's number",
+        "How do I call them?",
+        "Get their contact details",
+    ],
+)
+def test_asking_for_their_numbers(said: str) -> None:
+    assert simple.asks_for_contacts(said)
+
+
+@pytest.mark.parametrize(
+    "said",
+    [
+        "Message these three and give them my phone number",  # a message, with the owner's own number
+        "Text them to ask if they can start Saturday",  # a message
+        "Show me the numbers for the Product Designer role",  # how many, not phone numbers
+        "Tell them they can reach me on our number",
+    ],
+)
+def test_other_numbers_are_not_a_request_for_theirs(said: str) -> None:
+    assert not simple.asks_for_contacts(said)
+
+
+def test_a_message_with_the_owners_number_is_a_message() -> None:
+    assert intent("Message these three and give them my phone number", has_selection=True).action == "draft_outreach"
+
+
 def test_looking_people_up_online_is_noticed() -> None:
     assert simple.asks_online_lookup("Search online for Maria's phone number")
     assert simple.asks_online_lookup("find their numbers on Facebook")

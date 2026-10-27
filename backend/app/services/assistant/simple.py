@@ -165,11 +165,20 @@ _REQUIREMENT = re.compile(
     _I,
 )
 
+# Asking for applicants' numbers: "Show me their phone numbers", "What's Maria's number?", "How do I call
+# them?". Not "the numbers for the role" (how many), and not "give them my number" or "text them to ask…",
+# which are messages.
+_THEIR_NUMBERS = (
+    r"(?:phone numbers?|(?:their|these|those|his|her|[A-Z][\w'\-]*'s) (?:phone )?numbers?"
+    r"|contact (?:details|info\w*|numbers?))"
+)
 _CONTACTS = re.compile(
-    r"\b(phone numbers?|numbers|contact (details|info\w*|numbers?)|how (do|can) i (call|reach|contact)|"
-    r"(call|ring|text) (them|these|those))\b",
+    rf"\b(?:show|give|get|send|share|list|see|need|want|what(?:'s| is| are)|find|search|look up)\b[^.?!]{{0,40}}?"
+    rf"\b{_THEIR_NUMBERS}\b"
+    r"|\bhow (?:do|can) i (?:call|reach|contact)\b|\b(?:call|ring) (?:them|these|those)\b",
     _I,
 )
+_MY_NUMBER = re.compile(r"\b(?:my|our) (?:phone |cell |mobile )?numbers?\b", _I)
 _ONLINE = re.compile(
     r"\b(search|look (?:it |them |him |her )?up|google|find)\b.{0,50}\b(online|internet|on the web|web|facebook|instagram|"
     r"linkedin|social media)\b|\b(online|internet)\b.{0,30}\b(phone|number|contact)",
@@ -302,7 +311,7 @@ def job_changes(text: str, said: JobChanges | None = None) -> tuple[JobChanges, 
 
 
 def asks_for_contacts(text: str) -> bool:
-    return bool(_CONTACTS.search(text))
+    return bool(_CONTACTS.search(text)) and not _MY_NUMBER.search(text)
 
 
 def asks_online_lookup(text: str) -> bool:

@@ -40,7 +40,8 @@ function Frame({
   align?: "left" | "center";
   visualAlign?: "start" | "end" | "center";
 }) {
-  // Left-aligned scenes on wide screens: words at the top of one column, the picture at the foot of the other.
+  // Left-aligned scenes on wide screens: words at the top of one column, the picture at the foot of the other. The
+  // scenes put their words on the right, where the sky and the sunlit haze are light; the crags are on the left.
   const beside = align === "left" && visual;
   return (
     <div
@@ -52,13 +53,11 @@ function Frame({
     >
       <div
         className={cn(
-          "scene-fade relative isolate",
+          "scene-fade",
           align === "center" ? "mx-auto max-w-[56rem] text-center" : "max-w-[40rem]",
           beside && "lg:max-w-[34rem] lg:shrink-0 lg:self-start",
         )}
       >
-        {/* A soft lavender wash keeps the words readable wherever the valley is busy behind them. */}
-        <div aria-hidden className="sky-wash pointer-events-none absolute -inset-x-[16%] -inset-y-[22%] -z-10" />
         {children}
       </div>
       {visual && (
@@ -202,6 +201,7 @@ const WAITING = [
 export function RecruiterScene() {
   return (
     <Frame
+      visualAlign="start"
       visual={
         <figure
           aria-label="The recruiter workspace's Today page, with candidates waiting for an update and a drafted reply"
@@ -343,6 +343,7 @@ const FACTS = ["$17/hour", "Saturday + Sunday", "2 openings"];
 export function SimpleHireScene() {
   return (
     <Frame
+      visualAlign="start"
       visual={
         <figure aria-label="Simple Hire: asking for two weekend cashiers, and the job ready to post" className="w-full max-w-[460px]">
           <div aria-hidden className="flex flex-col gap-3">

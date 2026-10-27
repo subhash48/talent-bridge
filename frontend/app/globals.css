@@ -196,25 +196,18 @@
 }
 
 /*
- * The website's sky, taken from the reference landscape: a soft lavender-grey high up, warming to peach towards
- * the hills. sky-grade tints the film's own sky with it; sky-wash sits behind words that cross the busier parts
- * of the picture; sky-backdrop is the same sky for the website's pages without the film.
+ * The film's sky, toned towards the soft blue of the approved landscape. The colour blend takes only the blue's hue
+ * and keeps the brightness of every pixel under it, so the pale cream sky turns pale blue without being lightened
+ * or washed out the way a white layer would. It fades out above the far hills, and the sun on the right keeps its
+ * gold. Nothing else covers the film: no white, cream or lavender wash, not even behind the words.
  */
 @utility sky-grade {
-  background: linear-gradient(
-    180deg,
-    rgb(203 206 218 / 0.72) 0%,
-    rgb(220 217 221 / 0.52) 24%,
-    rgb(238 220 208 / 0.3) 42%,
-    rgb(238 220 208 / 0) 60%
-  );
+  background-image: linear-gradient(180deg, rgb(105 158 218 / 0.62) 0%, rgb(115 162 215 / 0.45) 20%, rgb(120 165 215 / 0) 36%);
+  mix-blend-mode: color;
+  mask-image: radial-gradient(34% 55% at 97% 30%, transparent 25%, black 100%);
 }
 
-/* Full strength across the words, fading only past their edge. */
-@utility sky-wash {
-  background: radial-gradient(closest-side, rgb(226 223 226 / 0.74) 58%, rgb(226 223 226 / 0));
-}
-
+/* sky-backdrop is the website's sky for its pages without the film. */
 @utility sky-backdrop {
   background-color: #e8e4e2;
   background-image: linear-gradient(180deg, #dfe1e8 0%, #e8e4e3 38%, #f0e4db 100%);
@@ -239,18 +232,16 @@
 
 /*
  * The still version of a home film scene (reduced motion, data saver): its own still of the valley, sky at the top,
- * so the scene's words sit on the sky as they do in the film.
+ * so the scene's words sit on the sky as they do in the film, toned as sky-grade tones the film.
  */
 @utility still-scene {
-  background-image:
-    linear-gradient(180deg, rgb(203 206 218 / 0.72) 0%, rgb(220 217 221 / 0.52) 24%, rgb(238 220 208 / 0.3) 42%, rgb(238 220 208 / 0) 60%),
-    url("/hero/desktop/01.webp");
+  --still-tone: linear-gradient(180deg, rgb(105 158 218 / 0.62) 0%, rgb(115 162 215 / 0.45) 20%, rgb(120 165 215 / 0) 36%);
+  background-image: var(--still-tone), url("/hero/desktop/01.webp");
+  background-blend-mode: color, normal;
   background-size: cover;
   background-position: center top;
   @media (max-aspect-ratio: 20/21) {
-    background-image:
-      linear-gradient(180deg, rgb(203 206 218 / 0.72) 0%, rgb(220 217 221 / 0.52) 24%, rgb(238 220 208 / 0.3) 42%, rgb(238 220 208 / 0) 60%),
-      url("/hero/mobile/01.webp");
+    background-image: var(--still-tone), url("/hero/mobile/01.webp");
   }
 }
 

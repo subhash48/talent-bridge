@@ -213,7 +213,7 @@ export function FilmStage({ scenes }: { scenes: Scene[] }) {
       {/*
         The film, behind the whole page. Large-viewport tall, so a phone's address bar sliding away never resizes
         the canvas mid-scroll. The first frame shows at once (and stays for the still version); the canvas fades in
-        over it once the film moves. The sky is graded towards a soft lavender-grey and peach, like the reference.
+        over it once the film moves. sky-grade tones the sky blue, as in the approved design, without lightening it.
       */}
       <div aria-hidden className="fixed inset-x-0 top-0 -z-10 h-lvh overflow-hidden bg-[#c9c6b3]">
         <picture>

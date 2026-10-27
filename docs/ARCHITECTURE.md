@@ -1,4 +1,4 @@
-# TalentBridge — Platform Architecture
+# Kavuntra — Platform Architecture
 
 > One recruiting system, two experiences.
 >
@@ -34,7 +34,7 @@
 21. [Demo careers site (development only)](#21-demo-careers-site-development-only)
 22. [Candidate portal analytics and voluntary demographics](#22-candidate-portal-analytics-and-voluntary-demographics)
 23. [Recruiter AI Assistant: one action engine for text and voice](#23-recruiter-ai-assistant-one-action-engine-for-text-and-voice)
-24. [Candidate communication (the TalentBridge refocus)](#24-candidate-communication-the-talentbridge-refocus)
+24. [Candidate communication (the Kavuntra refocus)](#24-candidate-communication-the-kavuntra-refocus)
 
 Appendices: [A. Seed data](#appendix-a-seed-data) · [B. Demo script](#appendix-b-demo-script) · [C. Decisions to confirm](#appendix-c-decisions-to-confirm)
 
@@ -78,7 +78,7 @@ These are the places where this design changes or tightens the brief to keep the
 
 ## 1. Executive architecture overview
 
-TalentBridge is one Next.js app, one FastAPI service and one Supabase project. Recruiters and candidates sign in through the same auth system and land in different workspaces based on their role. Everything they do passes through one **Recruiting Orchestration Layer**, which:
+Kavuntra is one Next.js app, one FastAPI service and one Supabase project. Recruiters and candidates sign in through the same auth system and land in different workspaces based on their role. Everything they do passes through one **Recruiting Orchestration Layer**, which:
 
 - validates and applies commands (confirm interview, move stage, send message),
 - appends every meaningful interaction to an event log (`activity_events`),
@@ -104,7 +104,7 @@ The connection loop *is* the product:
 The prototype proves this loop with one story. Sophia Martinez prepares for and confirms an interview. On Alex Rivera's dashboard, Sophia's engagement moves from Medium to High, the next action changes from "Confirm attendance" to "No action needed", and the Copilot explains why, citing the events behind it.
 
 ```
-TalentBridge (one platform)
+Kavuntra (one platform)
 ├── Recruiter Workspace      /recruiter/*    dense, built for triage
 ├── Candidate Portal         /candidate/*    personal, calm, guided
 ├── Shared AI Layer          gateway → intent → policy → context builder → provider → tools
@@ -1748,7 +1748,7 @@ Sourcing, calendar sync and scheduling UI, email delivery, file uploads, offer w
 
 ## 21. Demo careers site (development only)
 
-A way to run the Ashby flow end to end without an Ashby account, for development and testing only. A recruiter writes and publishes a demo job, anyone applies to it on a public careers page, and once the applicant proves they own the email, the application reaches Talent Bridge through the Ashby simulator (`integrations/ashby/demo.py`) on the same webhook path as a real Ashby application. Setup and use are in the README.
+A way to run the Ashby flow end to end without an Ashby account, for development and testing only. A recruiter writes and publishes a demo job, anyone applies to it on a public careers page, and once the applicant proves they own the email, the application reaches Kavuntra through the Ashby simulator (`integrations/ashby/demo.py`) on the same webhook path as a real Ashby application. Setup and use are in the README.
 
 ```
 Recruiter  /recruiter/jobs/demo/new ─▶ POST /demo/jobs/generate (AI draft; saves nothing) ─▶ edits
@@ -1788,7 +1788,7 @@ Apart from those routes, only `GET /me` reads the demo tables, and only with the
 1. Finds the pending rows for the token's account or email updated in the last 24 hours: one indexed query, which usually finds none.
 2. Keeps the ones this sign-in proves the applicant owns. Staff never submit. A linked candidate submits the rows made with their record's email, unless the token carries another email (which `/me` refuses anyway). An unlinked sign-in submits the rows made with its email when it is the account our invitation created, or when `auth.users` shows its owner confirmed the address by following an email Supabase sent; an auto-confirmed address proves nothing.
 3. Leases them in one compare-and-swap `UPDATE` (`finalizing_at`), so concurrent sign-ins never deliver anything twice, and waits up to 5 seconds for rows another request has freshly leased.
-4. Delivers each through `demo.submit()`: an `applicationSubmit` webhook for the existing job (no `jobCreate`), signed with a one-off key and handed to `WebhookProcessor` and `AshbyImporter`. Its Ashby ids derive from the email and the job, so a retry is a duplicate delivery. Careers data never rewrites someone already in Talent Bridge: an existing candidate is delivered without a name or phone, `resume_url` is set only when it is empty or already a demo résumé, and an empty `external_id` is restored afterwards, so `demo reset` never deletes them. If they already have an application for the job (a recruiter added them meanwhile), nothing is delivered and the row records that application.
+4. Delivers each through `demo.submit()`: an `applicationSubmit` webhook for the existing job (no `jobCreate`), signed with a one-off key and handed to `WebhookProcessor` and `AshbyImporter`. Its Ashby ids derive from the email and the job, so a retry is a duplicate delivery. Careers data never rewrites someone already in Kavuntra: an existing candidate is delivered without a name or phone, `resume_url` is set only when it is empty or already a demo résumé, and an empty `external_id` is restored afterwards, so `demo reset` never deletes them. If they already have an application for the job (a recruiter added them meanwhile), nothing is delivered and the row records that application.
 5. Links the sign-in (`account_service.link_account`) when there's no users row yet, marks the rows `submitted`, and queues the AI analysis for each delivered application that has none yet (when `ASHBY_AUTO_ANALYZE` is on). The portal invitation follow-up never runs: they're signed in already.
 
 It never raises. A failed delivery gives its lease back and is retried on the next `GET /me`; the person signs in either way.
@@ -1871,9 +1871,9 @@ POST /assistant/actions/{id}/confirm ─▶ status proposed ─▶ executing (co
 
 ---
 
-## 24. Candidate communication (the TalentBridge refocus)
+## 24. Candidate communication (the Kavuntra refocus)
 
-TalentBridge makes sure candidates never get forgotten during hiring. Everything that doesn't strengthen
+Kavuntra makes sure candidates never get forgotten during hiring. Everything that doesn't strengthen
 candidate communication, next-step clarity or interview preparation was removed: AI evaluation (analyses,
 strengths and concerns, rankings), the engagement score and portal activity tracking, portal analytics and
 demographics, job and analytics actions in the assistant, the top-bar voice button and the Career Run game.
@@ -1934,7 +1934,7 @@ with the message id as the idempotency key) and the row records `sent`, `failed`
 
 ### 24.4 Careers site and résumés
 
-`/careers` (`api/careers.py`, public) lists open jobs made in TalentBridge (`external_id` null). Applying
+`/careers` (`api/careers.py`, public) lists open jobs made in Kavuntra (`external_id` null). Applying
 creates or reuses the candidate by email, creates the application (Applied, source "Careers site") with its
 stage history and timeline entry, and stores the résumé (`candidate_resumes`, migration 016; checked like the
 demo site's, by content). Its text is read from PDF (pypdf) and DOCX for the candidate's own preparation. Then
@@ -2040,7 +2040,7 @@ Optional encore: open James → *Draft follow-up* → edit → send → James's 
 
 These defaults are baked into the design. Each is cheap to change now and expensive later.
 
-1. **Product and demo names.** "TalentBridge" (from the repo name) and the fictional "Halden Labs".
+1. **Product and demo names.** "Kavuntra" (formerly "TalentBridge", which was named after the repo) and the fictional "Halden Labs".
 2. **Default model.** `claude-opus-5-5` at low effort for chat. If time-to-first-token feels slow in rehearsal, try a per-route override (`AI_MODEL_CHAT`) and measure; it's a config change.
 3. **Backend host.** Railway (always-on + built-in cron) over Render.
 4. **Recruiters see AI question topics, not transcripts.** This is a product stance; some teams will ask for transcripts.

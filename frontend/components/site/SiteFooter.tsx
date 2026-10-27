@@ -1,38 +1,49 @@
 import Link from "next/link";
 
-import { SITE_SECTIONS, sectionHref } from "@/components/site/nav";
-import { TalentBridgeLogo } from "@/components/shared/TalentBridgeLogo";
+import { FOOTER_LINKS } from "@/components/site/nav";
+import { KavuntraLogo } from "@/components/shared/KavuntraLogo";
 
 const linkStyles = "rounded-sm text-sm text-stone transition-colors hover:text-ink";
 
-/** The public website's footer: every section, and the Privacy and Terms pages. */
-export function SiteFooter() {
-  return (
-    <footer className="border-t border-border bg-surface/60">
-      <div className="mx-auto grid w-full max-w-[1080px] gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.2fr_2fr]">
-        <div>
-          <TalentBridgeLogo />
-          <p className="mt-3 max-w-xs text-sm leading-relaxed text-stone">
-            The communication layer between hiring teams and candidates.
-          </p>
+/**
+ * The public website's footer: the mark, every place on the site, and the year. Nothing more. On the home page
+ * it's a floating bar over the film's last frames, like the header; elsewhere it sits at the foot of the page.
+ */
+export function SiteFooter({ overFilm = false }: { overFilm?: boolean }) {
+  if (overFilm) {
+    return (
+      <footer className="relative px-3 pt-[28vh] pb-3 sm:px-5 sm:pb-5">
+        <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-5 rounded-[28px] bg-overlay/90 px-6 py-6 shadow-soft ring-1 ring-ink/[0.07] backdrop-blur-xl lg:flex-row lg:items-center lg:gap-8 lg:rounded-full lg:py-3.5 lg:pr-8 lg:pl-6">
+          <Link href="/" aria-label="Kavuntra home" className="w-fit rounded-md">
+            <KavuntraLogo />
+          </Link>
+          <nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-2.5 lg:ml-auto">
+            {FOOTER_LINKS.map((link) => (
+              <Link key={link.href} href={link.href} className="rounded-sm text-sm text-charcoal transition-colors hover:text-ink">
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+          <p className="text-[13px] text-stone">© 2026 Kavuntra</p>
         </div>
-        <nav aria-label="Footer" className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-3">
-          {SITE_SECTIONS.map((section) => (
-            <Link key={section.id} href={sectionHref(section.id)} className={linkStyles}>
-              {section.label}
+      </footer>
+    );
+  }
+  return (
+    <footer className="border-t border-border px-5 sm:px-8">
+      <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-8 py-12 md:flex-row md:items-center md:justify-between">
+        <Link href="/" aria-label="Kavuntra home" className="w-fit rounded-md">
+          <KavuntraLogo />
+        </Link>
+        <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-3">
+          {FOOTER_LINKS.map((link) => (
+            <Link key={link.href} href={link.href} className={linkStyles}>
+              {link.label}
             </Link>
           ))}
-          <Link href="/privacy" className={linkStyles}>
-            Privacy
-          </Link>
-          <Link href="/terms" className={linkStyles}>
-            Terms
-          </Link>
         </nav>
       </div>
-      <div className="border-t border-border">
-        <p className="mx-auto w-full max-w-[1080px] px-4 py-5 text-[13px] text-faint sm:px-6">© 2026 TalentBridge</p>
-      </div>
+      <p className="mx-auto w-full max-w-[1120px] pb-10 text-[13px] text-faint">© 2026 Kavuntra</p>
     </footer>
   );
 }

@@ -48,7 +48,11 @@ export class Film {
     this.resize();
   }
 
-  /** Matches the canvas to its box (at up to 2× pixel density) and picks the frames for its shape. */
+  /**
+   * Matches the canvas's drawing buffer to its box at the screen's pixel density (up to 2×, which is where the
+   * frames' own detail runs out) and picks the frames for its shape. Setting the size clears the canvas, so it's
+   * only set when it has changed; the caller draws again afterwards.
+   */
   resize(): void {
     const { clientWidth: width, clientHeight: height } = this.canvas;
     if (!width || !height) return;

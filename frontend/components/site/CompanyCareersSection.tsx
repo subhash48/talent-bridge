@@ -48,6 +48,13 @@ export function CompanyCareersSection() {
             We don&apos;t have any open positions listed right now. Check back for future opportunities.
           </p>
         )}
+        <p className="mt-5 text-[14px] leading-relaxed text-stone">
+          Looking for a job at a company that hires with Kavuntra? Those roles are on the{" "}
+          <Link href="/careers" className="font-medium text-brand-ink underline-offset-4 hover:underline">
+            job board
+          </Link>
+          , not here.
+        </p>
       </div>
     </Section>
   );

@@ -417,6 +417,53 @@ HELP = (
 )
 
 
+# The recruiting team's words in answers both workspaces share, and Simple Hire's for them. Examples name no
+# one: the recruiting team's name their own demo candidates, who aren't anyone a small business knows.
+PLAIN_WORDS: tuple[tuple[re.Pattern[str], str], ...] = tuple(
+    (re.compile(pattern), plain)
+    for pattern, plain in (
+        (
+            (
+                r'Tick the candidates first, in the list or on the Candidates page, or say who: "Select Sophia, Maya '
+                r'and James"\.'
+            ),
+            "Tick the people first, in the list, or say who by name.",
+        ),
+        (
+            r'Who should I select\? Say their names, like "Select Sophia and Maya"\.',
+            "Who do you mean? Say their names.",
+        ),
+        (
+            r"Which candidate\? Say their name, for example \"Tell me about Sophia's application\"\.",
+            "Who do you mean? Say their name.",
+        ),
+        (
+            r'"Make them Thursday afternoon" or "Leave James out"',
+            '"Make them Thursday afternoon" or "Leave one of them out"',
+        ),
+        (r"in your active pipeline", "among the people who applied"),
+        (r"Check the name, or open the candidate's page\.", "Check the name, or look in Applicants."),
+        (
+            r" isn't in the active pipeline\. Restore them before messaging them\.",
+            "'s application is closed, so I can't message them.",
+        ),
+        (r"candidate portal messages", "TalentBridge messages"),
+        (r" Turned on candidate messaging so (\S+) can reply\.", r" \1 can reply, and you'll see it in Messages."),
+        (r" Candidate messaging will be turned on so (\S+) can reply\.", r" \1 will be able to reply."),
+        (r" (\S+) can't reply in the portal: candidate messaging (?:is|stays) off\.", r" \1 can't reply to it."),
+        (r"Check the message, then confirm\.", "Check the message, then press Send."),
+        (r"Confirm to send it\.", "Press Send to send it."),
+    )
+)
+
+
+def plainly(reply: str) -> str:
+    """A shared answer in Simple Hire's words."""
+    for pattern, plain in PLAIN_WORDS:
+        reply = pattern.sub(plain, reply)
+    return reply
+
+
 def plain_reply(cards: list[AssistantCard], reply: str) -> str:
     """The reply a Simple Hire owner reads with these cards. Answers with no plainer form keep their own."""
     for card in cards:

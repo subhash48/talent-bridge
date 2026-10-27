@@ -394,3 +394,21 @@ async def test_interview_replies_say_who_has_a_time_and_who_is_booked(client: As
     sent = await approve(client, sam, asked["id"])
     assert "Interviews for Maria and John are booked in TalentBridge." in sent["reply"]
     assert "No interview is booked for Tom: the message asks when they can come." in sent["reply"]
+
+
+RECRUITING_WORDS = ("candidate", "pipeline", "Candidates page", "Sophia", "Maya", "James")
+
+
+async def test_every_answer_sam_gets_is_in_plain_words(client: AsyncClient, sam: dict[str, str]) -> None:
+    """Found in review: answers Simple Hire shares with the full workspace came in recruiting words, with Encord's
+    demo candidates as examples."""
+    nobody = await ask(client, sam, "Message these three.")
+    unknown = await ask(client, sam, "Message Zed Quinn to say thanks for applying")
+    drafted = await ask(client, sam, "Message Maria Lopez to say thanks for applying")
+    sent = await approve(client, sam, drafted["id"])
+    replies = [nobody["reply"], unknown["reply"], drafted["reply"], sent["reply"]]
+    for reply in replies:
+        assert not [word for word in RECRUITING_WORDS if word.lower() in reply.lower()], reply
+    assert nobody["reply"] == "Tick the people first, in the list, or say who by name."
+    assert "among the people who applied" in unknown["reply"]
+    assert "It's in their TalentBridge messages." in sent["reply"]

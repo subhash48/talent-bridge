@@ -222,6 +222,8 @@ async def handle(
         outcome.reply = simple.plain_reply(outcome.cards, outcome.reply)
     elif plain and outcome.reply == answers.HELP:
         outcome.reply = simple.HELP
+    if plain:
+        outcome.reply = simple.plainly(outcome.reply)
     row = await _reload(session, row_id)
     response = AssistantResponse(
         id=row.id,
@@ -1139,7 +1141,7 @@ async def confirm(
         summary, card = _failed(payload, label), _failed_card(payload, error)
 
     if plain:
-        reply = simple.plain_reply([card], reply)
+        reply = simple.plainly(simple.plain_reply([card], reply))
     row = await _reload(session, action_id)
     if created is not None:
         row.target_type, row.target_id, row.target_label = created

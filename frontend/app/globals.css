@@ -1,50 +1,58 @@
 @import "tailwindcss";
 
 /*
- * TalentBridge design tokens. Light only: the sign-in page, the recruiter workspace, the careers site
- * and the candidate portal all read these, so the palette changes in one place.
+ * Kavuntra design tokens. Light only: the website, the sign-in pages, the recruiter workspace, Simple Hire,
+ * the careers site and the candidate portal all read these, so the palette changes in one place.
  *
- * Warm cream (#F9EAD7) carries the page; cards, inputs and menus are slightly lighter creams and insets
- * slightly darker ones. Nothing is pure white. Text is warm near-black.
+ * The colours come from the Kavuntra mark: its deep teal (#224047), its sage leaves and the warm cream of
+ * its highlight. A soft stone-cream carries the page; cards, inputs and menus are slightly lighter creams
+ * and insets slightly darker ones. Nothing is pure white or pure black. Text is a deep teal-black.
  *
- * Lime (brand, #BFE23A) is the one interaction colour, as a fill: primary buttons, active navigation,
- * selected tabs and chips, focus. Lime is too light to read on cream, so text and thin lines that carry
- * the brand use brand-ink, a dark olive derived from it, and anything on a lime fill is near-black.
- * Red (#E10600, highlight and danger) is the accent: errors, destructive actions, urgent dots, never a
- * large fill. Caution (a muted amber-brown) marks waiting on someone, sage marks something positive.
+ * Teal (brand) is the one interaction colour: primary buttons, active navigation, selected tabs and chips,
+ * links. Anything on a teal fill is cream. Sage (accent) is the quiet second colour: focus glow, selection,
+ * soft fills. Poppy (highlight), taken from the landscape on the home page, marks what's urgent or unread,
+ * as dots and small badges, never a large fill. Danger is a muted red for errors and destructive actions.
+ * Caution (a muted amber-brown) marks waiting on someone, sage-ink marks something positive.
  */
 @theme {
-  --color-canvas: #f9ead7;
-  --color-surface: #fbf0e2;
-  --color-surface-raised: #fcf4e9;
-  --color-overlay: #fdf7ef;
-  --color-muted: rgb(26 20 16 / 0.05);
-  --color-border: rgb(26 20 16 / 0.11);
-  --color-border-strong: rgb(26 20 16 / 0.22);
+  --color-canvas: #f2ede3;
+  --color-surface: #f6f2ea;
+  --color-surface-raised: #f9f6f0;
+  --color-overlay: #fbf9f5;
+  --color-muted: rgb(20 42 46 / 0.05);
+  --color-border: rgb(20 42 46 / 0.1);
+  --color-border-strong: rgb(20 42 46 / 0.2);
 
-  --color-ink: #1a1410;
-  --color-ink-bright: #0d0a08;
-  --color-charcoal: #2e2620;
-  --color-stone: #5a4e42;
-  --color-faint: #6b5e50;
+  --color-ink: #142a2e;
+  --color-ink-bright: #0c1f22;
+  --color-charcoal: #26393c;
+  --color-stone: #4e5f61;
+  --color-faint: #536264;
 
-  --color-brand: #bfe23a;
-  --color-brand-hover: #accf27;
-  --color-brand-soft: rgb(191 226 58 / 0.24);
-  --color-on-brand: #1a1410;
-  --color-brand-ink: #4a6200;
+  --color-brand: #224047;
+  --color-brand-hover: #18343a;
+  --color-brand-soft: rgb(34 64 71 / 0.08);
+  --color-on-brand: #f4ecdc;
+  --color-brand-ink: #224047;
+  --color-brand-deep: #12353b;
 
-  --color-highlight: #e10600;
-  --color-on-highlight: #f9ead7;
+  --color-accent: #b4c59c;
+  --color-accent-soft: #dce5cf;
+  --color-cream: #f2deb7;
 
-  --color-sage: #2d6a2e;
+  --color-highlight: #b5482b;
+  --color-on-highlight: #f7f1e6;
+
+  --color-sage: #3b6343;
   --color-caution: #8a5300;
-  --color-danger: #e10600;
-  --color-ai: #4a6200;
+  --color-danger: #b3261e;
+  --color-ai: #224047;
 
-  --shadow-soft: 0 1px 2px rgb(26 20 16 / 0.05), 0 8px 24px -18px rgb(26 20 16 / 0.16);
-  --shadow-raised: 0 2px 6px rgb(26 20 16 / 0.06), 0 18px 40px -16px rgb(26 20 16 / 0.22);
-  --shadow-sheet: 0 0 48px rgb(26 20 16 / 0.16);
+  --shadow-soft: 0 1px 2px rgb(20 42 46 / 0.04), 0 10px 28px -20px rgb(20 42 46 / 0.18);
+  --shadow-raised: 0 2px 6px rgb(20 42 46 / 0.05), 0 22px 48px -20px rgb(20 42 46 / 0.26);
+  --shadow-sheet: 0 0 56px rgb(20 42 46 / 0.16);
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 
   --animate-fade-in: fade-in 180ms ease-out;
   --animate-fade-out: fade-out 150ms ease-in;
@@ -130,20 +138,26 @@
   }
 
   ::selection {
-    background-color: rgb(191 226 58 / 0.55);
+    background-color: rgb(180 197 156 / 0.6);
     color: var(--color-ink-bright);
   }
 
-  /* A lime glow with an olive edge, so focus shows on cream as well as on lime. */
+  /* A teal edge with a sage glow, so focus shows on cream as well as on teal. */
   :focus-visible {
     outline: 2px solid var(--color-brand-ink);
     outline-offset: 2px;
-    box-shadow: 0 0 0 4px rgb(191 226 58 / 0.55);
+    box-shadow: 0 0 0 5px rgb(180 197 156 / 0.55);
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
   }
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgb(26 20 16 / 0.22) transparent;
+    scrollbar-color: rgb(20 42 46 / 0.2) transparent;
   }
 
   /* Parts the browser draws itself, which would otherwise be white. */
@@ -163,7 +177,7 @@
 
 /* Card surface: a slight lift from the page, with a hairline border (set by the card) and a soft shadow. */
 @utility glass {
-  background-color: var(--color-surface);
+  background-color: var(--color-surface-raised);
   box-shadow: var(--shadow-soft);
 }
 
@@ -174,9 +188,11 @@
   }
 }
 
-/* The faintest lighter cream at the top of a page: depth, without colour. */
+/* The faintest lighter cream at the top of a page, with a breath of sage: depth, without colour. */
 @utility app-backdrop {
-  background-image: radial-gradient(60% 70% at 70% -10%, rgb(253 247 239 / 0.7), transparent 70%);
+  background-image:
+    radial-gradient(55% 60% at 85% -10%, rgb(220 229 207 / 0.55), transparent 70%),
+    radial-gradient(60% 70% at 20% -20%, rgb(251 249 245 / 0.8), transparent 70%);
 }
 
 @media (prefers-reduced-motion: reduce) {

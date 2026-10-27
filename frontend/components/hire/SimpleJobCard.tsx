@@ -89,7 +89,11 @@ export function SimpleJobCard({ card, onPost, onEdits, busy, superseded }: Props
   return (
     <div className={cn("mt-3 rounded-[16px] border border-border bg-surface-raised p-5", closed && "opacity-60")}>
       <p className="text-[13px] font-semibold text-brand-ink">
-        {card.status === "cancelled" ? "Not posted" : superseded ? "Changed below" : "Ready to post"}
+        {card.status === "cancelled" || card.status === "failed"
+          ? "Not posted"
+          : superseded
+            ? "Changed below"
+            : "Ready to post"}
       </p>
       <p className="mt-1 text-xl font-semibold tracking-tight text-ink">{draft.title}</p>
       {facts.length > 0 && (
@@ -251,7 +255,12 @@ export function SimpleJobCard({ card, onPost, onEdits, busy, superseded }: Props
         </div>
       )}
 
-      {error && <p className="mt-3 text-sm text-danger">{error}</p>}
+      {(error ?? (card.status === "failed" ? card.error : null)) && (
+        <p role="alert" className="mt-3 text-sm text-danger">
+          {error ?? card.error}
+          {card.status === "failed" && " Ask again to make a new one."}
+        </p>
+      )}
       {!closed && (
         <div className="mt-5 flex flex-wrap gap-2">
           <Button size="lg" onClick={() => void post()} disabled={busy || posting || !draft.title.trim()}>

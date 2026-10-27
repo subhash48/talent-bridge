@@ -10,6 +10,7 @@ import { AssistantCardView, type CardActions } from "@/components/recruiter/assi
 import { ContactsCard } from "@/components/recruiter/assistant/ContactsCard";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
+import { cn } from "@/lib/utils";
 import { errorMessage } from "@/services/api";
 import type { AssistantCard, MessageCard } from "@/types/assistant";
 
@@ -112,8 +113,8 @@ function SimpleMessageCard({
 
   return (
     <div className="mt-3 rounded-[16px] border border-border bg-surface-raised p-4">
-      <p className="text-[15px] font-semibold text-ink">
-        {sent ? "Sent to" : "To"} {card.candidate.name}
+      <p className={cn("text-[15px] font-semibold", card.status === "failed" ? "text-danger" : "text-ink")}>
+        {sent ? "Sent to" : card.status === "failed" ? "Not sent to" : "To"} {card.candidate.name}
       </p>
       {sent || closed ? (
         <p className="mt-2 text-sm leading-relaxed whitespace-pre-line text-charcoal">{card.body}</p>
@@ -129,7 +130,11 @@ function SimpleMessageCard({
           aria-label={`Message to ${card.candidate.name}`}
         />
       )}
-      {error && <p className="mt-2 text-sm text-danger">{error}</p>}
+      {(error ?? (card.status === "failed" ? card.error : null)) && (
+        <p role="alert" className="mt-2 text-sm text-danger">
+          {error ?? card.error}
+        </p>
+      )}
       {!sent && !closed && (
         <div className="mt-3 flex justify-end">
           <Button size="lg" onClick={() => void send()} disabled={actions.busy || sending || !body.trim()}>

@@ -447,7 +447,7 @@ PLAIN_WORDS: tuple[tuple[re.Pattern[str], str], ...] = tuple(
             r" isn't in the active pipeline\. Restore them before messaging them\.",
             "'s application is closed, so I can't message them.",
         ),
-        (r"candidate portal messages", "TalentBridge messages"),
+        (r"candidate portal messages", "Kavuntra messages"),
         (r" Turned on candidate messaging so (\S+) can reply\.", r" \1 can reply, and you'll see it in Messages."),
         (r" Candidate messaging will be turned on so (\S+) can reply\.", r" \1 will be able to reply."),
         (r" (\S+) can't reply in the portal: candidate messaging (?:is|stays) off\.", r" \1 can't reply to it."),
@@ -532,7 +532,7 @@ def _sent(card: OutreachCard) -> str:
         lines.append(
             f"{whose} booked, and calendar invitations went out."
             if calendar
-            else f"{whose} booked in TalentBridge. No calendar is connected, so no calendar invitations were sent."
+            else f"{whose} booked in Kavuntra. No calendar is connected, so no calendar invitations were sent."
         )
     if card.schedule is not None and unbooked:
         asks = "their messages ask" if len(unbooked) > 1 else "the message asks"

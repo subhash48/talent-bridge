@@ -392,7 +392,7 @@ async def test_interview_replies_say_who_has_a_time_and_who_is_booked(client: As
     assert "Maria and John each have a time. There wasn't room in that window for Tom" in asked["reply"]
     assert "each with its own time" not in asked["reply"]
     sent = await approve(client, sam, asked["id"])
-    assert "Interviews for Maria and John are booked in TalentBridge." in sent["reply"]
+    assert "Interviews for Maria and John are booked in Kavuntra." in sent["reply"]
     assert "No interview is booked for Tom: the message asks when they can come." in sent["reply"]
 
 
@@ -411,4 +411,4 @@ async def test_every_answer_sam_gets_is_in_plain_words(client: AsyncClient, sam:
         assert not [word for word in RECRUITING_WORDS if word.lower() in reply.lower()], reply
     assert nobody["reply"] == "Tick the people first, in the list, or say who by name."
     assert "among the people who applied" in unknown["reply"]
-    assert "It's in their TalentBridge messages." in sent["reply"]
+    assert "It's in their Kavuntra messages." in sent["reply"]

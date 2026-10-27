@@ -1,4 +1,5 @@
 import { Mail } from "lucide-react";
+import Link from "next/link";
 
 import { ContactForm } from "@/components/site/ContactForm";
 import { FeatureIcon, Section } from "@/components/site/Section";
@@ -32,6 +33,17 @@ export function ContactSection({ email }: { email: string | null }) {
               </span>
             </p>
           )}
+          <p className="text-[14px] text-stone">
+            Applying for a role? Jobs at companies hiring with Kavuntra are on the{" "}
+            <Link href="/careers" className="font-medium text-brand-ink underline-offset-4 hover:underline">
+              job board
+            </Link>
+            ; working at Kavuntra is under{" "}
+            <Link href="/about/careers" className="font-medium text-brand-ink underline-offset-4 hover:underline">
+              Careers
+            </Link>
+            .
+          </p>
         </div>
         <div className="sky-card rounded-[24px] p-6 sm:p-8">
           <ContactForm />

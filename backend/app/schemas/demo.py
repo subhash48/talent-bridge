@@ -207,7 +207,7 @@ class CareerJobSummary(APIModel):
     salary_currency: str = "USD"
     summary: str | None = None
     published_at: Timestamp | None = None
-    # A small business's job (TalentBridge's own careers site): in the employer's words, or empty.
+    # A small business's job (Kavuntra's own careers site): in the employer's words, or empty.
     pay: str | None = None
     shift: str | None = None
     work_days: list[Weekday] = []

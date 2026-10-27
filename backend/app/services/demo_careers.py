@@ -12,12 +12,12 @@ must first prove they own the email, so nobody can apply in someone else's name.
    The sign-in is proof when it is the account our invitation created at that email, the one Talent
    Bridge already links to that email, or one Supabase says confirmed the address. Each pending
    application made (or made again) in the last day is then delivered through the Ashby simulator
-   (integrations/ashby/demo.py), so it reaches TalentBridge as a real Ashby application does: the
+   (integrations/ashby/demo.py), so it reaches Kavuntra as a real Ashby application does: the
    webhook processor, the importer and the stage mapping all run. Then the sign-in is
    linked to the candidate.
 
 Until then recruiters see nothing: no candidate or application exists before it is submitted. And what
-was typed here never rewrites someone TalentBridge already has: their name, phone and résumé link stay.
+was typed here never rewrites someone Kavuntra already has: their name, phone and résumé link stay.
 
 The simulator is ordinary application code: it builds its payloads from the values it is given
 (integrations/ashby/demo_payloads.py) and needs nothing outside app/. The API refuses every demo route
@@ -226,7 +226,7 @@ async def _submit_pending(factory: async_sessionmaker[AsyncSession], claims: Tok
                 job_title=job.title,
                 job_external_id=job.external_id,
                 source=DEMO_CAREERS_SOURCE,
-                profile=person is None,  # someone TalentBridge has keeps their name and phone
+                profile=person is None,  # someone Kavuntra has keeps their name and phone
             )
             if result.application_id is not None:
                 await _restore_candidate(factory, row, result.candidate_id, person)
@@ -328,7 +328,7 @@ async def _restore_candidate(
 ) -> None:
     """Undo what the import did to the candidate that careers data mustn't. A new candidate gets the
     name exactly as typed (the import splits a full name at its first space: "Mary" "Ann Smith").
-    Someone made in TalentBridge gets no Ashby id: the import linked them by email to the simulator's,
+    Someone made in Kavuntra gets no Ashby id: the import linked them by email to the simulator's,
     and `demo reset` deletes the simulator's candidates."""
     if before is None:
         values: dict[str, Any] = {"first_name": row.first_name, "last_name": row.last_name}

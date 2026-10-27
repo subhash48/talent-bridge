@@ -33,7 +33,7 @@ class MessageRead(APIModel):
     kind: MessageKind = MessageKind.MESSAGE  # the candidate's own label: a thank-you note, a follow-up
     created_at: Timestamp
     read_at: Timestamp | None = None
-    delivery: MessageDeliveryRead | None = None  # a recruiter's message sent from TalentBridge
+    delivery: MessageDeliveryRead | None = None  # a recruiter's message sent from Kavuntra
 
 
 class Conversation(APIModel):

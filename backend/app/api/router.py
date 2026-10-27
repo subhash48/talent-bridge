@@ -55,9 +55,9 @@ for module in (candidate,):
 # Guarded route by route: /me is for anyone signed in; the Ashby webhook checks Ashby's signature
 # and the other Ashby routes require staff of the company Ashby is connected for.
 api_router.include_router(auth.router)
-# Setting up an account: a valid sign-in, not yet linked to anything in TalentBridge.
+# Setting up an account: a valid sign-in, not yet linked to anything in Kavuntra.
 api_router.include_router(accounts.router)
-# TalentBridge's careers site and its website's contact form: public, no sign-in.
+# Kavuntra's careers site and its website's contact form: public, no sign-in.
 api_router.include_router(careers.router)
 api_router.include_router(contact.router)
 api_router.include_router(integrations.router)

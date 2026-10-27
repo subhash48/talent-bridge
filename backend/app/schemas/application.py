@@ -31,7 +31,7 @@ class ApplicationRead(APIModel):
     linkedin_url: str | None = None
     availability: list[Weekday] = []  # which of the job's work days they can work
     experience_note: str | None = None  # their relevant experience, in their words
-    # Ashby's own view of it, for recruiters (null for applications made in TalentBridge).
+    # Ashby's own view of it, for recruiters (null for applications made in Kavuntra).
     external_id: str | None = None
     external_status: str | None = None
     external_stage_title: str | None = None

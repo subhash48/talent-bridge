@@ -32,8 +32,8 @@ export function CandidateDashboard() {
         <p role="status" className="sr-only">
           {chosen ? `Loading your ${chosen.jobTitle} application at ${chosen.company}` : "Loading your application"}
         </p>
-        <Skeleton className="h-[218px] rounded-[14px]" />
-        <Skeleton className="h-[300px] rounded-[14px]" />
+        <Skeleton className="h-[248px] rounded-[24px]" />
+        <Skeleton className="h-[320px] rounded-[24px]" />
       </div>
     );
   } else if (application && job) {
@@ -41,7 +41,7 @@ export function CandidateDashboard() {
       <>
         <CurrentApplicationCard application={application} job={job} otherApplications={me.applications.length - 1} />
         <FourQuestions me={me} application={application} />
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <LastUpdateCard me={me} />
           <AskAIEntry
             description={`Questions about ${me.company?.name ?? "the company"}, the role, benefits or your application?`}
@@ -60,9 +60,15 @@ export function CandidateDashboard() {
     );
   }
 
+  const firstName = me.candidate.fullName.trim().split(/\s+/)[0];
   return (
-    <div className="flex flex-col gap-5">
-      <h1 className="sr-only">Dashboard</h1>
+    <div className="flex flex-col gap-6 pt-2">
+      <header className="mb-2">
+        <h1 className="text-[clamp(28px,3.4vw,40px)] leading-tight font-semibold tracking-[-0.035em] text-ink">
+          {firstName ? `Hi, ${firstName}` : "Welcome back"}
+        </h1>
+        <p className="mt-2 text-[15px] text-stone">Here&apos;s where your applications stand, and what comes next.</p>
+      </header>
       <ApplicationSelector />
       {content}
     </div>

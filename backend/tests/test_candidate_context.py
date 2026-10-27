@@ -256,7 +256,7 @@ async def test_another_candidates_application_or_interview_is_a_404(client: Asyn
 async def test_a_candidate_without_applications_sees_no_employer(
     anonymous: AsyncClient, sessions: async_sessionmaker[AsyncSession]
 ) -> None:
-    """The portal is TalentBridge's own until there's an application: no company is assumed."""
+    """The portal is Kavuntra's own until there's an application: no company is assumed."""
     async with sessions() as session:
         session.add(Candidate(first_name="Noa", last_name="Levi", email="noa.levi@example.com", skills=[]))
         await session.commit()

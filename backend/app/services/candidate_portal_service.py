@@ -249,7 +249,7 @@ async def require_record(
 
 async def recruiter_for(session: AsyncSession, application_id: uuid.UUID) -> PortalRecruiter | None:
     """Who hires for the application's employer: the one of its staff who last moved the application, else its
-    first. Never anyone from another company, whoever else uses TalentBridge."""
+    first. Never anyone from another company, whoever else uses Kavuntra."""
     company_id = await session.scalar(
         select(Job.company_id).join(Application, Application.job_id == Job.id).where(Application.id == application_id)
     )

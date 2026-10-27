@@ -177,7 +177,7 @@ async def create_candidate(session: AsyncSession, data: CandidateCreate, actor: 
     elsewhere = select(Candidate.id).where(Candidate.email == data.email).execution_options(all_workspaces=True)
     if await session.scalar(elsewhere):
         raise ConflictError(
-            "This person already has a TalentBridge candidate account. Ask them to apply on your careers page.",
+            "This person already has a Kavuntra candidate account. Ask them to apply on your careers page.",
             code="candidate_has_account",
         )
 

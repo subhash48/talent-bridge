@@ -178,7 +178,7 @@ class CandidateMe(APIModel):
 
     application is the one the portal is showing: the one asked for, else the most recently updated
     active one. applications lists all of them (active first). company is the selected application's
-    employer, and None without an application: the portal itself is TalentBridge's."""
+    employer, and None without an application: the portal itself is Kavuntra's."""
 
     company: PortalEmployer | None = None
     candidate: PortalCandidate

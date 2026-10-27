@@ -22,7 +22,7 @@ export function MetricCard({ label, value, icon: Icon, active, onSelect }: Metri
         active && "border-brand-ink/55 bg-brand-soft hover:border-brand-ink/55",
       )}
     >
-      <span className="hidden size-9 shrink-0 items-center justify-center rounded-full bg-ink/[0.05] ring-1 ring-ink/10 transition-colors group-hover:bg-ink/[0.08] group-aria-pressed:bg-brand/35 group-aria-pressed:ring-brand-ink/25 @[9rem]:flex">
+      <span className="hidden size-9 shrink-0 items-center justify-center rounded-full bg-ink/[0.05] ring-1 ring-ink/10 transition-colors group-hover:bg-ink/[0.08] group-aria-pressed:bg-accent-soft group-aria-pressed:ring-brand-ink/20 @[9rem]:flex">
         <Icon aria-hidden strokeWidth={1.75} className="size-4 text-charcoal group-aria-pressed:text-brand-ink" />
       </span>
       <span className="min-w-0">

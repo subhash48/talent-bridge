@@ -1,4 +1,4 @@
-"""Link Supabase Auth accounts to the people in TalentBridge. For operators, not the public.
+"""Link Supabase Auth accounts to the people in Kavuntra. For operators, not the public.
 
     python -m app.db.accounts link EMAIL   link the Supabase Auth account with this email
     python -m app.db.accounts list         show who can sign in and who isn't linked yet
@@ -59,7 +59,7 @@ async def list_accounts() -> int:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Link Supabase Auth accounts to TalentBridge users.")
+    parser = argparse.ArgumentParser(description="Link Supabase Auth accounts to Kavuntra users.")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("link", help="link the Supabase Auth account with this email").add_argument("email")
     commands.add_parser("list", help="show every user and whether they can sign in")

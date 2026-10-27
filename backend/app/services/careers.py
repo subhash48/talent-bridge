@@ -55,6 +55,10 @@ limiter = RateLimiter(
     "You've sent several applications just now. Please wait a few minutes and try again.",
     code="too_many_applications",
 )
+# Applying again sends a sign-in link each time, so anyone could fill someone's inbox by applying with their
+# email: one inbox gets at most this many in an hour from applying (the application itself still counts).
+LINKS_PER_INBOX, LINK_WINDOW_SECONDS = 3, 3600
+links = RateLimiter(LINKS_PER_INBOX, LINK_WINDOW_SECONDS, "Too many sign-in links for one inbox.")
 
 
 class EmailNotAccepted(AppError):
@@ -258,6 +262,9 @@ async def _portal_link(
     if status == P.INVITED and candidate.portal_invited_at and candidate.portal_invited_at != invited_before:
         return "invitation_sent"
     if status in (P.INVITED, P.ACTIVE):
+        if not links.allow(candidate.email):
+            logger.info("careers.sign_in_link_held candidate=%s reason=too_many_for_inbox", candidate.id)
+            return "unavailable"
         redirect = settings.portal_sign_in_redirect_url
         try:
             if ours:

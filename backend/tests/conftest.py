@@ -219,11 +219,9 @@ def fresh_rate_limits(monkeypatch: pytest.MonkeyPatch) -> None:
     from app.core.rate_limit import RateLimiter
     from app.services import careers, contact_service
 
-    for module in (careers, contact_service):
-        limit = module.limiter
-        monkeypatch.setattr(
-            module, "limiter", RateLimiter(limit.limit, limit.window_seconds, limit.message, limit.code)
-        )
+    for module, name in ((careers, "limiter"), (careers, "links"), (contact_service, "limiter")):
+        limit = getattr(module, name)
+        monkeypatch.setattr(module, name, RateLimiter(limit.limit, limit.window_seconds, limit.message, limit.code))
 
 
 @pytest.fixture

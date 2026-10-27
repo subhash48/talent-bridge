@@ -326,6 +326,21 @@ async def test_one_address_applying_too_often_is_asked_to_wait(anonymous: AsyncC
     assert other.status_code == 200
 
 
+async def test_applying_again_and_again_doesnt_fill_their_inbox(
+    anonymous: AsyncClient, supabase: FakeSupabaseAdmin
+) -> None:
+    from app.services import careers
+
+    await anonymous.post(f"{API}/careers/jobs/{PRODUCT_DESIGNER}/apply", json=application())
+    answers = [
+        (await anonymous.post(f"{API}/careers/jobs/{PRODUCT_DESIGNER}/apply", json=application())).json()
+        for _ in range(careers.LINKS_PER_INBOX + 2)
+    ]
+    assert len(supabase.sign_in_links) == careers.LINKS_PER_INBOX
+    assert [answer["portal_link"] for answer in answers[-2:]] == ["unavailable", "unavailable"]
+    assert {answer["status"] for answer in answers} == {"already_applied"}
+
+
 async def test_the_limit_counts_the_address_our_proxy_saw(anonymous: AsyncClient) -> None:
     """Behind the proxy, X-Forwarded-For ends with the visitor's real address: what comes before it is theirs to
     make up, and changing it doesn't reset the count."""

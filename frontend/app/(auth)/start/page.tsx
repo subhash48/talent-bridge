@@ -1,4 +1,4 @@
-import { Store, UserRound, Users, type LucideIcon } from "lucide-react";
+import { ArrowRight, Store, UserRound, Users, type LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -44,7 +44,7 @@ const CARD =
 
 /**
  * The website's Get started: one still of the valley, the mark, and three cards of the same size, one per way of
- * using Kavuntra. The whole card is the link.
+ * using Kavuntra. The whole card is the link; the arrow at its foot only shows where it leads.
  */
 export default async function GetStartedPage() {
   const user = await getSignedInUser();
@@ -70,7 +70,7 @@ export default async function GetStartedPage() {
         <p className="mt-3 text-[clamp(16px,1.3vw,20px)] leading-relaxed text-[#2b4044]">Choose how you want to use Kavuntra</p>
 
         <ul className="mt-10 grid w-full max-w-[960px] grid-cols-1 gap-5 sm:grid-cols-3 sm:gap-6">
-          {ROLES.map(({ href, icon: Icon, tile, title, text }) => (
+          {ROLES.map(({ href, icon: Icon, tile, title, text, action }) => (
             <li key={href} className="flex">
               <Link
                 href={href}
@@ -84,6 +84,12 @@ export default async function GetStartedPage() {
                 </span>
                 <span className="mt-6 text-[24px] leading-tight font-semibold tracking-[-0.02em] text-on-brand">{title}</span>
                 <span className="mt-2 max-w-[22ch] text-[15px] leading-snug text-on-brand/85">{text}</span>
+                <span className="mt-auto flex pt-7">
+                  <span className="flex size-12 items-center justify-center rounded-full bg-brand text-on-brand shadow-raised transition-transform duration-200 group-hover:translate-x-0.5">
+                    <ArrowRight aria-hidden className="size-5" />
+                    <span className="sr-only">{action}</span>
+                  </span>
+                </span>
               </Link>
             </li>
           ))}

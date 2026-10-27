@@ -2,6 +2,7 @@ import { ArrowRight, BriefcaseBusiness } from "lucide-react";
 import Link from "next/link";
 
 import { Section } from "@/components/site/Section";
+import { buttonStyles } from "@/components/ui/Button";
 
 /**
  * Kavuntra's own open positions. None are listed: add one here (its title, team, place and where to apply) and it
@@ -55,6 +56,17 @@ export function CompanyCareersSection() {
           </Link>
           , not here.
         </p>
+      </div>
+
+      <div className="mt-14 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <p className="max-w-[34rem] text-[17px] leading-relaxed text-charcoal">
+          Interested in the work even so? Tell us what you&apos;d bring, and we&apos;ll keep it in mind when a role
+          opens.
+        </p>
+        <Link href="/contact" className={buttonStyles({ size: "xl", className: "group shrink-0" })}>
+          Say hello
+          <ArrowRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5" />
+        </Link>
       </div>
     </Section>
   );

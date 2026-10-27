@@ -284,10 +284,12 @@ All `/assistant/*` routes check the recruiter role on the server; a candidate's 
 
 ## Environment
 
-- `backend/.env` (see `backend/.env.example`) — database URL, Supabase project URL and secret key (portal invitations and sign-in links), AI provider (`mock`, `gemini` or `groq`) and keys, `RESEND_API_KEY` and `EMAIL_FROM` (email delivery; optional), Ashby keys and options, CORS. Server-side only.
+- `backend/.env` (see `backend/.env.example`) — database URL, Supabase project URL and secret key (portal invitations and sign-in links), AI provider (`mock`, `gemini` or `groq`) and keys, `RESEND_API_KEY` and `EMAIL_FROM` (email delivery; optional), `CONTACT_EMAIL` (the address the website shows and its contact form emails), Ashby keys and options, CORS. Server-side only.
 - `frontend/.env.local` (see `frontend/.env.example`) — the API URL, the Supabase URL and publishable key, and the mock-mode switch. Only public values belong here.
 
 Never commit real secrets.
+
+**Checks.** Backend: `python -m pytest` (in-memory SQLite; set `TALENT_BRIDGE_TEST_POSTGRES_URL` to a throwaway Postgres to run them there too, including the migration tests) and `ruff check app tests`. Frontend: `npm test`, `npm run lint`, `npm run typecheck`, `npm run build`. End to end: `bash e2e/run.sh` ([e2e/README.md](e2e/README.md)).
 
 ## Architecture
 

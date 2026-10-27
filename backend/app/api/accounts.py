@@ -1,7 +1,7 @@
 """Accounts people make for themselves: a candidate account, or an employer's workspace.
 
 Signed in with Supabase Auth (which keeps the password and verifies the email), but not yet linked to
-anything in TalentBridge, so these take a valid access token rather than a TalentBridge account.
+anything in Kavuntra, so these take a valid access token rather than a Kavuntra account.
 """
 
 from fastapi import APIRouter
@@ -15,7 +15,7 @@ from app.services import signup_service
 router = APIRouter(prefix="/accounts", tags=["auth"])
 
 
-@router.get("/status", response_model=AccountStatus, summary="What this sign-in is in TalentBridge")
+@router.get("/status", response_model=AccountStatus, summary="What this sign-in is in Kavuntra")
 async def account_status(claims: ClaimsDep, session: SessionDep) -> AccountStatus:
     """Whether the email is verified, and whether it's a candidate's or an employer's account yet."""
     return await signup_service.status(session, claims)

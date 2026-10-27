@@ -1,7 +1,7 @@
 """Accounts people make for themselves (POST /accounts/*). Mirrors frontend/types/accounts.ts.
 
 Passwords never come here: Supabase Auth keeps them, and verifies the email address. These only say
-what the verified sign-in is in TalentBridge.
+what the verified sign-in is in Kavuntra.
 """
 
 from typing import Annotated, Literal
@@ -15,7 +15,7 @@ Name = Annotated[str, Field(min_length=1, max_length=100)]
 
 
 class AccountStatus(APIModel):
-    """What a signed-in Supabase account is in TalentBridge, so the frontend knows what to set up.
+    """What a signed-in Supabase account is in Kavuntra, so the frontend knows what to set up.
 
     account   candidate (a candidate portal), staff (an employer's workspace), or none yet
     """
@@ -27,7 +27,7 @@ class AccountStatus(APIModel):
 
 
 class CandidateSignup(APIModel):
-    """A candidate's own account, made on the TalentBridge website before or after applying anywhere."""
+    """A candidate's own account, made on the Kavuntra website before or after applying anywhere."""
 
     first_name: Name
     last_name: Name

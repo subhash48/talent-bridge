@@ -40,7 +40,7 @@ MAX_AUTOMATIC_ATTEMPTS = 5  # the sync stops retrying after this; a recruiter ca
 NOT_CONFIGURED = "Portal invitations aren't set up yet: add SUPABASE_SECRET_KEY to backend/.env."
 
 
-# Emails a one-time invitation link with TalentBridge's own message. Returns None once the email provider
+# Emails a one-time invitation link with Kavuntra's own message. Returns None once the email provider
 # accepted it, or a safe reason it didn't.
 InvitationSender = Callable[[str], Awaitable[str | None]]
 

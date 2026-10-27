@@ -95,7 +95,7 @@ async def link_account(session: AsyncSession, email: str, auth_user_id: uuid.UUI
     user = await session.scalar(select(User).where(User.email == email))
     candidate = await session.scalar(select(Candidate).where(Candidate.email == email))
     if user is None and candidate is None:
-        raise AccountLinkError(f"No recruiter or candidate in TalentBridge uses {email}.")
+        raise AccountLinkError(f"No recruiter or candidate in Kavuntra uses {email}.")
     holder = await session.scalar(select(User).where(User.auth_user_id == auth_user_id))
     if holder is not None and holder is not user:
         raise AccountLinkError(f"That Supabase account is already linked to {holder.email}.")

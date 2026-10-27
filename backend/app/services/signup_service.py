@@ -1,4 +1,4 @@
-"""Accounts people make for themselves on the TalentBridge website: a candidate's, or an employer's
+"""Accounts people make for themselves on the Kavuntra website: a candidate's, or an employer's
 workspace.
 
 Supabase Auth holds the password and verifies the email address; nothing here ever sees a password.
@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 NOT_VERIFIED = "Verify your email address first: open the link we sent you, then try again."
 STAFF_EMAIL = "This email belongs to an employer account. Use a personal email address for your candidate account."
 CANDIDATE_EMAIL = "This email belongs to a candidate account. Use your work email address for your company's workspace."
-LINKED_ELSEWHERE = "This email is already linked to another sign-in. Contact TalentBridge support."
+LINKED_ELSEWHERE = "This email is already linked to another sign-in. Contact Kavuntra support."
 
 
 async def status(session: AsyncSession, claims: TokenClaims) -> AccountStatus:
@@ -115,7 +115,7 @@ async def create_workspace(session: AsyncSession, claims: TokenClaims, data: Wor
         name=data.company_name,
         workspace_mode=data.mode,
         locations=[data.location] if data.location else [],
-        source="Set up by its admin on the TalentBridge website",
+        source="Set up by its admin on the Kavuntra website",
     )
     session.add(company)
     await session.flush()

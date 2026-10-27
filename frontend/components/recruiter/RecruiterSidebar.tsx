@@ -18,7 +18,7 @@ import { usePathname } from "next/navigation";
 import { useWorkspace } from "@/components/recruiter/WorkspaceProvider";
 import { Avatar } from "@/components/shared/Avatar";
 import { SidebarNavItem } from "@/components/shared/SidebarNavItem";
-import { TalentBridgeLogo } from "@/components/shared/TalentBridgeLogo";
+import { KavuntraLogo } from "@/components/shared/KavuntraLogo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,17 +46,17 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { signOut, signingOut } = useSignOut();
 
   return (
-    <div className="flex h-full flex-col px-3 pt-5 pb-4">
+    <div className="flex h-full flex-col px-4 pt-6 pb-5">
       <Link
         href="/recruiter/today"
         onClick={onNavigate}
-        aria-label="TalentBridge home"
-        className="mb-7 flex w-fit items-center rounded-md px-2.5"
+        aria-label="Kavuntra home"
+        className="mb-9 flex w-fit items-center rounded-md px-3"
       >
-        <TalentBridgeLogo />
+        <KavuntraLogo />
       </Link>
 
-      <nav aria-label="Primary" className="flex flex-col gap-0.5">
+      <nav aria-label="Primary" className="flex flex-col gap-1">
         {NAV.map((item) => (
           <SidebarNavItem
             key={item.href}
@@ -86,7 +86,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           onNavigate={onNavigate}
         />
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex w-full items-center gap-2.5 rounded-[8px] border-t border-border px-1.5 pt-3 pb-0.5 text-left transition-colors hover:text-ink">
+          <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-[12px] px-2 py-2 text-left transition-colors hover:bg-ink/[0.04]">
             <Avatar name={user.name} src={user.avatarUrl} size={30} />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[13px] font-medium text-ink">{user.name}</span>

@@ -117,7 +117,7 @@ export function ApplicationSelector() {
     <section aria-labelledby={labelId} className="flex flex-col gap-2.5">
       {/* Phones: the title and arrows on one line, the search full width under them. */}
       <div className="flex flex-wrap items-center gap-2">
-        <h2 id={labelId} className="shrink-0 text-[13px] font-semibold text-ink">
+        <h2 id={labelId} className="shrink-0 text-sm font-semibold text-ink">
           My applications
           <span className="ml-1.5 font-normal text-stone tabular-nums">{applications.length}</span>
         </h2>
@@ -234,13 +234,13 @@ function ApplicationCard({ application, selected, tabbable, onSelect }: Applicat
       data-application={application.id}
       onClick={onSelect}
       className={cn(
-        "relative flex w-[15.5rem] shrink-0 snap-start items-center gap-3 rounded-[12px] border py-2.5 pr-8 pl-2.5 text-left transition-[background-color,border-color,box-shadow] duration-200 focus-visible:ring-[3px] focus-visible:ring-brand-ink/65 focus-visible:outline-none",
+        "relative flex w-[16.5rem] shrink-0 snap-start items-center gap-3 rounded-[16px] py-3 pr-8 pl-3 text-left transition-[background-color,box-shadow] duration-200 focus-visible:ring-4 focus-visible:ring-accent/60 focus-visible:outline-none",
         selected
-          ? "border-brand-ink/45 bg-brand-soft shadow-[0_0_0_2px_var(--color-brand)]"
-          : "border-border bg-surface/80 hover:border-border-strong hover:bg-surface-raised",
+          ? "bg-overlay shadow-soft ring-2 ring-brand"
+          : "bg-surface-raised/70 ring-1 ring-ink/[0.07] hover:bg-overlay hover:ring-ink/15",
       )}
     >
-      <EmployerLogo name={application.company} logoUrl={application.companyLogoUrl} size={40} className="rounded-[9px]" />
+      <EmployerLogo name={application.company} logoUrl={application.companyLogoUrl} size={42} className="rounded-[11px]" />
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-1.5">
           <span className="truncate text-[13px] leading-5 font-semibold text-ink">{application.company}</span>

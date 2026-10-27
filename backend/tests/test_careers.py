@@ -324,3 +324,17 @@ async def test_one_address_applying_too_often_is_asked_to_wait(anonymous: AsyncC
         headers={"X-Forwarded-For": "198.51.100.7"},
     )
     assert other.status_code == 200
+
+
+async def test_the_limit_counts_the_address_our_proxy_saw(anonymous: AsyncClient) -> None:
+    """Behind the proxy, X-Forwarded-For ends with the visitor's real address: what comes before it is theirs to
+    make up, and changing it doesn't reset the count."""
+    from app.services import careers
+
+    for index in range(careers.APPLY_LIMIT + 1):
+        response = await anonymous.post(
+            f"{API}/careers/jobs/{PRODUCT_DESIGNER}/apply",
+            json=application(email=f"spoof{index}@inbox.dev"),
+            headers={"X-Forwarded-For": f"10.0.0.{index}, 198.51.100.20"},
+        )
+    assert response.status_code == 429

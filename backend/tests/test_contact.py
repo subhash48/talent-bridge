@@ -96,3 +96,16 @@ async def test_operators_can_read_what_wasnt_emailed(
     shown = contact_requests.describe(waiting)
     assert "[Pilot / design partnership]  not emailed" in shown
     assert "From: Priya Nair <priya@northwind.example>, Northwind Labs" in shown and MESSAGE["message"] in shown
+
+
+def test_quiet_addresses_are_forgotten(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.core import rate_limit
+
+    monkeypatch.setattr(rate_limit, "MAX_CLIENTS", 3)
+    clock = iter(float(second) for second in (0, 0, 0, 0, 100, 100))
+    monkeypatch.setattr(rate_limit.time, "monotonic", lambda: next(clock))
+    limiter = rate_limit.RateLimiter(1, 10, "Wait.")
+    for client in ("a", "b", "c", "d"):  # the fourth is one too many to keep: none is old enough to drop yet
+        assert limiter.allow(client)
+    assert limiter.allow("e") and set(limiter._seen) == {"e"}  # later, the quiet ones go
+    assert not limiter.allow("e")

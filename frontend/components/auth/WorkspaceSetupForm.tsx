@@ -95,7 +95,7 @@ export function WorkspaceSetupForm({ initialMode }: { initialMode: WorkspaceMode
             link: "Sign in",
           });
         }
-        setLoaded({ kind: "blocked", message: errorMessage(cause), href: "/", link: "Back to TalentBridge" });
+        setLoaded({ kind: "blocked", message: errorMessage(cause), href: "/", link: "Back to Kavuntra" });
       }
     })();
   }, [initialMode]);

@@ -22,7 +22,7 @@ export function onboardingPath(mode: WorkspaceMode | null): string {
 /**
  * An employer's own sign-in, for setting up their company's workspace. Supabase Auth keeps the password and
  * sends the verification email; its link opens the workspace set-up, where they say how they hire. Nothing
- * exists in TalentBridge until then, and the email must be verified first.
+ * exists in Kavuntra until then, and the email must be verified first.
  */
 export function EmployerSignupForm({ mode }: { mode: WorkspaceMode | null }) {
   const [form, setForm] = useState<Form>({ fullName: "", email: "", password: "", confirm: "" });

@@ -3,7 +3,7 @@
 import { ChevronDown, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 
 import { COMPANY_LINKS, PRODUCT_LINK, SOLUTIONS } from "@/components/site/nav";
 import { KavuntraLogo } from "@/components/shared/KavuntraLogo";
@@ -81,6 +81,23 @@ export function SiteHeader() {
     };
   }, [open]);
 
+  const solutionLinks = () => [...(solutions.current?.querySelectorAll<HTMLAnchorElement>("a") ?? [])];
+  // Arrow keys, as in a menu: down on the closed button opens Solutions on its first row; in the rows they move
+  // between them, round the ends.
+  const onSolutionsKey = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    event.preventDefault();
+    const links = solutionLinks();
+    if (!links.length) {
+      setOpen("solutions");
+      requestAnimationFrame(() => solutionLinks()[0]?.focus());
+      return;
+    }
+    const step = event.key === "ArrowDown" ? 1 : -1;
+    const at = links.indexOf(document.activeElement as HTMLAnchorElement);
+    links[at < 0 ? (step > 0 ? 0 : links.length - 1) : (at + step + links.length) % links.length]?.focus();
+  };
+
   return (
     <header className="fixed inset-x-0 top-0 z-40 px-3 pt-3 sm:px-5 lg:pt-5">
       <div
@@ -98,7 +115,7 @@ export function SiteHeader() {
           <Link href={PRODUCT_LINK.href} aria-current={current(PRODUCT_LINK.href)} className={linkStyles}>
             {PRODUCT_LINK.label}
           </Link>
-          <div className="relative">
+          <div className="relative" onKeyDown={onSolutionsKey}>
             <button
               ref={solutionsButton}
               type="button"

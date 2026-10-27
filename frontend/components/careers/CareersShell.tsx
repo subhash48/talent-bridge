@@ -2,7 +2,7 @@ import { FlaskConical } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { TalentBridgeLogo } from "@/components/shared/TalentBridgeLogo";
+import { KavuntraLogo } from "@/components/shared/KavuntraLogo";
 import { buttonStyles } from "@/components/ui/Button";
 import { CAREERS_PATHS, type CareersSite } from "@/types/careers";
 
@@ -15,7 +15,7 @@ export function CareersShell({ children, site = "demo" }: { children: ReactNode;
     <div className="relative flex min-h-dvh flex-col">
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:rounded-[8px] focus:bg-brand focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-on-brand"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:rounded-[10px] focus:bg-brand focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-on-brand"
       >
         Skip to content
       </a>
@@ -29,7 +29,7 @@ export function CareersShell({ children, site = "demo" }: { children: ReactNode;
       <header className="relative">
         <div className="mx-auto flex h-[72px] w-full max-w-[1080px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-10">
           <Link href={CAREERS_PATHS[site]} className="flex items-center gap-3 rounded-md">
-            <TalentBridgeLogo />
+            <KavuntraLogo />
             <span aria-hidden className="h-5 w-px bg-border-strong" />
             <span className="text-[15px] font-medium text-charcoal">Careers</span>
           </Link>

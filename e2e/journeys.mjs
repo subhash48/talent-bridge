@@ -85,6 +85,10 @@ async function website(browser) {
   for (const label of ["Product", "About", "Careers", "Contact"]) {
     check(`nav: ${label}`, await nav.getByRole("link", { name: label, exact: true }).first().isVisible());
   }
+  await nav.getByRole("button", { name: "Solutions" }).click();
+  for (const label of ["For Recruiters", "For Candidates", "For Small Businesses"]) {
+    check(`nav: Solutions: ${label}`, await nav.getByRole("link", { name: new RegExp(`^${label}`) }).isVisible());
+  }
   // The whole home page is told over the film: one pinned screen whose scenes take turns as it scrolls.
   // How shown a scene is: its words' opacity (scenes fade by their words and cards, never as a whole).
   const sceneOpacity = (target, label) =>

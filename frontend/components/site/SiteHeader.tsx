@@ -47,9 +47,10 @@ function SolutionRows({ pathname, onPick }: { pathname: string; onPick: () => vo
 }
 
 /**
- * The public website's header: a small floating pill over the page. Product, About, Careers and Contact in the
- * middle; Sign in and Get started on the right. It is as wide as a comfortable page, never the screen. Under lg
- * the places fold into one menu behind a button.
+ * The public website's header: a small floating pill over the page. Product, a Solutions menu (who Kavuntra is
+ * for), About, Careers and Contact in the middle; Sign in and Get started on the right. It is as wide as a
+ * comfortable page, never the screen. Under lg the places fold into one menu behind a button, and the bar keeps
+ * the logo, Sign in and that button.
  */
 export function SiteHeader() {
   const [open, setOpen] = useState<Panel | null>(null);
@@ -111,7 +112,7 @@ export function SiteHeader() {
         )}
       >
         <Link href="/" className="justify-self-start rounded-full py-1 lg:ml-2.5" aria-label="Kavuntra home">
-          <KavuntraLogo />
+          <KavuntraLogo className="[&>svg:first-child]:h-6" />
         </Link>
 
         <nav aria-label="Website" className="hidden items-center gap-0.5 lg:flex">

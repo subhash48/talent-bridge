@@ -220,7 +220,7 @@ async def test_stage_change_moves_the_application(anonymous: AsyncClient, sessio
             )
         ).all()
     assert [(row.previous_stage, row.new_stage) for row in history] == [(None, "screening"), ("screening", "interview")]
-    assert all(row.changed_by is None for row in history)  # changed in Ashby, not by a TalentBridge user
+    assert all(row.changed_by is None for row in history)  # changed in Ashby, not by a Kavuntra user
 
 
 async def test_an_older_event_never_reverts_a_newer_one(

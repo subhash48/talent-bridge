@@ -79,7 +79,7 @@ Record = AshbyApplication | InterviewSchedule | AshbyJob | CandidateMerge
 
 
 def parse_record(envelope: WebhookEnvelope) -> Record | None:
-    """The typed record a webhook carries, or None for actions TalentBridge doesn't use."""
+    """The typed record a webhook carries, or None for actions Kavuntra doesn't use."""
     action, data = envelope.action, envelope.data
     if action in APPLICATION_ACTIONS:
         return AshbyApplication.model_validate(data["application"])
@@ -236,7 +236,7 @@ class WebhookProcessor:
                 detail = await importer.merge_candidates(record)
                 return _Applied(record.merged_candidate.id, detail=detail)
             case None:
-                return _Applied(None, W.IGNORED, f"TalentBridge doesn't use {action} webhooks.")
+                return _Applied(None, W.IGNORED, f"Kavuntra doesn't use {action} webhooks.")
 
     async def _finish(
         self,

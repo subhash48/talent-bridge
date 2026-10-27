@@ -1,4 +1,4 @@
-"""How Ashby's states map onto TalentBridge's. Every rule is a table here, so changing a mapping is a
+"""How Ashby's states map onto Kavuntra's. Every rule is a table here, so changing a mapping is a
 one-line edit; custom stage titles can also be mapped without a code change (ASHBY_STAGE_TITLE_MAP).
 
 Ashby pipelines use custom stage titles, but every stage has one of a few types, so stages map by
@@ -18,7 +18,7 @@ from app.integrations.ashby.schemas import AshbyApplication, InterviewEvent, Int
 
 S = ApplicationStage
 
-# Ashby interview stage type -> TalentBridge stage. "Archived" isn't here: archiving is handled by
+# Ashby interview stage type -> Kavuntra stage. "Archived" isn't here: archiving is handled by
 # status and archive reason below, and keeps the stage the application had reached.
 STAGE_TYPES: dict[str, ApplicationStage] = {
     "Lead": S.SOURCED,
@@ -73,7 +73,7 @@ class ApplicationState:
 
 
 def stage_for(stage: InterviewStage | None, title_map: Mapping[str, ApplicationStage]) -> ApplicationStage | None:
-    """The TalentBridge stage for an Ashby interview stage: by title if mapped, else by type."""
+    """The Kavuntra stage for an Ashby interview stage: by title if mapped, else by type."""
     if stage is None:
         return None
     return title_map.get(stage.title.strip().lower()) or STAGE_TYPES.get(stage.type or "")

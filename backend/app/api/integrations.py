@@ -1,4 +1,4 @@
-"""Ashby integration endpoints. The rest of TalentBridge works without Ashby connected.
+"""Ashby integration endpoints. The rest of Kavuntra works without Ashby connected.
 
 Ashby is connected for one employer: the deployment's own company, the oldest one
 (services/company_profile.workspace_company_id). Only its staff see the integration's status or run a sync;

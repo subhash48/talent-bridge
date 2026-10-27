@@ -1,3 +1,5 @@
+import { Store, UserRound, Users, type LucideIcon } from "lucide-react";
+
 /** The public website's places: the header's links, in order. Product is the home page's first section. */
 export const SITE_LINKS = [
   { href: "/#product", label: "Product" },
@@ -26,6 +28,25 @@ export const FOOTER_LINKS = [
  */
 
 export const PRODUCT_LINK = { href: "/product", label: "Product" } as const;
+
+/** The Solutions menu: who Kavuntra is for, each with its page and a line on what it does for them. */
+export const SOLUTIONS: { href: string; label: string; short: string; text: string; icon: LucideIcon }[] = [
+  { href: "/for-recruiters", label: "For Recruiters", short: "Recruiters", text: "Manage hiring and candidate communication.", icon: Users },
+  {
+    href: "/for-candidates",
+    label: "For Candidates",
+    short: "Candidates",
+    text: "Track applications and prepare for interviews.",
+    icon: UserRound,
+  },
+  {
+    href: "/for-small-businesses",
+    label: "For Small Businesses",
+    short: "Small Businesses",
+    text: "Hire easily with an AI assistant.",
+    icon: Store,
+  },
+];
 
 export const COMPANY_LINKS = [
   { href: "/about", label: "About" },

@@ -1,5 +1,5 @@
 /**
- * What a new TalentBridge password must be, checked as it's typed. Passwords only ever go to Supabase Auth,
+ * What a new Kavuntra password must be, checked as it's typed. Passwords only ever go to Supabase Auth,
  * which checks them again (its own minimum and, when switched on, leaked-password protection); its
  * "weak_password" answer is shown as it says it.
  */
@@ -26,6 +26,7 @@ const COMMON = new Set([
   "sunshine1",
   "princess1",
   "admin123",
+  "kavuntra1",
   "talentbridge1",
 ]);
 

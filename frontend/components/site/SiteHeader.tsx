@@ -60,6 +60,7 @@ export function SiteHeader() {
   const menuButton = useRef<HTMLButtonElement>(null);
   const close = () => setOpen(null);
   const current = (href: string) => (pathname === href ? "page" : undefined);
+  const inSolutions = SOLUTIONS.some((solution) => solution.href === pathname);
 
   // Escape closes what's open and gives focus back to its button; so does a click, or focus moving, outside the pill.
   useEffect(() => {
@@ -124,7 +125,7 @@ export function SiteHeader() {
               aria-expanded={open === "solutions"}
               aria-controls="site-solutions"
               onClick={() => setOpen(open === "solutions" ? null : "solutions")}
-              className={cn(linkStyles, "gap-1 pr-2", open === "solutions" && "bg-ink/[0.06] text-ink")}
+              className={cn(linkStyles, "gap-1 pr-2", (inSolutions || open === "solutions") && "bg-ink/[0.06] text-ink")}
             >
               Solutions
               <ChevronDown

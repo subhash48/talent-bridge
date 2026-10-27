@@ -7,8 +7,7 @@ import type { ReactNode } from "react";
 
 import { useWorkspace } from "@/components/recruiter/WorkspaceProvider";
 import { Avatar } from "@/components/shared/Avatar";
-import { NightSky } from "@/components/shared/NightSky";
-import { TalentBridgeLogo } from "@/components/shared/TalentBridgeLogo";
+import { KavuntraLogo } from "@/components/shared/KavuntraLogo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,16 +53,15 @@ export function HireShell({ children }: { children: ReactNode }) {
     <ToastProvider>
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:rounded-[8px] focus:bg-brand focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-on-brand"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:rounded-[10px] focus:bg-brand focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-on-brand"
       >
         Skip to content
       </a>
       <div className="relative isolate flex min-h-dvh flex-col">
-        <NightSky className="fixed opacity-30" />
-        <header className="sticky top-0 z-30 border-b border-border bg-canvas/85 backdrop-blur">
-          <div className="mx-auto flex h-16 w-full max-w-[1040px] items-center gap-4 px-4 sm:px-6">
-            <Link href="/hire" className="flex min-w-0 items-center gap-3 rounded-[8px]" aria-label="Simple Hire home">
-              <TalentBridgeLogo />
+        <header className="sticky top-0 z-30 px-3 pt-3 sm:px-5 sm:pt-4">
+          <div className="mx-auto flex h-14 w-full max-w-[1040px] items-center gap-4 rounded-full bg-overlay/75 pr-2 pl-4 shadow-soft ring-1 ring-ink/[0.07] backdrop-blur-xl sm:pl-5">
+            <Link href="/hire" className="flex min-w-0 items-center gap-3 rounded-full" aria-label="Simple Hire home">
+              <KavuntraLogo />
               <span className="hidden truncate border-l border-border pl-3 text-sm font-medium text-charcoal sm:block">
                 {business}
               </span>
@@ -75,8 +73,8 @@ export function HireShell({ children }: { children: ReactNode }) {
                   href={href}
                   aria-current={isActive(pathname, href) ? "page" : undefined}
                   className={cn(
-                    "inline-flex h-10 items-center gap-2 rounded-full px-4 text-[15px] font-medium transition-colors",
-                    isActive(pathname, href) ? "bg-brand text-on-brand" : "text-stone hover:bg-muted hover:text-ink",
+                    "inline-flex h-10 items-center gap-2 rounded-full px-4 text-[15px] font-medium transition-colors duration-200",
+                    isActive(pathname, href) ? "bg-brand text-on-brand" : "text-charcoal hover:bg-ink/[0.05] hover:text-ink",
                   )}
                 >
                   <Icon aria-hidden className="size-[18px]" />
@@ -88,7 +86,7 @@ export function HireShell({ children }: { children: ReactNode }) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button type="button" className="ml-auto rounded-full md:ml-2" aria-label="Your account">
-                  <Avatar name={user.name} src={user.avatarUrl} size={34} className="rounded-full ring-1 ring-ink/15" />
+                  <Avatar name={user.name} src={user.avatarUrl} size={36} className="rounded-full ring-1 ring-ink/10" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -109,12 +107,12 @@ export function HireShell({ children }: { children: ReactNode }) {
             </DropdownMenu>
           </div>
         </header>
-        <main id="main" tabIndex={-1} className="relative flex-1 pb-28 focus:outline-none md:pb-12">
-          <div className="mx-auto w-full max-w-[1040px] px-4 pt-6 sm:px-6 sm:pt-8">{children}</div>
+        <main id="main" tabIndex={-1} className="app-backdrop relative flex-1 pb-28 focus:outline-none md:pb-16">
+          <div className="mx-auto w-full max-w-[1040px] px-4 pt-8 sm:px-6 sm:pt-12">{children}</div>
         </main>
         <nav
           aria-label="Simple Hire"
-          className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-canvas/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+          className="fixed inset-x-0 bottom-0 z-30 border-t border-border/70 bg-overlay/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
         >
           <ul className="grid grid-cols-4">
             {HIRE_NAV.map(({ href, label, icon: Icon }) => (

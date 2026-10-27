@@ -133,7 +133,7 @@ export function OpeningScene() {
   return (
     <Centre>
       <h1 className={cn(HEADLINE, "max-w-[24ch]")}>Hiring feels simpler.</h1>
-      <p className="mt-4 text-[clamp(16px,1.2vw,19px)] leading-relaxed text-balance text-[#3a4b4e]">
+      <p className={cn("mt-4 text-[clamp(16px,1.2vw,19px)] leading-relaxed font-medium text-balance text-[#1f3539]", HALO)}>
         Kavuntra keeps recruiters responsive and candidates informed.
       </p>
       <div className="mt-7 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">

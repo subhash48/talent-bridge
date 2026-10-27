@@ -108,6 +108,12 @@ async def test_applicants_with_the_reasons_they_match(client: AsyncClient, sam: 
     applied = await ask(client, sam, "Show me people who applied for the kitchen job.")
     [card] = applied["cards"]
     assert card["type"] == "candidate_match" and card["considered"] == 5
+    # Everyone who applied, not only those showing the job's requirement (found in review: two were hidden).
+    assert len(card["items"]) == 5 and card["criteria_source"] == "job_requirements"
+    assert applied["reply"] == (
+        "Here are 5 people who applied. Each one shows whether they have kitchen experience, as the job asks. Tick "
+        "the people you'd like to contact."
+    )
     assert [item["label"] for item in card["filters"]] == ["Job: Kitchen Assistant · Sam's Cafe"]
 
     three = await ask(
@@ -292,9 +298,11 @@ async def test_sam_reads_plain_replies_not_recruiting_terms(client: AsyncClient,
     found = await ask(
         client, sam, "Show me 3 applicants with kitchen experience who are available Friday and Saturday."
     )
+    # Amina can't do Fridays and John's experience is restaurant work: the reply doesn't say all three have it all.
     assert found["reply"] == (
-        "Here are 3 people who applied with kitchen experience and who can work Friday and Saturday. Each one shows "
-        "why. Tick the people you'd like to contact."
+        "Here are 3 of the 5 people who applied. I looked for kitchen experience and people who can work Friday and "
+        "Saturday: "
+        "each one shows what they have and what they don't. Tick the people you'd like to contact."
     )
     picked = [item["application_id"] for item in found["cards"][0]["items"]]
     asked = await ask(

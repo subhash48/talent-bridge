@@ -173,7 +173,10 @@ async def match(session: AsyncSession, request: MatchRequest, now: datetime | No
     days = [day for day in Weekday if day in request.available_days]
     resumes = await _resume_texts(session, {app.candidate_id for app in applications})
     found = [_match(app, criteria, days, resumes.get(app.candidate_id)) for app in applications]
-    matching = [item for item in found if item.matched] if criteria or days else found
+    # Only what was asked for leaves anyone out. The job's own requirements, used when nothing was asked,
+    # order everyone who applied by what their application shows, and hide no one.
+    asked = bool(criteria and source == "recruiter") or bool(days)
+    matching = [item for item in found if item.matched] if asked else found
     matching.sort(key=lambda item: (-item.matched, item.applied_at, item.name))
     return MatchResult(
         criteria=criteria,

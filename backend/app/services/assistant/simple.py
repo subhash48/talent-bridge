@@ -427,16 +427,28 @@ def plain_reply(cards: list[AssistantCard], reply: str) -> str:
 
 
 def _people(card: CandidateMatchCard) -> str:
+    """Who's in the list, claiming no more than every one of them shows."""
     shown = len(card.items)
     if not shown:
         return "Nobody who applied fits that yet. Try asking for less, or look again when more people have applied."
-    lead = f"Here {'is' if shown == 1 else 'are'} {shown} {'person' if shown == 1 else 'people'} who applied"
-    asked = [criterion[:1].lower() + criterion[1:] for criterion in card.criteria]
-    if asked:
-        lead += f" with {_join(asked)}"
-    if card.available_days:
-        lead += f"{' and' if asked else ','} who can work {_join([day.label for day in card.available_days])}"
-    return f"{lead}. Each one shows why. Tick the people you'd like to contact."
+    verb = "is" if shown == 1 else "are"
+    people = f"{shown} {'person' if shown == 1 else 'people'}"
+    if card.matching > shown:
+        people = f"{shown} of the {card.matching} people"
+    tick = "Tick the people you'd like to contact."
+    asked = _join([criterion[:1].lower() + criterion[1:] for criterion in card.criteria]) if card.criteria else ""
+    days = _join([day.label for day in card.available_days]) if card.available_days else ""
+    if not asked and not days:
+        return f"Here {verb} {people} who applied. {tick}"
+    if card.criteria_source == "job_requirements" and not days:
+        return f"Here {verb} {people} who applied. Each one shows whether they have {asked}, as the job asks. {tick}"
+    if all(item.matched == len(item.evidence) for item in card.items):
+        lead = f"Here {verb} {people} who applied" + (f" with {asked}" if asked else "")
+        if days:
+            lead += f"{' and' if asked else ','} who can work {days}"
+        return f"{lead}. Each one shows why. {tick}"
+    looked = " and ".join(part for part in (asked, f"people who can work {days}" if days else "") if part)
+    return f"Here {verb} {people} who applied. I looked for {looked}: each one shows what they have and what they don't. {tick}"
 
 
 def _to_send(card: OutreachCard) -> str:

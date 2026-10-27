@@ -114,10 +114,11 @@ function Onward({ href, children }: { href: string; children: ReactNode }) {
  * The film's headlines (the opening line and the statements between scenes): an editorial serif in forest teal,
  * sized for the screen, and centred in the viewport. The scene is the whole viewport (FilmStage), so a flex column
  * centres the words in what's left under the floating header, lifted a little above the exact middle, where the
- * eye reads the centre to be. No margins to balance by hand, and no wash behind the words: the valley's haze is
- * light enough there.
+ * eye reads the centre to be and the valley's haze is lightest. No margins to balance by hand, and no wash behind
+ * the words: only the faintest pale halo on the letters themselves, for where a tree or a crag is behind them.
  */
-const HEADLINE = "font-serif text-[clamp(40px,calc(28px+2.6vw),76px)] leading-[1.04] tracking-[-0.01em] text-balance text-[#10282b]";
+const HALO = "[text-shadow:0_1px_1px_rgb(246_243_236/0.3),0_0_30px_rgb(246_243_236/0.5)]";
+const HEADLINE = `font-serif text-[clamp(40px,calc(28px+2.6vw),76px)] leading-[1.04] tracking-[-0.01em] text-balance text-[#10282b] ${HALO}`;
 
 function Centre({ children }: { children: ReactNode }) {
   return (

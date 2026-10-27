@@ -6,15 +6,15 @@ import { PIPELINE_STAGES, type CandidateStage } from "@/types/workspace";
 // Status presentation lives here so every badge, dot and bar uses the same colours.
 // Colour is never the only signal: each style is paired with a text label (ARCHITECTURE.md 12.2).
 //
-// A pipeline reads as neutral early on and lime once a candidate is interviewing, growing
+// A pipeline reads as neutral early on and teal-sage once a candidate is interviewing, growing
 // stronger stage by stage. Sage marks an offer or a hire, danger a rejection; amber marks a wait.
 
 export const STAGE_BADGE_STYLES: Record<ApplicationStage, string> = {
   sourced: "bg-ink/[0.03] text-stone ring-ink/10",
   applied: "bg-ink/[0.05] text-charcoal ring-ink/10",
   screening: "bg-ink/[0.07] text-charcoal ring-ink/[0.16]",
-  interview: "bg-brand/25 text-brand-ink ring-brand-ink/25",
-  final_interview: "bg-brand/35 text-brand-ink ring-brand-ink/35",
+  interview: "bg-accent-soft text-brand-ink ring-brand-ink/20",
+  final_interview: "bg-accent/55 text-ink ring-brand-ink/30",
   offer: "bg-sage/[0.08] text-sage ring-sage/20",
   hired: "bg-sage/[0.12] text-sage ring-sage/30",
   rejected: "bg-danger/[0.08] text-danger ring-danger/20",

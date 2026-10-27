@@ -13,6 +13,7 @@ KITCHEN = (
     "available Friday and Saturday."
 )
 CASHIER = "Post a cashier job paying $16 an hour for weekend shifts."
+HELPER = "I need someone to help in the kitchen on Friday and Saturday evenings, $18/hour, 2 people"
 
 
 def test_the_restaurant_job_is_read_whole() -> None:
@@ -107,12 +108,17 @@ def test_an_owner_can_ask_for_a_job_in_many_ways() -> None:
         "I'm looking for a barista for Saturday mornings",
         "Hire two delivery drivers, $20 an hour",
         "We're hiring a cook",
+        HELPER,
+        "I need a cook who can work weekends, $18 an hour",
+        "We need a dishwasher for weekends",
+        "Need a cook Friday and Saturday",
     ):
         assert simple.is_job_request(said), said
     for said in (
         "Show me people who applied for the kitchen job",
         "I need the phone numbers of the people who applied",
         "Message these three",
+        "Who is free on Friday?",
     ):
         assert not simple.is_job_request(said), said
 
@@ -125,6 +131,16 @@ def intent(text: str, **context: object) -> AssistantIntent:
 def test_refine_turns_plain_words_into_the_same_actions() -> None:
     job = intent(KITCHEN)
     assert job.action == "create_job" and job.job is not None and job.job.openings == 2
+    # The rules read this one as a search: nobody who applied is mentioned, so it's a job.
+    helper = intent(HELPER)
+    assert helper.action == "create_job" and helper.job is not None
+    assert (helper.job.title, helper.job.pay, helper.job.shift, helper.job.work_days, helper.job.openings) == (
+        "Kitchen Assistant",
+        "$18/hour",
+        "Evenings",
+        [W.FRIDAY, W.SATURDAY],
+        2,
+    )
 
     search = intent("Show me 3 applicants with kitchen experience who are available Friday and Saturday.")
     assert (search.action, search.limit, search.skills, search.available_days) == (

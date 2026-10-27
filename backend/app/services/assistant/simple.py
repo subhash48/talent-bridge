@@ -138,15 +138,16 @@ _ROLE = re.compile(r"\b(?P<role>" + "|".join(re.escape(word) for word, _ in ROLE
 
 _JOB_REQUEST = re.compile(
     r"\b(post|create|open|list|advertise|put up|add)\b.{0,40}\b(job|position|role|opening|vacanc\w+|listing|ad)\b"
-    rf"|\bI\s*(?:'m|am)?\s*(?:need|want|looking for|hiring|need to hire|want to hire)\b.{{0,40}}\b({_PEOPLE}|someone|"
-    + "|".join(re.escape(word) for word, _ in ROLES)
-    + r")\b"
+    rf"|(?:\b(?:I|we)\s*(?:'m|am|'re|are)?\s*|^\s*)(?:need|want|looking for|hiring|need to hire|want to hire)\b"
+    rf".{{0,40}}\b({_PEOPLE}|someone|" + "|".join(re.escape(word) for word, _ in ROLES) + r")\b"
     r"|\b(we're|we are|i'm|i am)\s+hiring\b|\bhire\s+(?:a|an|\d+|one|two|three|four|five|some)\b",
     _I,
 )
-# A search or a question about applicants is never a new job: "I need to see who applied".
+# A search or a question about applicants is never a new job: "I need to see who applied", "Who is free
+# Friday?". "A cook who can work weekends" still is one.
 _NOT_A_JOB = re.compile(
-    r"\b(applied|applicants?|candidates?|phone numbers?|show me|who\b|see\b|message|ask (them|these|those))", _I
+    r"\b(applied|applicants?|candidates?|phone numbers?|show me|see\b|message|ask (them|these|those))|^\s*who\b",
+    _I,
 )
 
 # "should have kitchen experience", "with customer service experience", "must have a driver's license".
@@ -329,7 +330,10 @@ def refine(intent: AssistantIntent, text: str, *, has_selection: bool, proposal_
                 "schedule": ScheduleDetails(**details.model_dump(), window_start=start, window_end=end),
             }
         )
-    if intent.action == "create_job" or (intent.action not in KEEP_ACTIONS and is_job_request(text)):
+    # A job described in plain words is a job, even when the reader took it for a search: "I need someone to
+    # help in the kitchen on Fridays, $18 an hour" names no applicant, no one who applied.
+    described = is_job_request(text) and (intent.action not in KEEP_ACTIONS or intent.action == "search_candidates")
+    if intent.action == "create_job" or described:
         changes, _ = job_changes(text, intent.job)
         return intent.model_copy(update={"action": "create_job", "job": changes})
     if intent.action == "search_candidates":

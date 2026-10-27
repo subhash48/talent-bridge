@@ -97,7 +97,7 @@ export function ApplyResultCard({ site = "demo", result, problem, retrying, stil
             <>
               <p>
                 Your application for {job}
-                {result.company ? <> at {result.company}</> : null} has been submitted. You already have a TalentBridge
+                {result.company ? <> at {result.company}</> : null} has been submitted. You already have a Kavuntra
                 account: sign in with the link we&apos;ve emailed to {email} to follow updates from the hiring team.
               </p>
               <p className="text-sm text-stone">
@@ -108,7 +108,7 @@ export function ApplyResultCard({ site = "demo", result, problem, retrying, stil
           ) : (
             <>
               <p>
-                Your application has been submitted. Create your TalentBridge password to follow updates from the
+                Your application has been submitted. Create your Kavuntra password to follow updates from the
                 hiring team.
               </p>
               <p>

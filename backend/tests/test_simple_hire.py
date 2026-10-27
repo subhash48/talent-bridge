@@ -361,3 +361,10 @@ async def test_a_draft_changed_in_words_says_the_same_thing_everywhere(
     posted = await approve(client, sam, first["id"])
     job = (await client.get(f"{API}/careers/jobs/{posted['cards'][0]['job_id']}")).json()
     assert "$19/hour" in job["summary"] and "$18" not in job["summary"]
+
+
+async def test_a_named_title_is_the_title(client: AsyncClient, sam: dict[str, str]) -> None:
+    answer = await ask(client, sam, "I need a dental assistant on weekdays, $20 an hour")
+    assert answer["cards"][0]["draft"]["title"] == "Dental Assistant"
+    full = await ask(client, {}, "Create a Medical Assistant role in Boston, hybrid")  # Alex's full workspace
+    assert full["cards"][0]["draft"]["title"] == "Medical Assistant"

@@ -135,6 +135,13 @@ WORK_TITLES: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"\b(retail|shop floor|store)\b", _I), "Retail Associate"),
 )
 _ROLE = re.compile(r"\b(?P<role>" + "|".join(re.escape(word) for word, _ in ROLES) + r")s?\b", _I)
+# Any other job named the usual way: "a dental assistant", "a pharmacy technician", "two night clerks".
+_NAMED_ROLE = re.compile(
+    r"\b(?P<role>(?:(?!(?:a|an|the|my|our|new|more|extra|some|good|reliable|time)\b)[a-z]+\s+)?"
+    r"(?:assistant|associate|technician|attendant|clerk|coordinator|supervisor|specialist|nurse|caregiver|nanny"
+    r"|tutor|mechanic|electrician|plumber|carpenter|painter|landscaper|gardener|groomer|stylist|barber|guard))s?\b",
+    _I,
+)
 
 _JOB_REQUEST = re.compile(
     r"\b(post|create|open|list|advertise|put up|add)\b.{0,40}\b(job|position|role|opening|vacanc\w+|listing|ad)\b"
@@ -253,6 +260,9 @@ def title(text: str, needs: list[str]) -> tuple[str | None, bool]:
     if role:
         word = role.group("role").lower()
         return next(name for key, name in ROLES if key == word), False
+    named = _NAMED_ROLE.search(text)
+    if named and not _generic(named.group("role")):
+        return named.group("role").title(), False
     described = " ".join([text, *needs])
     for pattern, name in WORK_TITLES:
         if pattern.search(described):
@@ -273,6 +283,8 @@ def job_changes(text: str, said: JobChanges | None = None) -> tuple[JobChanges, 
     name = said.title if said.title and not _generic(said.title) else None
     if name is None:
         name, suggested = title(text, needs)
+    else:  # read before, by the model or from the work described: a suggestion unless the owner said it
+        suggested = name.casefold() not in text.casefold()
     return (
         said.model_copy(
             update={
@@ -355,9 +367,18 @@ def _experience_criteria(skills: list[str], text: str) -> list[str]:
     return criteria
 
 
+# Words for people that aren't a job: "two workers", "kitchen staff", "some help". A bare "Assistant" or
+# "Associate" says no more; "Medical Assistant" and "Store Associate" are real titles.
+_GENERIC = re.compile(
+    r"(?:\w+\s+)?(?:workers?|people|staff|employees|hires|hands|helpers?|team members?|someone|help)"
+    r"|assistants?|associates?|porters?",
+    _I,
+)
+
+
 def _generic(said: str) -> bool:
     """ "Workers", "people", "staff": not a title."""
-    return bool(re.fullmatch(rf"(?:\w+\s+)?(?:{_PEOPLE}|someone|help)", said.strip(), _I))
+    return bool(_GENERIC.fullmatch(said.strip()))
 
 
 # Simple Hire's words for the assistant's answers: what happened, plainly, with no recruiting terms.

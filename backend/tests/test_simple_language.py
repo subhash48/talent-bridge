@@ -188,6 +188,19 @@ def test_a_model_reading_keeps_what_it_read_and_gains_what_it_missed() -> None:
     assert simple.refine(workers, KITCHEN, has_selection=False, proposal_kind=None).job.title == "Kitchen Assistant"  # type: ignore[union-attr]
 
 
+@pytest.mark.parametrize("title", ["Medical Assistant", "Dental Assistant", "Store Associate", "Night Porter"])
+def test_a_real_title_is_kept(title: str) -> None:
+    """Found in review: any "<word> Assistant" was taken for "workers" and thrown away, in both workspaces."""
+    read = AssistantIntent(action="create_job", job=JobChanges(title=title))
+    refined = simple.refine(read, f"Create a {title} role in Boston", has_selection=False, proposal_kind=None)
+    assert refined.job is not None and refined.job.title == title
+
+
+@pytest.mark.parametrize("said", ["Workers", "kitchen staff", "Two people", "Someone", "Assistant", "some help"])
+def test_words_for_people_are_not_titles(said: str) -> None:
+    assert simple._generic(said)
+
+
 def test_approvals_and_draft_edits_are_left_alone() -> None:
     yes = AssistantIntent(action="confirm", mode="execute")
     assert simple.refine(yes, "yes, post it", has_selection=False, proposal_kind="job") == yes

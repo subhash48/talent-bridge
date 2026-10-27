@@ -1,7 +1,7 @@
-"""The email an applicant gets from TalentBridge's careers site, when an email provider is configured: one
+"""The email an applicant gets from Kavuntra's careers site, when an email provider is configured: one
 message that confirms the application and carries their way into the candidate portal.
 
-Someone new gets a one-time link to create their TalentBridge password; someone with an account already
+Someone new gets a one-time link to create their Kavuntra password; someone with an account already
 gets a one-time sign-in link. The link is a secret: it's in this email and nowhere else, never a log line.
 Without an email provider, Supabase sends its own invitation or sign-in email instead (careers.py).
 """
@@ -10,8 +10,8 @@ import hashlib
 
 from app.integrations.email import OutboundEmail
 
-ACTIVATE = "Create your TalentBridge password to follow updates from the hiring team:"
-SIGN_IN = "Sign in to TalentBridge to follow updates from the hiring team:"
+ACTIVATE = "Create your Kavuntra password to follow updates from the hiring team:"
+SIGN_IN = "Sign in to Kavuntra to follow updates from the hiring team:"
 
 
 def application_received(
@@ -27,7 +27,7 @@ def application_received(
         link,
         "",
         (
-            "The link works once and expires soon. If it has, use “Forgot password” on the TalentBridge sign-in"
+            "The link works once and expires soon. If it has, use “Forgot password” on the Kavuntra sign-in"
             " page with this email address."
         ),
         "",
@@ -40,7 +40,7 @@ def application_received(
         "If you didn't apply, you can ignore this email.",
         "",
         "--",
-        "TalentBridge",
+        "Kavuntra",
     ]
     # A retried send of this email is one email; applying again sends a new link, so a new one.
     digest = hashlib.sha256(link.encode()).hexdigest()[:16]

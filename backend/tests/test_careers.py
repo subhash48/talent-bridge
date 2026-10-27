@@ -1,4 +1,4 @@
-"""TalentBridge's own careers site: open jobs, and applying with a name, an email and a résumé. The
+"""Kavuntra's own careers site: open jobs, and applying with a name, an email and a résumé. The
 application exists straight away, and the applicant's portal link comes by email."""
 
 import base64
@@ -241,7 +241,7 @@ async def test_a_job_without_work_days_asks_for_none(anonymous: AsyncClient, cli
     assert (detail["application"]["availability"], detail["application"]["phone"]) == ([], None)
 
 
-# With an email provider: one email from TalentBridge confirms the application and carries the link.
+# With an email provider: one email from Kavuntra confirms the application and carries the link.
 
 
 async def test_a_new_applicant_gets_one_email_to_create_their_password(
@@ -255,7 +255,7 @@ async def test_a_new_applicant_gets_one_email_to_create_their_password(
     [sent] = mail.sent
     assert (sent.to, sent.subject) == (EMAIL, "Application received: Product Designer at Encord")
     assert "Your application for Product Designer at Encord has been submitted." in sent.text
-    assert "Create your TalentBridge password to follow updates from the hiring team:" in sent.text
+    assert "Create your Kavuntra password to follow updates from the hiring team:" in sent.text
     assert "type=invite&token=invite-1" in sent.text
     [item] = (await client.get(f"{API}/candidates", params={"search": EMAIL})).json()["items"]
     timeline = (await client.get(f"{API}/applications/{item['application_id']}/activity")).json()
@@ -269,7 +269,7 @@ async def test_a_new_applicant_gets_one_email_to_create_their_password(
         True,
     )
     assert len(supabase.invites) == 1 and len(mail.sent) == 2
-    assert "Sign in to TalentBridge to follow updates from the hiring team:" in mail.sent[1].text
+    assert "Sign in to Kavuntra to follow updates from the hiring team:" in mail.sent[1].text
     assert mail.sent[0].idempotency_key != mail.sent[1].idempotency_key
 
 
@@ -290,7 +290,7 @@ async def test_if_the_email_fails_the_application_still_stands(
 async def test_someone_with_an_account_applies_elsewhere_and_it_joins_their_portal(
     anonymous: AsyncClient, client: AsyncClient, supabase: FakeSupabaseAdmin, sessions: async_sessionmaker[AsyncSession]
 ) -> None:
-    """Sophia already has a TalentBridge account. Applying to another company with the same email adds an
+    """Sophia already has a Kavuntra account. Applying to another company with the same email adds an
     application to it: no second account, no second candidate."""
     mail = use_email(FakeEmail())
     jobs = (await anonymous.get(f"{API}/careers/jobs")).json()
@@ -298,7 +298,7 @@ async def test_someone_with_an_account_applies_elsewhere_and_it_joins_their_port
     sophia = application(first_name="Sophia", last_name="Martinez", email="Sophia.Martinez@example.com")
     applied = (await anonymous.post(f"{API}/careers/jobs/{other['id']}/apply", json=sophia)).json()
     assert (applied["status"], applied["portal_link"]) == ("submitted", "sign_in_link_sent")
-    assert supabase.invites == [] and "Sign in to TalentBridge" in mail.sent[0].text
+    assert supabase.invites == [] and "Sign in to Kavuntra" in mail.sent[0].text
     async with sessions() as session:
         people = await session.scalar(
             select(func.count()).select_from(Candidate).where(Candidate.email == "sophia.martinez@example.com")

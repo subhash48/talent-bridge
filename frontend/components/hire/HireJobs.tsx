@@ -67,17 +67,23 @@ function JobRow({ job, applicants }: { job: JobOpening; applicants: number }) {
     setPending(true);
     try {
       await setJobStatus(job.id, open ? "closed" : "open");
-      await refresh();
-      router.refresh();
-      toast({
-        title: open ? `${job.title} is no longer taking applications` : `${job.title} is taking applications again`,
-        tone: "success",
-      });
     } catch (error) {
       toast({ title: "Not changed", description: errorMessage(error, "Try again in a moment."), tone: "error" });
-    } finally {
       setPending(false);
+      return;
     }
+    // It changed. Reloading the lists afterwards can fail on its own; that never makes the change "not" happen.
+    toast({
+      title: open ? `${job.title} is no longer taking applications` : `${job.title} is taking applications again`,
+      tone: "success",
+    });
+    try {
+      await refresh();
+    } catch {
+      // the page below still refreshes; the next visit reads the lists again
+    }
+    router.refresh();
+    setPending(false);
   }
 
   return (

@@ -25,6 +25,7 @@ from app.schemas.assistant import (
     CandidateMatchCard,
     JobChanges,
     OutreachCard,
+    OutreachItem,
     ScheduleDetails,
 )
 from app.services import personal_characteristics
@@ -452,15 +453,24 @@ def _people(card: CandidateMatchCard) -> str:
 
 
 def _to_send(card: OutreachCard) -> str:
-    if card.schedule is not None:
-        when = f" between {_clock(card.schedule.window_start)} and {_clock(card.schedule.window_end)}"
-        if card.schedule.day:
-            when = f" on {_day(card.schedule.day)}{when}"
-        return (
-            f"Here's an interview request for each of them{when}, each with its own time. Read them and change "
-            "anything you like. Nothing is sent until you press Send."
-        )
-    return "Here's a message for each of them. Read them and change anything you like. Nothing is sent until you press Send."
+    check = "Read them and change anything you like. Nothing is sent until you press Send."
+    if card.schedule is None:
+        return f"Here's a message for each of them. {check}"
+    when = f" between {_clock(card.schedule.window_start)} and {_clock(card.schedule.window_end)}"
+    if card.schedule.day:
+        when = f" on {_day(card.schedule.day)}{when}"
+    included = [item for item in card.items if item.include]
+    timed = [item for item in included if item.slot]
+    untimed = [item for item in included if not item.slot]
+    if not untimed:
+        return f"Here's an interview request for each of them{when}, each with its own time. {check}"
+    asks = "their messages ask" if len(untimed) > 1 else "the message asks"
+    if not timed:
+        return f"Here's an interview request for each of them{when}. None fit in that time, so each message asks when they can come instead. {check}"
+    return (
+        f"Here's an interview request for each of them{when}. {_names(timed)} {'each have' if len(timed) > 1 else 'has'} "
+        f"a time. There wasn't room in that window for {_names(untimed)}, so {asks} when they can come instead. {check}"
+    )
 
 
 def _sent(card: OutreachCard) -> str:
@@ -468,17 +478,26 @@ def _sent(card: OutreachCard) -> str:
     failed = [item for item in card.items if item.result and not item.result.message_sent]
     lines = [f"Sent to {_join([item.candidate.name.split()[0] for item in done])}." if done else "Nothing was sent."]
     booked = [item for item in done if item.result and item.result.interview_created]
+    unbooked = [item for item in done if not (item.result and item.result.interview_created)]
     if booked:
+        whose = "Their interviews are" if not unbooked else f"Interviews for {_names(booked)} are"
         calendar = all(item.result and item.result.calendar == "created" for item in booked)
         lines.append(
-            "Their interviews are booked, and calendar invitations went out."
+            f"{whose} booked, and calendar invitations went out."
             if calendar
-            else "Their interviews are booked in TalentBridge. No calendar is connected, so no calendar invitations were sent."
+            else f"{whose} booked in TalentBridge. No calendar is connected, so no calendar invitations were sent."
         )
+    if card.schedule is not None and unbooked:
+        asks = "their messages ask" if len(unbooked) > 1 else "the message asks"
+        lines.append(f"No interview is booked for {_names(unbooked)}: {asks} when they can come.")
     if done:
         lines.append("They can reply, and you'll see it in Messages.")
     lines += [f"Couldn't send to {item.candidate.name}: {item.result.error}" for item in failed if item.result]
     return " ".join(lines)
+
+
+def _names(items: list[OutreachItem]) -> str:
+    return _join([item.candidate.name.split()[0] for item in items])
 
 
 def _join(items: list[str]) -> str:

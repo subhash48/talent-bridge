@@ -376,3 +376,21 @@ async def test_a_named_title_is_the_title(client: AsyncClient, sam: dict[str, st
     assert answer["cards"][0]["draft"]["title"] == "Dental Assistant"
     full = await ask(client, {}, "Create a Medical Assistant role in Boston, hybrid")  # Alex's full workspace
     assert full["cards"][0]["draft"]["title"] == "Medical Assistant"
+
+
+async def test_interview_replies_say_who_has_a_time_and_who_is_booked(client: AsyncClient, sam: dict[str, str]) -> None:
+    """Found in review: with no room for Tom in the window, the reply still said "each with its own time", and
+    after Send "Their interviews are booked" though Tom's wasn't."""
+    picked = [application_id(key) for key in ("maria-lopez", "john-patel", "tom-becker")]
+    asked = await ask(
+        client,
+        sam,
+        "Ask them if they can come in Tuesday between 2 and 3",
+        context={"selected_application_ids": picked},
+        time_zone="America/Los_Angeles",
+    )
+    assert "Maria and John each have a time. There wasn't room in that window for Tom" in asked["reply"]
+    assert "each with its own time" not in asked["reply"]
+    sent = await approve(client, sam, asked["id"])
+    assert "Interviews for Maria and John are booked in TalentBridge." in sent["reply"]
+    assert "No interview is booked for Tom: the message asks when they can come." in sent["reply"]

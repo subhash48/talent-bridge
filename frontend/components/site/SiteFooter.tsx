@@ -4,8 +4,8 @@ import { COMPANY_LINKS, POLICY_LINKS, PRODUCT_LINK, SOLUTIONS } from "@/componen
 import { KavuntraLogo } from "@/components/shared/KavuntraLogo";
 import { cn } from "@/lib/utils";
 
-// The footer's places: Product, the solutions by name, the company, then the policies.
-const PLACES = [PRODUCT_LINK, ...SOLUTIONS.map(({ href, short }) => ({ href, label: short })), ...COMPANY_LINKS, ...POLICY_LINKS];
+// The footer's places: Product, the solutions by name, then the company. The policies sit on the line below.
+const PLACES = [PRODUCT_LINK, ...SOLUTIONS.map(({ href, short }) => ({ href, label: short })), ...COMPANY_LINKS];
 
 function FooterLinks({ className }: { className?: string }) {
   const linkStyles = "rounded-sm text-sm text-stone transition-colors hover:text-ink";
@@ -20,9 +20,23 @@ function FooterLinks({ className }: { className?: string }) {
   );
 }
 
+function Policies({ className }: { className?: string }) {
+  return (
+    <p className={cn("flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-stone", className)}>
+      {POLICY_LINKS.map((link) => (
+        <Link key={link.href} href={link.href} className="rounded-sm transition-colors hover:text-ink">
+          {link.label}
+        </Link>
+      ))}
+      <span className="text-faint">© 2026 Kavuntra</span>
+    </p>
+  );
+}
+
 /**
- * The public website's footer: the mark, every place on the site, and the year. Nothing more. On the home page
- * it's a floating bar over the film's last frames, like the header; elsewhere it sits at the foot of the page.
+ * The public website's footer: the mark, every place on the site, the policies and the year. Nothing more. On the
+ * home page it's a floating bar over the film's last frames, like the header; elsewhere it sits at the foot of
+ * the page.
  */
 export function SiteFooter({ overFilm = false }: { overFilm?: boolean }) {
   if (overFilm) {
@@ -33,7 +47,7 @@ export function SiteFooter({ overFilm = false }: { overFilm?: boolean }) {
             <KavuntraLogo />
           </Link>
           <FooterLinks className="lg:ml-auto" />
-          <p className="text-[13px] text-stone">© 2026 Kavuntra</p>
+          <Policies />
         </div>
       </footer>
     );
@@ -46,7 +60,7 @@ export function SiteFooter({ overFilm = false }: { overFilm?: boolean }) {
         </Link>
         <FooterLinks className="gap-x-6 gap-y-3" />
       </div>
-      <p className="mx-auto w-full max-w-[1120px] pb-10 text-[13px] text-faint">© 2026 Kavuntra</p>
+      <Policies className="mx-auto w-full max-w-[1120px] pb-10" />
     </footer>
   );
 }

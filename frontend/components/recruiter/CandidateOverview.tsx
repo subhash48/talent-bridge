@@ -37,13 +37,13 @@ export function CandidateOverview({ candidate, state, onViewAll }: CandidateOver
         <StatCard
           icon={Link2}
           label="Source"
-          value={candidate.source || (candidate.origin === "ashby" ? "Ashby" : "TalentBridge")}
+          value={candidate.source || (candidate.origin === "ashby" ? "Ashby" : "Kavuntra")}
           hint={
             candidate.origin === "ashby"
               ? state.detail?.ashby?.stageTitle
                 ? `Ashby stage: ${state.detail.ashby.stageTitle}`
                 : "Synced from Ashby"
-              : "Added in TalentBridge"
+              : "Added in Kavuntra"
           }
         />
       </div>

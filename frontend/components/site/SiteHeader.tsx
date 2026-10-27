@@ -11,11 +11,12 @@ import { buttonStyles } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 const linkStyles =
-  "rounded-full px-3 py-1.5 text-[13px] font-medium text-charcoal transition-colors duration-200 hover:bg-ink/[0.05] hover:text-ink aria-[current=page]:text-ink aria-[current=page]:bg-ink/[0.05]";
+  "rounded-full px-3 py-1.5 text-[14px] text-charcoal transition-colors duration-200 hover:bg-ink/[0.05] hover:text-ink aria-[current=page]:text-ink aria-[current=page]:bg-ink/[0.05]";
 
 /**
- * The public website's header: a floating bar over the page, with the website's places in the middle, then
- * Sign in (which asks who you are) and Get started. Under the lg breakpoint the places fold into a menu.
+ * The public website's header: a floating pill over the page, with the website's places in the middle, then
+ * Sign in (which asks who you are) and Get started. Wide screens give it 85% of the width, as in the approved
+ * design; under the lg breakpoint the places fold into a menu.
  */
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
@@ -29,12 +30,12 @@ export function SiteHeader() {
   }, [open]);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 px-3 pt-3 sm:px-5 sm:pt-4">
-      <div className="mx-auto flex h-14 w-full max-w-[1120px] items-center justify-between gap-3 rounded-full bg-overlay/75 pr-2 pl-4 shadow-soft ring-1 ring-ink/[0.07] backdrop-blur-xl sm:pl-5">
+    <header className="fixed inset-x-0 top-0 z-40 px-3 pt-3 sm:px-5 sm:pt-5">
+      <div className="mx-auto flex h-14 w-full max-w-[1680px] items-center justify-between gap-3 rounded-full bg-overlay/75 pr-2 pl-4 shadow-soft ring-1 ring-ink/[0.06] backdrop-blur-xl sm:pl-5 lg:pr-3 lg:pl-7 xl:w-[85vw]">
         <Link href="/" className="rounded-full py-1" aria-label="Kavuntra home">
           <KavuntraLogo />
         </Link>
-        <nav aria-label="Website" className="hidden items-center gap-0.5 lg:flex">
+        <nav aria-label="Website" className="hidden items-center gap-1.5 lg:flex">
           {SITE_LINKS.map((link) => (
             <Link
               key={link.href}
@@ -46,11 +47,11 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 lg:gap-2">
           <Link href="/signin" className={cn(linkStyles, "hidden sm:inline-flex")}>
             Sign in
           </Link>
-          <Link href="/start" className={buttonStyles({ size: "md", className: "rounded-full px-4" })}>
+          <Link href="/start" className={buttonStyles({ size: "md", className: "h-[38px] rounded-full px-[18px] text-[14px]" })}>
             Get started
           </Link>
           <button

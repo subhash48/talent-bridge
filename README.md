@@ -72,17 +72,31 @@ Pages: `/signin` asks "How are you using TalentBridge?" and leads to `/login?as=
 
 **Demo accounts.** The demo data has Alex Chen (recruiter), Sophia Martinez (candidate, applications at four companies: Encord, OpenAI, Anthropic and Google) and Rosa Navarro (candidate, applications at three companies: Encord, and the fictional Nova AI and Harbor Robotics, so the portal shows its application selector) but no sign-ins. The OpenAI, Anthropic and Google profiles hold only each company's own public description and links, their recruiters are fictional (`.example` addresses), and their jobs are drafts, so the public careers site never lists them. To give each one:
 
-1. In the Supabase dashboard, open Authentication > Users > Add user > Create new user. Enter `alex.chen@encord.example` and a password of your choice, and tick **Auto Confirm User**. Do the same for `sophia.martinez@example.com` and `rosa.navarro@example.com`. Keep the passwords out of git.
+1. In the Supabase dashboard, open Authentication > Users > Add user > Create new user. Enter `alex.chen@encord.example` and a password of your choice, and tick **Auto Confirm User**. Do the same for `sophia.martinez@example.com`, `rosa.navarro@example.com` and `sam@samscafe.example`. Keep the passwords out of git.
 2. Link each account to its person (from `backend/`):
 
    ```bash
    python -m app.db.accounts link alex.chen@encord.example      # Alex Chen, recruiter
    python -m app.db.accounts link sophia.martinez@example.com   # Sophia Martinez, candidate at four companies
    python -m app.db.accounts link rosa.navarro@example.com      # Rosa Navarro, candidate at three companies
+   python -m app.db.accounts link sam@samscafe.example          # Sam Rivera, Sam's Cafe (Simple Hire), admin
    python -m app.db.accounts list                               # who can sign in
    ```
 
-Linking never sets a role: Alex keeps the recruiter role his `users` row has, and Sophia gets a candidate `users` row tied to her existing candidate record. To add another recruiter or an admin, insert their `users` row (with `role`) in the database first, then create and link their account the same way. Resetting the demo data (`POST /api/v1/demo/reset`) keeps these links.
+Linking never sets a role: Alex keeps the recruiter role the `users` row has, Sam the admin role, and Sophia's existing candidate record gets a candidate `users` row tied to it. To add another recruiter or an admin, insert their `users` row (with `role`) in the database first, then create and link their account the same way. Resetting the demo data (`POST /api/v1/demo/reset`) keeps these links.
+
+**Trying the three journeys** (local demo data only; none of it is in production logic). A database seeded before Sam's Cafe was added gets it, and nothing else changes, with `python -m app.db.seed --add-missing`.
+
+- **Alex Chen, recruiting team** (`alex.chen@encord.example`): Sign in > Employer / Recruiter. Alex lands on `/recruiter/today` in Encord's full workspace (Today, Candidates, Jobs, Interviews, Messages, Analytics, AI Assistant, Settings) and sees only Encord's pipeline, never Sam's Cafe's applicants.
+- **Sophia Martinez, candidate** (`sophia.martinez@example.com`): Sign in > Candidate. The portal shows every application, at four employers. Applying to another job on `/careers` with the same email adds it to the same account; nothing asks for a new one.
+- **Sam Rivera, Sam's Cafe** (`sam@samscafe.example`): Sign in > Employer / Recruiter. Sam lands on `/hire`, Simple Hire, with a Kitchen Assistant job and five applicants (Maria Lopez, John Patel, Amina Yusuf, Tom Becker, Lena Park). Then:
+  1. Press the big button and say or type "Post a cashier job paying $16 an hour for weekend shifts.", check the Ready to post card, and press **Post Job**.
+  2. Have six fictional people apply to it the way real applicants do (from `backend/`; refuses to run with `ENVIRONMENT=production`): `python -m app.db.demo_applicants "Cashier" --company sams-cafe`
+  3. "Show me 3 applicants available weekends with customer service experience." Tick the three, then "Show me their phone numbers."
+  4. "Ask them if they can come in Tuesday afternoon." Read the requests, then **Send**: three messages and three interview records, and no calendar claimed.
+- **A new candidate**: `/signup` with first and last name; verify the email; the portal opens. **Applying first**: apply to a job on `/careers` with a new email, open the emailed link, and create a password at `/welcome`.
+
+`e2e/` runs all of this in a browser against its own stack ([e2e/README.md](e2e/README.md)).
 
 **Candidate sign-up** (`/signup`): first and last name, email, and a password typed twice (at least 8 characters, letters and a number, not a common one and not the email's name; `frontend/lib/password.ts`). Supabase emails a verification link; opening it lands on `/signup/complete`, which creates the candidate account (`POST /api/v1/accounts/candidate`) and opens the portal. If they had already applied with that email, anywhere, that candidate record becomes theirs with every application on it; otherwise they start with none. Sign-up never creates an application. Nothing is created before the email is verified (403 `email_not_verified`).
 

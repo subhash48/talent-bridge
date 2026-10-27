@@ -10,14 +10,14 @@ from app.services import contact_service
 router = APIRouter(prefix="/contact", tags=["contact"])
 
 
-@router.get("", response_model=ContactInfo, summary="How to reach TalentBridge")
+@router.get("", response_model=ContactInfo, summary="How to reach Kavuntra")
 async def contact_info() -> ContactInfo:
     """The official contact address when one is configured (CONTACT_EMAIL; null otherwise), and the
     topics the form offers."""
     return contact_service.info()
 
 
-@router.post("", response_model=ContactReceived, summary="Send a message to TalentBridge")
+@router.post("", response_model=ContactReceived, summary="Send a message to Kavuntra")
 async def send_message(
     body: ContactCreate, request: Request, session: SessionDep, email: EmailProviderDep
 ) -> ContactReceived:

@@ -15,7 +15,7 @@ MESSAGE = {
     "email": "Priya@Northwind.example",
     "company": "Northwind Labs",
     "topic": "pilot",
-    "message": "We'd like to try TalentBridge with our next three hires.",
+    "message": "We'd like to try Kavuntra with our next three hires.",
 }
 
 
@@ -23,8 +23,8 @@ async def test_without_a_contact_address_none_is_shown(anonymous: AsyncClient, m
     monkeypatch.setattr(settings, "contact_email", None)
     info = (await anonymous.get(f"{API}/contact")).json()
     assert info == {"email": None, "topics": ["product", "pilot", "support", "partnerships", "general"]}
-    monkeypatch.setattr(settings, "contact_email", "hello@talentbridge.example")
-    assert (await anonymous.get(f"{API}/contact")).json()["email"] == "hello@talentbridge.example"
+    monkeypatch.setattr(settings, "contact_email", "hello@kavuntra.example")
+    assert (await anonymous.get(f"{API}/contact")).json()["email"] == "hello@kavuntra.example"
 
 
 async def test_a_message_is_kept_even_without_email(
@@ -46,12 +46,12 @@ async def test_a_message_is_kept_even_without_email(
 async def test_with_email_set_up_the_team_gets_it(
     anonymous: AsyncClient, sessions: async_sessionmaker[AsyncSession], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(settings, "contact_email", "hello@talentbridge.example")
+    monkeypatch.setattr(settings, "contact_email", "hello@kavuntra.example")
     mail = use_email(FakeEmail())
     assert (await anonymous.post(f"{API}/contact", json=MESSAGE)).status_code == 200
     [email] = mail.sent
     assert (email.to, email.subject) == (
-        "hello@talentbridge.example",
+        "hello@kavuntra.example",
         "[Pilot / design partnership] Priya Nair, Northwind Labs",
     )
     assert "From: Priya Nair <priya@northwind.example>" in email.text and MESSAGE["message"] in email.text
@@ -87,7 +87,7 @@ async def test_operators_can_read_what_wasnt_emailed(
 
     monkeypatch.setattr(settings, "contact_email", None)
     await anonymous.post(f"{API}/contact", json=MESSAGE)
-    monkeypatch.setattr(settings, "contact_email", "hello@talentbridge.example")
+    monkeypatch.setattr(settings, "contact_email", "hello@kavuntra.example")
     use_email(FakeEmail())
     await anonymous.post(f"{API}/contact", json={**MESSAGE, "name": "Tom Ito", "company": None, "topic": "support"})
     async with sessions() as session:

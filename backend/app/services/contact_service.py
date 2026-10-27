@@ -67,7 +67,7 @@ async def receive(session: AsyncSession, data: ContactCreate, email: EmailProvid
                         data.message.strip(),
                         "",
                         "--",
-                        "Sent with the contact form on the TalentBridge website. Reply to the address above.",
+                        "Sent with the contact form on the Kavuntra website. Reply to the address above.",
                     ]
                 ),
                 idempotency_key=f"contact-{row.id}",

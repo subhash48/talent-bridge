@@ -10,7 +10,7 @@ import {
 
 /*
  * Loads and draws the hero's frames on one canvas. Memory stays bounded however long the film:
- *  - the compressed files (about 110 KB each on desktop, 38 KB on phones) are fetched nearest first, the
+ *  - the compressed files (about 220 KB each on desktop, 75 KB on phones) are fetched nearest first, the
  *    first few at once and the rest only after the visitor starts scrolling, a few at a time;
  *  - only the frames around the one on screen are decoded (ImageBitmap, off the main thread), and frames
  *    further away are released again, so a handful of bitmaps exist at any moment, not forty.

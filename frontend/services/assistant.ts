@@ -13,7 +13,7 @@ import type {
 // transcribed first (by the API, or by the browser where the API has no transcription) and only the
 // words are sent on. The server checks the recruiter's role on every call.
 
-const NEEDS_API = new ApiError("The AI Assistant needs the TalentBridge API. Turn off mock mode to use it.", 0, "mock_mode");
+const NEEDS_API = new ApiError("The AI Assistant needs the Kavuntra API. Turn off mock mode to use it.", 0, "mock_mode");
 
 export type AssistantRequest = {
   text: string;

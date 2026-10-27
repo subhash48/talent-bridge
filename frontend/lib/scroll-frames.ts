@@ -5,7 +5,7 @@
 
 export const FRAME_COUNT = 40;
 
-/** Landscape screens get 1600×900 frames; portrait ones a 9:16 crop of the valley's centre, at 540×960. */
+/** Landscape screens get the 1920×1080 frames; portrait ones the 9:16 crop of the valley's centre (608×1080). */
 export type FrameSet = "desktop" | "mobile";
 
 export function frameUrl(set: FrameSet, index: number): string {

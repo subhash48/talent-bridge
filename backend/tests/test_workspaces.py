@@ -252,6 +252,17 @@ async def test_each_employer_sees_only_the_phone_and_resume_it_was_given(
         assert (await client.get(f"{API}/resumes/{resume_id}", headers=headers)).status_code == 200
 
 
+async def test_only_the_company_ashby_is_connected_for_can_run_it(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    """A self-made workspace's admin can't pull Ashby's data or send its invitations."""
+    sam = await link(sessions, SAM["email"])
+    for method, path in (("GET", "status"), ("POST", "sync?full=true")):
+        refused = await client.request(method, f"{API}/integrations/ashby/{path}", headers=sam)
+        assert refused.status_code == 404 and refused.json()["error"]["code"] == "ashby_not_connected"
+    assert (await client.get(f"{API}/integrations/ashby/status")).status_code == 200  # Alex, at Encord
+
+
 async def test_a_job_draft_is_written_for_the_recruiters_own_company(
     client: AsyncClient, julia: dict[str, str]
 ) -> None:

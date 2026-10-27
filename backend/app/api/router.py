@@ -53,7 +53,7 @@ for module in (
 for module in (candidate,):
     api_router.include_router(module.router, dependencies=[Depends(require_candidate)])
 # Guarded route by route: /me is for anyone signed in; the Ashby webhook checks Ashby's signature
-# and the other Ashby routes require a recruiter.
+# and the other Ashby routes require staff of the company Ashby is connected for.
 api_router.include_router(auth.router)
 # Setting up an account: a valid sign-in, not yet linked to anything in TalentBridge.
 api_router.include_router(accounts.router)

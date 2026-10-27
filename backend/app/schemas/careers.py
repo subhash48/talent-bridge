@@ -1,4 +1,4 @@
-"""TalentBridge's own careers site (/careers): open jobs, and applying without an account.
+"""Kavuntra's own careers site (/careers): open jobs, and applying without an account.
 
 The job shapes are the demo careers site's (schemas/demo.py), so the same pages show either.
 """
@@ -85,6 +85,6 @@ class ApplicationResult(APIModel):
     email: str
     job_title: str
     company: str | None = None
-    # TalentBridge emailed its own confirmation with the link (an email provider is configured); otherwise
+    # Kavuntra emailed its own confirmation with the link (an email provider is configured); otherwise
     # the link came in Supabase's invitation or sign-in email.
     confirmation_emailed: bool = False

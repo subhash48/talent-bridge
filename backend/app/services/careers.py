@@ -1,4 +1,4 @@
-"""TalentBridge's own careers site: open jobs, and applying with a name, an email and a résumé (and
+"""Kavuntra's own careers site: open jobs, and applying with a name, an email and a résumé (and
 what the job asks: which of its work days they can work, and their relevant experience).
 
 An application is created the moment it's sent: the recruiter sees it at once, with the résumé, and
@@ -72,7 +72,7 @@ class AvailabilityRequired(AppError):
 
 
 def _native_open(job: Job | None) -> Job:
-    """Only jobs made in TalentBridge are on its careers site; Ashby's live in Ashby."""
+    """Only jobs made in Kavuntra are on its careers site; Ashby's live in Ashby."""
     if job is None or job.external_id is not None or job.status == JobStatus.DRAFT:
         raise NotFoundError("This role isn't on the careers site.", code="job_not_found")
     return job
@@ -110,7 +110,7 @@ def _detail(job: Job) -> CareerJobDetail:
 
 
 async def list_jobs(session: AsyncSession) -> list[CareerJobSummary]:
-    """Open jobs made in TalentBridge, newest first."""
+    """Open jobs made in Kavuntra, newest first."""
     jobs = await session.scalars(
         select(Job).where(Job.external_id.is_(None), Job.status == JobStatus.OPEN).order_by(Job.created_at.desc())
     )
@@ -228,7 +228,7 @@ async def _portal_link(
     email: EmailProvider,
 ) -> PortalLink:
     """Email the applicant a way into their portal: a new account's invitation (to create their password),
-    or an existing account's sign-in link. With an email provider configured, TalentBridge sends one email
+    or an existing account's sign-in link. With an email provider configured, Kavuntra sends one email
     of its own that confirms the application and carries the link; otherwise Supabase sends its invitation
     or sign-in email. Failing to email never undoes the application."""
     if admin is None:

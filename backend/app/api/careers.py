@@ -1,4 +1,4 @@
-"""TalentBridge's careers site: public, no sign-in. Open jobs, and applying with a name, an email
+"""Kavuntra's careers site: public, no sign-in. Open jobs, and applying with a name, an email
 and a résumé; the applicant gets their candidate portal link by email."""
 
 from uuid import UUID

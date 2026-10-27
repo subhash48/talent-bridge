@@ -11,7 +11,7 @@ export default function HireError({ reset }: { error: Error & { digest?: string 
     <EmptyState
       icon={CircleAlert}
       title="This page couldn't load"
-      description="TalentBridge didn't respond just now. Nothing you did was lost. Try again in a moment."
+      description="Kavuntra didn't respond just now. Nothing you did was lost. Try again in a moment."
       className="mt-5"
       action={<Button onClick={reset}>Try again</Button>}
     />

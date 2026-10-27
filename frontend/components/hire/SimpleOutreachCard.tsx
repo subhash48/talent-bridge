@@ -92,7 +92,7 @@ export function SimpleOutreachCard({ card, onSend, onEdits, busy, superseded }: 
             {card.schedule.day ? `${calendarDayLabel(card.schedule.day)}, ` : ""}
             between {clockLabel(card.schedule.window_start)} and {clockLabel(card.schedule.window_end)}
             {!card.schedule.calendar_configured &&
-              ". No calendar is connected: TalentBridge records each interview and messages them."}
+              ". No calendar is connected: Kavuntra records each interview and messages them."}
           </p>
         )}
       </div>

@@ -75,7 +75,7 @@ export default async function GetStartedPage() {
               <Link
                 href={href}
                 className={cn(
-                  "group flex w-full flex-col items-center rounded-[22px] px-6 pt-9 pb-7 text-center sm:min-h-[280px]",
+                  "group flex w-full flex-col items-center rounded-[22px] px-6 pt-9 pb-7 text-center transition-[transform,background-color] duration-200 hover:-translate-y-0.5 hover:bg-[rgb(32_58_55/0.44)] sm:min-h-[280px]",
                   CARD,
                 )}
               >

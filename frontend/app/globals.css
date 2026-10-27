@@ -195,6 +195,112 @@
     radial-gradient(60% 70% at 20% -20%, rgb(251 249 245 / 0.8), transparent 70%);
 }
 
+/*
+ * The website's sky, taken from the reference landscape: a soft lavender-grey high up, warming to peach towards
+ * the hills. sky-grade tints the film's own sky with it; sky-wash sits behind words that cross the busier parts
+ * of the picture; sky-backdrop is the same sky for the website's pages without the film.
+ */
+@utility sky-grade {
+  background: linear-gradient(
+    180deg,
+    rgb(203 206 218 / 0.72) 0%,
+    rgb(220 217 221 / 0.52) 24%,
+    rgb(238 220 208 / 0.3) 42%,
+    rgb(238 220 208 / 0) 60%
+  );
+}
+
+/* Full strength across the words, fading only past their edge. */
+@utility sky-wash {
+  background: radial-gradient(closest-side, rgb(226 223 226 / 0.74) 58%, rgb(226 223 226 / 0));
+}
+
+@utility sky-backdrop {
+  background-color: #e8e4e2;
+  background-image: linear-gradient(180deg, #dfe1e8 0%, #e8e4e3 38%, #f0e4db 100%);
+  background-attachment: fixed;
+}
+
+/* Frosted glass over the film, for the product pictures: the meadow shows through, softened. */
+@utility scene-card {
+  background-color: rgb(249 246 241 / 0.86);
+  box-shadow: var(--shadow-raised);
+  border: 1px solid rgb(244 236 220 / 0.55);
+  backdrop-filter: blur(22px) saturate(1.15);
+}
+
+/* The same frost for cards on the website's sky pages: lifted from the sky, not a white block on it. */
+@utility sky-card {
+  background-color: rgb(249 246 241 / 0.5);
+  border: 1px solid rgb(244 236 220 / 0.6);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px) saturate(1.1);
+}
+
+/*
+ * The still version of a home film scene (reduced motion, data saver): its own still of the valley, sky at the top,
+ * so the scene's words sit on the sky as they do in the film.
+ */
+@utility still-scene {
+  background-image:
+    linear-gradient(180deg, rgb(203 206 218 / 0.72) 0%, rgb(220 217 221 / 0.52) 24%, rgb(238 220 208 / 0.3) 42%, rgb(238 220 208 / 0) 60%),
+    url("/hero/desktop/01.webp");
+  background-size: cover;
+  background-position: center top;
+  @media (max-aspect-ratio: 20/21) {
+    background-image:
+      linear-gradient(180deg, rgb(203 206 218 / 0.72) 0%, rgb(220 217 221 / 0.52) 24%, rgb(238 220 208 / 0.3) 42%, rgb(238 220 208 / 0) 60%),
+      url("/hero/mobile/01.webp");
+  }
+}
+
+/*
+ * The home film's scenes fade by their words and their cards (each reads its scene's --shown), never as a whole:
+ * a parent below full opacity would stop the cards' frosted blur in the middle of every fade.
+ */
+[data-scene] .scene-fade,
+[data-scene] .scene-card {
+  opacity: var(--shown, 1);
+}
+
+/* Pages on the sky: the same sky past the edges (overscroll) instead of the app's cream. */
+html:has(.sky-backdrop),
+html:has(.sky-grade) {
+  background-color: #dfe1e8;
+
+  & body {
+    background-color: transparent;
+  }
+}
+
+/* The Kavuntra mark's own backdrop: deep teal, lifting to sage at one corner, like the logo. */
+@utility brand-backdrop {
+  background-color: var(--color-brand-deep);
+  background-image:
+    radial-gradient(120% 90% at 100% 0%, rgb(169 181 163 / 0.55), transparent 60%),
+    radial-gradient(90% 80% at 0% 100%, rgb(18 53 59 / 0.9), transparent 70%),
+    linear-gradient(135deg, #1d3c42 0%, #2f5257 55%, #5f7a70 100%);
+}
+
+/*
+ * Something that rises into view as it scrolls in, tied to the scroll itself rather than to a script.
+ * Browsers without scroll-driven animations simply show it.
+ */
+@utility reveal {
+  @supports (animation-timeline: view()) {
+    animation: reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 5% cover 28%;
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,
@@ -203,5 +309,9 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .reveal {
+    animation: none !important;
   }
 }

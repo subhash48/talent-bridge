@@ -146,7 +146,7 @@ export type CandidateCompany = PortalEmployer & {
 };
 
 export type CandidateMeResponse = {
-  /** The selected application's employer. Null without an application: the portal is TalentBridge's. */
+  /** The selected application's employer. Null without an application: the portal is Kavuntra's. */
   company: PortalEmployer | null;
   candidate: CandidateProfile;
   /** Every application, active first. */

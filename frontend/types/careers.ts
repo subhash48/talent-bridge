@@ -1,5 +1,5 @@
 
-// The careers sites: TalentBridge's own (/careers) and the development-only demo (/demo/careers),
+// The careers sites: Kavuntra's own (/careers) and the development-only demo (/demo/careers),
 // which show jobs the same way. The wire format mirrors
 // backend/app/schemas/demo.py; services/careers.ts maps it into the view models below, so components
 // never depend on it directly.
@@ -10,7 +10,7 @@ import type { Weekday } from "@/lib/days";
 export type ApiCareerJobSummary = {
   id: string;
   title: string;
-  /** The employer (job -> company). Only TalentBridge's own careers site names it. */
+  /** The employer (job -> company). Only Kavuntra's own careers site names it. */
   company?: string | null;
   department: string | null;
   location: string | null;
@@ -23,7 +23,7 @@ export type ApiCareerJobSummary = {
   salary_currency: string;
   summary: string | null;
   published_at: string | null;
-  /** A small business's job, in the employer's words (TalentBridge's own careers site). */
+  /** A small business's job, in the employer's words (Kavuntra's own careers site). */
   pay?: string | null;
   shift?: string | null;
   work_days?: Weekday[];
@@ -61,11 +61,11 @@ export type ApplyOutcome =
   | "sign_in_required"
   | "already_applied"
   | "invitation_failed"
-  // TalentBridge's own site: the application is in, and the portal link was emailed (or couldn't be).
+  // Kavuntra's own site: the application is in, and the portal link was emailed (or couldn't be).
   | "submitted"
   | "link_unavailable";
 
-/** Which careers site: TalentBridge's own, or the development-only demo through the Ashby simulator. */
+/** Which careers site: Kavuntra's own, or the development-only demo through the Ashby simulator. */
 export type CareersSite = "native" | "demo";
 
 export const CAREERS_PATHS: Record<CareersSite, string> = { native: "/careers", demo: "/demo/careers" };
@@ -77,7 +77,7 @@ export type ApiNativeApplicationResult = {
   email: string;
   job_title: string;
   company?: string | null;
-  /** TalentBridge emailed its own confirmation, with the link in it. */
+  /** Kavuntra emailed its own confirmation, with the link in it. */
   confirmation_emailed?: boolean;
 };
 
@@ -133,19 +133,19 @@ export type ApplyInput = {
   phone: string;
   linkedinUrl: string | null;
   resume: ResumeUpload;
-  /** Which of the job's work days they can work (TalentBridge's own site, for a job that lists them). */
+  /** Which of the job's work days they can work (Kavuntra's own site, for a job that lists them). */
   availability?: Weekday[];
   /** Their relevant experience, in their own words. */
   experienceNote?: string | null;
 };
 
 export type ApplyResult = {
-  /** TalentBridge's own site: how the portal link reached them. */
+  /** Kavuntra's own site: how the portal link reached them. */
   portalLink?: ApiNativeApplicationResult["portal_link"];
   status: ApplyOutcome;
   email: string;
   jobTitle: string;
-  /** The employer, on TalentBridge's own site. */
+  /** The employer, on Kavuntra's own site. */
   company?: string | null;
 };
 

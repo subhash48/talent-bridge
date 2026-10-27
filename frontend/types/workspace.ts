@@ -45,7 +45,7 @@ export type PipelineCandidate = CandidateRef & {
   lastActivity: string;
   lastActivityAt: string;
   portalStatus?: PortalAccessStatus;
-  /** Synced from Ashby, the system of record, or added in TalentBridge. */
+  /** Synced from Ashby, the system of record, or added in Kavuntra. */
   origin?: "ashby" | "talent_bridge";
   /** Where the application came from, e.g. "Referral" or "Ashby Simulator / Demo Careers". */
   source?: string;
@@ -105,7 +105,7 @@ export type ThreadMessage = {
   author: MessageAuthor;
   body: string;
   sentAt: string;
-  /** A recruiter's message sent from TalentBridge: portal always, email when configured. */
+  /** A recruiter's message sent from Kavuntra: portal always, email when configured. */
   delivery?: MessageDelivery;
 };
 

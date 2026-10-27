@@ -110,17 +110,29 @@ function Onward({ href, children }: { href: string; children: ReactNode }) {
   );
 }
 
-/**
- * The opening, as in the approved design: one line, what Kavuntra does, and the two ways in, small and centred in
- * the sky with the valley left clear around them. No panel or wash behind the words: the sky is light enough.
+/*
+ * The film's headlines (the opening line and the statements between scenes): an editorial serif in forest teal,
+ * sized for the screen, and centred in the viewport. The scene is the whole viewport (FilmStage), so a flex column
+ * centres the words in what's left under the floating header, lifted a little above the exact middle, where the
+ * eye reads the centre to be. No margins to balance by hand, and no wash behind the words: the valley's haze is
+ * light enough there.
  */
+const HEADLINE = "font-serif text-[clamp(40px,calc(28px+2.6vw),76px)] leading-[1.04] tracking-[-0.01em] text-balance text-[#10282b]";
+
+function Centre({ children }: { children: ReactNode }) {
+  return (
+    <div className="scene-fade mx-auto flex w-full max-w-[1100px] flex-1 flex-col items-center justify-center px-5 pt-[60px] pb-[12svh] text-center sm:px-8 lg:pt-[76px]">
+      {children}
+    </div>
+  );
+}
+
+/** The opening: one line, what Kavuntra does, and the two ways in, with the valley left clear around them. */
 export function OpeningScene() {
   return (
-    <div className="scene-fade mx-auto flex w-full max-w-[1200px] flex-col items-center px-5 pt-[clamp(120px,21.5svh,260px)] text-center sm:px-8">
-      <h1 className="text-[clamp(34px,calc(22px+2.25vw),64px)] leading-[1.1] font-medium tracking-[-0.02em] text-[#10282b]">
-        Hiring feels simpler.
-      </h1>
-      <p className="mt-3 text-[clamp(16px,1.2vw,19px)] leading-relaxed text-balance text-[#3a4b4e]">
+    <Centre>
+      <h1 className={cn(HEADLINE, "max-w-[24ch]")}>Hiring feels simpler.</h1>
+      <p className="mt-4 text-[clamp(16px,1.2vw,19px)] leading-relaxed text-balance text-[#3a4b4e]">
         Kavuntra keeps recruiters responsive and candidates informed.
       </p>
       <div className="mt-7 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">

@@ -266,7 +266,8 @@ async def test_020_gives_each_application_the_phone_number_it_came_with(
     await apply([*COMPANIES, *MESSAGING, *WORKSPACES])
     await connection.execute(
         f"""
-        update public.candidates set phone = '+1 415 555 0134' where id = '{CANDIDATE}';
+        update public.candidates set phone = '+1 415 555 0134 (mobile), +1 415 555 0199 (work)'
+        where id = '{CANDIDATE}';
         update public.applications set updated_at = now() - interval '6 days' where id = '{APPLICATION}';
         """
     )
@@ -275,6 +276,11 @@ async def test_020_gives_each_application_the_phone_number_it_came_with(
     row = await connection.fetchrow(
         f"select phone, availability, updated_at from public.applications where id = '{APPLICATION}'"
     )
-    assert (row["phone"], row["availability"], row["updated_at"]) == ("+1 415 555 0134", "[]", before)
+    # Longer than a form takes (40): kept whole, not cut off or refused.
+    assert (row["phone"], row["availability"], row["updated_at"]) == (
+        "+1 415 555 0134 (mobile), +1 415 555 0199 (work)",
+        "[]",
+        before,
+    )
     job = await connection.fetchrow(f"select pay, shift, work_days, openings from public.jobs where id = '{JOB}'")
     assert dict(job) == {"pay": None, "shift": None, "work_days": "[]", "openings": None}

@@ -627,9 +627,9 @@ def data_stage_title(data: AshbyApplication) -> str | None:
 
 def _phone(candidate: AshbyCandidate) -> str | None:
     """The number Ashby has for them, kept with the application too: what this employer may call them on.
-    Left off when it's longer than an application holds (40 characters)."""
+    Left off when it's longer than an application holds (200 characters)."""
     value = candidate.primary_phone_number.value.strip() if candidate.primary_phone_number else ""
-    return value if 0 < len(value) <= 40 else None
+    return value if 0 < len(value) <= 200 else None
 
 
 def _raw_state(data: AshbyApplication, state: mapping.ApplicationState) -> dict[str, Any]:

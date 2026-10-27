@@ -13,16 +13,17 @@ alter table public.jobs
   add column openings  integer check (openings is null or openings between 1 and 500);
 
 alter table public.applications
-  add column phone           text check (phone is null or length(phone) <= 40),
+  add column phone           text check (phone is null or length(phone) <= 200),  -- forms take 40; room for what's on file
   add column linkedin_url    text check (linkedin_url is null or length(linkedin_url) <= 300),
   add column availability    jsonb not null default '[]'::jsonb,                            -- the job's days they can work
   add column experience_note text check (experience_note is null or length(experience_note) <= 2000);
 
 -- Until now a phone number was kept only on the person. The number each existing application came with is
--- the one on file, so it becomes that application's own. The backfill leaves updated_at as it was.
+-- the one on file, so it becomes that application's own, as it was written (some hold two numbers, longer
+-- than a form takes). The backfill leaves updated_at as it was.
 alter table public.applications disable trigger applications_set_updated_at;
 update public.applications a
 set phone = c.phone
 from public.candidates c
-where c.id = a.candidate_id and c.phone is not null and a.phone is null;
+where c.id = a.candidate_id and c.phone is not null and length(c.phone) <= 200 and a.phone is null;
 alter table public.applications enable trigger applications_set_updated_at;

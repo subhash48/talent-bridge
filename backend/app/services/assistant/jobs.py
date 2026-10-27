@@ -115,7 +115,6 @@ def simple_draft(changes: JobChanges, company: Company, *, title_suggested: bool
     nothing is invented; what wasn't said stays empty and is listed to add."""
     assert changes.title
     location = changes.location or (company.locations[0] if company.locations else None)
-    shift_work = bool(changes.shift or changes.work_days)
     job = JobDraft(
         title=changes.title,
         location=location,
@@ -127,25 +126,50 @@ def simple_draft(changes: JobChanges, company: Company, *, title_suggested: bool
         openings=changes.openings,
     )
     job = job.model_copy(update={"summary": simple_summary(job, company.name), "requirements": job.skills})
+    return job, simple_checks(job, title_suggested=title_suggested, employment_said=bool(changes.employment_type))
+
+
+def simple_update(
+    job: JobDraft, changes: JobChanges, notes: list[str], company: str
+) -> tuple[JobDraft, list[str], list[str]]:
+    """A Simple Hire draft changed in words ("Make it $19 an hour"): the same facts changed, and the summary,
+    the employment type it was given from the days, and the checks all rebuilt from them, so the job posted
+    never says one thing in its facts and another in its description. Returns it, the changes described and
+    the checks."""
+    changed, described = update(job, changes)
+    if not described:
+        return job, [], notes
+    employment_said = bool(changes.employment_type) or not any(
+        note.startswith(("Part-time, from", "Full-time or part-time")) for note in notes
+    )
+    if not employment_said:
+        changed = changed.model_copy(update={"employment_type": "Part-time" if _part_time(changed) else "Full-time"})
+    title_suggested = changed.title == job.title and any(note.startswith("Title: “") for note in notes)
+    changed = changed.model_copy(update={"summary": simple_summary(changed, company), "requirements": changed.skills})
+    return changed, described, simple_checks(changed, title_suggested=title_suggested, employment_said=employment_said)
+
+
+def simple_checks(job: JobDraft, *, title_suggested: bool, employment_said: bool) -> list[str]:
+    """What an owner should look at before posting: a suggested title, and whatever they didn't say."""
     notes = [f"Title: “{job.title}” is a suggestion from what you said"] if title_suggested else []
     if not job.pay:
         notes.append("Pay: not given")
-    if not shift_work:
+    if not (job.shift or job.work_days):
         notes.append("Shift and days: not given")
     if not job.location:
         notes.append("Location: not given")
-    if not changes.employment_type:
+    if not employment_said:
         notes.append(
             "Part-time, from the days you gave"
-            if _part_time(changes)
+            if _part_time(job)
             else "Full-time or part-time: not given, shown as full-time"
         )
-    return job, notes
+    return notes
 
 
-def _part_time(changes: JobChanges) -> bool:
+def _part_time(job: JobChanges | JobDraft) -> bool:
     """A few set days a week is part-time work, as the owner described it."""
-    return 0 < len(changes.work_days) <= 4
+    return 0 < len(job.work_days) <= 4
 
 
 SHIFT_WORDS = {

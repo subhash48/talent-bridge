@@ -335,3 +335,29 @@ async def test_an_applicant_hears_from_the_business_they_applied_to(
     me = (await client.get(f"{API}/candidate/me", headers=nora)).json()
     assert me["recruiter"]["name"] == "Sam Rivera"
     assert "Alex" not in json.dumps(me)
+
+
+async def test_a_draft_changed_in_words_says_the_same_thing_everywhere(
+    client: AsyncClient, sam: dict[str, str]
+) -> None:
+    """Found in review: "Make it $19 an hour" changed the pay, but the description applicants read still said $18,
+    and the checks turned into a recruiting team's (department, seniority, salary)."""
+    first = await ask(
+        client, sam, "I need someone to help in the kitchen on Friday and Saturday evenings, $18/hour, 2 people"
+    )
+    for change in ("Make it $19 an hour", "Change the days to Saturday and Sunday"):
+        changed = await ask(client, sam, change, context=first["context"])
+    card = changed["cards"][0]
+    draft = card["draft"]
+    assert (draft["pay"], draft["work_days"], card["layout"]) == ("$19/hour", ["saturday", "sunday"], "simple")
+    assert draft["summary"] == (
+        "Sam's Cafe is hiring 2 Kitchen Assistants in Portland, OR: evening shifts on weekends, $19/hour."
+    )
+    assert card["missing"] == [
+        "Title: “Kitchen Assistant” is a suggestion from what you said",
+        "Part-time, from the days you gave",
+    ]
+    assert changed["reply"].endswith("Check it, then press Post Job. Nothing is posted until you do.")
+    posted = await approve(client, sam, first["id"])
+    job = (await client.get(f"{API}/careers/jobs/{posted['cards'][0]['job_id']}")).json()
+    assert "$19/hour" in job["summary"] and "$18" not in job["summary"]

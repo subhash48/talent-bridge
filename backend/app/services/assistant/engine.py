@@ -297,7 +297,8 @@ async def _plan(
     if action == "show_contacts":
         return await _show_contacts(session, recruiter, intent, context, keep)
     if action == "update_job":
-        return await _update_job(session, intent.job or JobChanges(), context, keep)
+        company = await session.get(Company, recruiter.company_id) if recruiter.company_id else None
+        return await _update_job(session, intent.job or JobChanges(), context, keep, company)
     if action == "search_candidates":
         return await _search(session, intent, request, context, keep)
     if action == "select_candidates":
@@ -638,29 +639,39 @@ def _create_simple_job(
     )
 
 
-async def _update_job(session: AsyncSession, changes: JobChanges, context: Context, keep: AssistantContext) -> Outcome:
+async def _update_job(
+    session: AsyncSession, changes: JobChanges, context: Context, keep: AssistantContext, company: Company | None
+) -> Outcome:
     proposal = context.proposal
     if proposal is None or context.proposal_kind != "job":
         return Outcome(reply='There\'s no job draft open. Say "Create a … role" to start one.', context=keep)
     payload = dict(proposal.payload or {})
     card = JobDraftCard.model_validate(payload["card"])
-    draft, described = jobs.update(card.draft, changes)
+    plain = card.layout == "simple"
+    if plain:
+        draft, described, missing = jobs.simple_update(
+            card.draft, changes, card.missing, company.name if company else ""
+        )
+    else:
+        draft, described = jobs.update(card.draft, changes)
+        missing = _job_checks(card, draft)
     keep = keep.model_copy(update={"action_id": proposal.id})
     if not described:
         return Outcome(
-            reply='I didn\'t catch what to change. Try "Add Kubernetes" or "Make it remote".',
+            reply='I didn\'t catch what to change. Try "Make it $19 an hour" or "Change the days to Saturday and Sunday".'
+            if plain
+            else 'I didn\'t catch what to change. Try "Add Kubernetes" or "Make it remote".',
             cards=[card],
             context=keep,
         )
-    card = card.model_copy(
-        update={"draft": draft, "changes": described, "missing": _job_checks(card, draft), "stage": "draft"}
-    )
+    card = card.model_copy(update={"draft": draft, "changes": described, "missing": missing, "stage": "draft"})
     await _save_payload(session, proposal.id, {**payload, "card": card.model_dump(mode="json"), "final": False})
-    return Outcome(
-        reply=f"Updated the draft: {'; '.join(described)}. Review it, then approve to create it.",
-        cards=[card],
-        context=keep,
+    next_step = (
+        "Check it, then press Post Job. Nothing is posted until you do."
+        if plain
+        else "Review it, then approve to create it."
     )
+    return Outcome(reply=f"Updated the draft: {'; '.join(described)}. {next_step}", cards=[card], context=keep)
 
 
 def _job_checks(card: JobDraftCard, draft: JobDraft) -> list[str]:

@@ -94,6 +94,13 @@ export default async function GetStartedPage() {
             </li>
           ))}
         </ul>
+
+        <p className={cn("mt-9 rounded-full px-5 py-2.5 text-[15px] text-on-brand", CARD)}>
+          Already have an account?{" "}
+          <Link href="/signin" className="font-medium underline underline-offset-4 transition-colors hover:text-overlay">
+            Sign in
+          </Link>
+        </p>
       </main>
     </div>
   );

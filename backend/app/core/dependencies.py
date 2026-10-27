@@ -77,7 +77,7 @@ async def get_current_user_submitting_demo(
 
 
 async def get_token_claims(credentials: BearerDep, verifier: VerifierDep) -> TokenClaims:
-    """Who a valid access token says the caller is, whether or not TalentBridge has an account for them
+    """Who a valid access token says the caller is, whether or not Kavuntra has an account for them
     yet: for setting one up (api/accounts.py)."""
     return await _verify_token(credentials, verifier)
 
@@ -106,7 +106,7 @@ async def _signed_in_user(request: Request, session: AsyncSession, claims: Token
     user = await user_for_auth_account(session, claims.subject)
     if user is None:
         raise ForbiddenError(
-            "Your account isn't linked to TalentBridge yet. Contact the hiring team.", code="account_not_linked"
+            "Your account isn't linked to Kavuntra yet. Contact the hiring team.", code="account_not_linked"
         )
     if user.disabled_at is not None:
         raise ForbiddenError("This account has been disabled.", code="account_disabled")
@@ -141,7 +141,7 @@ require_admin = require_role(UserRole.ADMIN)
 RecruiterDep = Annotated[User, Depends(require_recruiter)]
 AdminDep = Annotated[User, Depends(require_admin)]
 
-WORKSPACE_MISSING = "Set up your company's workspace before using TalentBridge."
+WORKSPACE_MISSING = "Set up your company's workspace before using Kavuntra."
 
 
 @dataclass(frozen=True)

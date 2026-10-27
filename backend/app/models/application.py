@@ -18,7 +18,7 @@ LOCAL_ONLY = text("external_id IS NULL")
 class Application(UUIDPrimaryKey, Base):
     """One candidate's candidacy for one job. The pipeline stage belongs here, not on the person.
 
-    Applications synced from Ashby keep Ashby's raw stage and status next to the stage TalentBridge
+    Applications synced from Ashby keep Ashby's raw stage and status next to the stage Kavuntra
     mapped them to (integrations/ashby/mapping.py), so the mapping can be re-run or audited.
     """
 
@@ -56,7 +56,7 @@ class Application(UUIDPrimaryKey, Base):
     availability: Mapped[list[str]] = mapped_column(JSONType, default=list)  # which of the job's work days
     experience_note: Mapped[str | None] = mapped_column(Text)  # their relevant experience, in their words
 
-    # Ashby (migration 011). Null for applications created in TalentBridge.
+    # Ashby (migration 011). Null for applications created in Kavuntra.
     external_id: Mapped[str | None] = mapped_column(Text, unique=True)
     external_status: Mapped[str | None] = mapped_column(Text)  # Active, Lead, Hired or Archived
     external_stage_id: Mapped[str | None] = mapped_column(Text)

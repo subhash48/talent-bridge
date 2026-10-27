@@ -1,4 +1,4 @@
-"""Candidate portal activity from before TalentBridge stopped recording it (migration 012).
+"""Candidate portal activity from before Kavuntra stopped recording it (migration 012).
 
 Nothing writes these tables any more and nothing reads them: the rows are kept, not migrated away.
 """

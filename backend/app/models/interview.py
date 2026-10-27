@@ -31,7 +31,7 @@ class Interview(UUIDPrimaryKey, Timestamps, Base):
     confirmed_at: Mapped[datetime | None]
 
     # Ashby (migration 011): the interview event id, its schedule, and the version applied here.
-    # Null for interviews scheduled in TalentBridge, which are never pushed to Ashby.
+    # Null for interviews scheduled in Kavuntra, which are never pushed to Ashby.
     external_id: Mapped[str | None] = mapped_column(Text, unique=True)
     external_schedule_id: Mapped[str | None] = mapped_column(Text, index=True)
     external_updated_at: Mapped[datetime | None]

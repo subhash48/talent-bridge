@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class Company(UUIDPrimaryKey, Timestamps, Base):
-    """An employer hiring through TalentBridge (migration 017). Every job belongs to one, and a candidate
+    """An employer hiring through Kavuntra (migration 017). Every job belongs to one, and a candidate
     learns about a company only through an application to one of its jobs.
 
     A company is also a workspace (migration 019): the people who hire for it (users.company_id) see its

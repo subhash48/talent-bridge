@@ -86,10 +86,10 @@ function Headline({ id, children, size = "md" }: { id?: string; children: ReactN
     <h2
       id={id}
       className={cn(
-        "mt-4 font-semibold text-ink",
-        size === "lg"
-          ? "text-[clamp(36px,5.6vw,76px)] leading-[1.02] tracking-[-0.045em]"
-          : "text-[clamp(30px,4.2vw,54px)] leading-[1.04] tracking-[-0.04em]",
+        "mt-4 font-medium tracking-[-0.02em] text-[#10282b]",
+        // The size before the leading: a later font size would drop the leading (tailwind-merge).
+        size === "lg" ? "text-[clamp(30px,3.3vw,52px)]" : "text-[clamp(28px,2.9vw,44px)]",
+        "leading-[1.08]",
       )}
     >
       {children}
@@ -143,7 +143,7 @@ export function OpeningScene() {
 export function StatementScene({ text }: { text: string }) {
   return (
     <Frame align="center">
-      <p className="text-[clamp(36px,5.8vw,76px)] leading-[1.02] font-semibold tracking-[-0.04em] text-ink">{text}</p>
+      <p className="text-[clamp(30px,3.3vw,52px)] leading-[1.1] font-medium tracking-[-0.02em] text-[#10282b]">{text}</p>
     </Frame>
   );
 }

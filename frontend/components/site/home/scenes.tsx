@@ -121,7 +121,7 @@ const HEADLINE = "font-serif text-[clamp(40px,calc(28px+2.6vw),76px)] leading-[1
 
 function Centre({ children }: { children: ReactNode }) {
   return (
-    <div className="scene-fade mx-auto flex w-full max-w-[1100px] flex-1 flex-col items-center justify-center px-5 pt-[60px] pb-[12svh] text-center sm:px-8 lg:pt-[76px]">
+    <div className="scene-fade mx-auto flex w-full max-w-[1100px] flex-1 flex-col items-center justify-center px-5 pt-[60px] pb-[20svh] text-center sm:px-8 lg:pt-[76px]">
       {children}
     </div>
   );

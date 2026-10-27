@@ -147,16 +147,16 @@ export function OpeningScene() {
           See how it works
         </Link>
       </div>
-    </div>
+    </Centre>
   );
 }
 
-/** One line between scenes, as the valley goes by. */
+/** One line between scenes, as the valley goes by: the same type and the same centre as the opening. */
 export function StatementScene({ text }: { text: string }) {
   return (
-    <Frame align="center">
-      <p className="text-[clamp(30px,3.3vw,52px)] leading-[1.1] font-medium tracking-[-0.02em] text-[#10282b]">{text}</p>
-    </Frame>
+    <Centre>
+      <p className={cn(HEADLINE, "max-w-[24ch]")}>{text}</p>
+    </Centre>
   );
 }
 

@@ -21,7 +21,7 @@ import { EmployerLogo } from "@/components/candidate/EmployerLogo";
 import { HelpDialog } from "@/components/candidate/HelpDialog";
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
 import { Avatar } from "@/components/shared/Avatar";
-import { TalentBridgeLogo } from "@/components/shared/TalentBridgeLogo";
+import { KavuntraLogo } from "@/components/shared/KavuntraLogo";
 import { SidebarNavItem } from "@/components/shared/SidebarNavItem";
 import {
   DropdownMenu,
@@ -61,14 +61,14 @@ export function CandidateSidebarContent({ onNavigate }: { onNavigate?: () => voi
   const unread = me.unreadMessages;
 
   return (
-    <div className="flex h-full flex-col px-3 pt-5 pb-4">
-      <Link href="/candidate" onClick={onNavigate} aria-label="Candidate portal home" className="mb-1.5 flex w-fit items-center rounded-md px-2.5">
-        <TalentBridgeLogo />
+    <div className="flex h-full flex-col px-4 pt-6 pb-5">
+      <Link href="/candidate" onClick={onNavigate} aria-label="Candidate portal home" className="mb-2 flex w-fit items-center rounded-md px-3">
+        <KavuntraLogo />
       </Link>
-      <p className={me.applications.length > 0 ? "mb-3 px-2.5 text-xs text-faint" : "mb-6 px-2.5 text-xs text-faint"}>Candidate portal</p>
+      <p className={me.applications.length > 0 ? "mb-6 px-3 text-xs text-faint" : "mb-8 px-3 text-xs text-faint"}>Candidate portal</p>
       <ApplicationContext onNavigate={onNavigate} />
 
-      <nav aria-label="Candidate portal" className="flex flex-col gap-0.5">
+      <nav aria-label="Candidate portal" className="flex flex-col gap-1">
         {NAV.map((item) => (
           <SidebarNavItem
             key={item.href}
@@ -86,15 +86,15 @@ export function CandidateSidebarContent({ onNavigate }: { onNavigate?: () => voi
         <button
           type="button"
           onClick={() => setHelpOpen(true)}
-          className="flex h-9 items-center gap-2.5 rounded-[8px] px-2.5 text-sm text-stone transition-[background-color,color] duration-200 hover:bg-ink/[0.04] hover:text-ink"
+          className="flex h-10 items-center gap-3 rounded-[10px] px-3 text-sm text-stone transition-[background-color,color] duration-200 hover:bg-ink/[0.04] hover:text-ink"
         >
-          <LifeBuoy aria-hidden strokeWidth={1.75} className="size-[17px]" />
+          <LifeBuoy aria-hidden strokeWidth={1.75} className="size-[18px] text-faint" />
           Help
         </button>
         <HelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} onNavigate={onNavigate} />
 
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex w-full items-center gap-2.5 rounded-[8px] border-t border-border px-1.5 pt-3 pb-0.5 text-left transition-colors hover:text-ink">
+          <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-[12px] px-2 py-2 text-left transition-colors hover:bg-ink/[0.04]">
             <Avatar name={me.candidate.fullName} src={me.candidate.avatarUrl} size={30} />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[13px] font-medium text-ink">{me.candidate.fullName}</span>
@@ -146,7 +146,7 @@ function ApplicationContext({ onNavigate }: { onNavigate?: () => void }) {
   );
 
   if (me.applications.length === 1) {
-    return <div className="mb-4 flex items-center gap-2.5 rounded-[8px] px-2.5 py-2 ring-1 ring-ink/[0.08]">{summary("Your application")}</div>;
+    return <div className="mb-6 flex items-center gap-3 rounded-[14px] bg-overlay/70 px-3 py-2.5 ring-1 ring-ink/[0.06]">{summary("Your application")}</div>;
   }
 
   function choose(id: string) {
@@ -168,7 +168,7 @@ function ApplicationContext({ onNavigate }: { onNavigate?: () => void }) {
           .filter(Boolean)
           .join(". ")}
         aria-busy={switching || undefined}
-        className="relative mb-4 flex w-full items-center gap-2.5 rounded-[8px] bg-ink/[0.04] px-2.5 py-2 text-left ring-1 ring-ink/[0.08] transition-colors hover:bg-ink/[0.07]"
+        className="relative mb-6 flex w-full items-center gap-3 rounded-[14px] bg-overlay/70 px-3 py-2.5 text-left shadow-soft ring-1 ring-ink/[0.06] transition-colors hover:bg-overlay"
       >
         {summary("Viewing application")}
         {switching ? (

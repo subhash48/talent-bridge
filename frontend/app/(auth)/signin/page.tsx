@@ -31,7 +31,7 @@ export default async function SignInChooserPage() {
 
   return (
     <AuthCard
-      title="How are you using TalentBridge?"
+      title="How are you using Kavuntra?"
       footer={
         <>
           New here?{" "}
@@ -50,9 +50,9 @@ export default async function SignInChooserPage() {
           <li key={href}>
             <Link
               href={href}
-              className="group flex items-center gap-4 rounded-[14px] border border-border bg-surface-raised p-4 transition-colors hover:border-border-strong hover:bg-overlay"
+              className="group sky-card flex items-center gap-4 rounded-[18px] p-4 transition-[background-color,transform] duration-200 hover:-translate-y-px hover:bg-overlay/75"
             >
-              <span className="flex size-11 shrink-0 items-center justify-center rounded-[12px] bg-brand-soft text-brand-ink ring-1 ring-brand-ink/20">
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-accent-soft/80 text-brand-ink">
                 <Icon aria-hidden className="size-5" strokeWidth={1.75} />
               </span>
               <span className="flex-1">

@@ -40,6 +40,19 @@ export function SimpleOutreachCard({ card, onSend, onEdits, busy, superseded }: 
   const closed = superseded || card.status === "cancelled";
   const chosen = card.items.filter((item) => drafts[item.candidate.application_id]?.include);
   const asking = card.schedule !== null;
+  const sent = card.items.filter((item) => item.result?.message_sent).length;
+  const tried = card.items.filter((item) => item.include).length;
+  // Only what really went: a failed send says so, and a partly failed one says how many.
+  const heading = !done
+    ? asking
+      ? "Interview requests to send"
+      : "Messages to send"
+    : sent === 0
+      ? "Not sent"
+      : sent < tried
+        ? `Sent ${sent} of ${tried}`
+        : "Sent";
+  const problem = error ?? (done && card.error ? card.error : null);
 
   function edits(next: Record<string, Draft>): ConfirmEdits {
     return {
@@ -72,9 +85,7 @@ export function SimpleOutreachCard({ card, onSend, onEdits, busy, superseded }: 
   return (
     <div className={cn("mt-3 rounded-[16px] border border-border bg-surface-raised", closed && "opacity-60")}>
       <div className="border-b border-border px-4 py-3">
-        <p className="text-[15px] font-semibold text-ink">
-          {done ? "Sent" : asking ? "Interview requests to send" : "Messages to send"}
-        </p>
+        <p className={cn("text-[15px] font-semibold", done && sent === 0 ? "text-danger" : "text-ink")}>{heading}</p>
         {card.schedule && (
           <p className="mt-1 flex items-start gap-1.5 text-sm text-stone">
             <CalendarClock aria-hidden className="mt-0.5 size-4 shrink-0" />
@@ -101,7 +112,11 @@ export function SimpleOutreachCard({ card, onSend, onEdits, busy, superseded }: 
           />
         ))}
       </ul>
-      {error && <p className="px-4 pt-3 text-sm text-danger">{error}</p>}
+      {problem && (
+        <p role="alert" className="px-4 pt-3 pb-1 text-sm text-danger">
+          {problem}
+        </p>
+      )}
       {!done && !closed && (
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4">
           <p className="text-xs text-faint">{card.delivery_note}</p>

@@ -486,7 +486,7 @@ class AssistantStatus(APIModel):
     voice_transcription: bool  # the server can transcribe speech (else the browser's own recognition)
     model_name: str
     email_configured: bool = False  # messages are also emailed; else they reach the candidate portal only
-    calendar_configured: bool = False  # interviews also become calendar events; else TalentBridge only
+    calendar_configured: bool = False  # interviews also become calendar events; else Kavuntra only
 
 
 class TranscriptionRead(APIModel):

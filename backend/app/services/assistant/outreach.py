@@ -7,7 +7,7 @@ time zone, and rewrites the drafts to name it. All of it waits in one proposal (
 until the recruiter approves it, after one final look at the candidates, messages and times together.
 
 Approving runs the existing services, once, for the candidates still ticked: first a check that their
-draft is still the one approved, then each interview is created in TalentBridge (interview_service), the
+draft is still the one approved, then each interview is created in Kavuntra (interview_service), the
 calendar provider is asked for an event (none is connected, so none is claimed), the message goes
 through the one send path (portal, timeline, and email when configured), and only then is candidate
 messaging turned on. Each candidate's outcome is reported on its own, and one candidate's failure
@@ -357,7 +357,7 @@ def _reply(card: OutreachCard, done: list[OutreachItem], failed: list[OutreachIt
             else "no calendar invitations were sent, because calendar integration isn't set up"
         )
         lines.append(
-            f"Created {len(interviews)} interview{'s' if len(interviews) != 1 else ''} in TalentBridge; {calendar}."
+            f"Created {len(interviews)} interview{'s' if len(interviews) != 1 else ''} in Kavuntra; {calendar}."
         )
     opened = [item for item in done if item.result and item.result.messaging_enabled]
     if opened:

@@ -236,7 +236,7 @@ async def test_shortlist_select_draft_schedule_and_send(
     assert done["reply"].startswith(
         "Sent 3 personalized interview invitations to Sophia Martinez, Maya Brooks and James"
     )
-    assert "Created 3 interviews in TalentBridge; no calendar invitations were sent" in done["reply"]
+    assert "Created 3 interviews in Kavuntra; no calendar invitations were sent" in done["reply"]
     for item in card["items"]:
         assert item["result"]["message_sent"] and item["result"]["interview_created"]
         assert (item["result"]["email"], item["result"]["calendar"]) == ("not_configured", "not_configured")

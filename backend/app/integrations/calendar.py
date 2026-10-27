@@ -1,6 +1,6 @@
 """Calendar events for interviews, behind one small interface.
 
-No calendar is connected yet, so every interview is created in TalentBridge only, and nothing claims a
+No calendar is connected yet, so every interview is created in Kavuntra only, and nothing claims a
 calendar invitation went out: DisabledCalendar says so, and the recruiter sees "Calendar integration
 required to create real calendar events." Google Calendar or Microsoft Outlook plug in here later, as
 another CalendarProvider: the interview flow (services/assistant/outreach.py) already asks the provider
@@ -48,7 +48,7 @@ class CalendarProvider(ABC):
 
 
 class DisabledCalendar(CalendarProvider):
-    """No calendar connected: interviews live in TalentBridge, and no invitation is claimed."""
+    """No calendar connected: interviews live in Kavuntra, and no invitation is claimed."""
 
     name = "none"
     configured = False

@@ -13,7 +13,7 @@ Every request is recorded (assistant_actions): the words, the structured action,
 result. A repeated request (same client_request_id) returns the first one's answer instead of doing
 anything twice, and a proposal's status moves on exactly once, so one approval is one send.
 
-What runs is always an existing TalentBridge service: communication drafts (sent through the one send
+What runs is always an existing Kavuntra service: communication drafts (sent through the one send
 path: candidate portal, timeline and email when configured), message_service, interview_service (with
 the calendar provider, which isn't connected, so no invitation is claimed), job_service for a new job,
 candidate_matching for lists and the communication health behind Today. Nothing here decides anything
@@ -567,7 +567,7 @@ def _final_summary(card: OutreachCard) -> str:
         scheduled = [item for item in chosen if item.slot is not None]
         lines.append(
             f"{len(scheduled)} {card.schedule.duration_minutes}-minute interview{'s' if len(scheduled) != 1 else ''} "
-            "will be created in TalentBridge."
+            "will be created in Kavuntra."
         )
         if not card.schedule.calendar_configured:
             lines.append(card.schedule.calendar_note)

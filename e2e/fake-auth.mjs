@@ -2,7 +2,7 @@
 // ES256 access tokens (JWKS at /auth/v1/.well-known/jwks.json), so the backend and the frontend verify them
 // unchanged; keeps users in memory and mirrors them into the e2e database's auth.users table, which the backend
 // reads to know whether an email was verified; and "sends" emails into an outbox (GET /__outbox) instead of
-// anyone's inbox. Only the endpoints TalentBridge calls are here.
+// anyone's inbox. Only the endpoints Kavuntra calls are here.
 import { createHash, generateKeyPairSync, randomBytes, randomUUID, sign } from "node:crypto";
 import { createServer } from "node:http";
 

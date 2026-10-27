@@ -18,7 +18,7 @@ export E2E_AUTH_URL="http://localhost:$AUTH_PORT" E2E_WEB_URL="http://localhost:
 # The backend's settings all come from here: it runs from e2e/, where there's no .env to read.
 export PYTHONPATH="$ROOT/backend" DATABASE_URL="$E2E_DATABASE_URL" SUPABASE_URL="$E2E_AUTH_URL" \
   SUPABASE_SECRET_KEY=e2e-secret FRONTEND_URL="$E2E_WEB_URL" CORS_ORIGINS="$E2E_WEB_URL" AI_PROVIDER=mock \
-  ENVIRONMENT=development SEED_DEMO_DATA=false CONTACT_EMAIL=hello@talentbridge.example
+  ENVIRONMENT=development SEED_DEMO_DATA=false CONTACT_EMAIL=hello@kavuntra.example
 
 pids=()
 stop() {

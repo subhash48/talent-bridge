@@ -1,8 +1,8 @@
 # End-to-end journeys
 
-TalentBridge's three journeys, run in a real (headless) browser against the whole stack: a database built
+Kavuntra's three journeys, run in a real (headless) browser against the whole stack: a database built
 from every migration, the demo seed, the backend and a production build of the frontend. Nothing is mocked
-in TalentBridge itself. Only Supabase Auth is replaced: `fake-auth.mjs` is a small stand-in that signs real
+in Kavuntra itself. Only Supabase Auth is replaced: `fake-auth.mjs` is a small stand-in that signs real
 tokens and puts every email in an outbox the journeys read, so no one's inbox is involved.
 
 | Journey           | What it checks                                                                                      |

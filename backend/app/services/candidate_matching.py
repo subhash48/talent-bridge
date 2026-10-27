@@ -85,9 +85,28 @@ NOT_WORKED_AFTER = re.compile(
 )
 NOT_WORKED_BEFORE = re.compile(r"\b(?:aged?|age of|turning|turned)\s*$", re.IGNORECASE)
 SENTENCE = re.compile(r"(?<=[.!?;])\s+|\n+")
+# Said not to have it, in the few words before: "no kitchen experience", "never worked in a restaurant",
+# "I don't have any barista experience".
+NEGATED = re.compile(
+    r"\b(?:no|not|never|without|none|zero|cannot|dont|didnt|doesnt|havent|hasnt|hadnt|cant|wont|wasnt|isnt|arent"
+    r"|werent|couldnt)\b(?:\W+\w+){0,4}\W*$",
+    re.IGNORECASE,
+)
+# What someone wrote reads as work: a job, a time spent at it, a place they did it. "I love to cook for my
+# family" and "I go to the cafe" don't.
+AS_WORK = re.compile(
+    r"\b(?:work\w*|job|jobs|years?|months?|experience|employ\w*|shifts?|roles?|positions?|served|serving|ran"
+    r"|running|managed|cooked|prepped|staff|crew|intern\w*|volunteer\w*|(?:19|20)\d\d)\b|\bas an?\b|\bat (?:an?|the)\b",
+    re.IGNORECASE,
+)
+NOT_WORK = re.compile(
+    r"\b(?:for (?:my|our) (?:family|kids|children|friends|partner)|at home|as a hobby|for fun|i (?:love|like|enjoy) to)\b",
+    re.IGNORECASE,
+)
 EXPERIENCE = re.compile(r"\s+experience$", re.IGNORECASE)
 # Closely related work that shows the same experience, by the criterion's core words. Each match is labelled
 # with the word found ("Restaurant experience"), never as the criterion itself.
+# Words with an everyday other meaning ("server" for computers, "host" of a show) aren't among them.
 RELATED: dict[str, tuple[str, ...]] = {
     "kitchen": ("restaurant", "line cook", "prep cook", "cook", "chef", "food prep", "catering", "dishwasher"),
     "customer service": (
@@ -95,12 +114,12 @@ RELATED: dict[str, tuple[str, ...]] = {
         "front of house",
         "retail",
         "barista",
-        "server",
+        "serving tables",
         "waiter",
         "waitress",
         "hospitality",
     ),
-    "restaurant": ("kitchen", "server", "waiter", "waitress", "host", "front of house", "line cook", "cook"),
+    "restaurant": ("kitchen", "serving tables", "waiter", "waitress", "front of house", "line cook", "cook"),
     "cashier": ("till", "checkout", "point of sale", "register"),
     "barista": ("coffee", "espresso", "cafe"),
     "warehouse": ("forklift", "picking", "packing", "inventory", "stockroom"),
@@ -227,11 +246,35 @@ def _evidence(term: str, candidate: Candidate, note: str | None, resume: str | N
     )
     for words, label in ((core, term), *((related, _related_label(term, related)) for related in _related(core))):
         for source, text in texts:
-            if _mentions(text, words):
-                return MatchEvidence(
-                    criterion=term, matched=True, source=source, label=label, quote=_quote(text or "", words)
-                )
+            sentence = _shown(text, words, source)
+            if sentence is not None:
+                return MatchEvidence(criterion=term, matched=True, source=source, label=label, quote=_short(sentence))
     return MatchEvidence(criterion=term, matched=False, label=term)
+
+
+def _shown(text: str | None, words: str, source: EvidenceSource) -> str | None:
+    """The first sentence that shows the words as experience: never one saying it's missing ("no kitchen
+    experience"); outside the headline, not about home or a hobby; and in what they wrote with the application
+    (not a résumé, which is about work throughout), about work."""
+    for sentence in SENTENCE.split(text or ""):
+        if not _mentions(sentence, words):
+            continue
+        before = sentence.casefold()[: _position(sentence, words)].replace("’", "'").replace("'", "")
+        if NEGATED.search(before):
+            continue
+        if source != "headline" and NOT_WORK.search(sentence):
+            continue
+        if source == "application" and not AS_WORK.search(sentence):
+            continue
+        return sentence.strip()
+    return None
+
+
+def _position(sentence: str, words: str) -> int:
+    """Where the words start in the sentence (a match _mentions() found)."""
+    first = _norm(words).split()[0]
+    found = re.search(rf"(?<![\w]){re.escape(first)}", sentence.casefold())
+    return found.start() if found else 0
 
 
 def _related(core: str) -> tuple[str, ...]:
@@ -244,13 +287,9 @@ def _related_label(term: str, related: str) -> str:
     return f"{said} experience" if EXPERIENCE.search(term) else said
 
 
-def _quote(text: str, words: str) -> str | None:
+def _short(sentence: str) -> str:
     """The sentence the words were found in, as written, up to 160 characters."""
-    for sentence in SENTENCE.split(text):
-        if _mentions(sentence, words):
-            sentence = sentence.strip()
-            return sentence if len(sentence) <= 160 else f"{sentence[:159].rstrip()}…"
-    return None
+    return sentence if len(sentence) <= 160 else f"{sentence[:159].rstrip()}…"
 
 
 def _available(day: Weekday, application: Application) -> MatchEvidence:

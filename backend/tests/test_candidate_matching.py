@@ -6,12 +6,13 @@ candidate's listed skills, headline or résumé. Nobody is moved, rejected or co
 
 import uuid
 
+import pytest
 from httpx import AsyncClient
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.models import Candidate, CandidateActivity, CandidateResume, Message
-from app.services.candidate_matching import _mentions, experience
+from app.services.candidate_matching import _evidence, _mentions, experience
 from app.services.personal_characteristics import REFUSAL
 from tests.conftest import API, application_id, candidate_id, job_id
 
@@ -304,3 +305,42 @@ async def test_availability_alone_is_a_criterion(client: AsyncClient, anonymous:
     result = await find(client, job_ids=[job], available_days=["sunday"], limit=10)
     assert sorted(item["name"] for item in result["items"]) == ["Lena Park", "Tom Becker"]
     assert result["criteria"] == []
+
+
+def _evidence_for(criterion: str, note: str) -> dict[str, object]:
+    person = Candidate(first_name="Test", last_name="Applicant", email="t@inbox.dev", skills=[])
+    return _evidence(criterion, person, note, None).model_dump()
+
+
+@pytest.mark.parametrize(
+    ("criterion", "note"),
+    [
+        ("Kitchen experience", "I have no kitchen experience."),
+        ("Kitchen experience", "I don't have any kitchen experience yet."),
+        ("Restaurant experience", "Never worked in a restaurant, but keen to learn."),
+        ("Customer service experience", "I set up Linux servers at my last job."),
+        ("Cook experience", "I love to cook for my family."),
+        ("Barista experience", "I go to the cafe every morning."),
+    ],
+)
+def test_words_that_dont_show_the_experience_arent_a_reason(criterion: str, note: str) -> None:
+    """Found in review: each of these was shown as a ✓ reason."""
+    assert _evidence_for(criterion, note)["matched"] is False
+
+
+@pytest.mark.parametrize(
+    ("criterion", "note", "label"),
+    [
+        ("Kitchen experience", "Two years as a prep cook in a busy kitchen.", "Kitchen experience"),
+        ("Kitchen experience", "No problem with weekends. A year in a hotel kitchen.", "Kitchen experience"),
+        (
+            "Kitchen experience",
+            "I didn't finish college, but worked three years as a line cook.",
+            "Line cook experience",
+        ),
+        ("Customer service experience", "Three years serving tables at a diner.", "Serving tables experience"),
+    ],
+)
+def test_experience_said_plainly_is_a_reason(criterion: str, note: str, label: str) -> None:
+    found = _evidence_for(criterion, note)
+    assert (found["matched"], found["label"]) == (True, label)

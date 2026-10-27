@@ -191,6 +191,11 @@ export function SiteHeader() {
               Solutions
             </p>
             <SolutionRows pathname={pathname} onPick={close} />
+            <div className="border-t border-ink/[0.07] p-2 pt-3">
+              <Link href="/start" onClick={close} className={buttonStyles({ size: "lg", className: "w-full rounded-full" })}>
+                Get started
+              </Link>
+            </div>
           </nav>
         )}
       </div>

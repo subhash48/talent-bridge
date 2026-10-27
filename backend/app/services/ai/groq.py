@@ -47,7 +47,7 @@ class GroqProvider(LLMProvider):
         return True
 
     async def transcribe(self, audio: bytes, content_type: str, vocabulary: str = "") -> str:
-        """The recording goes to Groq to be transcribed and TalentBridge keeps no copy of it."""
+        """The recording goes to Groq to be transcribed and Kavuntra keeps no copy of it."""
         kind = content_type.split(";")[0].strip().lower()
         extension = AUDIO_EXTENSIONS.get(kind, "webm")
         prompt = TRANSCRIPTION_PROMPT.format(vocabulary=vocabulary)[:800]

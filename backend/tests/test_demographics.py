@@ -1,4 +1,4 @@
-"""Voluntary demographic information. TalentBridge no longer collects or shows it: no form or endpoint
+"""Voluntary demographic information. Kavuntra no longer collects or shows it: no form or endpoint
 asks for it, and no page reports it. Answers given before stay in their own table, untouched, and are
 never part of anything that ranks, filters, evaluates or describes a person."""
 

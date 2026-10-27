@@ -20,7 +20,7 @@ SOPHIA = application_id("sophia-martinez")
 
 
 async def test_ai_never_evaluates_candidates(client: AsyncClient) -> None:
-    """No analysis, scoring, strengths or concerns: TalentBridge's AI drafts communication."""
+    """No analysis, scoring, strengths or concerns: Kavuntra's AI drafts communication."""
     for path in ("analyze-candidate", "ask-candidate"):
         response = await client.post(f"{API}/ai/{path}", json={"application_id": SOPHIA, "message": "Any concerns?"})
         assert response.status_code in (404, 405)

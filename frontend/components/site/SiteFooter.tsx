@@ -1,9 +1,24 @@
 import Link from "next/link";
 
-import { FOOTER_LINKS } from "@/components/site/nav";
+import { COMPANY_LINKS, POLICY_LINKS, PRODUCT_LINK, SOLUTIONS } from "@/components/site/nav";
 import { KavuntraLogo } from "@/components/shared/KavuntraLogo";
+import { cn } from "@/lib/utils";
 
-const linkStyles = "rounded-sm text-sm text-stone transition-colors hover:text-ink";
+// The footer's places: Product, the solutions by name, the company, then the policies.
+const PLACES = [PRODUCT_LINK, ...SOLUTIONS.map(({ href, short }) => ({ href, label: short })), ...COMPANY_LINKS, ...POLICY_LINKS];
+
+function FooterLinks({ className }: { className?: string }) {
+  const linkStyles = "rounded-sm text-sm text-stone transition-colors hover:text-ink";
+  return (
+    <nav aria-label="Footer" className={cn("flex flex-wrap gap-x-5 gap-y-2.5", className)}>
+      {PLACES.map((link) => (
+        <Link key={link.href} href={link.href} className={linkStyles}>
+          {link.label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
 
 /**
  * The public website's footer: the mark, every place on the site, and the year. Nothing more. On the home page
@@ -17,13 +32,7 @@ export function SiteFooter({ overFilm = false }: { overFilm?: boolean }) {
           <Link href="/" aria-label="Kavuntra home" className="w-fit rounded-md">
             <KavuntraLogo />
           </Link>
-          <nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-2.5 lg:ml-auto">
-            {FOOTER_LINKS.map((link) => (
-              <Link key={link.href} href={link.href} className="rounded-sm text-sm text-charcoal transition-colors hover:text-ink">
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          <FooterLinks className="lg:ml-auto" />
           <p className="text-[13px] text-stone">© 2026 Kavuntra</p>
         </div>
       </footer>
@@ -35,13 +44,7 @@ export function SiteFooter({ overFilm = false }: { overFilm?: boolean }) {
         <Link href="/" aria-label="Kavuntra home" className="w-fit rounded-md">
           <KavuntraLogo />
         </Link>
-        <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-3">
-          {FOOTER_LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className={linkStyles}>
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+        <FooterLinks className="gap-x-6 gap-y-3" />
       </div>
       <p className="mx-auto w-full max-w-[1120px] pb-10 text-[13px] text-faint">© 2026 Kavuntra</p>
     </footer>

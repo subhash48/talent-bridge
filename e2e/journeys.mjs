@@ -89,6 +89,8 @@ async function website(browser) {
   for (const label of ["For Recruiters", "For Candidates", "For Small Businesses"]) {
     check(`nav: Solutions: ${label}`, await nav.getByRole("link", { name: new RegExp(`^${label}`) }).isVisible());
   }
+  await page.keyboard.press("Escape");
+  check("nav: Solutions closes on Escape", (await nav.getByRole("link", { name: /^For Recruiters/ }).count()) === 0);
   // The whole home page is told over the film: one pinned screen whose scenes take turns as it scrolls.
   // How shown a scene is: its words' opacity (scenes fade by their words and cards, never as a whole).
   const sceneOpacity = (target, label) =>

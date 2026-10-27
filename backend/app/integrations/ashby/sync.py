@@ -207,7 +207,7 @@ def sync_from_settings(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Pull changes from Ashby into TalentBridge.")
+    parser = argparse.ArgumentParser(description="Pull changes from Ashby into Kavuntra.")
     parser.add_argument("resources", nargs="*", metavar="resource", help=f"any of {', '.join(RESOURCES)} (default: all)")
     parser.add_argument("--full", action="store_true", help="ignore the stored sync tokens and fetch everything")
     args = parser.parse_args()

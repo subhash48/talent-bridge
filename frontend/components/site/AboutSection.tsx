@@ -1,7 +1,9 @@
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 import { Section } from "@/components/site/Section";
 import { SOLUTIONS } from "@/components/site/nav";
+import { buttonStyles } from "@/components/ui/Button";
 
 // Who Kavuntra is for, with a line each, in the words of their own pages.
 const SERVED = [
@@ -60,6 +62,21 @@ export function AboutSection() {
             ))}
           </ul>
         </div>
+      </div>
+
+      <div className="mt-14 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <p className="max-w-[34rem] text-[17px] leading-relaxed text-charcoal">
+          Questions, feedback, or a pilot in mind? We&apos;d like to hear from you. And if this is work you&apos;d want to
+          do, see{" "}
+          <Link href="/about/careers" className="font-medium text-brand-ink underline-offset-4 hover:underline">
+            Careers
+          </Link>
+          .
+        </p>
+        <Link href="/contact" className={buttonStyles({ size: "xl", className: "group shrink-0" })}>
+          Let&apos;s talk
+          <ArrowRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5" />
+        </Link>
       </div>
     </Section>
   );

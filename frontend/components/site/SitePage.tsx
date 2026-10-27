@@ -3,12 +3,12 @@ import type { ReactNode } from "react";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteHeader } from "@/components/site/SiteHeader";
 
-/** A page of the public website: the header, the page, the footer. */
+/** A page of the public website: the floating header, the page (clear of the header) on the sky, the footer. */
 export function SitePage({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="sky-backdrop flex min-h-dvh flex-col">
       <SiteHeader />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 pt-16 sm:pt-20">{children}</main>
       <SiteFooter />
     </div>
   );
@@ -20,13 +20,13 @@ type PolicyPageProps = { title: string; updated: string; summary: ReactNode; chi
 export function PolicyPage({ title, updated, summary, children }: PolicyPageProps) {
   return (
     <SitePage>
-      <article className="mx-auto w-full max-w-[720px] px-4 py-16 sm:px-6">
-        <h1 className="text-[34px] leading-tight font-semibold tracking-[-0.02em] text-ink sm:text-[42px]">{title}</h1>
-        <p className="mt-2 text-sm text-faint">Last updated {updated}</p>
-        <div className="mt-6 rounded-[12px] border border-caution/30 bg-caution/[0.06] px-4 py-3 text-sm leading-relaxed text-charcoal">
+      <article className="mx-auto w-full max-w-[720px] px-5 py-16 sm:px-8 sm:py-20">
+        <h1 className="text-[clamp(34px,5vw,52px)] leading-[1.04] font-semibold tracking-[-0.04em] text-ink">{title}</h1>
+        <p className="mt-3 text-sm text-faint">Last updated {updated}</p>
+        <div className="mt-8 rounded-[16px] bg-caution/[0.06] px-5 py-4 text-sm leading-relaxed text-charcoal ring-1 ring-caution/20">
           {summary}
         </div>
-        <div className="mt-10 flex flex-col gap-8 text-[15px] leading-relaxed text-charcoal [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:text-ink [&_li]:mt-1.5 [&_ul]:mt-2 [&_ul]:list-disc [&_ul]:pl-5">
+        <div className="mt-12 flex flex-col gap-9 text-[15px] leading-relaxed text-charcoal [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:tracking-[-0.01em] [&_h2]:text-ink [&_li]:mt-1.5 [&_ul]:mt-2 [&_ul]:list-disc [&_ul]:pl-5">
           {children}
         </div>
       </article>

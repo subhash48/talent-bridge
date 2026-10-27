@@ -11,7 +11,9 @@ One email is one kind of account, so candidate and employer accounts are never m
   already applied somewhere with it, that record is theirs, with every application on it; otherwise a
   new one starts with none. Nothing here creates an application.
 - An employer's account is a users row with the admin role in a new company of their own: their
-  workspace, empty, in the mode they chose. It never sees anything of any other company's.
+  workspace, empty, in the mode they chose. It never sees anything of any other company's. Someone their
+  company already added (a users row with a company, not yet signed in) is linked to that workspace as they
+  are instead: setting up never moves anyone out of their company or changes their role.
 - An address that is already the other kind is refused with a plain explanation.
 """
 
@@ -102,6 +104,11 @@ async def create_workspace(session: AsyncSession, claims: TokenClaims, data: Wor
     holder = user or await session.scalar(select(User).where(User.email == account.email))
     if holder is not None and (holder.role == UserRole.CANDIDATE or holder.auth_user_id not in (None, account.id)):
         raise ConflictError(LINKED_ELSEWHERE, code="account_conflict")
+    if holder is not None and holder.company_id is not None:  # added by their company: that's their workspace
+        holder.auth_user_id = account.id
+        await session.commit()
+        logger.info("accounts.workspace_joined user=%s company=%s", holder.id, holder.company_id)
+        return holder
 
     company = Company(
         slug=await _unique_slug(session, data.company_name),

@@ -13,6 +13,7 @@ from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.db.seed_data import OPENAI_RECRUITER
 from app.models import Candidate, Company, User
 from app.services import account_service
 from app.services.account_service import AuthAccount
@@ -161,3 +162,15 @@ async def test_a_candidate_email_is_never_an_employer_account(anonymous: AsyncCl
         token = supabase.sign_up(email)
         refused = await anonymous.post(f"{API}/accounts/workspace", json=SAMS, headers=token)
         assert refused.status_code == 409 and refused.json()["error"]["code"] == "candidate_email"
+
+
+async def test_staff_their_company_added_are_linked_to_it_not_moved(
+    anonymous: AsyncClient, supabase: Inbox, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    """Julia hires for OpenAI but hasn't signed in yet. Choosing "Create company workspace" by mistake signs
+    Julia in to OpenAI's workspace as the recruiter they already are: no new company, no new role."""
+    token = supabase.sign_up(OPENAI_RECRUITER["email"])
+    me = (await anonymous.post(f"{API}/accounts/workspace", json=SAMS, headers=token)).json()
+    assert (me["role"], me["workspace"]["name"], me["workspace"]["can_manage"]) == ("recruiter", "OpenAI", False)
+    async with sessions() as session:
+        assert await session.scalar(select(Company.id).where(Company.name == "Rosie's Bakery")) is None

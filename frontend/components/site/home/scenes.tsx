@@ -110,25 +110,32 @@ function Onward({ href, children }: { href: string; children: ReactNode }) {
   );
 }
 
-/** The opening: the promise, and the two ways in. */
+/**
+ * The opening, as in the approved design: one line, what Kavuntra does, and the two ways in, small and centred in
+ * the sky with the valley left clear around them. No panel or wash behind the words: the sky is light enough.
+ */
 export function OpeningScene() {
   return (
-    <Frame align="center">
-      <h1 className="text-[clamp(40px,6.4vw,84px)] leading-[0.98] font-semibold tracking-[-0.045em] text-ink">
-        Hiring shouldn&apos;t feel like a black box.
+    <div className="scene-fade mx-auto flex w-full max-w-[1200px] flex-col items-center px-5 pt-[clamp(120px,21.5svh,260px)] text-center sm:px-8">
+      <h1 className="text-[clamp(34px,calc(22px+2.25vw),64px)] leading-[1.1] font-medium tracking-[-0.02em] text-[#10282b]">
+        Hiring feels simpler.
       </h1>
-      <p className="mx-auto mt-6 max-w-[36rem] text-[17px] leading-relaxed font-medium text-ink sm:text-[19px]">
-        Kavuntra keeps recruiters responsive and candidates informed throughout the hiring process.
+      <p className="mt-3 text-[clamp(16px,1.2vw,19px)] leading-relaxed text-balance text-[#3a4b4e]">
+        Kavuntra keeps recruiters responsive and candidates informed.
       </p>
-      <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-        <Link href="/start" className={buttonStyles({ size: "xl" })}>
-          Get started <ArrowRight aria-hidden />
+      <div className="mt-7 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
+        <Link href="/start" className={buttonStyles({ size: "xl", className: "group h-11 px-5 text-[14px] sm:px-6.5 sm:text-[15px]" })}>
+          Get started
+          <ArrowRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5" />
         </Link>
-        <Link href="#product" className={buttonStyles({ variant: "glass", size: "xl", className: "shadow-soft" })}>
+        <Link
+          href="#product"
+          className={buttonStyles({ variant: "glass", size: "xl", className: "h-11 px-5 text-[14px] text-[#10282b] sm:px-6.5 sm:text-[15px]" })}
+        >
           See how it works
         </Link>
       </div>
-    </Frame>
+    </div>
   );
 }
 

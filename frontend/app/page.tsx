@@ -15,7 +15,7 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { homePath } from "@/lib/auth";
 import { getSignedInUser } from "@/lib/session";
 
-export const metadata: Metadata = { title: { absolute: "Kavuntra: hiring shouldn't feel like a black box" } };
+export const metadata: Metadata = { title: { absolute: "Kavuntra: hiring feels simpler" } };
 
 // The home page, scene by scene over the film. Weights say how much of the scroll each one holds.
 const SCENES: Scene[] = [

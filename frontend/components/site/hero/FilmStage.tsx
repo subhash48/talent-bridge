@@ -1,6 +1,5 @@
 "use client";
 
-import { ArrowDown } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 import { Film } from "@/components/site/hero/film";
@@ -46,7 +45,6 @@ export function FilmStage({ scenes }: { scenes: Scene[] }) {
   const stage = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const sceneRefs = useRef<(HTMLElement | null)[]>([]);
-  const hint = useRef<HTMLDivElement>(null);
   const [still, setStill] = useState(false);
   const windows = useMemo(() => sceneWindows(scenes.map((scene) => scene.weight)), [scenes]);
   const screens = 1 + SCREENS_PER_WEIGHT * scenes.reduce((sum, scene) => sum + scene.weight, 0);
@@ -102,7 +100,6 @@ export function FilmStage({ scenes }: { scenes: Scene[] }) {
         scene.style.transform = `translate3d(0, ${((1 - amount) * (leaving ? -24 : 24)).toFixed(1)}px, 0)`;
         scene.style.pointerEvents = amount > 0.5 ? "auto" : "none";
       });
-      if (hint.current) hint.current.style.opacity = String(Math.max(0, 1 - story * 40));
     };
 
     const tick = (now: number) => {
@@ -272,14 +269,6 @@ export function FilmStage({ scenes }: { scenes: Scene[] }) {
               {scene.content}
             </section>
           ))}
-
-          <div
-            ref={hint}
-            aria-hidden
-            className="absolute bottom-7 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-overlay/60 px-3.5 py-1.5 text-[11px] font-medium tracking-[0.2em] text-charcoal uppercase ring-1 ring-ink/10 backdrop-blur-md motion-reduce:hidden group-data-[still]/stage:hidden"
-          >
-            Scroll <ArrowDown className="size-3" />
-          </div>
         </div>
       </div>
     </>

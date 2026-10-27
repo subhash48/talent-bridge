@@ -75,7 +75,7 @@ async function website(browser) {
   page.on("pageerror", (error) => errors.push(error.message));
   page.on("request", (request) => request.url().includes("/hero/") && frames.add(new URL(request.url()).pathname));
   await page.goto(WEB);
-  check("hero headline", await page.getByRole("heading", { name: "Hiring shouldn't feel like a black box." }).isVisible());
+  check("hero headline", await page.getByRole("heading", { name: "Hiring feels simpler." }).isVisible());
   check("hero subheadline", await page.getByText("Kavuntra keeps recruiters responsive and candidates informed").isVisible());
   check("hero CTAs", (await page.getByRole("link", { name: "Get started" }).count()) >= 2 && (await page.getByRole("link", { name: "See how it works" }).isVisible()));
   await page.waitForTimeout(3000); // the film starts loading once the page is idle

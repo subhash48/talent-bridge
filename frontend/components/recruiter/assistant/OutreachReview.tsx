@@ -121,7 +121,7 @@ export function OutreachReview({ card, onConfirm, onCancel, onEdits, superseded 
         <div className="mt-3 flex flex-col gap-3">
           <p className="text-[13px] text-charcoal">
             {chosen.length
-              ? `You're about to send ${pluralize(chosen.length, `personalized ${what}`)}${card.schedule ? ` and create ${pluralize(chosen.filter((item) => item.slot).length, "interview")} in TalentBridge` : ""}:`
+              ? `You're about to send ${pluralize(chosen.length, `personalized ${what}`)}${card.schedule ? ` and create ${pluralize(chosen.filter((item) => item.slot).length, "interview")} in Kavuntra` : ""}:`
               : "Nobody is ticked, so nothing would be sent."}
           </p>
           <ul className="flex flex-col gap-2">
@@ -415,7 +415,7 @@ function ResultRow({ item, emailConfigured }: { item: OutreachItem; emailConfigu
             <Check aria-hidden className="size-3.5" />
             {result.calendar === "created"
               ? "Interview created and calendar invite sent"
-              : "Interview created in TalentBridge — Calendar invite not sent"}
+              : "Interview created in Kavuntra — Calendar invite not sent"}
             {item.slot && ` · ${slotLabel(item.slot)}`}
           </li>
         )}

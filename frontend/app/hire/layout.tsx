@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { unstable_rethrow } from "next/navigation";
 import { connection } from "next/server";
 import type { ReactNode } from "react";
@@ -15,6 +15,9 @@ import { getJobs } from "@/services/jobs";
 import { getUnreadThreadCount } from "@/services/messages";
 
 export const metadata: Metadata = { title: { default: "Simple Hire", template: "%s · Simple Hire" } };
+
+// The portals keep the cream canvas, so the browser's toolbar matches them rather than the website's sky.
+export const viewport: Viewport = { themeColor: "#F2EDE3" };
 
 // Simple Hire: the same workspace data and services as the full recruiter workspace (WorkspaceProvider), in
 // a few large pages. Recruiting teams on the full workspace are sent to /recruiter.

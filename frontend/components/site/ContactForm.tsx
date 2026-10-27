@@ -22,7 +22,7 @@ export function ContactForm() {
   const [error, setError] = useState<string | null>(null);
 
   const problems = {
-    name: form.name.trim() ? undefined : "Enter your name.",
+    name: form.name.trim() ? undefined : "Enter your full name.",
     email: EMAIL.test(form.email.trim()) ? undefined : "Enter an email address we can reply to.",
     message: form.message.trim() ? undefined : "Write your message.",
   };
@@ -61,7 +61,7 @@ export function ContactForm() {
     <form onSubmit={send} noValidate className="flex flex-col gap-4">
       {error && <AuthAlert>{error}</AuthAlert>}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Name" htmlFor="contact-name" error={shown.name} required>
+        <Field label="Full name" htmlFor="contact-name" error={shown.name} required>
           <Input
             id="contact-name"
             autoComplete="name"

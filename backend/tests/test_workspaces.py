@@ -263,6 +263,16 @@ async def test_only_the_company_ashby_is_connected_for_can_run_it(
     assert (await client.get(f"{API}/integrations/ashby/status")).status_code == 200  # Alex, at Encord
 
 
+async def test_a_workspace_cant_take_another_systems_job_id(
+    client: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    """Ashby matches its jobs by external id across workspaces: one sent with a new job is ignored."""
+    sam = await link(sessions, SAM["email"])
+    for external_id in ("ashby-job-not-imported-yet", "ashby-job-1"):
+        made = await client.post(f"{API}/jobs", json={"title": "Cashier", "external_id": external_id}, headers=sam)
+        assert made.status_code == 201 and made.json()["external_id"] is None
+
+
 async def test_a_job_draft_is_written_for_the_recruiters_own_company(
     client: AsyncClient, julia: dict[str, str]
 ) -> None:

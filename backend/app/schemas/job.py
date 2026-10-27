@@ -12,6 +12,9 @@ Title = Annotated[str, Field(min_length=1, max_length=200)]
 
 
 class JobCreate(APIModel):
+    """A job an employer makes. Another system's id (external_id) is set only by the integration that imports
+    its jobs: one sent here is ignored, so no workspace can take a job id that's another employer's."""
+
     title: Title
     department: OptionalText(100) = None
     location: OptionalText(200) = None
@@ -19,7 +22,6 @@ class JobCreate(APIModel):
     status: JobStatus = JobStatus.OPEN
     employment_type: Annotated[str, Field(min_length=1, max_length=50)] = "Full-time"
     hiring_manager: OptionalText(200) = None
-    external_id: OptionalText(200) = None
     # A small business's job, in the employer's words (migration 020).
     pay: OptionalText(100) = None
     shift: OptionalText(100) = None

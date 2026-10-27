@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import JobStatus, Weekday
-from app.core.errors import ConflictError, NotFoundError
+from app.core.errors import NotFoundError
 from app.models import Job
 from app.schemas.job import JobCreate, JobRead, JobUpdate
 from app.services.company_profile import workspace_company_id
@@ -28,8 +28,6 @@ async def get_job(session: AsyncSession, job_id: uuid.UUID) -> Job:
 
 
 async def create_job(session: AsyncSession, data: JobCreate) -> JobRead:
-    if data.external_id and await session.scalar(select(Job.id).where(Job.external_id == data.external_id)):
-        raise ConflictError("A job with this external id already exists.", code="job_exists")
     values = data.model_dump()
     values["work_days"] = _days(data.work_days)
     job = Job(**values, company_id=await workspace_company_id(session))

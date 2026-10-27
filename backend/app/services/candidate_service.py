@@ -34,7 +34,7 @@ from app.services.application_service import check_initial_stage, record_stage
 from app.services.communication.health import assess
 from app.services.communication.present import health_read
 from app.services.communication.rules import load_rules
-from app.services.pipeline_service import build_list_items, load_snapshots
+from app.services.pipeline_service import build_list_items, employer_view, load_snapshots
 
 DETAIL_ACTIVITY_LIMIT = 100
 
@@ -138,11 +138,12 @@ async def get_candidate_detail(
     else:
         focus = applications[0] if applications else None
 
-    candidate_read = CandidateRead.model_validate(candidate)
-    if focus is None:
-        return CandidateDetail(candidate=candidate_read, applications=briefs)
+    if focus is None:  # nothing applied for here: nothing they gave an employer is shown
+        unattached = CandidateRead.model_validate(candidate).model_copy(update={"phone": None, "resume_url": None})
+        return CandidateDetail(candidate=unattached, applications=briefs)
 
     [snapshot] = await load_snapshots(session, [focus])
+    candidate_read = employer_view(snapshot)
     history = await session.scalars(
         select(CandidateStageHistory)
         .where(CandidateStageHistory.application_id == focus.id)
@@ -203,6 +204,7 @@ async def create_candidate(session: AsyncSession, data: CandidateCreate, actor: 
         source=data.source or "Added by recruiter",
         applied_at=now,
         updated_at=now,
+        phone=data.phone,  # what this employer was given, kept with its application
     )
     session.add(application)
     await session.flush()

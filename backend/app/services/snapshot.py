@@ -1,5 +1,6 @@
 """The facts communication health reads: one application and its history."""
 
+import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
@@ -14,6 +15,9 @@ class ApplicationSnapshot:
     activities: Sequence[CandidateActivity]  # newest first
     messages: Sequence[Message]  # oldest first
     interviews: Sequence[Interview]  # by scheduled time
+    # The résumé this employer has for the application: the one sent with it, else one kept on the person
+    # before résumés were kept per application. Never one the person sent another employer.
+    resume_id: uuid.UUID | None = None
 
     def last_interview(self, now: datetime) -> Interview | None:
         """The most recent interview that has taken place (or was due to), cancelled ones left out."""

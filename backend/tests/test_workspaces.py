@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.core.enums import UserRole
 from app.core.tenancy import scope_to
 from app.db.seed import seed_id
-from app.db.seed_data import OPENAI_RECRUITER
+from app.db.seed_data import OPENAI_RECRUITER, SAM, SAMS_KITCHEN
 from app.main import app
 from app.models import Application, Company, Job, Message, User
 from tests.conftest import API, SOPHIA_AUTH, application_id, bearer, candidate_id, job_id, link
@@ -218,6 +218,38 @@ async def test_a_scoped_bulk_change_reaches_only_its_own_workspace(sessions: asy
         )
         assert left and openai not in left
     assert removed.rowcount > 0
+
+
+async def test_each_employer_sees_only_the_phone_and_resume_it_was_given(
+    client: AsyncClient, anonymous: AsyncClient, sessions: async_sessionmaker[AsyncSession]
+) -> None:
+    """One person record is shared by every employer someone applies to: what they gave one never shows at another."""
+    from tests.test_careers import PRODUCT_DESIGNER, application
+
+    email = "zed.okafor@inbox.dev"
+    encord = application(first_name="Zed", last_name="Okafor", email=email, phone="+1 415 555 0100")
+    assert (await anonymous.post(f"{API}/careers/jobs/{PRODUCT_DESIGNER}/apply", json=encord)).status_code == 200
+    sams = application(first_name="Zed", last_name="Okafor", email=email, availability=["friday"])
+    sams["resume"] = {**sams["resume"], "file_name": "Zed for Sam's Cafe.docx"}
+    kitchen = seed_id("job", SAMS_KITCHEN)
+    assert (await anonymous.post(f"{API}/careers/jobs/{kitchen}/apply", json=sams)).status_code == 200
+
+    async def seen_by(headers: dict[str, str]) -> dict[str, Any]:
+        page = (await client.get(f"{API}/candidates", params={"search": "Zed", "limit": 50}, headers=headers)).json()
+        [row] = page["items"]
+        detail = (await client.get(f"{API}/candidates/{row['candidate']['id']}", headers=headers)).json()
+        assert detail["candidate"] == row["candidate"]
+        return row["candidate"]
+
+    at_encord = await seen_by({})  # Alex
+    at_sams = await seen_by(await link(sessions, SAM["email"]))
+    assert at_encord["phone"] == "+1 415 555 0100"
+    assert at_sams["phone"] is None
+    # Each one's résumé link is its own, and opens for it.
+    assert at_encord["resume_url"] != at_sams["resume_url"]
+    for headers, person in (({}, at_encord), (await link(sessions, SAM["email"]), at_sams)):
+        resume_id = person["resume_url"].rsplit("/", 1)[1]
+        assert (await client.get(f"{API}/resumes/{resume_id}", headers=headers)).status_code == 200
 
 
 async def test_a_job_draft_is_written_for_the_recruiters_own_company(

@@ -420,6 +420,8 @@ async def update_profile(session: AsyncSession, candidate: Candidate, data: Prof
     active = [application for application in applications if status_of(application).bucket == B.ACTIVE]
     labels = [PROFILE_FIELDS[field] for field in PROFILE_FIELDS if field in changes]
     for application in active or applications[:1]:
+        if "phone" in changes:  # given to each of these hiring teams, as each application's own
+            application.phone = changes["phone"]
         record_activity(
             session,
             application.id,

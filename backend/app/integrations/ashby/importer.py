@@ -252,7 +252,9 @@ class AshbyImporter:
             result.invite = self._queue_invitation(candidate)
         return result
 
-    async def _application_to_update(self, external_id: str, candidate_id: uuid.UUID, job_id: uuid.UUID) -> Application | None:
+    async def _application_to_update(
+        self, external_id: str, candidate_id: uuid.UUID, job_id: uuid.UUID
+    ) -> Application | None:
         """The application with this Ashby id, else one made here for the same person and job."""
         application = await self.session.scalar(
             select(Application).where(Application.external_id == external_id).execution_options(populate_existing=True)
@@ -288,6 +290,7 @@ class AshbyImporter:
                 "applied_at": data.created_at or now,
                 "updated_at": now,
                 "archived_at": state.archived_at if state.archived else None,
+                "phone": _phone(data.candidate),
                 **_raw_state(data, state),
             },
         )
@@ -331,6 +334,8 @@ class AshbyImporter:
         }
         if data.source and data.source.title:
             values["source"] = data.source.title
+        if phone := _phone(data.candidate):
+            values["phone"] = phone
         changed = {key: value for key, value in values.items() if getattr(application, key) != value}
         if not changed:
             return False
@@ -384,7 +389,11 @@ class AshbyImporter:
             application_id,
             ActivityType.APPLICATION_CLOSED,
             f"Archived in Ashby: {CLOSED_TITLES.get(reason_type or '', 'closed')}",
-            metadata={"origin": ORIGIN, "outcome": CLOSED_OUTCOMES.get(reason_type or "", "closed"), "reason_type": reason_type},
+            metadata={
+                "origin": ORIGIN,
+                "outcome": CLOSED_OUTCOMES.get(reason_type or "", "closed"),
+                "reason_type": reason_type,
+            },
             at=at,
         )
 
@@ -431,7 +440,9 @@ class AshbyImporter:
                 )
             )
             for interview in dropped:
-                if interview.external_id not in kept and not _is_older(schedule.updated_at, interview.external_updated_at):
+                if interview.external_id not in kept and not _is_older(
+                    schedule.updated_at, interview.external_updated_at
+                ):
                     changes += await self._set_interview(
                         interview, {"status": InterviewStatus.CANCELLED, "external_updated_at": schedule.updated_at}
                     )
@@ -554,7 +565,9 @@ class AshbyImporter:
             )
         )
 
-    async def _interview_title(self, application: Application, schedule: InterviewSchedule, event: InterviewEvent) -> str:
+    async def _interview_title(
+        self, application: Application, schedule: InterviewSchedule, event: InterviewEvent
+    ) -> str:
         if event.interview and event.interview.title:
             return event.interview.title
         if event.interview_id and self.client is not None:
@@ -583,7 +596,9 @@ class AshbyImporter:
             gone.external_id = merge.merged_candidate.id
             return "Re-linked the candidate to the merged Ashby profile."
         if gone.user_id is not None:
-            raise SkipRecord("Both merged profiles are in TalentBridge and the merged-away one has a portal sign-in. Review them manually.")
+            raise SkipRecord(
+                "Both merged profiles are in TalentBridge and the merged-away one has a portal sign-in. Review them manually."
+            )
         await self.session.execute(
             update(Application).where(Application.candidate_id == gone.id).values(candidate_id=kept.id)
         )
@@ -608,6 +623,13 @@ class AshbyImporter:
 
 def data_stage_title(data: AshbyApplication) -> str | None:
     return data.current_interview_stage.title if data.current_interview_stage else None
+
+
+def _phone(candidate: AshbyCandidate) -> str | None:
+    """The number Ashby has for them, kept with the application too: what this employer may call them on.
+    Left off when it's longer than an application holds (40 characters)."""
+    value = candidate.primary_phone_number.value.strip() if candidate.primary_phone_number else ""
+    return value if 0 < len(value) <= 40 else None
 
 
 def _raw_state(data: AshbyApplication, state: mapping.ApplicationState) -> dict[str, Any]:

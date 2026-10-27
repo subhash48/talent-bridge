@@ -84,7 +84,7 @@ Pages: `/signin` asks "How are you using TalentBridge?" and leads to `/login?as=
 
 Linking never sets a role: Alex keeps the recruiter role his `users` row has, and Sophia gets a candidate `users` row tied to her existing candidate record. To add another recruiter or an admin, insert their `users` row (with `role`) in the database first, then create and link their account the same way. Resetting the demo data (`POST /api/v1/demo/reset`) keeps these links.
 
-**Candidate sign-up** (`/signup`): first and last name, email, and a password typed twice (at least 8 characters with a number, and not a common one; `frontend/lib/password.ts`). Supabase emails a verification link; opening it lands on `/signup/complete`, which creates the candidate account (`POST /api/v1/accounts/candidate`) and opens the portal. If they had already applied with that email, anywhere, that candidate record becomes theirs with every application on it; otherwise they start with none. Sign-up never creates an application. Nothing is created before the email is verified (403 `email_not_verified`).
+**Candidate sign-up** (`/signup`): first and last name, email, and a password typed twice (at least 8 characters, letters and a number, not a common one and not the email's name; `frontend/lib/password.ts`). Supabase emails a verification link; opening it lands on `/signup/complete`, which creates the candidate account (`POST /api/v1/accounts/candidate`) and opens the portal. If they had already applied with that email, anywhere, that candidate record becomes theirs with every application on it; otherwise they start with none. Sign-up never creates an application. Nothing is created before the email is verified (403 `email_not_verified`).
 
 **Applying first.** Someone who applies on the careers site without an account gets one email with a one-time link to create their password (see Careers site); `/welcome` takes the password twice, and their application is in the portal. Applying again later with the same email, at the same employer or another, never makes a second account: they get a sign-in link instead, and every application is in the one portal.
 
@@ -96,6 +96,18 @@ Linking never sets a role: Alex keeps the recruiter role his `users` row has, an
 
 - **Confirm signup**: the default link must be opened in the browser that signed up. For one that works anywhere, link to `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email` (`/auth/confirm` accepts both).
 - **Invite user**: without an email provider, an applicant's activation link comes in this email, so word it for them: "Your application has been submitted. Create your TalentBridge password to follow updates from the hiring team." With Resend set up, TalentBridge sends its own confirmation with the link instead, and Supabase sends nothing.
+
+## Workspaces
+
+Each employer is a workspace: its company (`companies`), the people who hire for it (`users.company_id`), its jobs, and the applications to them with everything kept per application (messages, interviews, timeline, drafts, résumés sent with it). One backend and one database serve every workspace; nothing is copied per employer.
+
+**Isolation** (`backend/app/core/tenancy.py`). Every recruiter request runs in a database session scoped to the recruiter's own company before the route runs (`require_workspace`). From then on every ORM read, and every bulk UPDATE or DELETE, sees only that workspace's rows, however the query is written: another employer's job, application, candidate or message isn't there, so a list leaves it out and its id answers 404. A lookup that has to see across workspaces says so in the statement, and only for checks that tell nothing about another employer. `backend/tests/test_workspaces.py` requests every recruiter route as another employer and checks nothing leaks.
+
+**One person, many employers.** Someone who applies to two employers is one candidate record and one sign-in, with both applications in their portal. Each employer sees only its own application and what was given with it: the phone number, availability, experience and LinkedIn from that application, and the résumé sent with it, never what the person gave another employer. Recruiters' private notes, interviewer feedback, internal stages and rejection reasons never reach the candidate, and demographic answers are never used to find or order anyone.
+
+**How a workspace hires** (`companies.workspace_mode`): `full` is the recruiting team's workspace at `/recruiter`; `simple` is Simple Hire at `/hire`. The data and services are the same; only the interface differs. Signing in opens the one the company uses, and each sends the other's users to the right place. An admin switches it in Settings (`PATCH /api/v1/workspace`); recruiters see it read-only.
+
+The Ashby integration is connected for one employer, the deployment's own company (the oldest): only its staff see its status or run a sync.
 
 ## Ashby (optional)
 

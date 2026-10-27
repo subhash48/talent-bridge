@@ -5,11 +5,11 @@ import { USE_MOCK_API, apiFetch } from "@/services/api";
 export type ContactTopic = "product" | "pilot" | "support" | "partnerships" | "general";
 
 export const CONTACT_TOPICS: { value: ContactTopic; label: string }[] = [
-  { value: "product", label: "Product questions" },
-  { value: "pilot", label: "Pilot / design partnership" },
-  { value: "support", label: "Support" },
-  { value: "partnerships", label: "Partnerships" },
   { value: "general", label: "General inquiry" },
+  { value: "product", label: "Product questions" },
+  { value: "support", label: "Product support" },
+  { value: "partnerships", label: "Partnership" },
+  { value: "pilot", label: "Pilot program" },
 ];
 
 export type ContactMessage = {

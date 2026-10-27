@@ -7,8 +7,11 @@ import { cn } from "@/lib/utils";
 // The footer's places: Product, the solutions by name, then the company. The policies sit on the line below.
 const PLACES = [PRODUCT_LINK, ...SOLUTIONS.map(({ href, short }) => ({ href, label: short })), ...COMPANY_LINKS];
 
-function FooterLinks({ className }: { className?: string }) {
-  const linkStyles = "rounded-sm text-sm text-stone transition-colors hover:text-ink";
+function FooterLinks({ className, tone = "quiet" }: { className?: string; tone?: "quiet" | "plain" }) {
+  const linkStyles = cn(
+    "rounded-sm text-sm transition-colors hover:text-ink",
+    tone === "quiet" ? "text-stone" : "text-charcoal",
+  );
   return (
     <nav aria-label="Footer" className={cn("flex flex-wrap gap-x-5 gap-y-2.5", className)}>
       {PLACES.map((link) => (
@@ -46,7 +49,7 @@ export function SiteFooter({ overFilm = false }: { overFilm?: boolean }) {
           <Link href="/" aria-label="Kavuntra home" className="w-fit rounded-md">
             <KavuntraLogo />
           </Link>
-          <FooterLinks className="lg:ml-auto" />
+          <FooterLinks tone="plain" className="lg:ml-auto" />
           <Policies />
         </div>
       </footer>

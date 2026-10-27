@@ -14,7 +14,7 @@ import { CONTACT_TOPICS, sendContactMessage, type ContactMessage } from "@/servi
 const EMPTY: ContactMessage = { name: "", email: "", company: "", topic: "product", message: "", website: "" };
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Contact TalentBridge: name, email, company (optional), topic and message. */
+/** Contact Kavuntra: name, email, company (optional), topic and message. */
 export function ContactForm() {
   const [form, setForm] = useState<ContactMessage>(EMPTY);
   const [checked, setChecked] = useState(false);
@@ -51,7 +51,7 @@ export function ContactForm() {
   if (state === "sent") {
     return (
       <AuthAlert tone="success">
-        Thanks, {form.name.trim().split(" ")[0]}. Your message reached TalentBridge, and we&apos;ll reply to{" "}
+        Thanks, {form.name.trim().split(" ")[0]}. Your message reached Kavuntra, and we&apos;ll reply to{" "}
         <strong className="font-medium">{form.email.trim()}</strong>.
       </AuthAlert>
     );

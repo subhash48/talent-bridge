@@ -23,15 +23,14 @@ export function SidebarNavItem({ href, label, icon: Icon, active, indicator, bad
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group relative flex h-9 items-center gap-2.5 rounded-[8px] px-2.5 text-sm text-stone transition-[background-color,color] duration-200 hover:bg-ink/[0.04] hover:text-ink",
-        active && "bg-brand-soft font-medium text-brand-ink ring-1 ring-brand-ink/20 hover:bg-brand-soft hover:text-brand-ink",
+        "group relative flex h-10 items-center gap-3 rounded-[10px] px-3 text-sm text-stone transition-[background-color,color,box-shadow] duration-200 hover:bg-ink/[0.04] hover:text-ink",
+        active && "bg-overlay font-medium text-ink shadow-soft ring-1 ring-ink/[0.06] hover:bg-overlay hover:text-ink",
       )}
     >
-      {active && <span aria-hidden className="absolute top-1/2 left-0 h-3.5 w-[2px] -translate-y-1/2 rounded-r-full bg-brand" />}
       <Icon
         aria-hidden
         strokeWidth={1.75}
-        className={cn("size-[17px] shrink-0 transition-colors", active ? "text-brand-ink" : "text-stone group-hover:text-charcoal")}
+        className={cn("size-[18px] shrink-0 transition-colors", active ? "text-brand-ink" : "text-faint group-hover:text-charcoal")}
       />
       <span className="flex-1">{label}</span>
       {indicator && (

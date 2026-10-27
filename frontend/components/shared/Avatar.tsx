@@ -12,12 +12,12 @@ type AvatarProps = {
   className?: string;
 };
 
-// Two neutral and two soft brand tints: initials avatars stay distinguishable without adding new colours.
+// Two neutral and two soft sage tints: initials avatars stay distinguishable without adding new colours.
 const TINTS = [
   "bg-ink/[0.08] text-ink",
-  "bg-brand-ink/40 text-brand-ink",
+  "bg-accent-soft text-brand-ink",
   "bg-ink/[0.12] text-ink",
-  "bg-brand/40 text-brand-ink",
+  "bg-accent/60 text-ink",
 ];
 
 function tintFor(name: string) {

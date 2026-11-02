@@ -14,7 +14,7 @@ export function FilterChip({ active, className, ...props }: FilterChipProps) {
         "h-8 shrink-0 rounded-full px-3 text-[13px] whitespace-nowrap transition-[background-color,color,border-color] duration-200",
         active
           ? "bg-brand font-medium text-on-brand"
-          : "border border-border bg-surface-raised text-charcoal hover:border-border-strong hover:bg-ink/[0.04] hover:text-ink",
+          : "border border-border bg-glass-strong text-charcoal hover:border-border-strong hover:bg-overlay hover:text-ink",
         className,
       )}
       {...props}

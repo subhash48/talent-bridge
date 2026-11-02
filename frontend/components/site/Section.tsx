@@ -29,15 +29,15 @@ export function Section({ id, eyebrow, title, intro, children, className, level 
         <Heading
           id={`${id}-title`}
           className={cn(
-            "mt-5 max-w-3xl font-medium text-ink",
+            "mt-4 max-w-3xl text-ink",
             level === "h1"
-              ? "text-[clamp(38px,5.4vw,68px)] leading-[1.0] tracking-[-0.045em]"
-              : "text-[clamp(30px,4vw,50px)] leading-[1.04] tracking-[-0.04em]",
+              ? "text-[clamp(32px,3.6vw,46px)] leading-[1.1] font-bold tracking-[-0.03em]"
+              : "text-[clamp(26px,2.8vw,36px)] leading-[1.15] font-semibold tracking-[-0.02em]",
           )}
         >
           {title}
         </Heading>
-        {intro && <div className="mt-5 max-w-2xl text-[17px] leading-relaxed text-charcoal sm:text-lg">{intro}</div>}
+        {intro && <div className="mt-4 max-w-2xl text-[16px] leading-relaxed text-charcoal sm:text-[17px]">{intro}</div>}
         {children}
       </div>
     </section>

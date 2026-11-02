@@ -1,56 +1,59 @@
 @import "tailwindcss";
 
 /*
- * Kavuntra design tokens. Light only: the website, the sign-in pages, the recruiter workspace, Simple Hire,
+ * Hirvello design tokens. Light only: the website, the sign-in pages, the recruiter workspace, Simple Hire,
  * the careers site and the candidate portal all read these, so the palette changes in one place.
  *
- * The colours come from the Kavuntra mark: its deep teal (#224047), its sage leaves and the warm cream of
- * its highlight. A soft stone-cream carries the page; cards, inputs and menus are slightly lighter creams
- * and insets slightly darker ones. Nothing is pure white or pure black. Text is a deep teal-black.
+ * The brand is blue and airy. A misty blue-white carries every page; surfaces are frosted glass over it,
+ * never a plain white block, and the edges between them are hairlines of the deep navy at a few percent.
+ * Text is a deep navy.
  *
- * Teal (brand) is the one interaction colour: primary buttons, active navigation, selected tabs and chips,
- * links. Anything on a teal fill is cream. Sage (accent) is the quiet second colour: focus glow, selection,
- * soft fills. Poppy (highlight), taken from the landscape on the home page, marks what's urgent or unread,
- * as dots and small badges, never a large fill. Danger is a muted red for errors and destructive actions.
- * Caution (a muted amber-brown) marks waiting on someone, sage-ink marks something positive.
+ * Navy (brand) is the colour of primary actions: buttons, active navigation, selected chips. Blue (accent)
+ * is the colour of emphasis: the word that matters in a headline, links, focus, the assistant. Coral
+ * (highlight) marks what's urgent or unread, as dots and small badges, never a large fill. Success is a calm
+ * green, caution an amber, danger a muted red: each is paired with words, never the only signal.
  */
 @theme {
-  --color-canvas: #f2ede3;
-  --color-surface: #f6f2ea;
-  --color-surface-raised: #f9f6f0;
-  --color-overlay: #fbf9f5;
-  --color-muted: rgb(20 42 46 / 0.05);
-  --color-border: rgb(20 42 46 / 0.1);
-  --color-border-strong: rgb(20 42 46 / 0.2);
+  --color-canvas: #f4f8fc;
+  --color-surface: #f7fafd;
+  --color-surface-raised: #fafcfe;
+  --color-overlay: #fbfdff;
+  --color-glass: rgb(255 255 255 / 0.55);
+  --color-glass-strong: rgb(255 255 255 / 0.72);
+  --color-muted: rgb(20 35 59 / 0.05);
+  --color-border: rgb(20 35 59 / 0.08);
+  --color-border-strong: rgb(20 35 59 / 0.16);
 
-  --color-ink: #142a2e;
-  --color-ink-bright: #0c1f22;
-  --color-charcoal: #26393c;
-  --color-stone: #4e5f61;
-  --color-faint: #536264;
+  --color-ink: #10213a;
+  --color-ink-bright: #0b1730;
+  --color-charcoal: #2a3a52;
+  --color-stone: #6b778c;
+  --color-faint: #8a94a6;
 
-  --color-brand: #224047;
-  --color-brand-hover: #18343a;
-  --color-brand-soft: rgb(34 64 71 / 0.08);
-  --color-on-brand: #f4ecdc;
-  --color-brand-ink: #224047;
-  --color-brand-deep: #12353b;
+  --color-brand: #14233b;
+  --color-brand-hover: #1c2f4d;
+  --color-brand-soft: rgb(47 107 255 / 0.09);
+  --color-on-brand: #f4f8fc;
+  --color-brand-ink: #2456cf;
+  --color-brand-deep: #0e1a2e;
 
-  --color-accent: #b4c59c;
-  --color-accent-soft: #dce5cf;
-  --color-cream: #f2deb7;
+  --color-accent: #2f6bff;
+  --color-accent-soft: #e3eeff;
+  --color-sky: #cfe4ff;
+  --color-sky-deep: #9dc2f7;
 
-  --color-highlight: #b5482b;
-  --color-on-highlight: #f7f1e6;
+  --color-highlight: #e8603c;
+  --color-on-highlight: #fff7f3;
 
-  --color-sage: #3b6343;
-  --color-caution: #8a5300;
-  --color-danger: #b3261e;
-  --color-ai: #224047;
+  --color-success: #1e7f62;
+  --color-caution: #9a5f00;
+  --color-danger: #c2312d;
+  --color-ai: #2f6bff;
 
-  --shadow-soft: 0 1px 2px rgb(20 42 46 / 0.04), 0 10px 28px -20px rgb(20 42 46 / 0.18);
-  --shadow-raised: 0 2px 6px rgb(20 42 46 / 0.05), 0 22px 48px -20px rgb(20 42 46 / 0.26);
-  --shadow-sheet: 0 0 56px rgb(20 42 46 / 0.16);
+  --shadow-soft: 0 1px 2px rgb(20 35 59 / 0.04), 0 12px 32px -20px rgb(20 35 59 / 0.18);
+  --shadow-raised: 0 2px 8px rgb(20 35 59 / 0.05), 0 24px 56px -24px rgb(20 35 59 / 0.28);
+  --shadow-glow: 0 2px 6px rgb(20 35 59 / 0.04), 0 30px 70px -30px rgb(47 107 255 / 0.45);
+  --shadow-sheet: 0 0 56px rgb(20 35 59 / 0.16);
 
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 
@@ -64,6 +67,7 @@
   --animate-sheet-out-left: sheet-out-left 200ms ease-in;
   --animate-rise: rise 260ms cubic-bezier(0.16, 1, 0.3, 1);
   --animate-caret: caret 1s steps(2, start) infinite;
+  --animate-drift: drift 14s ease-in-out infinite alternate;
 
   @keyframes fade-in {
     from {
@@ -118,12 +122,20 @@
       visibility: hidden;
     }
   }
+  @keyframes drift {
+    from {
+      transform: translate3d(-2%, 1%, 0) scale(1);
+    }
+    to {
+      transform: translate3d(2%, -2%, 0) scale(1.06);
+    }
+  }
 }
 
 @theme inline {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  /* The home page's headlines over the film (Instrument Serif), with serifs of the same colour until it loads. */
+  /* The word that matters in a headline (Instrument Serif, italic), with serifs of the same colour until it loads. */
   --font-serif: var(--font-instrument-serif), "Iowan Old Style", "Palatino Linotype", Georgia, "Times New Roman", serif;
 }
 
@@ -140,15 +152,15 @@
   }
 
   ::selection {
-    background-color: rgb(180 197 156 / 0.6);
+    background-color: rgb(47 107 255 / 0.22);
     color: var(--color-ink-bright);
   }
 
-  /* A teal edge with a sage glow, so focus shows on cream as well as on teal. */
+  /* A blue edge with a soft glow, so focus shows on the mist as well as on navy. */
   :focus-visible {
-    outline: 2px solid var(--color-brand-ink);
+    outline: 2px solid var(--color-accent);
     outline-offset: 2px;
-    box-shadow: 0 0 0 5px rgb(180 197 156 / 0.55);
+    box-shadow: 0 0 0 5px rgb(47 107 255 / 0.22);
   }
 
   h1,
@@ -159,7 +171,7 @@
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgb(20 42 46 / 0.2) transparent;
+    scrollbar-color: rgb(20 35 59 / 0.18) transparent;
   }
 
   /* Parts the browser draws itself, which would otherwise be white. */
@@ -177,10 +189,11 @@
   }
 }
 
-/* Card surface: a slight lift from the page, with a hairline border (set by the card) and a soft shadow. */
+/* Card surface: frosted glass lifted from the mist, with a hairline edge (set by the card) and a soft shadow. */
 @utility glass {
-  background-color: var(--color-surface-raised);
+  background-color: var(--color-glass-strong);
   box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(16px) saturate(1.15);
 }
 
 @utility scrollbar-none {
@@ -190,89 +203,64 @@
   }
 }
 
-/* The faintest lighter cream at the top of a page, with a breath of sage: depth, without colour. */
+/* The portals' backdrop: two soft blue glows at the top of the page, on the mist. Depth, without a picture. */
 @utility app-backdrop {
   background-image:
-    radial-gradient(55% 60% at 85% -10%, rgb(220 229 207 / 0.55), transparent 70%),
-    radial-gradient(60% 70% at 20% -20%, rgb(251 249 245 / 0.8), transparent 70%);
+    radial-gradient(55% 60% at 88% -10%, rgb(207 228 255 / 0.75), transparent 70%),
+    radial-gradient(50% 55% at 12% -15%, rgb(227 238 255 / 0.9), transparent 70%);
 }
 
 /*
- * The film's sky, toned towards the soft blue of the approved landscape. The colour blend takes only the blue's hue
- * and keeps the brightness of every pixel under it, so the pale cream sky turns pale blue without being lightened
- * or washed out the way a white layer would. It fades out above the far hills, and the sun on the right keeps its
- * gold. Nothing else covers the film: no white, cream or lavender wash, not even behind the words.
+ * The website's sky: a blue-white mist that deepens towards the lower right, as on the home page, over the whole
+ * length of the page.
  */
-@utility sky-grade {
-  background-image: linear-gradient(180deg, rgb(105 158 218 / 0.62) 0%, rgb(115 162 215 / 0.45) 20%, rgb(120 165 215 / 0) 36%);
-  mix-blend-mode: color;
-  mask-image: radial-gradient(34% 55% at 97% 30%, transparent 25%, black 100%);
-}
-
-/* sky-backdrop is the website's sky for its pages without the film. */
 @utility sky-backdrop {
-  background-color: #e8e4e2;
-  background-image: linear-gradient(180deg, #dfe1e8 0%, #e8e4e3 38%, #f0e4db 100%);
-  background-attachment: fixed;
+  background-color: #eef4fc;
+  background-image:
+    radial-gradient(60% 50% at 100% 100%, rgb(47 107 255 / 0.28), transparent 70%),
+    radial-gradient(45% 40% at 0% 0%, rgb(255 255 255 / 0.8), transparent 70%),
+    linear-gradient(165deg, #f8fbff 0%, #ebf2fd 45%, #d4e5fd 80%, #b9d4fa 100%);
+  background-repeat: no-repeat;
 }
 
-/* Frosted glass over the film, for the product pictures: the meadow shows through, softened. */
-@utility scene-card {
-  background-color: rgb(249 246 241 / 0.86);
-  box-shadow: var(--shadow-raised);
-  border: 1px solid rgb(244 236 220 / 0.55);
-  backdrop-filter: blur(22px) saturate(1.15);
+/*
+ * The home page's hero: the same sky, stronger. Pale at the top left, a deep blue glow at the lower right, and a
+ * pale curve at the foot like a horizon.
+ */
+@utility hero-sky {
+  background-color: #edf3fc;
+  background-image:
+    radial-gradient(50% 60% at 88% 92%, rgb(47 107 255 / 0.55), transparent 68%),
+    radial-gradient(36% 40% at 68% 100%, rgb(120 170 255 / 0.5), transparent 70%),
+    radial-gradient(40% 36% at 10% 8%, rgb(255 255 255 / 0.85), transparent 65%),
+    linear-gradient(160deg, #f9fbff 0%, #edf3fc 35%, #d9e7fc 70%, #b7d0f8 100%);
 }
 
-/* The same frost for cards on the website's sky pages: lifted from the sky, not a white block on it. */
+/* Frosted glass on the sky: the website's cards, lifted from the gradient rather than a white block on it. */
 @utility sky-card {
-  background-color: rgb(249 246 241 / 0.5);
-  border: 1px solid rgb(244 236 220 / 0.6);
+  background-color: rgb(255 255 255 / 0.5);
+  border: 1px solid rgb(255 255 255 / 0.65);
   box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(18px) saturate(1.1);
+  backdrop-filter: blur(18px) saturate(1.2);
 }
 
-/*
- * The still version of a home film scene (reduced motion, data saver): its own still of the valley, sky at the top,
- * so the scene's words sit on the sky as they do in the film, toned as sky-grade tones the film.
- */
-@utility still-scene {
-  --still-tone: linear-gradient(180deg, rgb(105 158 218 / 0.62) 0%, rgb(115 162 215 / 0.45) 20%, rgb(120 165 215 / 0) 36%);
-  background-image: var(--still-tone), url("/hero/desktop/01.webp");
-  background-blend-mode: color, normal;
-  background-size: cover;
-  background-position: center top;
-  @media (max-aspect-ratio: 20/21) {
-    background-image: var(--still-tone), url("/hero/mobile/01.webp");
-  }
+/* The sign-in pages' panel: Hirvello's blue, deepening to navy, with a pale glow at one corner. */
+@utility brand-backdrop {
+  background-color: #2456cf;
+  background-image:
+    radial-gradient(70% 60% at 100% 0%, rgb(207 228 255 / 0.55), transparent 60%),
+    radial-gradient(60% 50% at 0% 100%, rgb(14 26 46 / 0.6), transparent 70%),
+    linear-gradient(160deg, #4f86ff 0%, #2f6bff 45%, #1b3f9e 100%);
 }
 
-/*
- * The home film's scenes fade by their words and their cards (each reads its scene's --shown), never as a whole:
- * a parent below full opacity would stop the cards' frosted blur in the middle of every fade.
- */
-[data-scene] .scene-fade,
-[data-scene] .scene-card {
-  opacity: var(--shown, 1);
-}
-
-/* Pages on the sky: the same sky past the edges (overscroll) instead of the app's cream. */
+/* Pages on the sky: the same sky past the edges (overscroll) instead of the app's mist. */
 html:has(.sky-backdrop),
-html:has(.sky-grade) {
-  background-color: #dfe1e8;
+html:has(.hero-sky) {
+  background-color: #eaf1fb;
 
   & body {
     background-color: transparent;
   }
-}
-
-/* The Kavuntra mark's own backdrop: deep teal, lifting to sage at one corner, like the logo. */
-@utility brand-backdrop {
-  background-color: var(--color-brand-deep);
-  background-image:
-    radial-gradient(120% 90% at 100% 0%, rgb(169 181 163 / 0.55), transparent 60%),
-    radial-gradient(90% 80% at 0% 100%, rgb(18 53 59 / 0.9), transparent 70%),
-    linear-gradient(135deg, #1d3c42 0%, #2f5257 55%, #5f7a70 100%);
 }
 
 /*

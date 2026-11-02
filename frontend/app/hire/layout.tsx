@@ -16,8 +16,8 @@ import { getUnreadThreadCount } from "@/services/messages";
 
 export const metadata: Metadata = { title: { default: "Simple Hire", template: "%s · Simple Hire" } };
 
-// The portals keep the cream canvas, so the browser's toolbar matches them rather than the website's sky.
-export const viewport: Viewport = { themeColor: "#F2EDE3" };
+// The portals sit on the mist, so the browser's toolbar matches them rather than the website's sky.
+export const viewport: Viewport = { themeColor: "#F4F8FC" };
 
 // Simple Hire: the same workspace data and services as the full recruiter workspace (WorkspaceProvider), in
 // a few large pages. Recruiting teams on the full workspace are sent to /recruiter.

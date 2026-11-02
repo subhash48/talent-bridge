@@ -1,43 +1,45 @@
-import { Concierge } from "@/components/site/home/Concierge";
-import { RotatingWord } from "@/components/site/home/RotatingWord";
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 
-const WORDS = ["Skill.", "Signal.", "Craft.", "Care."] as const;
+import { Concierge } from "@/components/site/home/Concierge";
+import { HOW_IT_WORKS_LINK, PRODUCT_LINK } from "@/components/site/nav";
+import { buttonStyles } from "@/components/ui/Button";
 
 /**
- * The home page's opening: the sky, one headline with the word that matters in serif, two short lines, and the
- * hiring concierge. Spacious and centred; nothing floats beside it.
+ * The home page's opening: the sky, a small label, one headline in two lines with the words that matter in blue,
+ * two short lines, two buttons, and the hiring concierge close under them, so its top is in view on a desktop
+ * screen before anyone scrolls. Centred, and no wider than a comfortable page.
  */
 export function Hero() {
   return (
-    <section aria-labelledby="hero-title" className="relative isolate flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 pt-28 pb-20 text-center sm:px-8 sm:pt-32">
+    <section
+      aria-labelledby="hero-title"
+      className="relative isolate overflow-hidden px-5 pt-[120px] pb-16 text-center sm:px-8 lg:pt-[136px] lg:pb-20"
+    >
       <div aria-hidden className="hero-sky absolute inset-0 -z-20" />
       {/* A soft curve at the foot, like a horizon, and a drifting glow behind the words. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -bottom-[42vw] left-1/2 -z-10 h-[60vw] w-[150vw] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgb(255_255_255/0.75),rgb(214_230_253/0.5)_55%,transparent)] blur-2xl"
+        className="pointer-events-none absolute -bottom-[40vw] left-1/2 -z-10 h-[56vw] w-[150vw] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgb(255_255_255/0.7),rgb(214_230_253/0.45)_55%,transparent)] blur-2xl"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute top-[28%] left-1/2 -z-10 h-[46vh] w-[70vw] -translate-x-1/2 animate-drift rounded-full bg-[radial-gradient(closest-side,rgb(255_255_255/0.6),transparent)] blur-3xl motion-reduce:animate-none"
+        className="pointer-events-none absolute top-[14%] left-1/2 -z-10 h-[40vh] w-[64vw] -translate-x-1/2 animate-drift rounded-full bg-[radial-gradient(closest-side,rgb(255_255_255/0.55),transparent)] blur-3xl motion-reduce:animate-none"
       />
 
-      <p className="flex items-center gap-2 text-[11.5px] font-medium tracking-[0.22em] text-charcoal/80 uppercase">
+      <p className="flex items-center justify-center gap-2 text-[12px] font-semibold tracking-[0.18em] text-charcoal uppercase">
         <span aria-hidden className="size-1.5 rounded-full bg-accent" />
         Less noise. More signal.
       </p>
       <h1
         id="hero-title"
-        className="mt-8 max-w-[14ch] text-[clamp(44px,8.2vw,104px)] leading-[0.98] font-normal tracking-[-0.045em] text-ink"
+        className="mx-auto mt-5 max-w-[1050px] text-[clamp(38px,4.8vw,68px)] leading-[1.06] font-bold tracking-[-0.03em] text-ink"
       >
         Talent is everywhere.
         <br />
-        Find the{" "}
-        <em className="font-serif font-normal tracking-[-0.02em] text-accent italic">real ones.</em>
+        Find the <span className="text-accent">real ones.</span>
       </h1>
-      <p className="mt-7 text-[11.5px] font-semibold tracking-[0.26em] text-brand-ink uppercase">
-        <RotatingWord words={WORDS} />
-      </p>
-      <p className="mt-6 max-w-[34ch] text-[16px] leading-relaxed text-charcoal sm:text-[17px]">
+      <p className="mx-auto mt-6 max-w-[40ch] text-[17px] leading-[1.6] text-charcoal sm:text-[18px]">
         The résumé gets them noticed.
         <br />
         The work tells you who they are.

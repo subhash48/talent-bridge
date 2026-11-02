@@ -47,7 +47,7 @@ export function Section({ id, eyebrow, title, intro, children, className, level 
 /** A small icon on a soft blue tile, for a feature or a step. */
 export function FeatureIcon({ children }: { children: ReactNode }) {
   return (
-    <span className="flex size-9 shrink-0 items-center justify-center rounded-[12px] bg-accent-soft/80 text-brand-ink ring-1 ring-accent/10 [&_svg]:size-4">
+    <span className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-accent-soft/80 text-brand-ink ring-1 ring-accent/10 [&_svg]:size-4">
       {children}
     </span>
   );

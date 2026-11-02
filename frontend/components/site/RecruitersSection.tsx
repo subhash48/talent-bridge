@@ -77,11 +77,11 @@ export function RecruitersSection() {
           </li>
         ))}
       </ul>
-      <div className="mt-16 flex flex-wrap gap-3">
-        <Link href="/login?as=employer" className={buttonStyles({ size: "xl" })}>
+      <div className="mt-12 flex flex-wrap gap-3">
+        <Link href="/login?as=employer" className={buttonStyles({ size: "lg" })}>
           Recruiter sign in
         </Link>
-        <Link href="/signup/employer?mode=full" className={buttonStyles({ variant: "secondary", size: "xl" })}>
+        <Link href="/signup/employer?mode=full" className={buttonStyles({ variant: "secondary", size: "lg" })}>
           Create company workspace
         </Link>
       </div>

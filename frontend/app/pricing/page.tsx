@@ -88,7 +88,7 @@ export default function PricingPage() {
               </ul>
               <Link
                 href={href}
-                className={buttonStyles({ variant: featured ? "primary" : "secondary", size: "lg", className: "group mt-8 w-full" })}
+                className={buttonStyles({ variant: featured ? "primary" : "secondary", size: "lg", className: "group mt-6 w-full" })}
               >
                 {action}
                 <ArrowRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -96,7 +96,7 @@ export default function PricingPage() {
             </li>
           ))}
         </ul>
-        <p className="mt-10 text-[14px] text-stone">
+        <p className="mt-8 text-[14px] text-stone">
           Need something else, such as more than one workspace or a conversation about your team?{" "}
           <Link href="/contact" className="font-medium text-brand-ink underline-offset-4 hover:underline">
             Talk to us

@@ -64,14 +64,14 @@ export function RecruitersSection() {
       title="A workspace that keeps every candidate informed."
       intro="For recruiting teams and growing companies: your pipeline, with the communication around it, so no candidate is left waiting without a word. Matching uses only job-related criteria you choose, with the reasons shown, and never a score."
     >
-      <ul className="mt-16 grid grid-cols-1 gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="mt-12 grid grid-cols-1 gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
         {FEATURES.map(({ icon: Icon, title, text }) => (
           <li key={title} className="reveal flex gap-4">
             <FeatureIcon>
               <Icon aria-hidden strokeWidth={1.75} />
             </FeatureIcon>
             <div>
-              <h3 className="text-[15px] font-semibold text-ink">{title}</h3>
+              <h3 className="text-[16px] font-semibold text-ink">{title}</h3>
               <p className="mt-1 text-sm leading-relaxed text-stone">{text}</p>
             </div>
           </li>

@@ -11,7 +11,7 @@ export function Checkbox({ className, checked, ...props }: ComponentProps<typeof
     <CheckboxPrimitive.Root
       checked={checked}
       className={cn(
-        "inline-flex size-4 shrink-0 items-center justify-center rounded-[4px] border border-ink/30 bg-overlay text-on-brand transition-colors duration-150 hover:border-ink/50 data-[state=checked]:border-brand data-[state=checked]:bg-brand data-[state=indeterminate]:border-brand data-[state=indeterminate]:bg-brand",
+        "inline-flex size-4 shrink-0 items-center justify-center rounded-[5px] border border-ink/25 bg-overlay text-on-brand transition-colors duration-150 hover:border-ink/50 data-[state=checked]:border-brand data-[state=checked]:bg-brand data-[state=indeterminate]:border-brand data-[state=indeterminate]:bg-brand",
         className,
       )}
       {...props}

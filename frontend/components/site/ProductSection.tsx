@@ -66,12 +66,12 @@ export function ProductSection() {
         ))}
       </ul>
 
-      <div className="mt-16 flex flex-wrap items-center gap-3">
-        <Link href="/start" className={buttonStyles({ size: "xl", className: "group" })}>
+      <div className="mt-12 flex flex-wrap items-center gap-3">
+        <Link href="/start" className={buttonStyles({ size: "lg", className: "group" })}>
           Get started
           <ArrowRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5" />
         </Link>
-        <Link href="/#how-it-works" className={buttonStyles({ variant: "glass", size: "xl" })}>
+        <Link href="/#how-it-works" className={buttonStyles({ variant: "glass", size: "lg" })}>
           See how it works
         </Link>
       </div>

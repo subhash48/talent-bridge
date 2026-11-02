@@ -18,7 +18,7 @@ export function SearchBar({ className, containerClassName, placeholder = "Search
         type="search"
         placeholder={placeholder}
         aria-label={placeholder}
-        className={cn(fieldStyles, "h-10 rounded-[10px] pl-10 text-sm [&::-webkit-search-cancel-button]:hidden", trailing && "pr-16", className)}
+        className={cn(fieldStyles, "h-10 rounded-full pl-10 text-sm [&::-webkit-search-cancel-button]:hidden", trailing && "pr-16", className)}
         {...props}
       />
       {trailing && <div className="absolute top-1/2 right-3 -translate-y-1/2">{trailing}</div>}

@@ -154,7 +154,7 @@
   }
 
   ::selection {
-    background-color: rgb(47 107 255 / 0.22);
+    background-color: rgb(50 102 255 / 0.22);
     color: var(--color-ink-bright);
   }
 
@@ -162,7 +162,7 @@
   :focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
-    box-shadow: 0 0 0 5px rgb(47 107 255 / 0.22);
+    box-shadow: 0 0 0 5px rgb(50 102 255 / 0.22);
   }
 
   h1,

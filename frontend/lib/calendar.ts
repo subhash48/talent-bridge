@@ -23,7 +23,7 @@ export function interviewIcs(interview: CandidateInterview, company: string, now
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Kavuntra//Candidate Portal//EN",
+    "PRODID:-//Hirvello//Candidate Portal//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",

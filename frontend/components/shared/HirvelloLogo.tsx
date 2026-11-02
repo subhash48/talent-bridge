@@ -41,7 +41,7 @@ export function HirvelloWordmark({ tone = "light", className }: { tone?: Tone; c
     <span
       role="img"
       aria-label="Hirvello"
-      className={cn("font-sans text-[21px] leading-none font-semibold tracking-[-0.045em] whitespace-nowrap", className)}
+      className={cn("font-sans text-[20px] leading-none font-bold tracking-[-0.035em] whitespace-nowrap", className)}
     >
       <span aria-hidden>hir</span>
       <span aria-hidden className={tone === "light" ? "text-accent" : tone === "dark" ? "text-sky" : "opacity-70"}>

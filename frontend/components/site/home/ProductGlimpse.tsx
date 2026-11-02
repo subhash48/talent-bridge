@@ -54,8 +54,8 @@ export function ProductGlimpse() {
                   <span
                     className={
                       row.draft
-                        ? "hidden shrink-0 rounded-full bg-accent-soft px-2.5 py-1 text-[11.5px] font-medium text-brand-ink sm:inline"
-                        : "hidden shrink-0 rounded-full bg-muted px-2.5 py-1 text-[11.5px] font-medium text-charcoal sm:inline"
+                        ? "hidden shrink-0 rounded-full bg-accent-soft px-2.5 py-1 text-[11.5px] font-semibold text-brand-ink sm:inline"
+                        : "hidden shrink-0 rounded-full bg-muted px-2.5 py-1 text-[11.5px] font-semibold text-charcoal sm:inline"
                     }
                   >
                     {row.draft ? "Review draft" : "Remind"}
@@ -66,22 +66,22 @@ export function ProductGlimpse() {
           </div>
         </figure>
 
-        <ul className="grid grid-cols-1 gap-x-8 gap-y-7 self-center sm:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-x-8 gap-y-6 self-center sm:grid-cols-2">
           {FEATURES.map(({ icon: Icon, title, text }) => (
             <li key={title} className="reveal flex gap-3.5">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-[11px] bg-accent-soft text-brand-ink ring-1 ring-accent/10">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-accent-soft text-brand-ink ring-1 ring-accent/10">
                 <Icon aria-hidden className="size-4" strokeWidth={1.75} />
               </span>
               <div>
-                <h3 className="text-[15px] leading-snug font-semibold text-ink">{title}</h3>
-                <p className="mt-1.5 text-[13.5px] leading-relaxed text-charcoal">{text}</p>
+                <h3 className="text-[16px] leading-snug font-semibold text-ink">{title}</h3>
+                <p className="mt-1 text-[14px] leading-relaxed text-charcoal">{text}</p>
               </div>
             </li>
           ))}
         </ul>
       </div>
-      <div className="mt-12 flex justify-center">
-        <Link href="/product" className={buttonStyles({ variant: "glass", size: "xl", className: "group" })}>
+      <div className="mt-10 flex justify-center">
+        <Link href="/product" className={buttonStyles({ variant: "secondary", size: "lg", className: "group" })}>
           See the whole product
           <ArrowRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5" />
         </Link>

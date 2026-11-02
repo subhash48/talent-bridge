@@ -74,11 +74,11 @@ export function CandidatesSection() {
           </p>
         </div>
       </div>
-      <div className="mt-16 flex flex-wrap gap-3">
-        <Link href="/signup" className={buttonStyles({ size: "xl" })}>
+      <div className="mt-12 flex flex-wrap gap-3">
+        <Link href="/signup" className={buttonStyles({ size: "lg" })}>
           Create candidate account
         </Link>
-        <Link href="/login?as=candidate" className={buttonStyles({ variant: "secondary", size: "xl" })}>
+        <Link href="/login?as=candidate" className={buttonStyles({ variant: "secondary", size: "lg" })}>
           Already applied? Sign in
         </Link>
       </div>

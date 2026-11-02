@@ -41,7 +41,7 @@ export function CandidatesSection() {
       title="One place for your hiring journey."
       intro="Apply to a role on a Hirvello careers page, or create your account first. Either way, everything about your applications is in one portal: where you stand, what happens next, and how to prepare."
     >
-      <div className="mt-16 grid grid-cols-1 gap-12 lg:grid-cols-[1.3fr_1fr]">
+      <div className="mt-12 grid grid-cols-1 gap-12 lg:grid-cols-[1.3fr_1fr]">
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {FEATURES.map(({ icon: Icon, label }) => (
             <li key={label} className="flex items-center gap-3">
@@ -52,7 +52,7 @@ export function CandidatesSection() {
             </li>
           ))}
         </ul>
-        <div className="reveal sky-card self-start rounded-[24px] p-6" aria-label="An example account">
+        <div className="reveal sky-card self-start rounded-[20px] p-5" aria-label="An example account">
           <p className="text-[13px] font-semibold text-ink">My Applications</p>
           <ul className="mt-3 flex flex-col gap-2">
             {APPLICATIONS.map((application) => (

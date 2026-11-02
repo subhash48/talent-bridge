@@ -136,10 +136,9 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  /* The word that matters in a headline (Instrument Serif, italic), with serifs of the same colour until it loads. */
-  --font-serif: var(--font-instrument-serif), "Iowan Old Style", "Palatino Linotype", Georgia, "Times New Roman", serif;
+  /* Ranade once its licensed files are in place, Manrope until then (app/fonts.ts): one family for everything. */
+  --font-sans: var(--font-hirvello), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-hirvello), ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {

@@ -20,7 +20,7 @@ export function Frame({
       <p
         className={cn(
           "flex items-center gap-1.5 text-[11px] font-medium tracking-wide uppercase",
-          tone === "done" ? "text-sage" : tone === "failed" ? "text-danger" : "text-faint",
+          tone === "done" ? "text-success" : tone === "failed" ? "text-danger" : "text-faint",
         )}
       >
         {tone === "done" && <Check aria-hidden className="size-3.5" strokeWidth={2.5} />}

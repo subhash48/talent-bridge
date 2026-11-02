@@ -27,7 +27,7 @@ export function RecentActions({ items }: { items: AssistantHistoryItem[] }) {
                   {failed ? (
                     <X aria-hidden className="mt-0.5 size-3.5 shrink-0 text-danger" />
                   ) : (
-                    <Check aria-hidden className="mt-0.5 size-3.5 shrink-0 text-sage" strokeWidth={2.5} />
+                    <Check aria-hidden className="mt-0.5 size-3.5 shrink-0 text-success" strokeWidth={2.5} />
                   )}
                   <span className="min-w-0 flex-1">
                     <span className="block text-[13px] leading-snug text-charcoal">{item.summary}</span>

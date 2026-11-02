@@ -25,17 +25,17 @@ const STEPS: { icon: LucideIcon; title: string; text: string }[] = [
 export function HowItWorks() {
   return (
     <HomeSection id="how-it-works" eyebrow="How it works" title="Three steps. No noise." intro="Hiring, with the signal kept and the guesswork removed.">
-      <ol className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
+      <ol className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3">
         {STEPS.map(({ icon: Icon, title, text }, index) => (
-          <li key={title} className="reveal sky-card relative flex flex-col rounded-[24px] p-6 sm:p-7">
+          <li key={title} className="reveal sky-card relative flex flex-col rounded-[18px] p-5 sm:p-6">
             <span className="flex items-center justify-between">
-              <span className="flex size-10 items-center justify-center rounded-[12px] bg-accent-soft text-brand-ink ring-1 ring-accent/10">
+              <span className="flex size-9 items-center justify-center rounded-[10px] bg-accent-soft text-brand-ink ring-1 ring-accent/10">
                 <Icon aria-hidden className="size-[18px]" strokeWidth={1.75} />
               </span>
-              <span className="font-serif text-[22px] text-accent italic">0{index + 1}</span>
+              <span className="text-[12px] font-semibold tracking-[0.14em] text-accent tabular-nums">0{index + 1}</span>
             </span>
-            <h3 className="mt-6 text-[19px] leading-snug font-semibold tracking-[-0.02em] text-ink">{title}</h3>
-            <p className="mt-2.5 text-[14.5px] leading-relaxed text-charcoal">{text}</p>
+            <h3 className="mt-5 text-[18px] leading-snug font-semibold tracking-[-0.015em] text-ink">{title}</h3>
+            <p className="mt-2 text-[15px] leading-relaxed text-charcoal">{text}</p>
           </li>
         ))}
       </ol>

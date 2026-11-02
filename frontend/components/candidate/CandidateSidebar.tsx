@@ -21,7 +21,7 @@ import { EmployerLogo } from "@/components/candidate/EmployerLogo";
 import { HelpDialog } from "@/components/candidate/HelpDialog";
 import { useCandidatePortal } from "@/components/candidate/CandidatePortalProvider";
 import { Avatar } from "@/components/shared/Avatar";
-import { KavuntraLogo } from "@/components/shared/KavuntraLogo";
+import { HirvelloLogo } from "@/components/shared/HirvelloLogo";
 import { SidebarNavItem } from "@/components/shared/SidebarNavItem";
 import {
   DropdownMenu,
@@ -63,7 +63,7 @@ export function CandidateSidebarContent({ onNavigate }: { onNavigate?: () => voi
   return (
     <div className="flex h-full flex-col px-4 pt-6 pb-5">
       <Link href="/candidate" onClick={onNavigate} aria-label="Candidate portal home" className="mb-2 flex w-fit items-center rounded-md px-3">
-        <KavuntraLogo />
+        <HirvelloLogo />
       </Link>
       <p className={me.applications.length > 0 ? "mb-6 px-3 text-xs text-faint" : "mb-8 px-3 text-xs text-faint"}>Candidate portal</p>
       <ApplicationContext onNavigate={onNavigate} />

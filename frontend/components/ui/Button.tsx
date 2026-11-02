@@ -3,9 +3,11 @@ import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
 const VARIANTS = {
+  // Blue: the one action that matters most wherever it appears.
   primary:
-    "bg-brand text-on-brand shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_10px_24px_-12px_rgb(20_35_59/0.6)] hover:bg-brand-hover",
-  secondary: "border border-border-strong/70 bg-glass-strong text-ink backdrop-blur-md hover:border-border-strong hover:bg-overlay",
+    "bg-brand text-on-brand shadow-[inset_0_1px_0_rgb(255_255_255/0.16),0_8px_20px_-10px_rgb(50_102_255/0.7)] hover:bg-brand-hover",
+  // Translucent white with a navy hairline: the second action beside a primary one.
+  secondary: "border border-ink/15 bg-glass-strong text-ink backdrop-blur-md hover:border-ink/25 hover:bg-overlay",
   ghost: "text-stone hover:bg-muted hover:text-ink",
   ai: "border border-accent/20 bg-accent-soft/80 text-brand-ink hover:border-accent/40 hover:bg-accent-soft",
   danger: "border border-danger/25 bg-danger/[0.06] text-danger hover:bg-danger/[0.12]",

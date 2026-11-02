@@ -13,13 +13,16 @@ type SectionProps = {
   level?: "h1" | "h2";
 };
 
-/** One section of the public website: a short label, a headline, a line or two of intro, then its content. */
+/**
+ * One section of the public website: a short label, a headline, a line or two of intro, then its content. The page's
+ * own headline is bold and 32 to 46px; a section's inside a longer page is semibold and a step smaller.
+ */
 export function Section({ id, eyebrow, title, intro, children, className, level = "h2" }: SectionProps) {
   const Heading = level;
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className={cn("scroll-mt-24 py-20 sm:py-28", className)}>
-      <div className="mx-auto w-full max-w-[1120px] px-5 sm:px-8">
-        <p className="flex items-center gap-2 text-[11.5px] font-medium tracking-[0.22em] text-charcoal/80 uppercase">
+    <section id={id} aria-labelledby={`${id}-title`} className={cn("scroll-mt-28 py-14 sm:py-20", className)}>
+      <div className="mx-auto w-full max-w-[1200px] px-5 sm:px-8">
+        <p className="flex items-center gap-2 text-[12px] font-semibold tracking-[0.18em] text-charcoal uppercase">
           <span aria-hidden className="size-1.5 rounded-full bg-accent" />
           {eyebrow}
         </p>

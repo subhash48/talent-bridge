@@ -219,7 +219,7 @@
 @utility sky-backdrop {
   background-color: #eef4fc;
   background-image:
-    radial-gradient(60% 50% at 100% 100%, rgb(47 107 255 / 0.28), transparent 70%),
+    radial-gradient(60% 50% at 100% 100%, rgb(50 102 255 / 0.28), transparent 70%),
     radial-gradient(45% 40% at 0% 0%, rgb(255 255 255 / 0.8), transparent 70%),
     linear-gradient(165deg, #f8fbff 0%, #ebf2fd 45%, #d4e5fd 80%, #b9d4fa 100%);
   background-repeat: no-repeat;
@@ -232,7 +232,7 @@
 @utility hero-sky {
   background-color: #edf3fc;
   background-image:
-    radial-gradient(50% 60% at 88% 92%, rgb(47 107 255 / 0.55), transparent 68%),
+    radial-gradient(50% 60% at 88% 92%, rgb(50 102 255 / 0.55), transparent 68%),
     radial-gradient(36% 40% at 68% 100%, rgb(120 170 255 / 0.5), transparent 70%),
     radial-gradient(40% 36% at 10% 8%, rgb(255 255 255 / 0.85), transparent 65%),
     linear-gradient(160deg, #f9fbff 0%, #edf3fc 35%, #d9e7fc 70%, #b7d0f8 100%);

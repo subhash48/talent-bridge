@@ -1,8 +1,8 @@
-"""Upserts Ashby records into Kavuntra. Webhooks and the reconciliation sync both use this, so a
+"""Upserts Ashby records into Hirvello. Webhooks and the reconciliation sync both use this, so a
 record is applied the same way whichever path delivers it, as often as it is delivered.
 
 Identity: jobs, applications and interviews are matched by their Ashby id. A candidate is matched by
-Ashby id once linked; by email only the first time (an existing Kavuntra candidate who applies
+Ashby id once linked; by email only the first time (an existing Hirvello candidate who applies
 through Ashby, or a second Ashby profile with the same email), so a later email change in Ashby never
 merges or splits people.
 
@@ -590,14 +590,14 @@ class AshbyImporter:
         """Ashby merged two profiles and kept merged_candidate's id. Returns what was done."""
         gone = await self._candidate(merge.deleted_candidate.id)
         if gone is None:
-            return "The merged-away candidate isn't in Kavuntra."
+            return "The merged-away candidate isn't in Hirvello."
         kept = await self._candidate(merge.merged_candidate.id)
         if kept is None:
             gone.external_id = merge.merged_candidate.id
             return "Re-linked the candidate to the merged Ashby profile."
         if gone.user_id is not None:
             raise SkipRecord(
-                "Both merged profiles are in Kavuntra and the merged-away one has a portal sign-in. Review them manually."
+                "Both merged profiles are in Hirvello and the merged-away one has a portal sign-in. Review them manually."
             )
         await self.session.execute(
             update(Application).where(Application.candidate_id == gone.id).values(candidate_id=kept.id)

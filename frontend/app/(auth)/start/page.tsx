@@ -57,36 +57,37 @@ export default async function GetStartedPage({ searchParams }: Props) {
     <div className="sky-backdrop relative flex min-h-dvh flex-col">
       <main className="mx-auto flex w-full max-w-[1080px] flex-1 flex-col items-center justify-center px-5 py-10 text-center sm:px-8">
         <Link href="/" aria-label="Hirvello home" className="rounded-md">
-          <HirvelloLogo className="gap-3 [&>svg]:h-8 [&>span]:text-[28px]" />
+          <HirvelloLogo className="gap-2.5 [&>svg]:h-7 [&>span]:text-[24px]" />
         </Link>
-        <h1 className="mt-9 text-[clamp(36px,4.4vw,60px)] leading-[1.05] font-medium tracking-[-0.04em] text-ink">
-          Let&rsquo;s get started
-        </h1>
-        <p className="mt-3 text-[clamp(16px,1.3vw,20px)] leading-relaxed text-charcoal">Choose how you want to use Hirvello</p>
+        <h1 className="mt-8 text-[clamp(30px,3.4vw,44px)] leading-[1.1] font-bold tracking-[-0.03em] text-ink">Get started with Hirvello</h1>
+        <p className="mt-3 text-[16px] leading-relaxed text-charcoal sm:text-[17px]">
+          Choose how you&rsquo;ll use it, and we&rsquo;ll set up the right account.
+        </p>
         {need && (
-          <p className="sky-card mt-6 max-w-[52ch] rounded-full px-5 py-2.5 text-[14.5px] text-charcoal">
-            Looking for <span className="font-medium text-ink">{need}</span>? Simple Hire turns that into a job that&rsquo;s ready to post.
+          <p className="sky-card mt-5 max-w-[52ch] rounded-full px-5 py-2.5 text-[14.5px] text-charcoal">
+            Looking for <span className="font-semibold text-ink">{need}</span>? Simple Hire turns that into a job that&rsquo;s ready to post.
           </p>
         )}
 
-        <ul className="mt-10 grid w-full max-w-[960px] grid-cols-1 gap-5 sm:grid-cols-3 sm:gap-6">
-          {ROLES.map(({ href, icon: Icon, title, text, action, simple }) => (
+        <ul className="mt-8 grid w-full max-w-[960px] grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-5">
+          {ROLES.map(({ href, icon: Icon, who, title, text, action, simple }) => (
             <li key={href} className="flex">
               <Link
                 href={href}
                 className={cn(
-                  "group sky-card flex w-full flex-col items-center rounded-[26px] px-6 pt-9 pb-7 text-center transition-[transform,background-color] duration-200 hover:-translate-y-0.5 hover:bg-glass-strong sm:min-h-[280px]",
+                  "group sky-card flex w-full flex-col items-center rounded-[20px] px-5 pt-7 pb-6 text-center transition-[transform,background-color] duration-200 hover:-translate-y-0.5 hover:bg-glass-strong sm:min-h-[260px]",
                   need && simple && "ring-2 ring-accent/40",
                 )}
               >
-                <span className="flex size-[72px] items-center justify-center rounded-full bg-accent-soft text-brand-ink ring-1 ring-accent/10">
-                  <Icon aria-hidden className="size-8" strokeWidth={1.6} />
+                <span className="flex size-14 items-center justify-center rounded-full bg-accent-soft text-brand-ink ring-1 ring-accent/10">
+                  <Icon aria-hidden className="size-6" strokeWidth={1.6} />
                 </span>
-                <span className="mt-6 text-[24px] leading-tight font-semibold tracking-[-0.02em] text-ink">{title}</span>
-                <span className="mt-2 max-w-[22ch] text-[15px] leading-snug text-charcoal">{text}</span>
-                <span className="mt-auto flex pt-7">
-                  <span className="flex size-12 items-center justify-center rounded-full bg-brand text-on-brand shadow-raised transition-transform duration-200 group-hover:translate-x-0.5">
-                    <ArrowRight aria-hidden className="size-5" />
+                <span className="mt-5 text-[12px] font-semibold tracking-[0.12em] text-brand-ink uppercase">{who}</span>
+                <span className="mt-1.5 text-[20px] leading-tight font-semibold tracking-[-0.015em] text-ink">{title}</span>
+                <span className="mt-2 max-w-[26ch] text-[14.5px] leading-snug text-charcoal">{text}</span>
+                <span className="mt-auto flex pt-6">
+                  <span className="flex size-10 items-center justify-center rounded-full bg-brand text-on-brand shadow-raised transition-transform duration-200 group-hover:translate-x-0.5">
+                    <ArrowRight aria-hidden className="size-4.5" />
                     <span className="sr-only">{action}</span>
                   </span>
                 </span>

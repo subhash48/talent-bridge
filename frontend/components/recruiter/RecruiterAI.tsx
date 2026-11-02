@@ -135,7 +135,7 @@ export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: strin
       aria-label={listening ? "Stop listening" : "Speak to the AI Assistant"}
       title={micUnavailable ? "Voice input isn't supported in this browser" : undefined}
       className={cn(
-        "flex size-9 shrink-0 items-center justify-center rounded-[8px] border border-ink/20 bg-ink/[0.04] text-ink transition-[border-color,background-color,transform] duration-200 hover:border-ink/35 hover:bg-ink/[0.07] active:scale-95",
+        "flex size-9 shrink-0 items-center justify-center rounded-[12px] border border-ink/20 bg-ink/[0.04] text-ink transition-[border-color,background-color,transform] duration-200 hover:border-ink/35 hover:bg-ink/[0.07] active:scale-95",
         listening && "border-brand-ink/55 bg-brand-soft text-brand-ink",
       )}
     >

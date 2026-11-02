@@ -87,7 +87,7 @@ export function AIComposer({ id, label, placeholder, suggestions, pending, onSen
           disabled={pending ? !onStop : !value.trim()}
           aria-label={pending ? (onStop ? "Stop generating" : "Working…") : "Send"}
           className={cn(
-            "flex size-9 shrink-0 items-center justify-center rounded-[8px] border border-brand bg-brand text-on-brand transition-[border-color,background-color,opacity,transform] duration-200 hover:border-brand-hover hover:bg-brand-hover active:scale-95 disabled:opacity-40",
+            "flex size-9 shrink-0 items-center justify-center rounded-[12px] border border-brand bg-brand text-on-brand transition-[border-color,background-color,opacity,transform] duration-200 hover:border-brand-hover hover:bg-brand-hover active:scale-95 disabled:opacity-40",
             pending && "border-brand-hover bg-brand-hover",
           )}
         >

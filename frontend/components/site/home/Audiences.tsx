@@ -1,0 +1,41 @@
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
+
+import { HomeSection } from "@/components/site/home/HomeSection";
+import { SOLUTIONS } from "@/components/site/nav";
+
+// What each audience gets, in one line more than the menu says.
+const DETAILS: Record<string, string> = {
+  "/for-recruiters": "A workspace that shows who's waiting on you, drafts the update, and books the interview.",
+  "/for-candidates": "One portal for every application: where it stands, what's next, and how to prepare.",
+  "/for-small-businesses": "Simple Hire: say who you need, see who applied, and talk to them. No recruiting software to learn.",
+};
+
+/** The three ways in: recruiters, candidates and small businesses, each a card that is the link to its page. */
+export function Audiences() {
+  return (
+    <HomeSection id="solutions" eyebrow="Who it's for" title="One product. Three ways in." intro="The same records on every side, so a change on one side shows on the other.">
+      <ul className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
+        {SOLUTIONS.map(({ href, short, text, icon: Icon }) => (
+          <li key={href} className="reveal flex">
+            <Link
+              href={href}
+              className="group sky-card flex w-full flex-col rounded-[24px] p-6 transition-[transform,background-color] duration-200 hover:-translate-y-0.5 hover:bg-glass-strong sm:p-7"
+            >
+              <span className="flex size-10 items-center justify-center rounded-[12px] bg-accent-soft text-brand-ink ring-1 ring-accent/10">
+                <Icon aria-hidden className="size-[18px]" strokeWidth={1.75} />
+              </span>
+              <span className="mt-6 text-[20px] leading-snug font-semibold tracking-[-0.02em] text-ink">{short}</span>
+              <span className="mt-1 text-[14px] text-stone">{text}</span>
+              <span className="mt-4 text-[14.5px] leading-relaxed text-charcoal">{DETAILS[href]}</span>
+              <span className="mt-6 inline-flex items-center gap-1.5 text-[14px] font-medium text-brand-ink">
+                Learn more
+                <ArrowRight aria-hidden className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </HomeSection>
+  );
+}

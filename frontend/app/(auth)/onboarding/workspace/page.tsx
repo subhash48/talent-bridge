@@ -16,7 +16,7 @@ export default async function WorkspaceSetupPage({ searchParams }: Props) {
     <AuthCard
       wide
       title="Set up your workspace"
-      description="Your company's own space on Kavuntra. Nobody else's applicants are ever in it."
+      description="Your company's own space on Hirvello. Nobody else's applicants are ever in it."
     >
       <WorkspaceSetupForm initialMode={mode} />
     </AuthCard>

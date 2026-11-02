@@ -58,12 +58,12 @@ export function CompanyCareersSection() {
         </p>
       </div>
 
-      <div className="mt-14 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-10 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
         <p className="max-w-[34rem] text-[17px] leading-relaxed text-charcoal">
           Interested in the work even so? Tell us what you&apos;d bring, and we&apos;ll keep it in mind when a role
           opens.
         </p>
-        <Link href="/contact" className={buttonStyles({ size: "xl", className: "group shrink-0" })}>
+        <Link href="/contact" className={buttonStyles({ size: "lg", className: "group shrink-0" })}>
           Say hello
           <ArrowRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5" />
         </Link>

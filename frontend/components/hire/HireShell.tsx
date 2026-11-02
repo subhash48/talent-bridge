@@ -108,7 +108,7 @@ export function HireShell({ children }: { children: ReactNode }) {
           </div>
         </header>
         <main id="main" tabIndex={-1} className="app-backdrop relative flex-1 pb-28 focus:outline-none md:pb-16">
-          <div className="mx-auto w-full max-w-[1040px] px-4 pt-8 sm:px-6 sm:pt-12">{children}</div>
+          <div className="mx-auto w-full max-w-[1040px] px-4 pt-6 sm:px-6 sm:pt-10">{children}</div>
         </main>
         <nav
           aria-label="Simple Hire"

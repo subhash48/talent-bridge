@@ -1,20 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Instrument_Serif } from "next/font/google";
 import type { ReactNode } from "react";
 
+import { sans } from "./fonts";
 import "./globals.css";
 // Lets services/api.ts send the signed-in user's access token when rendering on the server.
 import "@/lib/supabase-server";
-import { cn } from "@/lib/utils";
-
-const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
-// The word that matters in a headline: an editorial serif, italic, in its one weight.
-const instrumentSerif = Instrument_Serif({
-  weight: "400",
-  style: ["normal", "italic"],
-  subsets: ["latin"],
-  variable: "--font-instrument-serif",
-});
 
 const DESCRIPTION = "Talent is everywhere. Hirvello finds the real ones, and keeps recruiters and candidates informed throughout hiring.";
 
@@ -34,7 +24,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="en" className={cn(geist.variable, instrumentSerif.variable)}>
+    <html lang="en" className={sans.variable}>
       <body className="antialiased">{children}</body>
     </html>
   );

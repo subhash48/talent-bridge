@@ -18,7 +18,7 @@ export function MetricCard({ label, value, icon: Icon, active, onSelect }: Metri
       onClick={onSelect}
       aria-pressed={active}
       className={cn(
-        "glass group @container flex min-h-[84px] w-full items-center gap-3 rounded-[18px] border border-border/70 px-4 py-3.5 text-left transition-[border-color,transform,background-color] duration-200 ease-out hover:-translate-y-0.5 hover:border-border-strong",
+        "glass group @container flex min-h-[76px] w-full items-center gap-3 rounded-[14px] border border-border/70 px-4 py-3.5 text-left transition-[border-color,transform,background-color] duration-200 ease-out hover:-translate-y-0.5 hover:border-border-strong",
         active && "border-accent/50 bg-brand-soft hover:border-accent/50",
       )}
     >
@@ -26,7 +26,7 @@ export function MetricCard({ label, value, icon: Icon, active, onSelect }: Metri
         <Icon aria-hidden strokeWidth={1.75} className="size-4 text-charcoal group-aria-pressed:text-brand-ink" />
       </span>
       <span className="min-w-0">
-        <span className="block text-2xl leading-none font-semibold tracking-tight text-ink tabular-nums">{value}</span>
+        <span className="block text-[22px] leading-none font-semibold tracking-tight text-ink tabular-nums">{value}</span>
         <span className="mt-1.5 block truncate text-xs leading-snug text-stone">{label}</span>
       </span>
     </button>

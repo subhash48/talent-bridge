@@ -20,13 +20,13 @@ const linkStyles = "rounded-sm text-[14px] text-charcoal transition-colors hover
 export function SiteFooter({ className }: { className?: string }) {
   return (
     <footer className={cn("px-3 pb-3 sm:px-5 sm:pb-5", className)}>
-      <div className="sky-card mx-auto w-full max-w-[1120px] rounded-[28px] px-6 py-8 sm:px-10 sm:py-10">
-        <div className="flex flex-col gap-10 lg:flex-row lg:justify-between">
+      <div className="sky-card mx-auto w-full max-w-[1200px] rounded-[22px] px-6 py-8 sm:px-10 sm:py-9">
+        <div className="flex flex-col gap-8 lg:flex-row lg:justify-between">
           <div className="max-w-xs">
             <Link href="/" aria-label="Hirvello home" className="inline-flex rounded-md">
               <HirvelloLogo />
             </Link>
-            <p className="mt-4 text-[14px] leading-relaxed text-stone">
+            <p className="mt-3.5 text-[14px] leading-relaxed text-stone">
               Less noise, more signal: Hirvello finds the real candidates and keeps everyone in the hiring process informed.
             </p>
           </div>
@@ -34,7 +34,7 @@ export function SiteFooter({ className }: { className?: string }) {
             {COLUMNS.map((column) => (
               <div key={column.title}>
                 <p className="text-[11px] font-semibold tracking-[0.16em] text-faint uppercase">{column.title}</p>
-                <ul className="mt-3.5 flex flex-col gap-2.5">
+                <ul className="mt-3 flex flex-col gap-2">
                   {column.links.map((link) => (
                     <li key={link.href}>
                       <Link href={link.href} className={linkStyles}>
@@ -47,7 +47,7 @@ export function SiteFooter({ className }: { className?: string }) {
             ))}
           </nav>
         </div>
-        <p className="mt-10 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-ink/[0.07] pt-6 text-[13px] text-stone">
+        <p className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-ink/[0.07] pt-5 text-[13px] text-stone">
           {POLICY_LINKS.map((link) => (
             <Link key={link.href} href={link.href} className="rounded-sm transition-colors hover:text-ink">
               {link.label}

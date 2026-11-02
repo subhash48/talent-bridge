@@ -8,30 +8,34 @@ import { homePath } from "@/lib/auth";
 import { getSignedInUser } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Get started" };
+export const metadata: Metadata = { title: "Sign up" };
 
-// Who it's for decides which account is made, so Get started asks first. Each is one card of glass on the sky.
-const ROLES: { href: string; icon: LucideIcon; title: string; text: string; action: string; simple?: boolean }[] = [
+// Who it's for decides which account is made, so Sign up asks first. Each is one card of glass on the sky: what
+// you're here for, the account that fits, and where it leads.
+const ROLES: { href: string; icon: LucideIcon; who: string; title: string; text: string; action: string; simple?: boolean }[] = [
   {
     href: "/signup",
     icon: UserRound,
+    who: "I'm looking for a job",
     title: "Candidate",
-    text: "Track your applications and stay informed.",
-    action: "Continue as Candidate",
+    text: "Follow your applications, messages and interviews in one portal.",
+    action: "Continue as a candidate",
   },
   {
     href: "/signup/employer?mode=full",
     icon: Users,
-    title: "Recruiter",
-    text: "Manage candidates and hire faster.",
-    action: "Continue as Recruiter",
+    who: "I'm hiring",
+    title: "Recruiter / Employer",
+    text: "A workspace for your pipeline, with every candidate kept informed.",
+    action: "Continue as a recruiter",
   },
   {
     href: "/signup/employer?mode=simple",
     icon: Store,
-    title: "Small Business",
-    text: "Post jobs and find great talent.",
-    action: "Continue as Small Business",
+    who: "I run a small business",
+    title: "Small business",
+    text: "Post a job by describing it, see who applied and talk to them.",
+    action: "Continue with Simple Hire",
     simple: true,
   },
 ];
@@ -39,9 +43,9 @@ const ROLES: { href: string; icon: LucideIcon; title: string; text: string; acti
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 /**
- * The website's Get started: the sky, the mark, and three cards of the same size, one per way of using Hirvello.
- * The whole card is the link; the arrow at its foot only shows where it leads. Arriving from the home page's
- * concierge with what you need (?need=), the page says so and points at Simple Hire, which posts that job.
+ * The website's Sign up: the sky, the mark, and three cards of the same size, one per way of using Hirvello. The
+ * whole card is the link; the arrow at its foot only shows where it leads. Arriving from the home page's concierge
+ * with what you need (?need=), the page says so and points at Simple Hire, which posts that job.
  */
 export default async function GetStartedPage({ searchParams }: Props) {
   const user = await getSignedInUser();

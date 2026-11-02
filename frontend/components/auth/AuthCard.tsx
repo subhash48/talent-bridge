@@ -41,16 +41,16 @@ export function AuthCard({ title, description, children, footer, wide }: AuthCar
         <p className="relative text-[13px] text-on-brand/75">© 2026 Hirvello</p>
       </aside>
 
-      <main className="flex flex-1 flex-col px-5 py-6 sm:px-10 sm:py-8">
+      <main className="flex flex-1 flex-col px-5 py-5 sm:px-10 sm:py-7">
         <Link href="/" aria-label="Hirvello home" className="w-fit rounded-md lg:hidden">
           <HirvelloLogo />
         </Link>
         <div className={cn("mx-auto flex w-full flex-1 flex-col justify-center py-8", wide ? "max-w-[600px]" : "max-w-[460px]")}>
-          <div className="sky-card rounded-[28px] px-6 py-8 sm:px-9 sm:py-10">
-            <h1 className="text-[clamp(26px,3vw,34px)] leading-[1.1] font-medium tracking-[-0.035em] text-ink">{title}</h1>
-            {description && <div className="mt-3 text-[15px] leading-relaxed text-charcoal">{description}</div>}
-            <div className="mt-8 [&_input:not([type=checkbox]):not([type=radio])]:h-11 [&_button[type=submit]]:h-11 [&_button[type=submit]]:text-sm">{children}</div>
-            {footer && <div className="mt-8 border-t border-ink/[0.07] pt-6 text-sm text-stone">{footer}</div>}
+          <div className="sky-card rounded-[22px] px-6 py-7 sm:px-8 sm:py-8">
+            <h1 className="text-[clamp(22px,2vw,28px)] leading-[1.15] font-bold tracking-[-0.025em] text-ink">{title}</h1>
+            {description && <div className="mt-2.5 text-[15px] leading-relaxed text-charcoal">{description}</div>}
+            <div className="mt-6 [&_input:not([type=checkbox]):not([type=radio])]:h-11 [&_button[type=submit]]:h-11 [&_button[type=submit]]:text-[15px]">{children}</div>
+            {footer && <div className="mt-6 border-t border-ink/[0.07] pt-5 text-sm text-stone">{footer}</div>}
           </div>
         </div>
       </main>

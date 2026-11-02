@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FeatureIcon, Section } from "@/components/site/Section";
 import { buttonStyles } from "@/components/ui/Button";
 
-// What Kavuntra does, in the order it happens to a hire: the gap is noticed, the update drafted, the candidate kept
+// What Hirvello does, in the order it happens to a hire: the gap is noticed, the update drafted, the candidate kept
 // in the picture and prepared; and Simple Hire, the whole of it for a small business.
 const FEATURES: { icon: LucideIcon; title: string; text: string; href: string }[] = [
   {
@@ -39,7 +39,7 @@ const FEATURES: { icon: LucideIcon; title: string; text: string; href: string }[
   },
 ];
 
-/** The product, concisely: what Kavuntra does, feature by feature, and where to read more about each. */
+/** The product, concisely: what Hirvello does, feature by feature, and where to read more about each. */
 export function ProductSection() {
   return (
     <Section
@@ -47,7 +47,7 @@ export function ProductSection() {
       id="product"
       eyebrow="Product"
       title="One hiring experience. Two sides."
-      intro="Kavuntra works on the communication layer of hiring: it notices when a conversation has gone quiet, drafts the next update for a recruiter to review, and shows each candidate where they stand and what happens next."
+      intro="Hirvello works on the communication layer of hiring: it notices when a conversation has gone quiet, drafts the next update for a recruiter to review, and shows each candidate where they stand and what happens next."
     >
       <ul className="mt-14 grid grid-cols-1 gap-x-10 gap-y-9 md:grid-cols-2">
         {FEATURES.map(({ icon: Icon, title, text, href }) => (
@@ -71,7 +71,7 @@ export function ProductSection() {
           Get started
           <ArrowRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5" />
         </Link>
-        <Link href="/#product" className={buttonStyles({ variant: "glass", size: "xl" })}>
+        <Link href="/#how-it-works" className={buttonStyles({ variant: "glass", size: "xl" })}>
           See how it works
         </Link>
       </div>

@@ -23,7 +23,7 @@ export function RoleHeading({ job, back, eyebrow, children }: RoleHeadingProps) 
         {back.label}
       </Link>
       {eyebrow && <p className="mt-6 text-sm text-stone">{eyebrow}</p>}
-      <h1 className={cn("text-[30px] leading-tight font-semibold tracking-[-0.03em] text-ink sm:text-[40px]", eyebrow ? "mt-1.5" : "mt-6")}>
+      <h1 className={cn("text-[26px] leading-tight font-semibold tracking-[-0.02em] text-ink sm:text-[34px]", eyebrow ? "mt-1.5" : "mt-6")}>
         {job.title}
       </h1>
       <JobFacts job={job} className="mt-3" />

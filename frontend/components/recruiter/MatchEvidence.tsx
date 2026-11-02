@@ -24,23 +24,23 @@ export function MatchEvidence({ match, className }: { match: CandidateMatch; cla
             title={
               item.quote ? `“${item.quote}”` : item.source ? `From their ${SOURCE_LABELS[item.source]}` : undefined
             }
-            className="inline-flex min-h-6 items-center gap-1 rounded-[12px] bg-sage/[0.08] px-2 py-0.5 text-xs leading-tight text-sage ring-1 ring-sage/20"
+            className="inline-flex min-h-6 items-center gap-1 rounded-[12px] bg-success/[0.08] px-2 py-0.5 text-xs leading-tight text-success ring-1 ring-success/20"
           >
             <Check aria-hidden className="size-3" strokeWidth={2.5} />
             {item.label || item.criterion}
             {item.source && item.source !== "skills" && item.kind !== "availability" && (
-              <span className="text-sage/75">· {SOURCE_LABELS[item.source]}</span>
+              <span className="text-success/75">· {SOURCE_LABELS[item.source]}</span>
             )}
           </li>
         ))}
         {match.experience && (
           <li
             title={`“${match.experience.quote}”`}
-            className="inline-flex min-h-6 items-center gap-1 rounded-[12px] bg-sage/[0.08] px-2 py-0.5 text-xs leading-tight text-sage ring-1 ring-sage/20"
+            className="inline-flex min-h-6 items-center gap-1 rounded-[12px] bg-success/[0.08] px-2 py-0.5 text-xs leading-tight text-success ring-1 ring-success/20"
           >
             <Check aria-hidden className="size-3" strokeWidth={2.5} />
             {match.experience.label}
-            <span className="text-sage/75">· {SOURCE_LABELS[match.experience.source]}</span>
+            <span className="text-success/75">· {SOURCE_LABELS[match.experience.source]}</span>
           </li>
         )}
         {missing.map((item) => (

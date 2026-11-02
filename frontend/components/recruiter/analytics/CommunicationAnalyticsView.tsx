@@ -197,7 +197,7 @@ function Tile({
       <p
         className={cn(
           "text-[26px] leading-none font-semibold tracking-tight tabular-nums",
-          tone === "caution" ? "text-caution" : tone === "positive" ? "text-sage" : "text-ink",
+          tone === "caution" ? "text-caution" : tone === "positive" ? "text-success" : "text-ink",
         )}
       >
         {value}
@@ -216,7 +216,7 @@ function Bar({ part, whole, label }: { part: number; whole: number; label: strin
       title={whole ? `${Math.round(share * 100)}% on time` : "None due"}
       className="mt-1.5 h-2 overflow-hidden rounded-full bg-ink/[0.08]"
     >
-      <div className="h-full rounded-full bg-sage" style={{ width: `${share * 100}%` }} />
+      <div className="h-full rounded-full bg-success" style={{ width: `${share * 100}%` }} />
     </div>
   );
 }

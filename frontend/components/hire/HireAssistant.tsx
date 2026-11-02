@@ -182,18 +182,18 @@ export function HireAssistant({ start = null }: { start?: "post" | null }) {
           </span>
           <span className="text-base font-semibold text-ink">{noMic ? "Ask Hirvello" : "Tap and say it"}</span>
         </button>
-        <ul className="mt-12 grid w-full max-w-2xl grid-cols-2 gap-3 sm:gap-4">
+        <ul className="mt-10 grid w-full max-w-2xl grid-cols-2 gap-3 sm:gap-4">
           {CHOICES.map((choice) => (
             <li key={choice.label}>
               <button
                 type="button"
                 onClick={() => choose(choice)}
-                className="flex min-h-[116px] w-full flex-col items-start justify-between gap-3 rounded-[22px] bg-surface-raised p-4 text-left shadow-soft ring-1 ring-ink/[0.06] transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:bg-overlay hover:shadow-raised sm:min-h-[136px] sm:p-5"
+                className="flex min-h-[104px] w-full flex-col items-start justify-between gap-3 rounded-[16px] bg-surface-raised p-4 text-left shadow-soft ring-1 ring-ink/[0.06] transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:bg-overlay hover:shadow-raised sm:min-h-[120px] sm:p-5"
               >
                 <span className="flex size-10 items-center justify-center rounded-[12px] bg-accent-soft/70">
                   <choice.icon aria-hidden className="size-5 text-brand-ink" strokeWidth={1.75} />
                 </span>
-                <span className="text-lg font-semibold text-ink">{choice.label}</span>
+                <span className="text-[16px] font-semibold text-ink">{choice.label}</span>
               </button>
             </li>
           ))}

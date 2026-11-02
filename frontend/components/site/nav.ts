@@ -2,9 +2,9 @@ import { Store, UserRound, Users, type LucideIcon } from "lucide-react";
 
 /*
  * The public website's places. The header shows Product and How it works, the solutions in one menu, Pricing, and
- * the company in another; the footer spells everything out and adds the policies. Careers here is working at
- * Hirvello: /careers itself is the job board, the open roles of the companies hiring with Hirvello, which keeps
- * its route.
+ * the company in another, then Log in and Sign up; the footer spells everything out and adds the policies. Careers
+ * here is working at Hirvello: /careers itself is the job board, the open roles of the companies hiring with
+ * Hirvello, which keeps its route.
  */
 
 export const PRODUCT_LINK = { href: "/product", label: "Product" } as const;
@@ -41,5 +41,10 @@ export const POLICY_LINKS = [
   { href: "/terms", label: "Terms" },
 ] as const;
 
-/** Where "Employer portal" leads: the employer sign-in, which opens the workspace or Simple Hire. */
-export const EMPLOYER_PORTAL_LINK = { href: "/login?as=employer", label: "Employer portal" } as const;
+/**
+ * The two ways into an account from the website. Log in asks whether you're a candidate or an employer, then opens
+ * that sign-in; Sign up asks how you'll use Hirvello (candidate, recruiter, small business) and makes that account.
+ * Both keep the roles and routing the portals already have.
+ */
+export const LOGIN_LINK = { href: "/signin", label: "Log in" } as const;
+export const SIGNUP_LINK = { href: "/start", label: "Sign up" } as const;

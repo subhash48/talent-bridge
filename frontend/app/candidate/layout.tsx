@@ -13,12 +13,12 @@ import { errorMessage, isServerUnavailable } from "@/services/api";
 import { getCandidateMe } from "@/services/portal";
 
 export const metadata: Metadata = {
-  title: { default: "Candidate portal", template: "%s · Kavuntra Candidate Portal" },
+  title: { default: "Candidate portal", template: "%s · Hirvello Candidate Portal" },
   description: "Follow your applications, interviews and messages with each company's hiring team.",
 };
 
-// The portals keep the cream canvas, so the browser's toolbar matches them rather than the website's sky.
-export const viewport: Viewport = { themeColor: "#F2EDE3" };
+// The portals sit on the mist, so the browser's toolbar matches them rather than the website's sky.
+export const viewport: Viewport = { themeColor: "#F4F8FC" };
 
 // The Candidate Portal. It reads the same records as the recruiter workspace through /candidate/*,
 // so a change on either side shows on the other. The API decides whose records those are from the

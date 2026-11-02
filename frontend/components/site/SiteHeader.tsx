@@ -1,26 +1,27 @@
 "use client";
 
-import { ArrowUpRight, ChevronDown, Menu, X } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 
 import { HirvelloLogo } from "@/components/shared/HirvelloLogo";
-import { COMPANY_LINKS, EMPLOYER_PORTAL_LINK, HOW_IT_WORKS_LINK, PRICING_LINK, PRODUCT_LINK, SOLUTIONS } from "@/components/site/nav";
+import { COMPANY_LINKS, HOW_IT_WORKS_LINK, LOGIN_LINK, PRICING_LINK, PRODUCT_LINK, SIGNUP_LINK, SOLUTIONS } from "@/components/site/nav";
 import { buttonStyles } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
-// Frosted glass over the sky: a pale tint the gradient shows through, a bright hairline and the softest shadow.
-const GLASS = "bg-glass ring-1 ring-[rgb(255_255_255/0.6)] shadow-[0_8px_30px_rgb(20_35_59/0.08)] backdrop-blur-[16px] backdrop-saturate-150";
-// What opens under the pill (a menu, or the whole navigation on narrow screens): frosted, and opaque enough to read
+// The bar: white, nearly opaque so it reads as a white container while the sky still tints its edges, with a light
+// hairline and a soft shadow.
+const BAR = "bg-white/85 ring-1 ring-ink/[0.07] shadow-[0_6px_24px_rgb(16_33_61/0.07)] backdrop-blur-xl backdrop-saturate-150";
+// What opens under the bar (a menu, or the whole navigation on narrow screens): white, and opaque enough to read
 // over whatever the page has there.
-const PANEL = "animate-pop-in rounded-[22px] bg-overlay/95 p-1.5 shadow-raised ring-1 ring-ink/[0.06] backdrop-blur-xl";
+const PANEL = "animate-pop-in rounded-[18px] bg-white/95 p-1.5 shadow-raised ring-1 ring-ink/[0.07] backdrop-blur-xl";
 
 const linkStyles =
-  "inline-flex h-9 items-center rounded-full px-3 text-[13.5px] text-charcoal transition-colors duration-200 hover:bg-ink/[0.05] hover:text-ink aria-[current=page]:bg-ink/[0.05] aria-[current=page]:text-ink";
+  "inline-flex h-9 items-center rounded-full px-3 text-[14.5px] font-medium text-charcoal transition-colors duration-200 hover:bg-ink/[0.05] hover:text-ink aria-[current=page]:bg-ink/[0.05] aria-[current=page]:text-ink";
 const menuLinkStyles =
-  "block rounded-[14px] px-3.5 py-2.5 text-[15px] text-charcoal transition-colors hover:bg-ink/[0.05] hover:text-ink aria-[current=page]:bg-ink/[0.05] aria-[current=page]:text-ink";
-const rowStyles = "flex items-center gap-3 rounded-[14px] px-3 py-2 transition-colors hover:bg-ink/[0.05] aria-[current=page]:bg-ink/[0.05]";
+  "block rounded-[12px] px-3.5 py-2.5 text-[15px] font-medium text-charcoal transition-colors hover:bg-ink/[0.05] hover:text-ink aria-[current=page]:bg-ink/[0.05] aria-[current=page]:text-ink";
+const rowStyles = "flex items-center gap-3 rounded-[12px] px-3 py-2 transition-colors hover:bg-ink/[0.05] aria-[current=page]:bg-ink/[0.05]";
 
 type Panel = "solutions" | "company" | "menu";
 
@@ -31,11 +32,11 @@ function SolutionRows({ pathname, onPick }: { pathname: string; onPick: () => vo
       {SOLUTIONS.map(({ href, label, text, icon: Icon }) => (
         <li key={href}>
           <Link href={href} onClick={onPick} aria-current={pathname === href ? "page" : undefined} className={rowStyles}>
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-accent-soft text-brand-ink">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-[9px] bg-accent-soft text-brand-ink">
               <Icon aria-hidden className="size-4" strokeWidth={1.75} />
             </span>
             <span className="min-w-0">
-              <span className="block text-[14px] font-medium text-ink">{label}</span>
+              <span className="block text-[14px] font-semibold text-ink">{label}</span>
               <span className="mt-0.5 block text-[12.5px] leading-snug text-stone">{text}</span>
             </span>
           </Link>
@@ -61,15 +62,15 @@ function CompanyRows({ pathname, onPick }: { pathname: string; onPick: () => voi
 }
 
 /**
- * The public website's header: a small floating pill of glass over the page. Product, How it works, a Solutions
- * menu (who Hirvello is for), Pricing and a Company menu in the middle; Sign in and Employer portal on the right.
+ * The public website's header: a white bar floating over the page. The logo on the left; Product, How it works, a
+ * Solutions menu (who Hirvello is for), Pricing and a Company menu in the middle; Log in and Sign up on the right.
  * It is as wide as a comfortable page, never the screen. Under lg the places fold into one menu behind a button,
- * and the bar keeps the logo, Sign in and that button.
+ * and the bar keeps the logo, Sign up and that button.
  */
 export function SiteHeader() {
   const [open, setOpen] = useState<Panel | null>(null);
   const pathname = usePathname();
-  const pill = useRef<HTMLDivElement>(null);
+  const bar = useRef<HTMLDivElement>(null);
   const solutionsButton = useRef<HTMLButtonElement>(null);
   const companyButton = useRef<HTMLButtonElement>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
@@ -79,7 +80,7 @@ export function SiteHeader() {
   const inSolutions = SOLUTIONS.some((solution) => solution.href === pathname);
   const inCompany = COMPANY_LINKS.some((link) => link.href === pathname);
 
-  // Escape closes what's open and gives focus back to its button; so does a click, or focus moving, outside the pill.
+  // Escape closes what's open and gives focus back to its button; so does a click, or focus moving, outside the bar.
   useEffect(() => {
     if (!open) return;
     const button = open === "solutions" ? solutionsButton : open === "company" ? companyButton : menuButton;
@@ -89,7 +90,7 @@ export function SiteHeader() {
       button.current?.focus();
     };
     const outside = (event: Event) => {
-      if (event.target instanceof Node && !pill.current?.contains(event.target)) setOpen(null);
+      if (event.target instanceof Node && !bar.current?.contains(event.target)) setOpen(null);
     };
     window.addEventListener("keydown", onKey);
     window.addEventListener("pointerdown", outside);
@@ -135,15 +136,15 @@ export function SiteHeader() {
   );
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 px-3 pt-3 sm:px-5 lg:pt-5">
+    <header className="fixed inset-x-0 top-0 z-40 px-3 pt-3 sm:px-5 lg:pt-4">
       <div
-        ref={pill}
+        ref={bar}
         className={cn(
-          "relative mx-auto flex h-13 w-full max-w-[1120px] items-center justify-between rounded-full pr-1.5 pl-4 lg:grid lg:h-14 lg:grid-cols-[1fr_auto_1fr] lg:px-2.5",
-          GLASS,
+          "relative mx-auto flex h-14 w-full max-w-[1280px] items-center justify-between rounded-full pr-2 pl-4 lg:grid lg:h-[68px] lg:grid-cols-[1fr_auto_1fr] lg:px-3",
+          BAR,
         )}
       >
-        <Link href="/" className="justify-self-start rounded-full py-1 lg:ml-2.5" aria-label="Hirvello home">
+        <Link href="/" className="justify-self-start rounded-full py-1 lg:ml-2" aria-label="Hirvello home">
           <HirvelloLogo />
         </Link>
 
@@ -175,16 +176,16 @@ export function SiteHeader() {
           </div>
         </nav>
 
-        <div className="flex items-center gap-1 lg:col-start-3 lg:justify-self-end lg:gap-1.5">
-          <Link href="/signin" aria-current={current("/signin")} className={cn(linkStyles, "hidden sm:inline-flex")}>
-            Sign in
-          </Link>
+        <div className="flex items-center gap-1.5 lg:col-start-3 lg:justify-self-end lg:gap-2">
           <Link
-            href={EMPLOYER_PORTAL_LINK.href}
-            className={buttonStyles({ variant: "glass", size: "md", className: "hidden h-10 gap-1.5 px-4 text-[13.5px] md:inline-flex" })}
+            href={LOGIN_LINK.href}
+            aria-current={current(LOGIN_LINK.href)}
+            className="hidden h-10 items-center rounded-full px-3 text-[14.5px] font-medium text-ink transition-colors duration-200 hover:text-brand-ink sm:inline-flex"
           >
-            {EMPLOYER_PORTAL_LINK.label}
-            <ArrowUpRight aria-hidden className="size-4 text-stone" />
+            {LOGIN_LINK.label}
+          </Link>
+          <Link href={SIGNUP_LINK.href} className={buttonStyles({ size: "md", className: "h-10 px-5" })}>
+            {SIGNUP_LINK.label}
           </Link>
           <button
             ref={menuButton}
@@ -223,12 +224,11 @@ export function SiteHeader() {
             </p>
             <CompanyRows pathname={pathname} onPick={close} />
             <div className="flex flex-col gap-2 border-t border-ink/[0.06] p-2 pt-3">
-              <Link href={EMPLOYER_PORTAL_LINK.href} onClick={close} className={buttonStyles({ size: "lg", className: "w-full" })}>
-                {EMPLOYER_PORTAL_LINK.label}
-                <ArrowUpRight aria-hidden />
+              <Link href={SIGNUP_LINK.href} onClick={close} className={buttonStyles({ size: "lg", className: "w-full" })}>
+                {SIGNUP_LINK.label}
               </Link>
-              <Link href="/signin" onClick={close} className={buttonStyles({ variant: "secondary", size: "lg", className: "w-full" })}>
-                Sign in
+              <Link href={LOGIN_LINK.href} onClick={close} className={buttonStyles({ variant: "secondary", size: "lg", className: "w-full" })}>
+                {LOGIN_LINK.label}
               </Link>
             </div>
           </nav>

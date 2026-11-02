@@ -1,69 +1,61 @@
 import Link from "next/link";
 
-import { COMPANY_LINKS, POLICY_LINKS, PRODUCT_LINK, SOLUTIONS } from "@/components/site/nav";
-import { KavuntraLogo } from "@/components/shared/KavuntraLogo";
+import { HirvelloLogo } from "@/components/shared/HirvelloLogo";
+import { COMPANY_LINKS, HOW_IT_WORKS_LINK, POLICY_LINKS, PRICING_LINK, PRODUCT_LINK, SOLUTIONS } from "@/components/site/nav";
 import { cn } from "@/lib/utils";
 
-// The footer's places: Product, the solutions by name, then the company. The policies sit on the line below.
-const PLACES = [PRODUCT_LINK, ...SOLUTIONS.map(({ href, short }) => ({ href, label: short })), ...COMPANY_LINKS];
+// The footer's columns: the product, the solutions by name, then the company.
+const COLUMNS: { title: string; links: readonly { href: string; label: string }[] }[] = [
+  { title: "Product", links: [PRODUCT_LINK, HOW_IT_WORKS_LINK, PRICING_LINK] },
+  { title: "Solutions", links: SOLUTIONS.map(({ href, short }) => ({ href, label: short })) },
+  { title: "Company", links: COMPANY_LINKS },
+];
 
-function FooterLinks({ className, tone = "quiet" }: { className?: string; tone?: "quiet" | "plain" }) {
-  const linkStyles = cn(
-    "rounded-sm text-sm transition-colors hover:text-ink",
-    tone === "quiet" ? "text-stone" : "text-charcoal",
-  );
-  return (
-    <nav aria-label="Footer" className={cn("flex flex-wrap gap-x-5 gap-y-2.5", className)}>
-      {PLACES.map((link) => (
-        <Link key={link.href} href={link.href} className={linkStyles}>
-          {link.label}
-        </Link>
-      ))}
-    </nav>
-  );
-}
-
-function Policies({ className }: { className?: string }) {
-  return (
-    <p className={cn("flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-stone", className)}>
-      {POLICY_LINKS.map((link) => (
-        <Link key={link.href} href={link.href} className="rounded-sm transition-colors hover:text-ink">
-          {link.label}
-        </Link>
-      ))}
-      <span className="text-faint">© 2026 Kavuntra</span>
-    </p>
-  );
-}
+const linkStyles = "rounded-sm text-[14px] text-charcoal transition-colors hover:text-ink";
 
 /**
- * The public website's footer: the mark, every place on the site, the policies and the year. Nothing more. On the
- * home page it's a floating bar over the film's last frames, like the header; elsewhere it sits at the foot of
- * the page.
+ * The public website's footer: the mark and its one line, every place on the site in three short columns, then the
+ * policies and the year. Nothing more. A sheet of glass at the foot of the sky.
  */
-export function SiteFooter({ overFilm = false }: { overFilm?: boolean }) {
-  if (overFilm) {
-    return (
-      <footer className="relative px-3 pt-[28vh] pb-3 sm:px-5 sm:pb-5">
-        <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-5 rounded-[28px] bg-overlay/90 px-6 py-6 shadow-soft ring-1 ring-ink/[0.07] backdrop-blur-xl lg:flex-row lg:items-center lg:gap-8 lg:rounded-full lg:py-3.5 lg:pr-8 lg:pl-6">
-          <Link href="/" aria-label="Kavuntra home" className="w-fit rounded-md">
-            <KavuntraLogo />
-          </Link>
-          <FooterLinks tone="plain" className="lg:ml-auto" />
-          <Policies />
-        </div>
-      </footer>
-    );
-  }
+export function SiteFooter({ className }: { className?: string }) {
   return (
-    <footer className="border-t border-border px-5 sm:px-8">
-      <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-8 py-12 md:flex-row md:items-center md:justify-between">
-        <Link href="/" aria-label="Kavuntra home" className="w-fit rounded-md">
-          <KavuntraLogo />
-        </Link>
-        <FooterLinks className="gap-x-6 gap-y-3" />
+    <footer className={cn("px-3 pb-3 sm:px-5 sm:pb-5", className)}>
+      <div className="sky-card mx-auto w-full max-w-[1120px] rounded-[28px] px-6 py-8 sm:px-10 sm:py-10">
+        <div className="flex flex-col gap-10 lg:flex-row lg:justify-between">
+          <div className="max-w-xs">
+            <Link href="/" aria-label="Hirvello home" className="inline-flex rounded-md">
+              <HirvelloLogo />
+            </Link>
+            <p className="mt-4 text-[14px] leading-relaxed text-stone">
+              Less noise, more signal: Hirvello finds the real candidates and keeps everyone in the hiring process informed.
+            </p>
+          </div>
+          <nav aria-label="Footer" className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:gap-14">
+            {COLUMNS.map((column) => (
+              <div key={column.title}>
+                <p className="text-[11px] font-semibold tracking-[0.16em] text-faint uppercase">{column.title}</p>
+                <ul className="mt-3.5 flex flex-col gap-2.5">
+                  {column.links.map((link) => (
+                    <li key={link.href}>
+                      <Link href={link.href} className={linkStyles}>
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </nav>
+        </div>
+        <p className="mt-10 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-ink/[0.07] pt-6 text-[13px] text-stone">
+          {POLICY_LINKS.map((link) => (
+            <Link key={link.href} href={link.href} className="rounded-sm transition-colors hover:text-ink">
+              {link.label}
+            </Link>
+          ))}
+          <span className="text-faint">© 2026 Hirvello</span>
+        </p>
       </div>
-      <Policies className="mx-auto w-full max-w-[1120px] pb-10" />
     </footer>
   );
 }

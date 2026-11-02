@@ -48,7 +48,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             <div
               key={item.id}
               role="status"
-              className="pointer-events-auto flex w-full max-w-sm animate-rise items-start gap-3 rounded-[16px] border border-border/70 bg-overlay/95 p-3.5 pr-2 text-sm shadow-raised backdrop-blur-xl"
+              className="pointer-events-auto flex w-full max-w-sm animate-rise items-start gap-3 rounded-[14px] border border-border/70 bg-overlay/95 p-3.5 pr-2 text-sm shadow-raised backdrop-blur-xl"
             >
               <Icon
                 aria-hidden

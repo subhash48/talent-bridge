@@ -1,17 +1,18 @@
 import { Store, UserRound, Users, type LucideIcon } from "lucide-react";
 
 /*
- * The public website's places. The header shows Product and How it works, the solutions in one menu, Pricing, and
- * the company in another, then Log in and Sign up; the footer spells everything out and adds the policies. Careers
- * here is working at Hirvello: /careers itself is the job board, the open roles of the companies hiring with
- * Hirvello, which keeps its route.
+ * The public website's places. The header shows Home, Product, How it works and Pricing, then Log in and Sign up;
+ * the footer spells everything out: the solutions (For you), the company, the policies, and where to follow
+ * Hirvello. Careers here is working at Hirvello: /careers itself is the job board, the open roles of the companies
+ * hiring with Hirvello, which keeps its route.
  */
 
+export const HOME_LINK = { href: "/", label: "Home" } as const;
 export const PRODUCT_LINK = { href: "/product", label: "Product" } as const;
 export const HOW_IT_WORKS_LINK = { href: "/#how-it-works", label: "How it works" } as const;
 export const PRICING_LINK = { href: "/pricing", label: "Pricing" } as const;
 
-/** The Solutions menu: who Hirvello is for, each with its page and a line on what it does for them. */
+/** The solutions: who Hirvello is for, each with its page and a line on what it does for them (the footer's For you). */
 export const SOLUTIONS: { href: string; label: string; short: string; text: string; icon: LucideIcon }[] = [
   { href: "/for-recruiters", label: "For Recruiters", short: "Recruiters", text: "Manage hiring and candidate communication.", icon: Users },
   {

@@ -1,10 +1,11 @@
 "use client";
 
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUp, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 import { HirvelloMark } from "@/components/shared/HirvelloLogo";
+import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /** What people most often need first. Each is a complete answer to the question. */
@@ -12,10 +13,39 @@ export const CONCIERGE_CHIPS = ["An office coordinator", "A bookkeeper", "Someon
 
 export const CONCIERGE_PLACEHOLDER = "Who would make your day easier?";
 
+// An example of the concierge at work, written for this page: the people are made up, and nothing here is read
+// from anyone's workspace.
+const ASKED = "Find the strongest candidates for my open roles.";
+const ANSWERED = "Here are 3 top candidates, ranked by fit for your roles.";
+const EXAMPLE: { name: string; role: string; evidence: string; skills: string[]; fit: "Strong fit" | "Good fit" }[] = [
+  {
+    name: "Maya Chen",
+    role: "Office coordinator",
+    evidence: "Ran a 40-person front desk for 3 years",
+    skills: ["Scheduling", "Vendors"],
+    fit: "Strong fit",
+  },
+  {
+    name: "Daniel Okafor",
+    role: "Bookkeeper",
+    evidence: "Closed the monthly books at a 60-person firm",
+    skills: ["QuickBooks", "Payroll"],
+    fit: "Strong fit",
+  },
+  {
+    name: "Priya Raman",
+    role: "Customer support lead",
+    evidence: "4.9 satisfaction over 2,000 tickets",
+    skills: ["Zendesk", "Onboarding"],
+    fit: "Good fit",
+  },
+];
+
 /**
- * The hero's hiring concierge: one question, a line to answer it, and three answers to pick from. The answer goes
- * with you to Get started (/start?need=...), where it's remembered for Simple Hire, so what you typed here is the
- * first thing the assistant hears once you're in.
+ * The hero's hiring concierge: a card that shows one short conversation (what you ask, what it answers, the three
+ * people it found with the evidence for each), then a line to ask it yourself and three answers to pick from. What
+ * you type goes with you to Get started (/start?need=...), where it's remembered for Simple Hire, so it's the first
+ * thing the assistant hears once you're in.
  */
 export function Concierge({ className }: { className?: string }) {
   const router = useRouter();

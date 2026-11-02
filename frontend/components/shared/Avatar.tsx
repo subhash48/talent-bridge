@@ -12,12 +12,12 @@ type AvatarProps = {
   className?: string;
 };
 
-// Two neutral and two soft sage tints: initials avatars stay distinguishable without adding new colours.
+// Two neutral and two soft blue tints: initials avatars stay distinguishable without adding new colours.
 const TINTS = [
   "bg-ink/[0.08] text-ink",
   "bg-accent-soft text-brand-ink",
   "bg-ink/[0.12] text-ink",
-  "bg-accent/60 text-ink",
+  "bg-sky text-brand-ink",
 ];
 
 function tintFor(name: string) {
@@ -46,7 +46,7 @@ export function Avatar({ name, src, size = 32, online, className }: AvatarProps)
       )}
       {online && (
         <span
-          className="absolute right-0 bottom-0 rounded-full bg-sage ring-[3px] ring-surface"
+          className="absolute right-0 bottom-0 rounded-full bg-success ring-[3px] ring-surface"
           style={{ width: Math.max(8, size * 0.2), height: Math.max(8, size * 0.2) }}
         >
           <span className="sr-only">Recently active</span>

@@ -27,7 +27,7 @@ export function CareersShell({ children, site = "demo" }: { children: ReactNode;
         </p>
       )}
       <header className="relative">
-        <div className="mx-auto flex h-[72px] w-full max-w-[1080px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-10">
+        <div className="mx-auto flex h-16 w-full max-w-[1080px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-10">
           <Link href={CAREERS_PATHS[site]} className="flex items-center gap-3 rounded-md">
             <HirvelloLogo />
             <span aria-hidden className="h-5 w-px bg-border-strong" />

@@ -16,8 +16,8 @@ import { getUnreadThreadCount } from "@/services/messages";
 
 // RecruiterShell (ARCHITECTURE.md 12.1). The candidate list is loaded once here and shared by every
 // recruiter page, so changes made on the dashboard are still there after navigating to Jobs and back.
-// The portals keep the cream canvas, so the browser's toolbar matches them rather than the website's sky.
-export const viewport: Viewport = { themeColor: "#F2EDE3" };
+// The portals sit on the mist, so the browser's toolbar matches them rather than the website's sky.
+export const viewport: Viewport = { themeColor: "#F4F8FC" };
 
 export default async function RecruiterLayout({ children }: { children: ReactNode }) {
   // Rendered per request: data and relative times must be current, never baked in at build time.

@@ -60,25 +60,25 @@ export default function PricingPage() {
         title="Free while we're in beta."
         intro="Every workspace, every feature, sample data to explore with and no commitment. When pricing comes, everyone in the beta hears about it first, and nothing you've set up changes."
       >
-        <ul className="mt-14 grid grid-cols-1 gap-5 lg:grid-cols-3">
+        <ul className="mt-10 grid grid-cols-1 gap-5 lg:grid-cols-3">
           {PLANS.map(({ icon: Icon, name, who, href, action, includes, featured }) => (
             <li
               key={name}
               className={cn(
-                "sky-card flex flex-col rounded-[26px] p-7",
-                featured && "bg-glass-strong ring-1 ring-accent/25 lg:-my-3 lg:py-10",
+                "sky-card flex flex-col rounded-[20px] p-6",
+                featured && "bg-glass-strong ring-1 ring-accent/25 lg:-my-3 lg:py-9",
               )}
             >
-              <span className="flex size-10 items-center justify-center rounded-[12px] bg-accent-soft text-brand-ink ring-1 ring-accent/10">
+              <span className="flex size-9 items-center justify-center rounded-[10px] bg-accent-soft text-brand-ink ring-1 ring-accent/10">
                 <Icon aria-hidden className="size-[18px]" strokeWidth={1.75} />
               </span>
-              <h2 className="mt-6 text-[22px] leading-snug font-semibold tracking-[-0.02em] text-ink">{name}</h2>
+              <h2 className="mt-5 text-[20px] leading-snug font-semibold tracking-[-0.015em] text-ink">{name}</h2>
               <p className="mt-1 text-[14px] text-stone">{who}</p>
-              <p className="mt-6 flex items-baseline gap-2">
-                <span className="text-[34px] leading-none font-medium tracking-[-0.04em] text-ink">Free</span>
+              <p className="mt-5 flex items-baseline gap-2">
+                <span className="text-[30px] leading-none font-bold tracking-[-0.03em] text-ink">Free</span>
                 <span className="text-[13px] text-stone">during the beta</span>
               </p>
-              <ul className="mt-6 flex flex-col gap-2.5 text-[14px] leading-snug text-charcoal">
+              <ul className="mt-5 flex flex-col gap-2.5 text-[14px] leading-snug text-charcoal">
                 {includes.map((line) => (
                   <li key={line} className="flex gap-2.5">
                     <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-brand-ink" strokeWidth={2.25} />

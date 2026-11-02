@@ -218,7 +218,7 @@ export function HireAssistant({ start = null }: { start?: "post" | null }) {
         <Button variant="ghost" size="icon" onClick={() => setOpen(false)} aria-label="Back to the start">
           <ArrowLeft />
         </Button>
-        <h1 className="text-2xl font-semibold tracking-[-0.03em] text-ink sm:text-[30px]">
+        <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-ink sm:text-[26px]">
           What would you like to do today?
         </h1>
       </div>

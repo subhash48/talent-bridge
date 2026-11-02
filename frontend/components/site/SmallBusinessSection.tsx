@@ -29,7 +29,7 @@ export function SmallBusinessSection() {
         </>
       }
     >
-      <div className="mt-16 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.1fr]">
+      <div className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.1fr]">
         <ul className="grid grid-cols-2 gap-3 self-start">
           {ACTIONS.map(({ icon: Icon, label }) => (
             <li
@@ -41,7 +41,7 @@ export function SmallBusinessSection() {
             </li>
           ))}
         </ul>
-        <figure className="reveal sky-card rounded-[24px] p-5 sm:p-7" aria-label="An example">
+        <figure className="reveal sky-card rounded-[20px] p-5 sm:p-6" aria-label="An example">
           <div className="flex items-start gap-3">
             <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand text-on-brand">
               <Mic aria-hidden className="size-4" />

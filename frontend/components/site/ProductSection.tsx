@@ -49,7 +49,7 @@ export function ProductSection() {
       title="One hiring experience. Two sides."
       intro="Hirvello works on the communication layer of hiring: it notices when a conversation has gone quiet, drafts the next update for a recruiter to review, and shows each candidate where they stand and what happens next."
     >
-      <ul className="mt-14 grid grid-cols-1 gap-x-10 gap-y-9 md:grid-cols-2">
+      <ul className="mt-10 grid grid-cols-1 gap-x-10 gap-y-9 md:grid-cols-2">
         {FEATURES.map(({ icon: Icon, title, text, href }) => (
           <li key={title} className="flex gap-4">
             <FeatureIcon>

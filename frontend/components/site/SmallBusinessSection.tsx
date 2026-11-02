@@ -74,11 +74,11 @@ export function SmallBusinessSection() {
           </figcaption>
         </figure>
       </div>
-      <div className="mt-16 flex flex-wrap gap-3">
-        <Link href="/signup/employer?mode=simple" className={buttonStyles({ size: "xl" })}>
+      <div className="mt-12 flex flex-wrap gap-3">
+        <Link href="/signup/employer?mode=simple" className={buttonStyles({ size: "lg" })}>
           Simple Hire
         </Link>
-        <Link href="/login?as=employer" className={buttonStyles({ variant: "ghost", size: "xl" })}>
+        <Link href="/login?as=employer" className={buttonStyles({ variant: "ghost", size: "lg" })}>
           Already using Simple Hire? Sign in
         </Link>
       </div>

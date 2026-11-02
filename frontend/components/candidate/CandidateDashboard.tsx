@@ -32,8 +32,8 @@ export function CandidateDashboard() {
         <p role="status" className="sr-only">
           {chosen ? `Loading your ${chosen.jobTitle} application at ${chosen.company}` : "Loading your application"}
         </p>
-        <Skeleton className="h-[248px] rounded-[24px]" />
-        <Skeleton className="h-[320px] rounded-[24px]" />
+        <Skeleton className="h-[248px] rounded-[20px]" />
+        <Skeleton className="h-[320px] rounded-[20px]" />
       </div>
     );
   } else if (application && job) {
@@ -64,7 +64,7 @@ export function CandidateDashboard() {
   return (
     <div className="flex flex-col gap-6 pt-2">
       <header className="mb-2">
-        <h1 className="text-[clamp(28px,3.4vw,40px)] leading-tight font-semibold tracking-[-0.035em] text-ink">
+        <h1 className="text-[clamp(24px,2.4vw,30px)] leading-tight font-semibold tracking-[-0.02em] text-ink">
           {firstName ? `Hi, ${firstName}` : "Welcome back"}
         </h1>
         <p className="mt-2 text-[15px] text-stone">Here&apos;s where your applications stand, and what comes next.</p>

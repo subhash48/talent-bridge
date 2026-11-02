@@ -23,8 +23,8 @@ export function SmallBusinessSection() {
       title="Hiring shouldn't require learning recruiting software."
       intro={
         <>
-          Simple Hire is Kavuntra for local shops, restaurants, cafes, warehouses and other small employers. Say
-          what you need, typed or out loud. Kavuntra prepares it, and nothing is posted or sent until you&apos;ve
+          Simple Hire is Hirvello for local shops, restaurants, cafes, warehouses and other small employers. Say
+          what you need, typed or out loud. Hirvello prepares it, and nothing is posted or sent until you&apos;ve
           seen it and said yes.
         </>
       }

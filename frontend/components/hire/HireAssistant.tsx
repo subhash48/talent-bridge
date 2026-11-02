@@ -168,17 +168,17 @@ export function HireAssistant({ start = null }: { start?: "post" | null }) {
     return (
       <div className="flex flex-col items-center pt-6 text-center sm:pt-12">
         <p className="text-[15px] font-medium text-stone">Hi {firstName(user.name)}</p>
-        <h1 className="mt-2 text-[clamp(34px,5vw,56px)] leading-[1.04] font-semibold tracking-[-0.04em] text-ink">
+        <h1 className="mt-2 text-[clamp(28px,3.4vw,40px)] leading-[1.1] font-semibold tracking-[-0.025em] text-ink">
           What would you like to do?
         </h1>
         <button
           type="button"
           onClick={talk}
-          className="group mt-10 flex flex-col items-center gap-4 rounded-[32px] p-2 focus-visible:outline-offset-4"
+          className="group mt-8 flex flex-col items-center gap-3 rounded-[24px] p-2 focus-visible:outline-offset-4"
           aria-label="Talk to Hirvello"
         >
-          <span className="flex size-32 items-center justify-center rounded-full bg-brand text-on-brand shadow-raised ring-[12px] ring-accent/35 transition-transform duration-300 group-hover:scale-[1.03] group-active:scale-95 sm:size-36">
-            {noMic ? <Sparkles aria-hidden className="size-11" /> : <Mic aria-hidden className="size-11" />}
+          <span className="flex size-24 items-center justify-center rounded-full bg-brand text-on-brand shadow-raised ring-[8px] ring-accent/25 transition-transform duration-300 group-hover:scale-[1.03] group-active:scale-95 sm:size-28">
+            {noMic ? <Sparkles aria-hidden className="size-9" /> : <Mic aria-hidden className="size-9" />}
           </span>
           <span className="text-base font-semibold text-ink">{noMic ? "Ask Hirvello" : "Tap and say it"}</span>
         </button>

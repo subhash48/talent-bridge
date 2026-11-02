@@ -9,7 +9,7 @@ type LoginCardProps = {
   footer?: ReactNode;
 };
 
-/** The sign-in page: the same frame as every other account page, so signing in looks like the rest of Kavuntra. */
+/** The sign-in page: the same frame as every other account page, so signing in looks like the rest of Hirvello. */
 export function LoginCard(props: LoginCardProps) {
   return <AuthCard {...props} />;
 }

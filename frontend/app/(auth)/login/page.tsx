@@ -20,14 +20,14 @@ const COPY: Record<
   candidate: {
     title: "Candidate sign in",
     description: "Follow your applications, messages from hiring teams and interviews.",
-    lead: "New to Kavuntra?",
+    lead: "New to Hirvello?",
     link: "Create your candidate account",
     href: "/signup",
   },
   employer: {
     title: "Employer sign in",
     description: "Open your company's hiring workspace or Simple Hire.",
-    lead: "Hiring for a company that isn't on Kavuntra yet?",
+    lead: "Hiring for a company that isn't on Hirvello yet?",
     link: "Create a company workspace",
     href: "/signup/employer",
   },

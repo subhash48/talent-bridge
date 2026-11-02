@@ -84,21 +84,12 @@ async function website(browser) {
   }
   check("no gallery of images", (await page.evaluate(() => document.images.length)) <= 2);
   const nav = page.getByRole("navigation", { name: "Website" });
-  for (const label of ["Product", "How it works", "Pricing"]) {
+  for (const label of ["Home", "Product", "How it works", "Pricing"]) {
     check(`nav: ${label}`, await nav.getByRole("link", { name: label, exact: true }).first().isVisible());
   }
-  await nav.getByRole("button", { name: "Solutions" }).click();
-  for (const label of ["For Recruiters", "For Candidates", "For Small Businesses"]) {
-    check(`nav: Solutions: ${label}`, await nav.getByRole("link", { name: new RegExp(`^${label}`) }).isVisible());
-  }
-  await page.keyboard.press("Escape");
-  check("nav: Solutions closes on Escape", (await nav.getByRole("link", { name: /^For Recruiters/ }).count()) === 0);
-  await nav.getByRole("button", { name: "Company" }).click();
-  for (const label of ["About", "Careers", "Contact"]) {
-    check(`nav: Company: ${label}`, await nav.getByRole("link", { name: label, exact: true }).isVisible());
-  }
-  await page.keyboard.press("Escape");
-  check("nav: Company closes on Escape", (await nav.getByRole("link", { name: "About", exact: true }).count()) === 0);
+  check("nav: Home goes to the homepage", (await nav.getByRole("link", { name: "Home", exact: true }).getAttribute("href")) === "/");
+  check("nav: four places, in order", (await nav.locator("a").allInnerTexts()).join("|") === "Home|Product|How it works|Pricing");
+  check("nav: no Solutions or Company menu", (await nav.getByRole("button").count()) === 0);
   const banner = page.getByRole("banner");
   check("Log in in the header", await banner.getByRole("link", { name: "Log in", exact: true }).isVisible());
   check("Sign up in the header", await banner.getByRole("link", { name: "Sign up", exact: true }).isVisible());
@@ -114,8 +105,39 @@ async function website(browser) {
   check("How it works scrolls to its three steps", stepsTop < 160 && (await page.getByRole("heading", { name: "Three steps. No noise." }).isVisible()), `top ${stepsTop}`);
   check("three ways in", (await page.locator('#solutions a[href^="/for-"]').count()) === 3);
   check("product glimpse", await page.getByRole("heading", { name: "A hiring system that keeps its word." }).isVisible());
-  await page.locator("footer").scrollIntoViewIfNeeded();
-  check("footer copyright", await page.getByText("© 2026 Hirvello").isVisible());
+  const footer = page.getByRole("contentinfo");
+  await footer.scrollIntoViewIfNeeded();
+  check("footer invitation", await footer.getByRole("heading", { name: "Better hiring starts here." }).isVisible());
+  check("footer: Get started signs up", (await footer.getByRole("link", { name: "Get started" }).getAttribute("href")) === "/start");
+  const footerLinks = {
+    Product: "/product",
+    "How it works": "/#how-it-works",
+    Pricing: "/pricing",
+    Recruiters: "/for-recruiters",
+    Candidates: "/for-candidates",
+    "Small business": "/for-small-businesses",
+    About: "/about",
+    Careers: "/about/careers",
+    Contact: "/contact",
+  };
+  for (const [label, href] of Object.entries(footerLinks)) {
+    check(`footer: ${label}`, (await footer.getByRole("navigation", { name: "Footer" }).getByRole("link", { name: label, exact: true }).getAttribute("href")) === href);
+  }
+  for (const heading of ["Product", "For you", "Company", "Follow Hirvello"]) {
+    check(`footer heading: ${heading}`, await footer.locator("p", { hasText: new RegExp(`^${heading}$`) }).isVisible());
+  }
+  // The networks are named either way; they're links only when their address is configured (HIRVELLO_*_URL).
+  for (const network of ["LinkedIn", "Instagram"]) {
+    const link = footer.getByRole("link", { name: new RegExp(`^Hirvello on ${network}`) });
+    if (await link.count()) {
+      const href = await link.getAttribute("href");
+      check(`footer: ${network} opens in a new tab`, (await link.getAttribute("target")) === "_blank" && (await link.getAttribute("rel")) === "noopener noreferrer" && href.startsWith("https://"), href);
+    } else {
+      check(`footer: ${network} named, not linked`, await footer.getByText(network, { exact: true }).isVisible());
+    }
+  }
+  check("footer copyright", await footer.getByText("© 2026 Hirvello").isVisible());
+  check("footer: no card around it", (await footer.locator(".sky-card, .glass").count()) === 0);
   check("no made-up claims", !(await page.content()).match(/customers love|trusted by|backed by|funding|market leader/i));
 
   // What you tell the concierge goes with you to Get started.
@@ -176,6 +198,10 @@ async function website(browser) {
   check("no sideways scroll on a phone", overflow <= 1, `overflow ${overflow}px`);
   await small.getByRole("button", { name: "Open menu" }).click();
   check("phone menu opens", await small.locator("#site-menu").isVisible());
+  check("phone menu: the four places, Sign up and Log in", (await small.locator("#site-menu a").allInnerTexts()).join("|") === "Home|Product|How it works|Pricing|Sign up|Log in");
+  await small.keyboard.press("Escape");
+  check("phone menu closes on Escape", (await small.locator("#site-menu").count()) === 0);
+  await small.getByRole("button", { name: "Open menu" }).click();
   await small.screenshot({ path: path.join(SHOTS, "site-phone.png"), fullPage: false });
   await page.goto(WEB);
   await page.screenshot({ path: path.join(SHOTS, "site.png"), fullPage: true });

@@ -2,7 +2,7 @@ import { FlaskConical } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { KavuntraLogo } from "@/components/shared/KavuntraLogo";
+import { HirvelloLogo } from "@/components/shared/HirvelloLogo";
 import { buttonStyles } from "@/components/ui/Button";
 import { CAREERS_PATHS, type CareersSite } from "@/types/careers";
 
@@ -19,7 +19,7 @@ export function CareersShell({ children, site = "demo" }: { children: ReactNode;
       >
         Skip to content
       </a>
-      <div aria-hidden className="app-backdrop pointer-events-none absolute inset-x-0 top-0 h-[520px]" />
+      <div aria-hidden className="app-backdrop pointer-events-none absolute inset-x-0 top-0 h-[560px]" />
       {site === "demo" && (
         <p className="relative flex items-center justify-center gap-2 border-b border-caution/30 bg-caution/10 px-4 py-2 text-center text-xs text-caution">
           <FlaskConical aria-hidden className="size-3.5 shrink-0" />
@@ -29,7 +29,7 @@ export function CareersShell({ children, site = "demo" }: { children: ReactNode;
       <header className="relative">
         <div className="mx-auto flex h-[72px] w-full max-w-[1080px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-10">
           <Link href={CAREERS_PATHS[site]} className="flex items-center gap-3 rounded-md">
-            <KavuntraLogo />
+            <HirvelloLogo />
             <span aria-hidden className="h-5 w-px bg-border-strong" />
             <span className="text-[15px] font-medium text-charcoal">Careers</span>
           </Link>

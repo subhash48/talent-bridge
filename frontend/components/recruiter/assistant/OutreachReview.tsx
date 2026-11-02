@@ -121,7 +121,7 @@ export function OutreachReview({ card, onConfirm, onCancel, onEdits, superseded 
         <div className="mt-3 flex flex-col gap-3">
           <p className="text-[13px] text-charcoal">
             {chosen.length
-              ? `You're about to send ${pluralize(chosen.length, `personalized ${what}`)}${card.schedule ? ` and create ${pluralize(chosen.filter((item) => item.slot).length, "interview")} in Kavuntra` : ""}:`
+              ? `You're about to send ${pluralize(chosen.length, `personalized ${what}`)}${card.schedule ? ` and create ${pluralize(chosen.filter((item) => item.slot).length, "interview")} in Hirvello` : ""}:`
               : "Nobody is ticked, so nothing would be sent."}
           </p>
           <ul className="flex flex-col gap-2">
@@ -338,7 +338,7 @@ function ScheduleSummary({ card }: { card: OutreachCard }) {
         </span>
       </p>
       {!plan.calendar_configured && (
-        <p className="flex items-center gap-1.5 rounded-[8px] bg-caution/[0.08] px-2.5 py-1.5 text-xs text-caution ring-1 ring-caution/20">
+        <p className="flex items-center gap-1.5 rounded-[10px] bg-caution/[0.08] px-2.5 py-1.5 text-xs text-caution ring-1 ring-caution/20">
           <CalendarX2 aria-hidden className="size-3.5 shrink-0" /> {plan.calendar_note}
         </p>
       )}
@@ -402,7 +402,7 @@ function ResultRow({ item, emailConfigured }: { item: OutreachItem; emailConfigu
       <p className="text-sm font-medium text-ink">{item.candidate.name}</p>
       <ul className="mt-1 flex flex-col gap-0.5 text-xs">
         {result.message_sent ? (
-          <li className="flex items-center gap-1.5 text-sage">
+          <li className="flex items-center gap-1.5 text-success">
             <Check aria-hidden className="size-3.5" /> Message sent · {delivery}
           </li>
         ) : (
@@ -411,11 +411,11 @@ function ResultRow({ item, emailConfigured }: { item: OutreachItem; emailConfigu
           </li>
         )}
         {result.interview_created && (
-          <li className="flex items-center gap-1.5 text-sage" suppressHydrationWarning>
+          <li className="flex items-center gap-1.5 text-success" suppressHydrationWarning>
             <Check aria-hidden className="size-3.5" />
             {result.calendar === "created"
               ? "Interview created and calendar invite sent"
-              : "Interview created in Kavuntra — Calendar invite not sent"}
+              : "Interview created in Hirvello — Calendar invite not sent"}
             {item.slot && ` · ${slotLabel(item.slot)}`}
           </li>
         )}

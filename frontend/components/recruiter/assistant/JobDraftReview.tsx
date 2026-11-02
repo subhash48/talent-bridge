@@ -196,13 +196,13 @@ export function JobDraftReview({ card, onApprove, onCancel, onEdits, superseded 
         <ul className="mt-3 flex flex-col gap-1 text-xs text-charcoal">
           {card.changes.map((change) => (
             <li key={change} className="flex items-center gap-1.5">
-              <Check aria-hidden className="size-3 text-sage" /> {change}
+              <Check aria-hidden className="size-3 text-success" /> {change}
             </li>
           ))}
         </ul>
       )}
       {card.missing.length > 0 && open && (
-        <ul aria-label="Check before creating" className="mt-3 flex flex-col gap-1 rounded-[8px] bg-caution/[0.06] px-3 py-2 text-xs text-caution ring-1 ring-caution/15">
+        <ul aria-label="Check before creating" className="mt-3 flex flex-col gap-1 rounded-[10px] bg-caution/[0.06] px-3 py-2 text-xs text-caution ring-1 ring-caution/15">
           {card.missing.map((note) => (
             <li key={note} className="flex items-center gap-1.5">
               <TriangleAlert aria-hidden className="size-3 shrink-0" /> {note}

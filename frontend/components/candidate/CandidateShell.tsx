@@ -41,7 +41,7 @@ export function CandidateShell({ children }: { children: ReactNode }) {
 
         <div className="relative flex min-w-0 flex-1 flex-col">
           <div aria-hidden className="app-backdrop pointer-events-none absolute inset-x-0 top-0 h-[480px]" />
-          <header className="relative flex h-16 shrink-0 items-center justify-between gap-3 px-4 sm:px-6 lg:justify-end lg:px-10">
+          <header className="relative flex h-14 shrink-0 items-center justify-between gap-3 px-4 sm:px-6 lg:justify-end lg:px-10">
             <div className="flex items-center gap-1 lg:hidden">
               <Button variant="ghost" size="icon" onClick={() => setNavOpen(true)} aria-label="Open navigation">
                 <Menu />

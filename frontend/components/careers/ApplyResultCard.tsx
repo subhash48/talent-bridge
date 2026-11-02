@@ -69,11 +69,11 @@ export function ApplyResultCard({ site = "demo", result, problem, retrying, stil
   }, [problem]);
 
   return (
-    <Card className="p-6 sm:p-8">
+    <Card className="p-5 sm:p-6">
       <span className={cn("flex size-12 items-center justify-center rounded-full ring-1", TONES[tone])}>
         <Icon aria-hidden className="size-[22px]" />
       </span>
-      <h2 ref={heading} tabIndex={-1} className="mt-5 text-2xl font-semibold tracking-tight text-ink focus:outline-none">
+      <h2 ref={heading} tabIndex={-1} className="mt-5 text-[22px] font-semibold tracking-tight text-ink focus:outline-none">
         {title}
       </h2>
 

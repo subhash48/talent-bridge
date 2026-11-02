@@ -73,7 +73,7 @@ export function AboutSection() {
           </Link>
           .
         </p>
-        <Link href="/contact" className={buttonStyles({ size: "xl", className: "group shrink-0" })}>
+        <Link href="/contact" className={buttonStyles({ size: "lg", className: "group shrink-0" })}>
           Let&apos;s talk
           <ArrowRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5" />
         </Link>

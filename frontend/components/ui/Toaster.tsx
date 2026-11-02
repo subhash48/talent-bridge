@@ -48,11 +48,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             <div
               key={item.id}
               role="status"
-              className="pointer-events-auto flex w-full max-w-sm animate-rise items-start gap-3 rounded-[12px] border border-border bg-overlay p-3.5 pr-2 text-sm shadow-raised"
+              className="pointer-events-auto flex w-full max-w-sm animate-rise items-start gap-3 rounded-[16px] border border-border/70 bg-overlay/95 p-3.5 pr-2 text-sm shadow-raised backdrop-blur-xl"
             >
               <Icon
                 aria-hidden
-                className={cn("mt-0.5 size-4 shrink-0", item.tone === "error" ? "text-danger" : "text-sage")}
+                className={cn("mt-0.5 size-4 shrink-0", item.tone === "error" ? "text-danger" : "text-success")}
               />
               <div className="min-w-0 flex-1">
                 <p className="font-medium text-ink">{item.title}</p>
@@ -65,7 +65,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                     item.action?.onClick();
                     dismiss(item.id);
                   }}
-                  className="rounded-[6px] px-2 py-1 text-sm font-medium text-brand-ink transition-colors hover:bg-brand-soft"
+                  className="rounded-full px-2.5 py-1 text-sm font-medium text-brand-ink transition-colors hover:bg-brand-soft"
                 >
                   {item.action.label}
                 </button>
@@ -74,7 +74,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 type="button"
                 onClick={() => dismiss(item.id)}
                 aria-label="Dismiss notification"
-                className="rounded-[6px] p-1 text-stone transition-colors hover:bg-ink/[0.06] hover:text-ink"
+                className="rounded-full p-1 text-stone transition-colors hover:bg-ink/[0.06] hover:text-ink"
               >
                 <X className="size-4" />
               </button>

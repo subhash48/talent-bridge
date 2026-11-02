@@ -75,6 +75,8 @@ async function website(browser) {
   await page.goto(WEB);
   check("hero headline", await page.getByRole("heading", { name: "Talent is everywhere. Find the real ones." }).isVisible());
   check("hero copy", await page.getByText("The work tells you who they are.").isVisible());
+  check("hero: Explore the platform", (await page.getByRole("link", { name: "Explore the platform" }).getAttribute("href")) === "/product");
+  check("hero: See how it works", (await page.getByRole("link", { name: "See how it works" }).first().getAttribute("href")) === "/#how-it-works");
   const concierge = page.getByPlaceholder("Who would make your day easier?");
   check("hero concierge", await concierge.isVisible());
   for (const chip of ["An office coordinator", "A bookkeeper", "Someone great with customers"]) {
@@ -97,7 +99,10 @@ async function website(browser) {
   }
   await page.keyboard.press("Escape");
   check("nav: Company closes on Escape", (await nav.getByRole("link", { name: "About", exact: true }).count()) === 0);
-  check("employer portal in the header", await page.getByRole("banner").getByRole("link", { name: "Employer portal" }).isVisible());
+  const banner = page.getByRole("banner");
+  check("Log in in the header", await banner.getByRole("link", { name: "Log in", exact: true }).isVisible());
+  check("Sign up in the header", await banner.getByRole("link", { name: "Sign up", exact: true }).isVisible());
+  check("no Employer portal in the header", (await banner.getByRole("link", { name: "Employer portal" }).count()) === 0);
 
   // The home page from the top down: how it works, who it's for, the product, the invitation.
   for (const id of ["how-it-works", "solutions", "product"]) {
@@ -154,11 +159,15 @@ async function website(browser) {
   check("terms page says it's a draft", await page.getByText(/not legal advice/).isVisible());
 
   await page.goto(WEB);
-  await page.getByRole("banner").getByRole("link", { name: "Sign in" }).click();
+  await page.getByRole("banner").getByRole("link", { name: "Log in", exact: true }).click();
   await page.waitForURL("**/signin");
   check("sign in asks who you are", await page.getByRole("heading", { name: "How are you using Hirvello?" }).isVisible());
   check("candidate choice", await page.getByRole("link", { name: /Candidate/ }).first().isVisible());
   check("employer choice", await page.getByRole("link", { name: /Employer \/ Recruiter/ }).isVisible());
+  await page.goto(WEB);
+  await page.getByRole("banner").getByRole("link", { name: "Sign up", exact: true }).click();
+  await page.waitForURL("**/start");
+  check("Sign up asks how you'll use Hirvello", await page.getByRole("heading", { name: /get started/i }).isVisible());
 
   const phone = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const small = await phone.newPage();

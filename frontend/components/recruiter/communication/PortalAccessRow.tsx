@@ -49,7 +49,7 @@ export function PortalAccessRow({ candidate }: { candidate: PipelineCandidate })
     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2 last:pb-0">
       <dt className="text-xs text-stone">Candidate portal</dt>
       <dd className="flex flex-wrap items-center gap-x-2 text-right text-[13px]">
-        <span className={done ? "inline-flex items-center gap-1 text-sage" : "inline-flex items-center gap-1 text-caution"}>
+        <span className={done ? "inline-flex items-center gap-1 text-success" : "inline-flex items-center gap-1 text-caution"}>
           {done ? <CircleCheck aria-hidden className="size-3.5" /> : <CircleDashed aria-hidden className="size-3.5" />}
           {LABELS[status]}
         </span>

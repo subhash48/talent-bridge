@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import type { MessageDelivery } from "@/types/communication";
 
 const NOTES = {
-  sent: { icon: CircleCheck, tone: "text-sage", text: () => "Emailed and in their portal" },
+  sent: { icon: CircleCheck, tone: "text-success", text: () => "Emailed and in their portal" },
   pending: { icon: Clock, tone: "text-stone", text: () => "In their portal · email sending" },
   failed: { icon: CircleAlert, tone: "text-danger", text: (error?: string) => `In their portal · email failed${error ? `: ${error}` : ""}` },
   not_configured: { icon: Inbox, tone: "text-caution", text: () => "In their portal only · email isn't set up" },

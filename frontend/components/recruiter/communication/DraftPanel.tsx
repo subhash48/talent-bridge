@@ -109,7 +109,7 @@ export function DraftPanel({
 
   if (phase === "sent") {
     return (
-      <div className={cn("rounded-[12px] border border-sage/20 bg-sage/[0.05] p-3.5", className)}>
+      <div className={cn("rounded-[12px] border border-success/20 bg-success/[0.05] p-3.5", className)}>
         <p className="text-sm font-medium text-ink">Sent to {firstName}.</p>
         <DeliveryNote delivery={sent?.delivery} className="mt-1" />
       </div>

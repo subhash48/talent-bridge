@@ -158,7 +158,7 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
 function Status({ tone, children }: { tone: "done" | "caution"; children: ReactNode }) {
   const Icon = tone === "done" ? CircleCheck : CircleDashed;
   return (
-    <span className={tone === "done" ? "inline-flex items-center gap-1 text-sage" : "inline-flex items-center gap-1 text-caution"}>
+    <span className={tone === "done" ? "inline-flex items-center gap-1 text-success" : "inline-flex items-center gap-1 text-caution"}>
       <Icon aria-hidden className="size-3.5" />
       {children}
     </span>

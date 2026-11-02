@@ -30,7 +30,7 @@ export function HireApplicants({ initialJob }: { initialJob: string | null }) {
 
   return (
     <div>
-      <h1 className="text-[28px] font-semibold tracking-tight text-ink sm:text-[32px]">Applicants</h1>
+      <h1 className="text-[24px] font-semibold tracking-tight text-ink sm:text-[28px]">Applicants</h1>
       <p className="mt-1 text-[15px] text-stone">{pluralize(shown.length, "person", "people")} applied.</p>
       {withApplicants.length > 1 && (
         <div role="group" aria-label="Which job" className="mt-4 flex flex-wrap gap-2">

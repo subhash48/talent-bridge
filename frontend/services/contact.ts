@@ -24,7 +24,7 @@ export type ContactMessage = {
   website: string;
 };
 
-/** Kavuntra's official contact address, when one is configured (CONTACT_EMAIL); never a made-up one. */
+/** Hirvello's official contact address, when one is configured (CONTACT_EMAIL); never a made-up one. */
 export async function getContactEmail(): Promise<string | null> {
   if (USE_MOCK_API) return null;
   try {

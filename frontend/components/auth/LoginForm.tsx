@@ -39,7 +39,7 @@ const WRONG_PLACE: Record<Audience, { message: string; href: string; link: strin
 // The sign-in card's own field styles (components/auth/LoginCard.tsx): larger than the app's, with a clearer edge.
 const labelStyles = "text-sm font-medium text-ink";
 const inputStyles =
-  "h-11 rounded-[12px] border-border-strong/70 bg-overlay px-3.5 text-[15px] hover:border-ink/25 focus-visible:border-accent focus-visible:bg-overlay focus-visible:ring-4 focus-visible:ring-accent/20";
+  "h-11 rounded-[10px] border-ink/15 bg-overlay px-3.5 text-[15px] hover:border-ink/25 focus-visible:border-accent focus-visible:bg-overlay focus-visible:ring-4 focus-visible:ring-accent/20";
 
 export function LoginForm({
   next,
@@ -225,7 +225,7 @@ export function LoginForm({
           </Link>
         </div>
       </div>
-      <Button type="submit" size="lg" disabled={pending} className="h-11 w-full text-base font-semibold">
+      <Button type="submit" size="lg" disabled={pending} className="h-11 w-full text-[15px]">
         {pending ? "Signing in…" : "Sign in"}
       </Button>
       <Button

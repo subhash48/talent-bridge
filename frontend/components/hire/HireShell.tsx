@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 
 import { useWorkspace } from "@/components/recruiter/WorkspaceProvider";
 import { Avatar } from "@/components/shared/Avatar";
-import { KavuntraLogo } from "@/components/shared/KavuntraLogo";
+import { HirvelloLogo } from "@/components/shared/HirvelloLogo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,9 +59,9 @@ export function HireShell({ children }: { children: ReactNode }) {
       </a>
       <div className="relative isolate flex min-h-dvh flex-col">
         <header className="sticky top-0 z-30 px-3 pt-3 sm:px-5 sm:pt-4">
-          <div className="mx-auto flex h-14 w-full max-w-[1040px] items-center gap-4 rounded-full bg-overlay/75 pr-2 pl-4 shadow-soft ring-1 ring-ink/[0.07] backdrop-blur-xl sm:pl-5">
+          <div className="mx-auto flex h-14 w-full max-w-[1040px] items-center gap-4 rounded-full bg-glass pr-2 pl-4 shadow-[0_8px_30px_rgb(20_35_59/0.08)] ring-1 ring-[rgb(255_255_255/0.6)] backdrop-blur-[16px] backdrop-saturate-150 sm:pl-5">
             <Link href="/hire" className="flex min-w-0 items-center gap-3 rounded-full" aria-label="Simple Hire home">
-              <KavuntraLogo />
+              <HirvelloLogo />
               <span className="hidden truncate border-l border-border pl-3 text-sm font-medium text-charcoal sm:block">
                 {business}
               </span>
@@ -112,7 +112,7 @@ export function HireShell({ children }: { children: ReactNode }) {
         </main>
         <nav
           aria-label="Simple Hire"
-          className="fixed inset-x-0 bottom-0 z-30 border-t border-border/70 bg-overlay/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
+          className="fixed inset-x-0 bottom-0 z-30 border-t border-ink/[0.06] bg-glass-strong pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
         >
           <ul className="grid grid-cols-4">
             {HIRE_NAV.map(({ href, label, icon: Icon }) => (

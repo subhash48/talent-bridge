@@ -80,7 +80,7 @@ export function SimpleApplicantsCard({ card, onSelect, onAsk, busy }: Props) {
                           )}
                         >
                           {reason.matched ? (
-                            <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-sage" strokeWidth={2.5} />
+                            <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-success" strokeWidth={2.5} />
                           ) : (
                             <Minus aria-hidden className="mt-0.5 size-4 shrink-0" />
                           )}

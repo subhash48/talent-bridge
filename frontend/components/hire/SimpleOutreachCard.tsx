@@ -92,7 +92,7 @@ export function SimpleOutreachCard({ card, onSend, onEdits, busy, superseded }: 
             {card.schedule.day ? `${calendarDayLabel(card.schedule.day)}, ` : ""}
             between {clockLabel(card.schedule.window_start)} and {clockLabel(card.schedule.window_end)}
             {!card.schedule.calendar_configured &&
-              ". No calendar is connected: Kavuntra records each interview and messages them."}
+              ". No calendar is connected: Hirvello records each interview and messages them."}
           </p>
         )}
       </div>
@@ -161,7 +161,7 @@ function ItemRow({ item, draft, done, disabled, editing, onEdit, onChange }: Row
           <span
             className={cn(
               "inline-flex items-center gap-1 text-sm font-medium",
-              result.message_sent ? "text-sage" : "text-danger",
+              result.message_sent ? "text-success" : "text-danger",
             )}
           >
             {result.message_sent ? (

@@ -58,8 +58,8 @@ export function SimpleJobCard({ card, onPost, onEdits, busy, superseded }: Props
 
   if (created) {
     return (
-      <div className="mt-3 rounded-[16px] border border-sage/30 bg-sage/[0.06] p-5">
-        <p className="flex items-center gap-2 text-[15px] font-semibold text-sage">
+      <div className="mt-3 rounded-[16px] border border-success/30 bg-success/[0.06] p-5">
+        <p className="flex items-center gap-2 text-[15px] font-semibold text-success">
           <CircleCheck aria-hidden className="size-5" /> Posted
         </p>
         <p className="mt-1 text-lg font-semibold text-ink">{card.draft.title}</p>

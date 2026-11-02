@@ -96,7 +96,7 @@ function JobRow({ job, applicants }: { job: JobOpening; applicants: number }) {
               className={cn(
                 "rounded-full px-2.5 py-0.5 text-xs font-medium",
                 open
-                  ? "bg-sage/10 text-sage"
+                  ? "bg-success/10 text-success"
                   : job.status === "closed"
                     ? "bg-muted text-stone"
                     : "bg-caution/10 text-caution",

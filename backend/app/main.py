@@ -1,4 +1,4 @@
-"""Kavuntra API: the backend for the recruiter workspace and the candidate portal.
+"""Hirvello API: the backend for the recruiter workspace and the candidate portal.
 
 Routes live under /api/v1; /health is the liveness check and /docs the interactive API reference.
 """

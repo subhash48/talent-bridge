@@ -13,16 +13,13 @@ const VARIANTS = {
   danger: "border border-danger/25 bg-danger/[0.06] text-danger hover:bg-danger/[0.12]",
   // Over the sky: frosted glass that keeps the gradient showing through.
   glass: "bg-glass text-ink ring-1 ring-ink/10 backdrop-blur-md hover:bg-glass-strong",
-  // Blue, for the one action that matters most on a page (the assistant, the hero's prompt).
-  accent: "bg-accent text-on-brand shadow-[0_10px_24px_-10px_rgb(47_107_255/0.7)] hover:bg-brand-ink",
 } as const;
 
+// 14 to 15px, semibold, pill-shaped, and never taller than 44px.
 const SIZES = {
-  sm: "h-8 gap-1.5 rounded-full px-3 text-xs [&_svg]:size-3.5",
-  md: "h-9 gap-2 rounded-full px-4 text-[13px] [&_svg]:size-4",
-  lg: "h-11 gap-2 rounded-full px-5 text-sm [&_svg]:size-4",
-  // The website's calls to action.
-  xl: "h-12 gap-2 rounded-full px-6 text-[15px] [&_svg]:size-4",
+  sm: "h-8 gap-1.5 rounded-full px-3 text-[13px] [&_svg]:size-3.5",
+  md: "h-9 gap-2 rounded-full px-4 text-[14px] [&_svg]:size-4",
+  lg: "h-11 gap-2 rounded-full px-5 text-[15px] [&_svg]:size-4",
   icon: "size-9 rounded-full [&_svg]:size-[17px]",
   "icon-sm": "size-8 rounded-full [&_svg]:size-3.5",
 } as const;

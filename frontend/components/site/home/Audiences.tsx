@@ -15,20 +15,20 @@ const DETAILS: Record<string, string> = {
 export function Audiences() {
   return (
     <HomeSection id="solutions" eyebrow="Who it's for" title="One product. Three ways in." intro="The same records on every side, so a change on one side shows on the other.">
-      <ul className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
+      <ul className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3">
         {SOLUTIONS.map(({ href, short, text, icon: Icon }) => (
           <li key={href} className="reveal flex">
             <Link
               href={href}
-              className="group sky-card flex w-full flex-col rounded-[24px] p-6 transition-[transform,background-color] duration-200 hover:-translate-y-0.5 hover:bg-glass-strong sm:p-7"
+              className="group sky-card flex w-full flex-col rounded-[18px] p-5 transition-[transform,background-color] duration-200 hover:-translate-y-0.5 hover:bg-glass-strong sm:p-6"
             >
-              <span className="flex size-10 items-center justify-center rounded-[12px] bg-accent-soft text-brand-ink ring-1 ring-accent/10">
+              <span className="flex size-9 items-center justify-center rounded-[10px] bg-accent-soft text-brand-ink ring-1 ring-accent/10">
                 <Icon aria-hidden className="size-[18px]" strokeWidth={1.75} />
               </span>
-              <span className="mt-6 text-[20px] leading-snug font-semibold tracking-[-0.02em] text-ink">{short}</span>
+              <span className="mt-5 text-[18px] leading-snug font-semibold tracking-[-0.015em] text-ink">{short}</span>
               <span className="mt-1 text-[14px] text-stone">{text}</span>
-              <span className="mt-4 text-[14.5px] leading-relaxed text-charcoal">{DETAILS[href]}</span>
-              <span className="mt-6 inline-flex items-center gap-1.5 text-[14px] font-medium text-brand-ink">
+              <span className="mt-3 text-[15px] leading-relaxed text-charcoal">{DETAILS[href]}</span>
+              <span className="mt-5 inline-flex items-center gap-1.5 text-[14px] font-semibold text-brand-ink">
                 Learn more
                 <ArrowRight aria-hidden className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
               </span>

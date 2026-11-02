@@ -4,14 +4,17 @@
  * Hirvello design tokens. Light only: the website, the sign-in pages, the recruiter workspace, Simple Hire,
  * the careers site and the candidate portal all read these, so the palette changes in one place.
  *
- * The brand is blue and airy. A misty blue-white carries every page; surfaces are frosted glass over it,
- * never a plain white block, and the edges between them are hairlines of the deep navy at a few percent.
- * Text is a deep navy.
+ * The brand is blue and white. A misty blue-white carries every page; surfaces are white or frosted glass over
+ * it, and the edges between them are hairlines of the deep navy at a few percent. Text is the deep navy.
  *
- * Navy (brand) is the colour of primary actions: buttons, active navigation, selected chips. Blue (accent)
- * is the colour of emphasis: the word that matters in a headline, links, focus, the assistant. Coral
- * (highlight) marks what's urgent or unread, as dots and small badges, never a large fill. Success is a calm
- * green, caution an amber, danger a muted red: each is paired with words, never the only signal.
+ * Blue (brand; accent is the same blue) is the colour of actions and emphasis: primary buttons, Sign up, the
+ * words that matter in a headline, links, focus, the assistant. Navy (ink) is for text, and for the quiet second
+ * button's edge. Coral (highlight) marks what's urgent or unread, as dots and small badges, never a large fill.
+ * Success is a calm green, caution an amber, danger a muted red: each is paired with words, never the only signal.
+ *
+ * Type is one family (Ranade, or Manrope until its files are in: app/fonts.ts) on one scale: the home page's
+ * headline 38 to 68px, a page's 32 to 46px, a section's 28 to 40px, card titles 18 to 20px, body 15 to 17px,
+ * navigation and buttons 14 to 15px, labels 12 to 13px.
  */
 @theme {
   --color-canvas: #f4f8fc;

@@ -18,7 +18,7 @@ import { usePathname } from "next/navigation";
 import { useWorkspace } from "@/components/recruiter/WorkspaceProvider";
 import { Avatar } from "@/components/shared/Avatar";
 import { SidebarNavItem } from "@/components/shared/SidebarNavItem";
-import { KavuntraLogo } from "@/components/shared/KavuntraLogo";
+import { HirvelloLogo } from "@/components/shared/HirvelloLogo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,10 +50,10 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <Link
         href="/recruiter/today"
         onClick={onNavigate}
-        aria-label="Kavuntra home"
+        aria-label="Recruiter workspace home"
         className="mb-9 flex w-fit items-center rounded-md px-3"
       >
-        <KavuntraLogo />
+        <HirvelloLogo />
       </Link>
 
       <nav aria-label="Primary" className="flex flex-col gap-1">

@@ -21,13 +21,13 @@ export function CurrentApplicationCard({ application, job, otherApplications }: 
   const meta = [job.company, job.location, job.employmentType].filter(Boolean).join(" · ");
 
   return (
-    <Card className="rounded-[24px] p-6 sm:p-8">
+    <Card className="rounded-[20px] p-5 sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="flex items-center gap-2 text-xs font-medium text-stone">
             <BriefcaseBusiness aria-hidden className="size-4" /> Current application
           </p>
-          <h2 className="mt-3 text-[24px] leading-tight font-semibold tracking-[-0.03em] text-ink sm:text-[30px]">{job.title}</h2>
+          <h2 className="mt-3 text-[22px] leading-tight font-semibold tracking-[-0.02em] text-ink sm:text-[26px]">{job.title}</h2>
           {meta && <p className="mt-1.5 text-[15px] text-stone">{meta}</p>}
         </div>
         <div className="flex items-center gap-2 sm:flex-col sm:items-end">

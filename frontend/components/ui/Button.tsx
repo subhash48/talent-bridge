@@ -4,23 +4,25 @@ import { cn } from "@/lib/utils";
 
 const VARIANTS = {
   primary:
-    "bg-brand text-on-brand shadow-[inset_0_1px_0_rgb(244_236_220/0.12),0_8px_20px_-12px_rgb(18_53_59/0.7)] hover:bg-brand-hover",
-  secondary: "border border-border-strong/80 bg-overlay/60 text-ink hover:border-border-strong hover:bg-overlay",
+    "bg-brand text-on-brand shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_10px_24px_-12px_rgb(20_35_59/0.6)] hover:bg-brand-hover",
+  secondary: "border border-border-strong/70 bg-glass-strong text-ink backdrop-blur-md hover:border-border-strong hover:bg-overlay",
   ghost: "text-stone hover:bg-muted hover:text-ink",
-  ai: "border border-brand-ink/15 bg-accent-soft/70 text-brand-ink hover:border-brand-ink/30 hover:bg-accent-soft",
+  ai: "border border-accent/20 bg-accent-soft/80 text-brand-ink hover:border-accent/40 hover:bg-accent-soft",
   danger: "border border-danger/25 bg-danger/[0.06] text-danger hover:bg-danger/[0.12]",
-  // Over a picture: frosted cream that keeps the picture showing through.
-  glass: "bg-overlay/70 text-ink ring-1 ring-ink/10 backdrop-blur-md hover:bg-overlay/90",
+  // Over the sky: frosted glass that keeps the gradient showing through.
+  glass: "bg-glass text-ink ring-1 ring-ink/10 backdrop-blur-md hover:bg-glass-strong",
+  // Blue, for the one action that matters most on a page (the assistant, the hero's prompt).
+  accent: "bg-accent text-on-brand shadow-[0_10px_24px_-10px_rgb(47_107_255/0.7)] hover:bg-brand-ink",
 } as const;
 
 const SIZES = {
-  sm: "h-7 gap-1.5 rounded-[8px] px-2.5 text-xs [&_svg]:size-3.5",
-  md: "h-9 gap-2 rounded-[10px] px-3.5 text-[13px] [&_svg]:size-4",
-  lg: "h-10 gap-2 rounded-[10px] px-4 text-sm [&_svg]:size-4",
+  sm: "h-8 gap-1.5 rounded-full px-3 text-xs [&_svg]:size-3.5",
+  md: "h-9 gap-2 rounded-full px-4 text-[13px] [&_svg]:size-4",
+  lg: "h-11 gap-2 rounded-full px-5 text-sm [&_svg]:size-4",
   // The website's calls to action.
   xl: "h-12 gap-2 rounded-full px-6 text-[15px] [&_svg]:size-4",
-  icon: "size-9 rounded-[10px] [&_svg]:size-[17px]",
-  "icon-sm": "size-7 rounded-[8px] [&_svg]:size-3.5",
+  icon: "size-9 rounded-full [&_svg]:size-[17px]",
+  "icon-sm": "size-8 rounded-full [&_svg]:size-3.5",
 } as const;
 
 export type ButtonVariant = keyof typeof VARIANTS;

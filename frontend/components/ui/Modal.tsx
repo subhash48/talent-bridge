@@ -26,13 +26,13 @@ export function Modal({ open, onClose, title, description, children, className }
           // Without a description, opt out explicitly so Radix doesn't point at a missing element.
           {...(description ? {} : { "aria-describedby": undefined })}
           className={cn(
-            "fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[22px] border border-border/70 bg-overlay/95 p-6 shadow-raised backdrop-blur-xl focus:outline-none data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in",
+            "fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[18px] border border-border/70 bg-overlay/95 p-5 shadow-raised sm:p-6 backdrop-blur-xl focus:outline-none data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in",
             className,
           )}
         >
-          <Dialog.Title className="pr-10 text-base font-semibold tracking-tight text-ink">{title}</Dialog.Title>
+          <Dialog.Title className="pr-10 text-[17px] font-semibold tracking-tight text-ink">{title}</Dialog.Title>
           {description && <Dialog.Description className="mt-1 text-[13px] text-stone">{description}</Dialog.Description>}
-          <div className="mt-5">{children}</div>
+          <div className="mt-4">{children}</div>
           <Dialog.Close asChild>
             <Button variant="ghost" size="icon-sm" className="absolute top-4 right-4" aria-label="Close">
               <X />

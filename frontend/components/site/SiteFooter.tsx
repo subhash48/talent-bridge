@@ -1,8 +1,10 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import type { ComponentProps } from "react";
 
 import { HirvelloLogo } from "@/components/shared/HirvelloLogo";
 import { COMPANY_LINKS, HOW_IT_WORKS_LINK, POLICY_LINKS, PRICING_LINK, PRODUCT_LINK, SIGNUP_LINK, SOLUTIONS } from "@/components/site/nav";
+import { socialLinks, type SocialNetwork } from "@/components/site/social";
 import { buttonStyles } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
@@ -17,12 +19,34 @@ const headingStyles = "text-[12px] font-semibold tracking-[0.16em] text-stone up
 const linkStyles = "rounded-sm text-[15px] text-charcoal transition-colors duration-200 hover:text-brand-ink";
 const rule = "border-ink/[0.08]";
 
+/** The two networks' marks, drawn in the same thin line as the site's other icons. */
+function SocialIcon({ network, ...props }: ComponentProps<"svg"> & { network: SocialNetwork }) {
+  const shared = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.75, strokeLinecap: "round", strokeLinejoin: "round" } as const;
+  if (network === "LinkedIn") {
+    return (
+      <svg aria-hidden="true" focusable="false" {...shared} {...props}>
+        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+        <rect x="2" y="9" width="4" height="12" />
+        <circle cx="4" cy="4" r="2" />
+      </svg>
+    );
+  }
+  return (
+    <svg aria-hidden="true" focusable="false" {...shared} {...props}>
+      <rect x="2" y="2" width="20" height="20" rx="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+    </svg>
+  );
+}
+
 /**
  * The public website's footer, on the same sky as the page, with no card around it. First the last invitation
- * (Better hiring starts here, Get started), then the mark with its one line beside the places on the site in three
- * columns, then a thin rule, the year and the policies.
+ * (Better hiring starts here, Get started), then the mark with its one line and where to follow Hirvello beside
+ * the places on the site in three columns, then a thin rule, the year and the policies.
  */
 export function SiteFooter({ className }: { className?: string }) {
+  const social = socialLinks();
   return (
     <footer className={cn("px-5 pt-10 pb-8 sm:px-8 sm:pt-14 sm:pb-10", className)}>
       <div className="mx-auto w-full max-w-[1200px]">
@@ -43,6 +67,31 @@ export function SiteFooter({ className }: { className?: string }) {
               <HirvelloLogo />
             </Link>
             <p className="mt-4 max-w-[30ch] text-[15px] leading-relaxed text-charcoal sm:text-[16px]">Find real talent. See the work behind the résumé.</p>
+            <p className={cn("mt-7", headingStyles)}>Follow Hirvello</p>
+            <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
+              {social.map(({ network, href }) => (
+                <li key={network}>
+                  {href ? (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Hirvello on ${network} (opens in a new tab)`}
+                      className={cn("group inline-flex items-center gap-2", linkStyles)}
+                    >
+                      <SocialIcon network={network} className="size-[18px] text-stone transition-colors duration-200 group-hover:text-brand-ink" />
+                      {network}
+                    </a>
+                  ) : (
+                    // Not configured yet (HIRVELLO_*_URL): the name and its mark, and nowhere to go.
+                    <span className="inline-flex items-center gap-2 text-[15px] text-stone">
+                      <SocialIcon network={network} className="size-[18px] text-faint" />
+                      {network}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
           </div>
           <nav aria-label="Footer" className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 sm:gap-x-8">
             {COLUMNS.map((column) => (

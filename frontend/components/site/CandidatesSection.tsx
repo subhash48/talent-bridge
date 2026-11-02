@@ -39,7 +39,7 @@ export function CandidatesSection() {
       id="candidates"
       eyebrow="For candidates"
       title="One place for your hiring journey."
-      intro="Apply to a role on a Kavuntra careers page, or create your account first. Either way, everything about your applications is in one portal: where you stand, what happens next, and how to prepare."
+      intro="Apply to a role on a Hirvello careers page, or create your account first. Either way, everything about your applications is in one portal: where you stand, what happens next, and how to prepare."
     >
       <div className="mt-16 grid grid-cols-1 gap-12 lg:grid-cols-[1.3fr_1fr]">
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">

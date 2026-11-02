@@ -20,7 +20,7 @@ import { AIMessageContent } from "@/components/ai/AIMessageContent";
 import { SimpleCardView } from "@/components/hire/SimpleCards";
 import type { CardActions } from "@/components/recruiter/assistant/AssistantCards";
 import { useWorkspace } from "@/components/recruiter/WorkspaceProvider";
-import { KavuntraMark } from "@/components/shared/KavuntraLogo";
+import { HirvelloMark } from "@/components/shared/HirvelloLogo";
 import { Button } from "@/components/ui/Button";
 import { handledCards, useAssistant, type AssistantTurn } from "@/hooks/useAssistant";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
@@ -57,7 +57,7 @@ const CHOICES: Choice[] = [
 ];
 
 /**
- * Simple Hire's home: "What would you like to do?", one large button to talk to Kavuntra, and the four
+ * Simple Hire's home: "What would you like to do?", one large button to talk to Hirvello, and the four
  * things it's for. Talking and typing go to the same assistant as the full workspace (/assistant/requests),
  * so a job, a list of applicants, their phone numbers, messages and interview requests all come back for the
  * owner to see, and nothing is posted or sent until they press the button that does it.
@@ -100,7 +100,7 @@ export function HireAssistant({ start = null }: { start?: "post" | null }) {
       setHint(null);
       const response = await assistant.send(text, "voice");
       if (!response) {
-        voice.fail(session, "Kavuntra couldn't answer just now. Try again, or type it.");
+        voice.fail(session, "Hirvello couldn't answer just now. Try again, or type it.");
         return;
       }
       voice.responded(session, response.status === "completed" || handledCards(response).length > 0);
@@ -175,12 +175,12 @@ export function HireAssistant({ start = null }: { start?: "post" | null }) {
           type="button"
           onClick={talk}
           className="group mt-10 flex flex-col items-center gap-4 rounded-[32px] p-2 focus-visible:outline-offset-4"
-          aria-label="Talk to Kavuntra"
+          aria-label="Talk to Hirvello"
         >
           <span className="flex size-32 items-center justify-center rounded-full bg-brand text-on-brand shadow-raised ring-[12px] ring-accent/35 transition-transform duration-300 group-hover:scale-[1.03] group-active:scale-95 sm:size-36">
             {noMic ? <Sparkles aria-hidden className="size-11" /> : <Mic aria-hidden className="size-11" />}
           </span>
-          <span className="text-base font-semibold text-ink">{noMic ? "Ask Kavuntra" : "Tap and say it"}</span>
+          <span className="text-base font-semibold text-ink">{noMic ? "Ask Hirvello" : "Tap and say it"}</span>
         </button>
         <ul className="mt-12 grid w-full max-w-2xl grid-cols-2 gap-3 sm:gap-4">
           {CHOICES.map((choice) => (
@@ -213,7 +213,7 @@ export function HireAssistant({ start = null }: { start?: "post" | null }) {
   }
 
   return (
-    <section aria-label="Kavuntra assistant" className="flex flex-col">
+    <section aria-label="Hirvello assistant" className="flex flex-col">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => setOpen(false)} aria-label="Back to the start">
           <ArrowLeft />
@@ -302,7 +302,7 @@ function Conversation({ turns, actions, hint }: { turns: AssistantTurn[]; action
         ) : (
           <div key={turn.id} className="flex animate-rise gap-3">
             <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-overlay ring-1 ring-ink/10">
-              <KavuntraMark className="h-4" />
+              <HirvelloMark className="h-4" />
             </span>
             <div className="min-w-0 flex-1 text-[15px] leading-relaxed text-charcoal">
               {turn.status === "thinking" ? (

@@ -44,9 +44,17 @@ export function Hero() {
         <br />
         The work tells you who they are.
       </p>
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <Link href={PRODUCT_LINK.href} className={buttonStyles({ size: "lg", className: "group px-6" })}>
+          Explore the platform
+          <ArrowRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5" />
+        </Link>
+        <Link href={HOW_IT_WORKS_LINK.href} className={buttonStyles({ variant: "secondary", size: "lg", className: "px-6" })}>
+          See how it works
+        </Link>
+      </div>
 
-      <Concierge className="mt-9" />
-      <p className="mt-4 text-[12.5px] text-stone">Explore the beta. Sample data, no commitment.</p>
+      <Concierge className="mt-12 lg:mt-14" />
     </section>
   );
 }

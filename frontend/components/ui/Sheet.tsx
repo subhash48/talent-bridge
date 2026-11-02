@@ -27,11 +27,11 @@ export function Sheet({ open, onOpenChange, title, side = "right", className, ch
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-ink/30 backdrop-blur-[2px] data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-ink/25 backdrop-blur-[3px] data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in" />
         <Dialog.Content
           aria-describedby={undefined}
           className={cn(
-            "fixed inset-y-0 z-50 flex flex-col overflow-y-auto border-border bg-surface shadow-sheet focus:outline-none",
+            "fixed inset-y-0 z-50 flex flex-col overflow-y-auto border-border/70 bg-surface/95 shadow-sheet backdrop-blur-xl focus:outline-none",
             SIDES[side],
             className,
           )}

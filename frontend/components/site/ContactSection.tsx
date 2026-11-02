@@ -14,7 +14,7 @@ export function ContactSection({ email }: { email: string | null }) {
       title="Let's talk."
       intro="Questions, feedback, or interested in working with Hirvello? We'd love to hear from you."
     >
-      <div className="mt-14 grid grid-cols-1 gap-12 lg:grid-cols-[1fr_1.6fr]">
+      <div className="mt-10 grid grid-cols-1 gap-12 lg:grid-cols-[1fr_1.6fr]">
         <div className="flex max-w-[26rem] flex-col gap-7 text-[15px] leading-relaxed text-charcoal">
           <p>
             Every message reaches the Hirvello team, and we reply by email. Tell us what you&apos;re working on, what
@@ -45,7 +45,7 @@ export function ContactSection({ email }: { email: string | null }) {
             .
           </p>
         </div>
-        <div className="sky-card rounded-[24px] p-6 sm:p-8">
+        <div className="sky-card rounded-[20px] p-5 sm:p-7">
           <ContactForm />
         </div>
       </div>

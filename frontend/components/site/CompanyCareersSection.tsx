@@ -20,7 +20,7 @@ export function CompanyCareersSection() {
       title="Build the future of hiring."
       intro="We're building tools that make hiring clearer, simpler, and more human."
     >
-      <div className="mt-14 max-w-[720px]">
+      <div className="mt-10 max-w-[720px]">
         <h2 className="text-[12px] font-semibold tracking-[0.18em] text-brand-ink/80 uppercase">Open positions</h2>
         {OPENINGS.length ? (
           <ul className="mt-4 flex flex-col gap-3">

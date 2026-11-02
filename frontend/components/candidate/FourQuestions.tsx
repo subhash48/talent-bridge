@@ -65,7 +65,7 @@ export function FourQuestions({ me, application }: { me: CandidateMeResponse; ap
   }
 
   return (
-    <Card className="rounded-[24px] p-0 sm:p-0">
+    <Card className="rounded-[20px] p-0 sm:p-0">
       <dl className="divide-y divide-border/70">
         <Answer icon={MapPin} question="Where am I?">
           <span className="font-medium text-ink">{application.stageLabel}</span>

@@ -73,7 +73,7 @@ export function HireShell({ children }: { children: ReactNode }) {
                   href={href}
                   aria-current={isActive(pathname, href) ? "page" : undefined}
                   className={cn(
-                    "inline-flex h-10 items-center gap-2 rounded-full px-4 text-[15px] font-medium transition-colors duration-200",
+                    "inline-flex h-9 items-center gap-2 rounded-full px-3.5 text-[14px] font-semibold transition-colors duration-200",
                     isActive(pathname, href) ? "bg-brand text-on-brand" : "text-charcoal hover:bg-ink/[0.05] hover:text-ink",
                   )}
                 >

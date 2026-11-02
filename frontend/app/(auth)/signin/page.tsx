@@ -31,7 +31,7 @@ export default async function SignInChooserPage() {
 
   return (
     <AuthCard
-      title="How are you using Kavuntra?"
+      title="How are you using Hirvello?"
       footer={
         <>
           New here?{" "}
@@ -50,9 +50,9 @@ export default async function SignInChooserPage() {
           <li key={href}>
             <Link
               href={href}
-              className="group sky-card flex items-center gap-4 rounded-[18px] p-4 transition-[background-color,transform] duration-200 hover:-translate-y-px hover:bg-overlay/75"
+              className="group flex items-center gap-4 rounded-[18px] border border-border/70 bg-glass-strong p-4 transition-[background-color,border-color,transform] duration-200 hover:-translate-y-px hover:border-accent/40 hover:bg-overlay"
             >
-              <span className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-accent-soft/80 text-brand-ink">
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-accent-soft text-brand-ink ring-1 ring-accent/10">
                 <Icon aria-hidden className="size-5" strokeWidth={1.75} />
               </span>
               <span className="flex-1">

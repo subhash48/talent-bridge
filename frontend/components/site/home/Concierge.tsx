@@ -143,23 +143,23 @@ export function Concierge({ className }: { className?: string }) {
           onChange={(event) => setNeed(event.target.value)}
           placeholder={CONCIERGE_PLACEHOLDER}
           autoComplete="off"
-          className="h-12 min-w-0 flex-1 bg-transparent text-[16px] text-ink placeholder:text-stone focus:outline-none sm:text-[20px]"
+          className="h-9 min-w-0 flex-1 bg-transparent text-[15px] text-ink placeholder:text-stone focus:outline-none"
         />
         <button
           type="submit"
           aria-label="Get started"
-          className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-brand sm:size-12 text-on-brand shadow-[0_10px_24px_-12px_rgb(20_35_59/0.7)] transition-[transform,background-color] duration-200 hover:bg-brand-hover active:scale-95"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent text-on-brand transition-[background-color,transform] duration-200 hover:bg-brand-hover active:scale-95"
         >
-          <ArrowUpRight aria-hidden className="size-5" />
+          <ArrowUp aria-hidden className="size-4" strokeWidth={2.25} />
         </button>
       </div>
-      <ul className="mt-4 flex flex-wrap gap-2" aria-label="Suggestions">
+      <ul className="mt-3 flex flex-wrap gap-2" aria-label="Suggestions">
         {CONCIERGE_CHIPS.map((chip) => (
           <li key={chip}>
             <button
               type="button"
               onClick={() => go(chip)}
-              className="h-8 rounded-[10px] border border-border-strong/60 bg-glass-strong px-3 text-[12.5px] text-charcoal transition-colors duration-200 hover:border-accent/40 hover:bg-overlay hover:text-ink"
+              className="h-8 rounded-full border border-ink/10 bg-white/60 px-3 text-[12.5px] font-medium text-charcoal transition-colors duration-200 hover:border-accent/40 hover:bg-white/90 hover:text-ink"
             >
               {chip}
             </button>

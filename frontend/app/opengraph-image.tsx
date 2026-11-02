@@ -28,15 +28,15 @@ export default function OpenGraphImage() {
             <path d="M18 24 32 41 46 24" fill="none" stroke="#f8fbff" strokeWidth="6.5" strokeLinecap="round" strokeLinejoin="round" />
             <circle cx="46.5" cy="15" r="3.6" fill="#cfe4ff" />
           </svg>
-          <div style={{ display: "flex", fontSize: 44, fontWeight: 700, letterSpacing: -2, color: "#10213a" }}>
-            hir<span style={{ color: "#2f6bff" }}>v</span>ello
+          <div style={{ display: "flex", fontSize: 44, fontWeight: 700, letterSpacing: -2, color: "#10213d" }}>
+            hir<span style={{ color: "#3266ff" }}>v</span>ello
           </div>
         </div>
-        <div style={{ marginTop: 44, fontSize: 84, fontWeight: 500, letterSpacing: -4, lineHeight: 1, color: "#10213a" }}>
+        <div style={{ marginTop: 44, fontSize: 76, fontWeight: 700, letterSpacing: -3, lineHeight: 1, color: "#10213d" }}>
           Talent is everywhere.
         </div>
-        <div style={{ marginTop: 12, display: "flex", fontSize: 84, fontWeight: 500, letterSpacing: -4, lineHeight: 1, color: "#10213a" }}>
-          Find the&nbsp;<span style={{ color: "#2f6bff", fontStyle: "italic", fontWeight: 400 }}>real ones.</span>
+        <div style={{ marginTop: 12, display: "flex", fontSize: 76, fontWeight: 700, letterSpacing: -3, lineHeight: 1, color: "#10213d" }}>
+          Find the&nbsp;<span style={{ color: "#3266ff" }}>real ones.</span>
         </div>
         <div style={{ marginTop: 36, fontSize: 22, letterSpacing: 6, color: "#2a3a52" }}>LESS NOISE. MORE SIGNAL.</div>
       </div>

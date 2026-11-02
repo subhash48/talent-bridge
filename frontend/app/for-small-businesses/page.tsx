@@ -5,7 +5,7 @@ import { SmallBusinessSection } from "@/components/site/SmallBusinessSection";
 
 export const metadata: Metadata = {
   title: "For small businesses",
-  description: "Simple Hire: say who you need, typed or out loud, and Kavuntra prepares the job and the messages for you to approve.",
+  description: "Simple Hire: say who you need, typed or out loud, and Hirvello prepares the job and the messages for you to approve.",
 };
 
 export default function ForSmallBusinessesPage() {

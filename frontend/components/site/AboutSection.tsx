@@ -38,14 +38,14 @@ export function AboutSection() {
       title="Making hiring more human."
       intro="Hirvello is building a better hiring experience for employers and candidates. We help hiring teams communicate clearly, reduce unnecessary waiting, and give candidates visibility into what happens next."
     >
-      <div className="mt-16 border-t border-ink/[0.08]">
+      <div className="mt-12 border-t border-ink/[0.08]">
         {CHAPTERS.map((chapter) => (
-          <div key={chapter.title} className="grid gap-3 border-b border-ink/[0.08] py-10 md:grid-cols-[220px_1fr] md:gap-12">
+          <div key={chapter.title} className="grid gap-3 border-b border-ink/[0.08] py-8 md:grid-cols-[220px_1fr] md:gap-12">
             <h2 className="text-[12px] font-semibold tracking-[0.18em] text-brand-ink/80 uppercase md:pt-1.5">{chapter.title}</h2>
             <p className="max-w-[640px] text-[17px] leading-relaxed text-charcoal">{chapter.text}</p>
           </div>
         ))}
-        <div className="grid gap-3 border-b border-ink/[0.08] py-10 md:grid-cols-[220px_1fr] md:gap-12">
+        <div className="grid gap-3 border-b border-ink/[0.08] py-8 md:grid-cols-[220px_1fr] md:gap-12">
           <h2 className="text-[12px] font-semibold tracking-[0.18em] text-brand-ink/80 uppercase md:pt-1.5">Who we serve</h2>
           <ul className="flex max-w-[640px] flex-col gap-4">
             {SERVED.map(({ href, who, line, icon: Icon }) => (
@@ -64,7 +64,7 @@ export function AboutSection() {
         </div>
       </div>
 
-      <div className="mt-14 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-10 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
         <p className="max-w-[34rem] text-[17px] leading-relaxed text-charcoal">
           Questions, feedback, or a pilot in mind? We&apos;d like to hear from you. And if this is work you&apos;d want to
           do, see{" "}

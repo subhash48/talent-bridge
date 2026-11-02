@@ -8,22 +8,27 @@ import "@/lib/supabase-server";
 import { cn } from "@/lib/utils";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
-// The home page's headlines over the film: an editorial serif, in its one weight.
-const instrumentSerif = Instrument_Serif({ weight: "400", subsets: ["latin"], variable: "--font-instrument-serif" });
+// The word that matters in a headline: an editorial serif, italic, in its one weight.
+const instrumentSerif = Instrument_Serif({
+  weight: "400",
+  style: ["normal", "italic"],
+  subsets: ["latin"],
+  variable: "--font-instrument-serif",
+});
 
-const DESCRIPTION = "Kavuntra keeps recruiters responsive and candidates informed throughout the hiring process.";
+const DESCRIPTION = "Talent is everywhere. Hirvello finds the real ones, and keeps recruiters and candidates informed throughout hiring.";
 
 export const metadata: Metadata = {
-  title: { default: "Kavuntra", template: "%s · Kavuntra" },
+  title: { default: "Hirvello", template: "%s · Hirvello" },
   description: DESCRIPTION,
-  applicationName: "Kavuntra",
-  openGraph: { type: "website", siteName: "Kavuntra", title: "Kavuntra", description: DESCRIPTION },
-  twitter: { card: "summary_large_image", title: "Kavuntra", description: DESCRIPTION },
+  applicationName: "Hirvello",
+  openGraph: { type: "website", siteName: "Hirvello", title: "Hirvello", description: DESCRIPTION },
+  twitter: { card: "summary_large_image", title: "Hirvello", description: DESCRIPTION },
 };
 
-// The website's sky. The portals (recruiter, candidate, Simple Hire, careers) keep their cream: see their layouts.
+// The website's sky. The portals (recruiter, candidate, Simple Hire, careers) sit on the mist: see their layouts.
 export const viewport: Viewport = {
-  themeColor: "#DFE1E8",
+  themeColor: "#EEF4FC",
   colorScheme: "light",
 };
 

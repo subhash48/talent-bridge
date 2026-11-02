@@ -9,7 +9,7 @@ export function InterviewStatusBadge({ interview, className }: { interview: Sche
   return (
     <span
       className={cn(
-        "inline-flex h-6 shrink-0 items-center rounded-[6px] px-2 text-xs font-medium whitespace-nowrap ring-1 ring-inset",
+        "inline-flex h-6 shrink-0 items-center rounded-full px-2.5 text-xs font-medium whitespace-nowrap ring-1 ring-inset",
         status.className,
         className,
       )}

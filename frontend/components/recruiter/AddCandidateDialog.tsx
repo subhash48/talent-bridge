@@ -139,7 +139,7 @@ function AddCandidateForm({ jobs, onCancel, onCreated }: Omit<AddCandidateDialog
       </div>
 
       {formError && (
-        <p role="alert" className="rounded-[8px] border border-danger/20 bg-danger/[0.06] px-3 py-2.5 text-sm text-danger">
+        <p role="alert" className="rounded-[12px] border border-danger/20 bg-danger/[0.06] px-3 py-2.5 text-sm text-danger">
           {formError}
         </p>
       )}

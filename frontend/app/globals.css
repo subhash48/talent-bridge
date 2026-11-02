@@ -51,11 +51,11 @@
   --color-success: #1e7f62;
   --color-caution: #9a5f00;
   --color-danger: #c2312d;
-  --color-ai: #2f6bff;
+  --color-ai: #3266ff;
 
   --shadow-soft: 0 1px 2px rgb(20 35 59 / 0.04), 0 12px 32px -20px rgb(20 35 59 / 0.18);
   --shadow-raised: 0 2px 8px rgb(20 35 59 / 0.05), 0 24px 56px -24px rgb(20 35 59 / 0.28);
-  --shadow-glow: 0 2px 6px rgb(20 35 59 / 0.04), 0 30px 70px -30px rgb(47 107 255 / 0.45);
+  --shadow-glow: 0 2px 6px rgb(20 35 59 / 0.04), 0 30px 70px -30px rgb(50 102 255 / 0.45);
   --shadow-sheet: 0 0 56px rgb(20 35 59 / 0.16);
 
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);

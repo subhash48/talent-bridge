@@ -39,7 +39,7 @@ const WRONG_PLACE: Record<Audience, { message: string; href: string; link: strin
 // The sign-in card's own field styles (components/auth/LoginCard.tsx): larger than the app's, with a clearer edge.
 const labelStyles = "text-sm font-medium text-ink";
 const inputStyles =
-  "h-11 rounded-[10px] border-border-strong bg-overlay px-3.5 text-[15px] hover:border-ink/30 focus-visible:border-brand-ink focus-visible:bg-overlay focus-visible:ring-4 focus-visible:ring-brand-ink/65";
+  "h-11 rounded-[12px] border-border-strong/70 bg-overlay px-3.5 text-[15px] hover:border-ink/25 focus-visible:border-accent focus-visible:bg-overlay focus-visible:ring-4 focus-visible:ring-accent/20";
 
 export function LoginForm({
   next,
@@ -207,7 +207,7 @@ export function LoginForm({
             aria-label="Show password"
             aria-pressed={passwordShown}
             onClick={() => setPasswordShown((shown) => !shown)}
-            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-[10px] text-stone transition-colors hover:text-ink"
+            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-[12px] text-stone transition-colors hover:text-ink"
           >
             {passwordShown ? (
               <EyeOff aria-hidden className="size-[18px]" />
@@ -225,7 +225,7 @@ export function LoginForm({
           </Link>
         </div>
       </div>
-      <Button type="submit" size="lg" disabled={pending} className="h-11 w-full rounded-[10px] text-base font-semibold">
+      <Button type="submit" size="lg" disabled={pending} className="h-11 w-full text-base font-semibold">
         {pending ? "Signing in…" : "Sign in"}
       </Button>
       <Button
@@ -233,7 +233,7 @@ export function LoginForm({
         size="lg"
         disabled={pending || linkState === "sending"}
         onClick={() => void emailLink()}
-        className="h-11 w-full rounded-[10px] text-[15px]"
+        className="h-11 w-full text-[15px]"
       >
         {linkState === "sending" ? "Sending…" : "Email me a sign-in link"}
       </Button>

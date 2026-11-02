@@ -27,7 +27,7 @@ export function HireJobs() {
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[28px] font-semibold tracking-tight text-ink sm:text-[32px]">Jobs</h1>
+          <h1 className="text-[24px] font-semibold tracking-tight text-ink sm:text-[28px]">Jobs</h1>
           <p className="mt-1 text-[15px] text-stone">
             {jobs.length ? `${pluralize(jobs.length, "job")}. Open ones are on your careers page.` : "No jobs yet."}
           </p>

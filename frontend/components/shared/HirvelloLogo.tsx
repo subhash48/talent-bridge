@@ -23,8 +23,8 @@ export function HirvelloMark({ tone = "light", className, ...props }: MarkProps)
       {tone === "light" && (
         <defs>
           <linearGradient id={gradient} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#2f6bff" />
-            <stop offset="1" stopColor="#14233b" />
+            <stop offset="0" stopColor="#3266ff" />
+            <stop offset="1" stopColor="#10213d" />
           </linearGradient>
         </defs>
       )}

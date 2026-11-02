@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import type { CandidateInterview } from "@/types/portal";
 
 const STYLES = {
-  confirmed: { label: "Confirmed", className: "bg-sage/[0.08] text-sage ring-sage/20" },
+  confirmed: { label: "Confirmed", className: "bg-success/[0.08] text-success ring-success/20" },
   confirm: { label: "Needs confirmation", className: "bg-caution/10 text-caution ring-caution/30" },
   now: { label: "Happening now", className: "bg-brand text-on-brand ring-brand" },
   completed: { label: "Completed", className: "bg-ink/[0.06] text-charcoal ring-ink/10" },
@@ -22,7 +22,7 @@ export function InterviewStatus({ interview, className }: { interview: Candidate
   return (
     <span
       className={cn(
-        "inline-flex h-6 shrink-0 items-center rounded-[6px] px-2 text-xs font-medium whitespace-nowrap ring-1 ring-inset",
+        "inline-flex h-6 shrink-0 items-center rounded-full px-2.5 text-xs font-medium whitespace-nowrap ring-1 ring-inset",
         style.className,
         className,
       )}

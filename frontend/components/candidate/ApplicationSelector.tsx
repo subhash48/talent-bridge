@@ -236,7 +236,7 @@ function ApplicationCard({ application, selected, tabbable, onSelect }: Applicat
       className={cn(
         "relative flex w-[16.5rem] shrink-0 snap-start items-center gap-3 rounded-[16px] py-3 pr-8 pl-3 text-left transition-[background-color,box-shadow] duration-200 focus-visible:ring-4 focus-visible:ring-accent/60 focus-visible:outline-none",
         selected
-          ? "bg-overlay shadow-soft ring-2 ring-brand"
+          ? "bg-overlay shadow-soft ring-2 ring-accent"
           : "bg-surface-raised/70 ring-1 ring-ink/[0.07] hover:bg-overlay hover:ring-ink/15",
       )}
     >

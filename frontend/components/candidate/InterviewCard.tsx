@@ -62,7 +62,7 @@ export function InterviewCard({ interview, company, onConfirm, confirming }: Int
           {interview.interviewers.length > 0 && <span>With {interview.interviewers.join(", ")}</span>}
         </div>
         {interview.confirmedAt && interview.upcoming && (
-          <p className="mt-3 inline-flex items-center gap-1.5 text-[13px] text-sage">
+          <p className="mt-3 inline-flex items-center gap-1.5 text-[13px] text-success">
             <CircleCheck aria-hidden className="size-4" /> You confirmed this interview. The team knows you’re coming.
           </p>
         )}

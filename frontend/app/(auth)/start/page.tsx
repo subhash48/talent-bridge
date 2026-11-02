@@ -96,10 +96,10 @@ export default async function GetStartedPage({ searchParams }: Props) {
           ))}
         </ul>
 
-        <p className="sky-card mt-9 rounded-full px-5 py-2.5 text-[15px] text-charcoal">
+        <p className="sky-card mt-8 rounded-full px-5 py-2.5 text-[15px] text-charcoal">
           Already have an account?{" "}
-          <Link href="/signin" className="font-medium text-brand-ink underline underline-offset-4 transition-colors hover:text-ink">
-            Sign in
+          <Link href="/signin" className="font-semibold text-brand-ink underline underline-offset-4 transition-colors hover:text-ink">
+            Log in
           </Link>
         </p>
       </main>

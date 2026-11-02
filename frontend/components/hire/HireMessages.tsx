@@ -64,7 +64,7 @@ export function HireMessages({
   return (
     <div>
       <h1
-        className={cn("text-[28px] font-semibold tracking-tight text-ink sm:text-[32px]", active && "hidden md:block")}
+        className={cn("text-[24px] font-semibold tracking-tight text-ink sm:text-[28px]", active && "hidden md:block")}
       >
         Messages
       </h1>

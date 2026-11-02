@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 const TONES = {
   error: "border-danger/25 bg-danger/[0.07] text-danger",
-  success: "border-sage/25 bg-sage/[0.07] text-sage",
+  success: "border-success/25 bg-success/[0.07] text-success",
   info: "border-brand-ink/25 bg-brand-soft text-ink",
 } as const;
 
@@ -12,7 +12,7 @@ export function AuthAlert({ tone = "error", children }: { tone?: keyof typeof TO
   return (
     <div
       role={tone === "error" ? "alert" : "status"}
-      className={cn("rounded-[8px] border px-3 py-2.5 text-sm leading-relaxed", TONES[tone])}
+      className={cn("rounded-[12px] border px-3.5 py-2.5 text-sm leading-relaxed", TONES[tone])}
     >
       {children}
     </div>

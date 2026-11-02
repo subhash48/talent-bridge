@@ -96,7 +96,7 @@ export function DemoJobsSection({ jobs, error }: DemoJobsSectionProps) {
       <h2 id="demo-jobs-heading" className="flex flex-wrap items-center gap-2 text-base font-semibold tracking-tight text-ink">
         <FlaskConical aria-hidden className="size-4 text-stone" />
         Demo jobs
-        <span className="inline-flex h-6 items-center rounded-[6px] bg-caution/10 px-2 text-xs font-medium text-caution ring-1 ring-caution/30 ring-inset">
+        <span className="inline-flex h-6 items-center rounded-full bg-caution/10 px-2.5 text-xs font-medium text-caution ring-1 ring-caution/30 ring-inset">
           Development demo
         </span>
       </h2>

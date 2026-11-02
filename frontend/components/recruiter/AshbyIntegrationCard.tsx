@@ -13,7 +13,7 @@ import { errorMessage } from "@/services/api";
 import { getAshbyStatus, syncAshby, type AshbyStatus } from "@/services/portal-access";
 
 const STATE: Record<AshbyStatus["status"], { label: string; className: string }> = {
-  connected: { label: "Connected", className: "bg-sage/10 text-sage ring-sage/20" },
+  connected: { label: "Connected", className: "bg-success/10 text-success ring-success/20" },
   disconnected: { label: "Not connected", className: "bg-ink/[0.06] text-stone ring-ink/10" },
   error: { label: "Needs attention", className: "bg-caution/10 text-caution ring-caution/30" },
 };
@@ -45,7 +45,7 @@ export function AshbyIntegrationCard() {
           <Workflow aria-hidden className="size-4" /> Ashby
         </h2>
         {data && (
-          <span className={cn("inline-flex h-6 items-center justify-center rounded-[6px] px-2 text-xs font-medium whitespace-nowrap ring-1 ring-inset", STATE[data.status].className)}>
+          <span className={cn("inline-flex h-6 items-center justify-center rounded-full px-2.5 text-xs font-medium whitespace-nowrap ring-1 ring-inset", STATE[data.status].className)}>
             {STATE[data.status].label}
           </span>
         )}

@@ -32,7 +32,7 @@ type StyleOptions = { variant?: ButtonVariant; size?: ButtonSize; className?: st
 /** Button classes, also used to style links that look like buttons. */
 export function buttonStyles({ variant = "primary", size = "md", className }: StyleOptions = {}) {
   return cn(
-    "inline-flex shrink-0 items-center justify-center font-medium whitespace-nowrap transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out select-none active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0",
+    "inline-flex shrink-0 items-center justify-center font-semibold whitespace-nowrap transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out select-none active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0",
     VARIANTS[variant],
     SIZES[size],
     className,

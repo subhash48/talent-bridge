@@ -21,20 +21,20 @@ type AuthCardProps = {
 export function AuthCard({ title, description, children, footer, wide }: AuthCardProps) {
   return (
     <div className="sky-backdrop flex min-h-dvh">
-      <aside className="brand-backdrop relative hidden w-[44%] max-w-[640px] shrink-0 flex-col justify-between overflow-hidden p-12 lg:flex xl:p-16">
-        <HirvelloMark tone="dark" aria-hidden className="pointer-events-none absolute -right-24 -bottom-24 h-[520px] opacity-[0.12]" />
+      <aside className="brand-backdrop relative hidden w-[42%] max-w-[600px] shrink-0 flex-col justify-between overflow-hidden p-10 lg:flex xl:p-14">
+        <HirvelloMark tone="dark" aria-hidden className="pointer-events-none absolute -right-20 -bottom-20 h-[440px] opacity-[0.12]" />
         <Link href="/" aria-label="Hirvello home" className="relative w-fit rounded-md">
           <HirvelloLogo tone="dark" />
         </Link>
         <div className="relative max-w-md">
-          <p className="flex items-center gap-2 text-[11.5px] font-medium tracking-[0.22em] text-on-brand/80 uppercase">
+          <p className="flex items-center gap-2 text-[12px] font-semibold tracking-[0.18em] text-on-brand/80 uppercase">
             <span aria-hidden className="size-1.5 rounded-full bg-sky" />
             Less noise. More signal.
           </p>
-          <p className="mt-5 text-[clamp(30px,2.8vw,44px)] leading-[1.04] font-medium tracking-[-0.04em] text-on-brand">
-            Hiring shouldn&apos;t feel like a <em className="font-serif font-normal text-sky italic">black box.</em>
+          <p className="mt-4 text-[clamp(26px,2.3vw,36px)] leading-[1.12] font-bold tracking-[-0.025em] text-on-brand">
+            Hiring shouldn&apos;t feel like a <span className="text-sky">black box.</span>
           </p>
-          <p className="mt-5 text-[16px] leading-relaxed text-on-brand/85">
+          <p className="mt-4 text-[16px] leading-relaxed text-on-brand/85">
             Hirvello finds the real candidates and keeps recruiters and candidates informed throughout hiring.
           </p>
         </div>

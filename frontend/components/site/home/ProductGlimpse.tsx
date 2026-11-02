@@ -25,19 +25,19 @@ const TODAY = [
 export function ProductGlimpse() {
   return (
     <HomeSection id="product" eyebrow="The product" title="A hiring system that keeps its word." intro="Everything Hirvello does is in service of one promise: nobody in your hiring process is left guessing.">
-      <div className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-[1.05fr_1fr] lg:gap-8">
-        <figure aria-hidden className="reveal sky-card rounded-[28px] p-3 sm:p-4">
-          <div className="rounded-[20px] bg-glass-strong p-5 ring-1 ring-ink/[0.05] sm:p-6">
+      <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-[1.05fr_1fr] lg:gap-8">
+        <figure aria-hidden className="reveal sky-card rounded-[20px] p-2.5 sm:p-3">
+          <div className="rounded-[14px] bg-glass-strong p-4 ring-1 ring-ink/[0.05] sm:p-5">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <p className="text-[22px] font-semibold tracking-[-0.03em] text-ink">Today</p>
-                <p className="mt-1 text-[13px] text-stone">3 candidates need an update from you</p>
+                <p className="text-[20px] font-semibold tracking-[-0.02em] text-ink">Today</p>
+                <p className="mt-0.5 text-[13px] text-stone">3 candidates need an update from you</p>
               </div>
-              <span className="rounded-full bg-accent-soft px-2.5 py-1 text-[12px] font-medium text-brand-ink">2 drafts ready</span>
+              <span className="rounded-full bg-accent-soft px-2.5 py-1 text-[12px] font-semibold text-brand-ink">2 drafts ready</span>
             </div>
-            <ul className="mt-5 flex flex-col gap-2.5">
+            <ul className="mt-4 flex flex-col gap-2">
               {TODAY.map((row) => (
-                <li key={row.name} className="flex items-center gap-3 rounded-[16px] bg-overlay/80 p-3.5 ring-1 ring-ink/[0.05]">
+                <li key={row.name} className="flex items-center gap-3 rounded-[12px] bg-overlay/80 p-3 ring-1 ring-ink/[0.05]">
                   <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[12px] font-semibold text-brand-ink">
                     {row.name
                       .split(" ")
@@ -46,7 +46,7 @@ export function ProductGlimpse() {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-baseline gap-2">
-                      <span className="truncate text-[14px] font-medium text-ink">{row.name}</span>
+                      <span className="truncate text-[14px] font-semibold text-ink">{row.name}</span>
                       <span className="truncate text-[12px] text-stone">{row.role}</span>
                     </span>
                     <span className="mt-0.5 block truncate text-[12.5px] text-caution">{row.reason}</span>

@@ -12,7 +12,7 @@ export function EmailDeliveryCard({ status }: { status: EmailDeliveryStatus | nu
       </h2>
       {status?.configured ? (
         <>
-          <p className="mt-3.5 flex items-center gap-2 text-sm font-medium text-sage">
+          <p className="mt-3.5 flex items-center gap-2 text-sm font-medium text-success">
             <CircleCheck aria-hidden className="size-4" /> On
           </p>
           <p className="mt-1.5 text-sm leading-relaxed text-stone">
@@ -30,8 +30,8 @@ export function EmailDeliveryCard({ status }: { status: EmailDeliveryStatus | nu
             Approved messages reach the candidate portal, and candidates get nothing in their inbox. To email them too, set
             these in <code className="text-charcoal">backend/.env</code> and restart the API:
           </p>
-          <pre className="mt-3 overflow-x-auto rounded-[8px] bg-ink/[0.04] p-3 text-xs leading-relaxed text-charcoal ring-1 ring-ink/10">
-            {"RESEND_API_KEY=re_...\nEMAIL_FROM=Kavuntra <updates@yourcompany.com>"}
+          <pre className="mt-3 overflow-x-auto rounded-[12px] bg-ink/[0.04] p-3 text-xs leading-relaxed text-charcoal ring-1 ring-ink/10">
+            {"RESEND_API_KEY=re_...\nEMAIL_FROM=Hirvello <updates@yourcompany.com>"}
           </pre>
           <p className="mt-2 text-xs text-faint">The sender&apos;s domain must be verified in Resend.</p>
         </>

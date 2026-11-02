@@ -96,7 +96,7 @@ export function WorkspaceSettingsCard({ workspace }: { workspace: Workspace }) {
           </p>
         </fieldset>
         {error && <p className="text-sm text-danger">{error}</p>}
-        {saved && !error && <p className="text-sm text-sage">Saved.</p>}
+        {saved && !error && <p className="text-sm text-success">Saved.</p>}
         {can ? (
           <div>
             <Button type="submit" disabled={pending || !name.trim()}>

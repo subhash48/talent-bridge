@@ -20,7 +20,7 @@ const SIGN_IN_PATH = "/login?next=/candidate";
 const PORTAL_PATH = "/candidate";
 
 const TONES = {
-  positive: "bg-sage/[0.08] text-sage ring-sage/25",
+  positive: "bg-success/[0.08] text-success ring-success/25",
   ai: "bg-brand-soft text-brand-ink ring-brand-ink/25",
   attention: "bg-caution/10 text-caution ring-caution/30",
 } as const;
@@ -97,7 +97,7 @@ export function ApplyResultCard({ site = "demo", result, problem, retrying, stil
             <>
               <p>
                 Your application for {job}
-                {result.company ? <> at {result.company}</> : null} has been submitted. You already have a Kavuntra
+                {result.company ? <> at {result.company}</> : null} has been submitted. You already have a Hirvello
                 account: sign in with the link we&apos;ve emailed to {email} to follow updates from the hiring team.
               </p>
               <p className="text-sm text-stone">
@@ -108,7 +108,7 @@ export function ApplyResultCard({ site = "demo", result, problem, retrying, stil
           ) : (
             <>
               <p>
-                Your application has been submitted. Create your Kavuntra password to follow updates from the
+                Your application has been submitted. Create your Hirvello password to follow updates from the
                 hiring team.
               </p>
               <p>

@@ -242,7 +242,7 @@ export function CandidatesWorkspace({ greeting, initialCandidateId, initialView,
         <div>
           <h1 className="text-ink">
             <span className="block text-base leading-6 text-stone sm:text-lg sm:leading-6">{greeting},</span>
-            <span className="mt-0.5 block text-[30px] leading-[1.05] font-semibold tracking-[-0.03em] sm:text-[38px]">
+            <span className="mt-0.5 block text-[26px] leading-[1.1] font-semibold tracking-[-0.02em] sm:text-[32px]">
               {firstName(user.name)}
             </span>
           </h1>

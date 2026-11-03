@@ -14,7 +14,13 @@ const LINES: Record<string, string> = {
 /** The three ways in: recruiters, candidates and small businesses, each a card that is the link to its page. */
 export function Audiences() {
   return (
-    <HomeSection id="solutions" eyebrow="Who it's for" title="One product. Three ways in." intro="The same records on every side, so a change on one side shows on the other.">
+    <HomeSection
+      id="solutions"
+      size="wide"
+      eyebrow="Who it's for"
+      title="One product. Three ways in."
+      intro="The right workspace for every side of hiring."
+    >
       <ul className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3">
         {SOLUTIONS.map(({ href, short, text, icon: Icon }) => (
           <li key={href} className="reveal flex">

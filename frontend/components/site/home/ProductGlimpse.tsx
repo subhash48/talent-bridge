@@ -64,13 +64,13 @@ export function ProductGlimpse() {
           </div>
         </figure>
 
-        <ul className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2">
           {FEATURES.map(({ icon: Icon, title, text }) => (
             <li key={title} className="reveal grid grid-cols-[auto_1fr] gap-x-4">
               <Icon aria-hidden className="mt-0.5 size-6 text-accent" strokeWidth={1.75} />
               <div>
-                <h3 className="text-[16px] leading-snug font-semibold text-ink">{title}</h3>
-                <p className="mt-1 text-[14px] leading-relaxed text-charcoal">{text}</p>
+                <h3 className="text-xl font-semibold text-balance text-ink">{title}</h3>
+                <p className="mt-2 text-base text-pretty text-charcoal">{text}</p>
               </div>
             </li>
           ))}

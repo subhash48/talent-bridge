@@ -222,12 +222,32 @@ async function website(browser) {
 
   await page.goto(`${WEB}/for-small-businesses`);
   check("small business page", await page.getByRole("heading", { name: "Hiring shouldn't require learning recruiting software." }).isVisible());
+  const hireSteps = (await page.locator("#small-business ol > li p:first-child").allInnerTexts()).join(" | ");
+  check("small business: four steps, in order", hireSteps === "Post a job | See who applied | Contact the ones you like | Set up an interview", hireSteps);
   await page.goto(`${WEB}/for-candidates`);
-  check("candidates page", await page.getByRole("heading", { name: "One place for your hiring journey." }).isVisible());
+  check("candidates page", await page.getByRole("heading", { name: "Know where every application stands." }).isVisible());
+  check("candidates: the example is labelled as one", await page.getByText(/^An example account\./).isVisible());
   await page.goto(`${WEB}/for-recruiters`);
   check("recruiters page", await page.getByRole("heading", { name: "A workspace that keeps every candidate informed." }).isVisible());
+  for (const group of ["Your pipeline", "Nobody left waiting", "Help along the way"]) {
+    check(`recruiters: ${group}`, await page.getByRole("heading", { name: group, exact: true }).isVisible());
+  }
   await page.goto(`${WEB}/about`);
-  check("about page", await page.getByRole("heading", { name: "Making hiring more human." }).isVisible());
+  check("about page", await page.getByRole("heading", { name: "Hiring shouldn't go quiet." }).isVisible());
+  await page.goto(`${WEB}/product`);
+  check("product page", await page.getByRole("heading", { name: "What Hirvello does." }).isVisible());
+  check("product: five numbered rows, each with its audience's page", (await page.locator("#product ol > li").count()) === 5 && (await page.locator('#product ol a[href^="/for-"]').count()) === 5);
+  await page.goto(`${WEB}/about/careers`);
+  check("company careers page", await page.getByRole("heading", { name: "Help hiring stop going quiet." }).isVisible());
+  // The section labels are plain words now: no glowing dot beside them anywhere past the hero, on any page.
+  for (const path of ["/", "/product", "/for-recruiters", "/pricing"]) {
+    await page.goto(`${WEB}${path}`);
+    check(`${path}: no dotted labels`, (await page.locator("main section:not([aria-labelledby=hero-title]) p > span[class~=\"size-1.5\"].bg-accent").count()) === 0);
+  }
+  await page.keyboard.press("Tab");
+  check("skip link comes first and lands on the page", (await page.evaluate(() => document.activeElement?.textContent)) === "Skip to content");
+  await page.keyboard.press("Enter");
+  check("skip link target", page.url().endsWith("#main") && (await page.locator("main#main").count()) === 1);
   await page.goto(`${WEB}/start`);
   check("Get started asks how you'll use it", await page.getByRole("heading", { name: /get started/i }).isVisible());
   check("Get started offers three ways in", (await page.locator('main a[href^="/signup"]').count()) === 3);

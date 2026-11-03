@@ -25,7 +25,7 @@ const ROLES: { href: string; icon: LucideIcon; who: string; title: string; text:
     href: "/signup/employer?mode=full",
     icon: Users,
     who: "I'm hiring",
-    title: "Recruiter / Employer",
+    title: "Recruiter or employer",
     text: "A workspace for your pipeline, with every candidate kept informed.",
     action: "Continue as a recruiter",
   },

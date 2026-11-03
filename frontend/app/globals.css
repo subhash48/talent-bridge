@@ -241,7 +241,8 @@
 /*
  * How it works' own sky, as in its reference: soft blue at the top left deepening to periwinkle at the lower right
  * (#E4EEFF, #C9DEFF, #B6D0FF, #9FBFFF), a little light at the top, and faded out at its foot into the page's sky
- * so the next section doesn't start at an edge. It sits behind the section on a layer of its own.
+ * so the next section doesn't start at an edge. It sits behind the section on a layer of its own. Who it's for
+ * shares it, faded in at its top as well (--sky-mask), so the two sections read as one stretch of the page.
  */
 @utility steps-sky {
   position: relative;

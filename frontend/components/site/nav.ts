@@ -1,10 +1,10 @@
 import { Store, UserRound, Users, type LucideIcon } from "lucide-react";
 
 /*
- * The public website's places. The header shows Home, Product, How it works and Pricing, then Log in and Sign up;
- * the footer spells everything out: the solutions (For you), the company, the policies, and where to follow
- * Hirvello. Careers here is working at Hirvello: /careers itself is the job board, the open roles of the companies
- * hiring with Hirvello, which keeps its route.
+ * The public website's places. The header shows Home, Product, How it works and Pricing, then Log in, Book a demo
+ * and Sign up; the footer spells everything out: the solutions (For you), the company, the policies, and where to
+ * follow Hirvello. Careers here is working at Hirvello: /careers itself is the job board, the open roles of the
+ * companies hiring with Hirvello, which keeps its route.
  */
 
 export const HOME_LINK = { href: "/", label: "Home" } as const;
@@ -49,3 +49,6 @@ export const POLICY_LINKS = [
  */
 export const LOGIN_LINK = { href: "/signin", label: "Log in" } as const;
 export const SIGNUP_LINK = { href: "/start", label: "Sign up" } as const;
+
+/** Book a demo: a request to the team (the contact form, set to the pilot topic), since there's no calendar behind the site. */
+export const DEMO_LINK = { href: "/book-a-demo", label: "Book a demo" } as const;

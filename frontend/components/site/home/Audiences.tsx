@@ -17,6 +17,7 @@ export function Audiences() {
     <HomeSection
       id="solutions"
       size="wide"
+      className="steps-sky [--sky-mask:linear-gradient(to_bottom,transparent_0%,#000_18%,#000_82%,transparent_100%)]"
       eyebrow="Who it's for"
       title="One product. Three ways in."
       intro="The right workspace for every side of hiring."

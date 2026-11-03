@@ -7,7 +7,7 @@ import { SIGNUP_LINK } from "@/components/site/nav";
 
 /** What a walkthrough covers: only what the product does today. */
 const SHOWN = [
-  "How candidates are matched on the job-related criteria you choose, with the reasons shown and never a score.",
+  "How candidates are matched only on criteria about the job that you choose, with the reasons shown and never a score.",
   "The messages, drafts and interview scheduling that keep every candidate informed of where they stand.",
   "Simple Hire, for a business that posts a job by describing it and talks to who applied.",
 ];
@@ -35,7 +35,7 @@ export function DemoSection({ email }: { email: string | null }) {
               {SHOWN.map((line) => (
                 <li key={line} className="flex gap-3">
                   <span aria-hidden className="mt-[9px] size-1.5 shrink-0 rounded-full bg-accent" />
-                  <span>{line}</span>
+                  <span className="text-pretty">{line}</span>
                 </li>
               ))}
             </ul>

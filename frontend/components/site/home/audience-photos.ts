@@ -15,4 +15,10 @@ export const AUDIENCE_PHOTOS: Record<string, AudiencePhoto> = {
     source: "https://unsplash.com/photos/diverse-group-of-people-in-a-modern-office-meeting-5V6KbvRcnV8",
     photographer: "Vitaly Gariev",
   },
+  "/for-candidates": {
+    src: "/images/who-its-for/candidates.jpg",
+    alt: "A person working on a laptop at a desk, among plants in a shared office",
+    source: "https://unsplash.com/photos/young-woman-working-on-a-laptop-in-an-office-272ClcPZ2Qs",
+    photographer: "Vitaly Gariev",
+  },
 };

@@ -35,7 +35,7 @@ export function ProductGlimpse() {
       title="A hiring system that keeps its word."
       intro="Everything Hirvello does is in service of one promise: nobody in your hiring process is left guessing."
     >
-      <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-[1.05fr_1fr] lg:gap-8">
+      <div className="mt-12 grid grid-cols-1 items-center gap-12 lg:mt-14 lg:grid-cols-[52fr_48fr] lg:gap-10 xl:gap-12">
         <figure className="reveal rounded-[20px] bg-accent-soft/55 p-3 ring-1 ring-accent-soft/80 sm:p-4">
           <div className="relative overflow-hidden rounded-[14px]">
             <Image
@@ -64,7 +64,7 @@ export function ProductGlimpse() {
           </div>
         </figure>
 
-        <ul className="grid grid-cols-1 gap-x-8 gap-y-6 self-center sm:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
           {FEATURES.map(({ icon: Icon, title, text }) => (
             <li key={title} className="reveal flex gap-3.5">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-accent-soft text-brand-ink ring-1 ring-accent/10">

@@ -24,7 +24,12 @@ const PHOTO = {
   alt: "Four colleagues smiling around a laptop at a wooden table in a bright office",
 };
 
-/** The product, glimpsed: a still of Today beside what Hirvello does, feature by feature. */
+/**
+ * The product: a photograph of a team at work, with a small still of Today on it, beside what Hirvello does in four
+ * features, straight on the sky (shared with How it works and Who it's for, faded in and out at the edges). The
+ * still is a picture, not the app: it shows the shape of Today and reads no one's data. Photo first and features
+ * in one column on a phone, two columns from sm, side by side (52 / 48) from lg.
+ */
 export function ProductGlimpse() {
   return (
     <HomeSection

@@ -22,23 +22,17 @@ export function Audiences() {
       title="One product. Three ways in."
       intro="The right workspace for every side of hiring."
     >
-      <ul className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3">
-        {SOLUTIONS.map(({ href, short, text, icon: Icon }) => (
-          <li key={href} className="reveal flex">
+      <ul className="mt-12 grid grid-cols-1 gap-12 lg:mt-14 lg:grid-cols-3 lg:gap-6 xl:gap-8">
+        {SOLUTIONS.map(({ href, short }) => (
+          <li key={href} className="reveal mx-auto w-full max-w-[520px] lg:max-w-none">
+            <h3 className="px-1 text-[clamp(22px,1.8vw,26px)] leading-tight font-bold tracking-[-0.02em] text-ink">{short}</h3>
+            <p className="mt-2 px-1 text-[16px] leading-relaxed text-charcoal">{LINES[href]}</p>
             <Link
               href={href}
-              className="group sky-card flex w-full flex-col rounded-[18px] p-5 transition-[transform,background-color] duration-200 hover:-translate-y-0.5 hover:bg-glass-strong sm:p-6"
+              className="group mt-3 ml-1 inline-flex items-center gap-1.5 rounded-md text-[16px] font-semibold text-brand-ink transition-colors duration-200 hover:text-ink"
             >
-              <span className="flex size-9 items-center justify-center rounded-[10px] bg-accent-soft text-brand-ink ring-1 ring-accent/10">
-                <Icon aria-hidden className="size-[18px]" strokeWidth={1.75} />
-              </span>
-              <span className="mt-5 text-[18px] leading-snug font-semibold tracking-[-0.015em] text-ink">{short}</span>
-              <span className="mt-1 text-[14px] text-stone">{text}</span>
-              <span className="mt-3 text-[15px] leading-relaxed text-charcoal">{LINES[href]}</span>
-              <span className="mt-5 inline-flex items-center gap-1.5 text-[14px] font-semibold text-brand-ink">
-                Learn more
-                <ArrowRight aria-hidden className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-              </span>
+              Learn more
+              <ArrowRight aria-hidden className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
             </Link>
           </li>
         ))}

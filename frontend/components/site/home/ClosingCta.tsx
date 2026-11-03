@@ -15,7 +15,7 @@ export function ClosingCta() {
         <p className="mx-auto mt-3 max-w-[46ch] text-[16px] leading-relaxed text-pretty text-charcoal sm:text-[17px]">
           Explore Hirvello and find the right people for your team.
         </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
+        <div className="mx-auto mt-7 flex max-w-[320px] flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
           <Link href={SIGNUP_LINK.href} className={buttonStyles({ size: "lg", className: "group px-6" })}>
             Get started
             <ArrowRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5" />

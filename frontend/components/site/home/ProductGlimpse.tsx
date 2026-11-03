@@ -25,6 +25,7 @@ export function ProductGlimpse() {
     <HomeSection
       id="product"
       size="wide"
+      className="steps-sky [--sky-mask:linear-gradient(to_bottom,transparent_0%,#000_18%,#000_82%,transparent_100%)]"
       eyebrow="The product"
       title="A hiring system that keeps its word."
       intro="Everything Hirvello does is in service of one promise: nobody in your hiring process is left guessing."

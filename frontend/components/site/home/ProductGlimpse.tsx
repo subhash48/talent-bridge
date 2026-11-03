@@ -76,10 +76,10 @@ export function ProductGlimpse() {
           ))}
         </ul>
       </div>
-      <div className="mt-10 flex justify-center">
+      <div className="mt-12 flex justify-center">
         <Link href="/product" className={buttonStyles({ variant: "secondary", size: "lg", className: "group" })}>
           See the whole product
-          <ArrowRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5" />
+          <ArrowRight aria-hidden className="transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-0.5" />
         </Link>
       </div>
     </HomeSection>

@@ -4,7 +4,10 @@ import Link from "next/link";
 import { DEMO_LINK, SIGNUP_LINK } from "@/components/site/nav";
 import { buttonStyles } from "@/components/ui/Button";
 
-/** The home page's last word: one invitation, two ways to take it. */
+/**
+ * The home page's last word, just above the footer: one line, one sentence and two ways in, straight on the page's
+ * sky with no card around it. Get started is the sign-up (/start); Book a demo is the request to the team.
+ */
 export function ClosingCta() {
   return (
     <section aria-labelledby="closing-title" className="px-5 sm:px-8">

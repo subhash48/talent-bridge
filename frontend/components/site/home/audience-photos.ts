@@ -21,4 +21,10 @@ export const AUDIENCE_PHOTOS: Record<string, AudiencePhoto> = {
     source: "https://unsplash.com/photos/young-woman-working-on-a-laptop-in-an-office-272ClcPZ2Qs",
     photographer: "Vitaly Gariev",
   },
+  "/for-small-businesses": {
+    src: "/images/who-its-for/small-business.jpg",
+    alt: "Two café workers in aprons smiling behind their counter",
+    source: "https://unsplash.com/photos/two-cafe-workers-standing-behind-a-counter-uRnRa8XXtrI",
+    photographer: "Vitaly Gariev",
+  },
 };

@@ -154,8 +154,8 @@ async function website(browser) {
   check("closing: no card, no beta label", (await closing.locator(".sky-card, .glass").count()) === 0 && (await closing.getByText(/beta is open/i).count()) === 0);
   const footer = page.getByRole("contentinfo");
   await footer.scrollIntoViewIfNeeded();
-  check("footer invitation", await footer.getByRole("heading", { name: "Better hiring starts here." }).isVisible());
-  check("footer: Get started signs up", (await footer.getByRole("link", { name: "Get started" }).getAttribute("href")) === "/start");
+  // The home page ends on its closing line alone: the footer's own invitation is left off here (it stays on the other pages).
+  check("home: one closing invitation", (await page.getByText("Better hiring starts here.").count()) === 0 && (await footer.getByRole("link", { name: "Get started" }).count()) === 0);
   const footerLinks = {
     Product: "/product",
     "How it works": "/#how-it-works",
@@ -219,6 +219,9 @@ async function website(browser) {
   await page.goto(`${WEB}/pricing`);
   check("pricing page", await page.getByRole("heading", { name: "Free while we're in beta." }).isVisible());
   check("pricing names no price", !(await page.locator("main").innerText()).match(/\$\s?\d/));
+  const pageFooter = page.getByRole("contentinfo");
+  check("other pages keep the footer invitation", await pageFooter.getByRole("heading", { name: "Better hiring starts here." }).isVisible());
+  check("footer: Get started signs up", (await pageFooter.getByRole("link", { name: "Get started" }).getAttribute("href")) === "/start");
 
   await page.goto(`${WEB}/for-small-businesses`);
   check("small business page", await page.getByRole("heading", { name: "Hiring shouldn't require learning recruiting software." }).isVisible());

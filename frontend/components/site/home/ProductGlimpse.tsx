@@ -46,6 +46,21 @@ export function ProductGlimpse() {
               sizes="(min-width: 1280px) 620px, (min-width: 1024px) 50vw, 100vw"
               className="aspect-[3/2] w-full object-cover"
             />
+            {/* A still of Today, over the table and clear of everyone's face: a small chip in the corner on a phone, a
+                card from sm. Its corner follows the photo's (14px less the inset). Decorative: the features say it. */}
+            <div
+              aria-hidden
+              className="absolute bottom-2 left-2 w-fit rounded-md bg-accent-soft/85 px-3 py-2 ring-1 ring-white/60 backdrop-blur-md sm:bottom-4 sm:left-4 sm:w-[min(15rem,60%)] sm:rounded-xl sm:px-4 sm:py-3"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-base font-medium text-ink sm:text-lg">Today</p>
+                <span className="flex items-center gap-1">
+                  <span className="size-2 rounded-full bg-accent" />
+                  <span className="size-2 rounded-full bg-accent-soft ring-1 ring-accent/50" />
+                </span>
+              </div>
+              <p className="text-xs text-charcoal sm:text-sm">3 updates to review</p>
+            </div>
           </div>
         </figure>
 

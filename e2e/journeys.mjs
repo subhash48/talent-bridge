@@ -141,6 +141,10 @@ async function website(browser) {
   for (const title of ["Communication gaps, noticed", "Updates, drafted", "An assistant that does the work", "Every application, followed"]) {
     check(`product: ${title}`, await product.getByRole("heading", { name: title, exact: true }).isVisible());
   }
+  await product.locator("img").scrollIntoViewIfNeeded();
+  check("product: the photo loads, described", await product.locator("img").evaluate((i) => i.complete && i.naturalWidth > 0 && i.alt.length > 20));
+  check("product: the still of Today", (await product.getByText("Today", { exact: true }).isVisible()) && (await product.getByText("3 updates to review").isVisible()));
+  check("product: no sample candidates", (await product.getByText(/Priya Nair|Marcus Lee|Sofia Alvarez/).count()) === 0);
   const footer = page.getByRole("contentinfo");
   await footer.scrollIntoViewIfNeeded();
   check("footer invitation", await footer.getByRole("heading", { name: "Better hiring starts here." }).isVisible());

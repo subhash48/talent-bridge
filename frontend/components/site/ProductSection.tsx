@@ -1,77 +1,83 @@
-import { ArrowRight, ListChecks, MessageSquareText, NotebookPen, Radar, Store, type LucideIcon } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
-import { FeatureIcon, Section } from "@/components/site/Section";
+import { Section } from "@/components/site/Section";
 import { buttonStyles } from "@/components/ui/Button";
 
 // What Hirvello does, in the order it happens to a hire: the gap is noticed, the update drafted, the candidate kept
 // in the picture and prepared; and Simple Hire, the whole of it for a small business.
-const FEATURES: { icon: LucideIcon; title: string; text: string; href: string }[] = [
+const FEATURES: { title: string; text: string; href: string; more: string }[] = [
   {
-    icon: Radar,
-    title: "Communication-gap detection",
-    text: "Today shows a recruiter who is waiting on them: a stage change nobody mentioned, a question with no reply, a candidate who has heard nothing for longer than your team allows.",
+    title: "It notices who's waiting",
+    text: "Today shows a recruiter which candidates are waiting on them: a stage change nobody mentioned, a question with no reply, a silence longer than your team allows.",
     href: "/for-recruiters",
+    more: "More for recruiters",
   },
   {
-    icon: MessageSquareText,
-    title: "Personalized recruiter updates",
-    text: "For the people a recruiter picks, one message each, drafted from that candidate's own application. The recruiter reviews it; nothing is sent until they approve.",
+    title: "It drafts the update",
+    text: "For each candidate a recruiter picks, one message written from that person's own application. The recruiter reads it first, and nothing goes out until they approve.",
     href: "/for-recruiters",
+    more: "More for recruiters",
   },
   {
-    icon: ListChecks,
-    title: "Candidate application tracking",
-    text: "Candidates follow every application in one portal: where it stands, what comes next, their messages and their interviews.",
+    title: "Candidates see where they stand",
+    text: "One portal for every application: the stage it's at, what comes next, the messages and the interviews.",
     href: "/for-candidates",
+    more: "More for candidates",
   },
   {
-    icon: NotebookPen,
-    title: "AI interview preparation",
-    text: "Before an interview, the portal helps the candidate prepare for that role and that stage, so they arrive ready rather than guessing.",
+    title: "Help before the interview",
+    text: "Before an interview, the portal helps the candidate prepare for that role and that stage, so they don't walk in guessing.",
     href: "/for-candidates",
+    more: "More for candidates",
   },
   {
-    icon: Store,
-    title: "Simple Hire for small businesses",
+    title: "Simple Hire, for small employers",
     text: "Say who you need, typed or out loud, and Simple Hire turns it into a job that's ready to post. Nothing is posted or sent until you've seen it and said yes.",
     href: "/for-small-businesses",
+    more: "More for small businesses",
   },
 ];
 
-/** The product, concisely: what Hirvello does, feature by feature, and where to read more about each. */
+/** The product, concisely: what Hirvello does, one numbered row each, and where to read more about it. */
 export function ProductSection() {
   return (
     <Section
       level="h1"
       id="product"
       eyebrow="Product"
-      title="One hiring experience. Two sides."
-      intro="Hirvello works on the communication layer of hiring: it notices when a conversation has gone quiet, drafts the next update for a recruiter to review, and shows each candidate where they stand and what happens next."
+      title="What Hirvello does."
+      intro="Most hiring tools manage the process. Hirvello looks after the conversation around it: it notices when one has gone quiet, drafts the next update for a recruiter to review, and shows each candidate where they stand."
     >
-      <ul className="mt-10 grid grid-cols-1 gap-x-10 gap-y-9 md:grid-cols-2">
-        {FEATURES.map(({ icon: Icon, title, text, href }) => (
-          <li key={title} className="flex gap-4">
-            <FeatureIcon>
-              <Icon aria-hidden strokeWidth={1.75} />
-            </FeatureIcon>
-            <div>
-              <h2 className="text-[18px] leading-snug font-semibold tracking-[-0.01em] text-ink">{title}</h2>
-              <p className="mt-2 text-[15px] leading-relaxed text-charcoal">{text}</p>
-              <Link href={href} className="mt-2.5 inline-flex items-center gap-1 text-[14px] font-medium text-brand-ink underline-offset-4 hover:underline">
-                Read more <ArrowRight aria-hidden className="size-3.5" />
+      <ol className="mt-12 border-t border-ink/[0.08]">
+        {FEATURES.map(({ title, text, href, more }, index) => (
+          <li key={title} className="grid gap-3 border-b border-ink/[0.08] py-7 md:grid-cols-[minmax(0,340px)_1fr] md:gap-12 md:py-8">
+            <h2 className="flex items-baseline gap-3 text-[20px] leading-snug font-semibold tracking-[-0.015em] text-balance text-ink">
+              <span aria-hidden className="text-[15px] font-semibold text-accent tabular-nums">
+                0{index + 1}
+              </span>
+              {title}
+            </h2>
+            <div className="max-w-[620px]">
+              <p className="text-[16px] leading-relaxed text-pretty text-charcoal sm:text-[17px]">{text}</p>
+              <Link
+                href={href}
+                className="group mt-3 inline-flex items-center gap-1.5 rounded-sm text-[15px] font-semibold text-brand-ink transition-colors duration-200 hover:text-ink"
+              >
+                {more}
+                <ArrowRight aria-hidden className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
               </Link>
             </div>
           </li>
         ))}
-      </ul>
+      </ol>
 
       <div className="mt-12 flex flex-wrap items-center gap-3">
         <Link href="/start" className={buttonStyles({ size: "lg", className: "group" })}>
           Get started
           <ArrowRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5" />
         </Link>
-        <Link href="/#how-it-works" className={buttonStyles({ variant: "glass", size: "lg" })}>
+        <Link href="/#how-it-works" className={buttonStyles({ variant: "secondary", size: "lg" })}>
           See how it works
         </Link>
       </div>

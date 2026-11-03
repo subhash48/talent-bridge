@@ -5,7 +5,8 @@ import { SitePage } from "@/components/site/SitePage";
 
 export const metadata: Metadata = {
   title: "Product",
-  description: "What Hirvello does: communication-gap detection, personalized recruiter updates, candidate application tracking, AI interview preparation and Simple Hire for small businesses.",
+  description:
+    "What Hirvello does: it notices which candidates are waiting, drafts the update for a recruiter to approve, shows candidates where they stand, helps them prepare, and gives small businesses Simple Hire.",
 };
 
 export default function ProductPage() {

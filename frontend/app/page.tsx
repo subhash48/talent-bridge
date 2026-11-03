@@ -31,7 +31,7 @@ export default async function Home() {
         <ProductGlimpse />
         <ClosingCta />
       </main>
-      <SiteFooter />
+      <SiteFooter invitation={false} />
     </div>
   );
 }

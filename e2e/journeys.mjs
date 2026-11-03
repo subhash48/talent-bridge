@@ -92,8 +92,16 @@ async function website(browser) {
   check("nav: no Solutions or Company menu", (await nav.getByRole("button").count()) === 0);
   const banner = page.getByRole("banner");
   check("Log in in the header", await banner.getByRole("link", { name: "Log in", exact: true }).isVisible());
+  check("Book a demo in the header", (await banner.getByRole("link", { name: /^Book a demo/ }).getAttribute("href")) === "/book-a-demo");
   check("Sign up in the header", await banner.getByRole("link", { name: "Sign up", exact: true }).isVisible());
   check("no Employer portal in the header", (await banner.getByRole("link", { name: "Employer portal" }).count()) === 0);
+  const bar = await banner.evaluate((el) => {
+    const s = getComputedStyle(el);
+    const line = [...el.querySelectorAll("div")].find((d) => getComputedStyle(d).height === "1px");
+    return { bg: s.backgroundColor, shadow: s.boxShadow, radius: getComputedStyle(el.firstElementChild).borderRadius, line: line ? getComputedStyle(line).backgroundColor : null };
+  });
+  check("header is clear on the sky, no box", bar.bg === "rgba(0, 0, 0, 0)" && bar.shadow === "none" && bar.radius === "0px", JSON.stringify(bar));
+  check("a thin line under the header", Boolean(bar.line) && bar.line !== "rgba(0, 0, 0, 0)", JSON.stringify(bar));
 
   // The home page from the top down: how it works, who it's for, the product, the invitation.
   for (const id of ["how-it-works", "solutions", "product"]) {
@@ -195,6 +203,7 @@ async function website(browser) {
   const stored = await sql("select topic, email from contact_requests order by created_at desc limit 1");
   check("contact form stored", stored[0]?.topic === "pilot" && stored[0]?.email === "priya@northwind.example");
 
+
   await page.getByRole("contentinfo").getByRole("link", { name: "Privacy" }).click();
   await page.waitForURL("**/privacy");
   check("privacy page says it's a draft", await page.getByText(/not legal advice/).isVisible());
@@ -219,7 +228,7 @@ async function website(browser) {
   check("no sideways scroll on a phone", overflow <= 1, `overflow ${overflow}px`);
   await small.getByRole("button", { name: "Open menu" }).click();
   check("phone menu opens", await small.locator("#site-menu").isVisible());
-  check("phone menu: the four places, Sign up and Log in", (await small.locator("#site-menu a").allInnerTexts()).join("|") === "Home|Product|How it works|Pricing|Sign up|Log in");
+  check("phone menu: the four places, Log in, Book a demo and Sign up", (await small.locator("#site-menu a").allInnerTexts()).join("|") === "Home|Product|How it works|Pricing|Log in|Book a demo|Sign up");
   await small.keyboard.press("Escape");
   check("phone menu closes on Escape", (await small.locator("#site-menu").count()) === 0);
   await small.getByRole("button", { name: "Open menu" }).click();

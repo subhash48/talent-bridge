@@ -1,12 +1,12 @@
 "use client";
 
-import { Menu, X } from "lucide-react";
+import { ArrowUpRight, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { HirvelloLogo } from "@/components/shared/HirvelloLogo";
-import { HOME_LINK, HOW_IT_WORKS_LINK, LOGIN_LINK, PRICING_LINK, PRODUCT_LINK, SIGNUP_LINK } from "@/components/site/nav";
+import { DEMO_LINK, HOME_LINK, HOW_IT_WORKS_LINK, LOGIN_LINK, PRICING_LINK, PRODUCT_LINK, SIGNUP_LINK } from "@/components/site/nav";
 import { buttonStyles } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +21,7 @@ const menuLinkStyles =
 
 /**
  * The public website's header: the logo on the left, Home, Product, How it works and Pricing in the middle, then
- * Log in and Sign up on the right, all straight on the sky with one thin line under them. No box, no
+ * Log in, Book a demo and Sign up on the right, all straight on the sky with one thin line under them. No box, no
  * shadow: the bar is clear, and only turns solid while its menu is open. Under lg the places fold into one menu
  * behind a button, and the bar keeps the logo, Sign up and that button.
  */
@@ -79,6 +79,10 @@ export function SiteHeader() {
           <Link href={LOGIN_LINK.href} aria-current={current(LOGIN_LINK.href)} className={cn(linkStyles, "hidden lg:inline-flex")}>
             {LOGIN_LINK.label}
           </Link>
+          <Link href={DEMO_LINK.href} aria-current={current(DEMO_LINK.href)} className={cn(linkStyles, "hidden lg:inline-flex")}>
+            {DEMO_LINK.label}
+            <ArrowUpRight aria-hidden className="size-4" strokeWidth={2} />
+          </Link>
           <Link href={SIGNUP_LINK.href} className={buttonStyles({ size: "lg", className: "px-5" })}>
             {SIGNUP_LINK.label}
           </Link>
@@ -116,6 +120,12 @@ export function SiteHeader() {
               <li>
                 <Link href={LOGIN_LINK.href} onClick={close} aria-current={current(LOGIN_LINK.href)} className={menuLinkStyles}>
                   {LOGIN_LINK.label}
+                </Link>
+              </li>
+              <li>
+                <Link href={DEMO_LINK.href} onClick={close} aria-current={current(DEMO_LINK.href)} className={menuLinkStyles}>
+                  {DEMO_LINK.label}
+                  <ArrowUpRight aria-hidden className="size-4" strokeWidth={2} />
                 </Link>
               </li>
             </ul>

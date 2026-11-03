@@ -7,6 +7,7 @@ import { Hero } from "@/components/site/home/Hero";
 import { HowItWorks } from "@/components/site/home/HowItWorks";
 import { ProductGlimpse } from "@/components/site/home/ProductGlimpse";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { SkipLink } from "@/components/site/SitePage";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { homePath } from "@/lib/auth";
 import { getSignedInUser } from "@/lib/session";
@@ -21,8 +22,9 @@ export default async function Home() {
 
   return (
     <div className="sky-backdrop flex min-h-dvh flex-col">
+      <SkipLink />
       <SiteHeader />
-      <main className="flex-1">
+      <main id="main" className="flex-1">
         <Hero />
         <HowItWorks />
         <Audiences />

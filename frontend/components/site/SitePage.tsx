@@ -3,12 +3,25 @@ import type { ReactNode } from "react";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteHeader } from "@/components/site/SiteHeader";
 
+/** The first stop for a keyboard: hidden until focused, then a pill at the top left that jumps past the header. */
+export function SkipLink() {
+  return (
+    <a
+      href="#main"
+      className="sr-only rounded-full bg-ink px-4 py-2 text-[14px] font-semibold text-on-brand focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60]"
+    >
+      Skip to content
+    </a>
+  );
+}
+
 /** A page of the public website: the floating header, the page (clear of the header) on the sky, the footer. */
 export function SitePage({ children }: { children: ReactNode }) {
   return (
     <div className="sky-backdrop flex min-h-dvh flex-col">
+      <SkipLink />
       <SiteHeader />
-      <main className="flex-1 pt-24 sm:pt-28">{children}</main>
+      <main id="main" className="flex-1 pt-24 sm:pt-28">{children}</main>
       <SiteFooter />
     </div>
   );
@@ -27,7 +40,7 @@ export function PolicyPage({ title, updated, summary, children }: PolicyPageProp
           <div className="mt-6 rounded-[14px] bg-caution/[0.06] px-5 py-4 text-sm leading-relaxed text-charcoal ring-1 ring-caution/20">
             {summary}
           </div>
-          <div className="mt-10 flex flex-col gap-8 text-[16px] leading-relaxed text-charcoal [&_h2]:text-[20px] [&_h2]:font-semibold [&_h2]:tracking-[-0.01em] [&_h2]:text-ink [&_li]:mt-1.5 [&_ul]:mt-2 [&_ul]:list-disc [&_ul]:pl-5">
+          <div className="mt-10 flex flex-col gap-8 text-[16px] leading-relaxed text-pretty text-charcoal [&_h2]:text-[20px] [&_h2]:font-semibold [&_h2]:tracking-[-0.01em] [&_h2]:text-ink [&_li]:mt-1.5 [&_ul]:mt-2 [&_ul]:list-disc [&_ul]:pl-5">
             {children}
           </div>
         </div>

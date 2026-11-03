@@ -3,7 +3,7 @@
 import { ArrowUpRight, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { HirvelloLogo } from "@/components/shared/HirvelloLogo";
 import { DEMO_LINK, HOME_LINK, HOW_IT_WORKS_LINK, LOGIN_LINK, PRICING_LINK, PRODUCT_LINK, SIGNUP_LINK } from "@/components/site/nav";
@@ -19,11 +19,21 @@ const linkStyles =
 const menuLinkStyles =
   "flex h-12 items-center gap-1 rounded-[10px] px-3 text-[16px] font-medium text-ink transition-colors hover:bg-ink/[0.04] aria-[current=page]:font-semibold";
 
+// Whether the page has scrolled under the bar. Read as an external store, so the first render on the server and in
+// the browser agree (not scrolled) and no state is set from an effect.
+const subscribeToScroll = (onChange: () => void) => {
+  window.addEventListener("scroll", onChange, { passive: true });
+  return () => window.removeEventListener("scroll", onChange);
+};
+const isScrolled = () => window.scrollY > 8;
+const isScrolledOnServer = () => false;
+
 /**
  * The public website's header: the logo on the left, Home, Product, How it works and Pricing in the middle, then
  * Log in, Book a demo and Sign up on the right, all straight on the sky with one thin line under them. No box, no
- * shadow: the bar is clear, and only turns solid while its menu is open. Under lg the places fold into one menu
- * behind a button, and the bar keeps the logo, Sign up and that button.
+ * shadow: the bar is clear at the top of the page and takes a little of the mist once the page scrolls under it, so
+ * the words stay readable. Under lg the places fold into one menu behind a button, and the bar keeps the logo,
+ * Sign up and that button.
  */
 export function SiteHeader() {
   const pathname = usePathname();
@@ -31,6 +41,7 @@ export function SiteHeader() {
   const [openOn, setOpenOn] = useState<string | null>(null);
   const open = openOn === pathname;
   const setOpen = (value: boolean) => setOpenOn(value ? pathname : null);
+  const scrolled = useSyncExternalStore(subscribeToScroll, isScrolled, isScrolledOnServer);
   const header = useRef<HTMLElement>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
   const close = () => setOpen(false);
@@ -60,7 +71,11 @@ export function SiteHeader() {
   return (
     <header
       ref={header}
-      className={cn("fixed inset-x-0 top-0 z-40 transition-[background-color] duration-200", open && "bg-canvas")}
+      className={cn(
+        "fixed inset-x-0 top-0 z-40 transition-[background-color] duration-200",
+        // Open: solid, with no blur, because a blur inside a blur shows the page through the menu in Chrome.
+        open ? "bg-canvas" : scrolled && "bg-canvas/85 backdrop-blur-xl",
+      )}
     >
       <div className="mx-auto flex h-16 w-full max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:grid lg:h-20 lg:grid-cols-[1fr_auto_1fr] xl:px-10">
         <Link href="/" className="justify-self-start rounded-md" aria-label="Hirvello home">

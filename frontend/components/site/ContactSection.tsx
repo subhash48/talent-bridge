@@ -11,8 +11,8 @@ export function ContactSection({ email }: { email: string | null }) {
       level="h1"
       id="contact"
       eyebrow="Contact"
-      title="Let's talk."
-      intro="Questions, feedback, or interested in working with Hirvello? We'd love to hear from you."
+      title="Write to the Hirvello team."
+      intro="A question, some feedback, or a pilot in mind? Send it here and someone on the team will reply by email."
     >
       <div className="mt-10 grid grid-cols-1 gap-12 lg:grid-cols-[1fr_1.6fr]">
         <div className="flex max-w-[26rem] flex-col gap-7 text-[15px] leading-relaxed text-charcoal">

@@ -132,6 +132,10 @@ async function website(browser) {
   ]) {
     check(`who it's for: ${title}`, (await ways.getByRole("heading", { name: title, exact: true }).isVisible()) && (await ways.getByText(line).isVisible()));
   }
+  for (const img of await ways.locator("img").all()) await img.scrollIntoViewIfNeeded();
+  const photos = await ways.locator("img").evaluateAll((imgs) => imgs.map((i) => ({ alt: i.alt, ok: i.complete && i.naturalWidth > 0 })));
+  check("who it's for: three photos, loaded, described", photos.length === 3 && photos.every((p) => p.ok && p.alt.length > 20), JSON.stringify(photos));
+  check("who it's for: no cards", (await ways.locator(".sky-card, .glass").count()) === 0);
   check("product glimpse", await page.getByRole("heading", { name: "A hiring system that keeps its word." }).isVisible());
   const footer = page.getByRole("contentinfo");
   await footer.scrollIntoViewIfNeeded();

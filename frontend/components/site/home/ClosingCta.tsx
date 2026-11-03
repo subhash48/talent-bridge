@@ -7,8 +7,8 @@ import { buttonStyles } from "@/components/ui/Button";
 /** The home page's last word: one invitation, two ways to take it. */
 export function ClosingCta() {
   return (
-    <section aria-labelledby="closing-title" className="px-5 pt-2 pb-16 sm:px-8 sm:pb-20">
-      <div className="mx-auto w-full max-w-[1200px] py-12 text-center sm:py-14">
+    <section aria-labelledby="closing-title" className="px-5 sm:px-8">
+      <div className="mx-auto w-full max-w-[1200px] py-10 text-center sm:py-14">
         <h2 id="closing-title" className="text-[clamp(26px,2.4vw,34px)] leading-[1.15] font-semibold tracking-[-0.02em] text-balance text-ink">
           Ready to hire with <span className="text-accent">more clarity?</span>
         </h2>

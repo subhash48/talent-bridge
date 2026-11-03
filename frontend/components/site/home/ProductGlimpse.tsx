@@ -1,4 +1,4 @@
-import { ArrowRight, CalendarClock, ListChecks, MessageSquareText, NotebookPen, Radar, Sparkles, type LucideIcon } from "lucide-react";
+import { ArrowRight, ListChecks, MessageSquareText, Radar, Sparkles, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
 import { HomeSection } from "@/components/site/home/HomeSection";
@@ -10,8 +10,6 @@ const FEATURES: { icon: LucideIcon; title: string; text: string }[] = [
   { icon: MessageSquareText, title: "Updates, drafted", text: "One message each, written from the candidate's own application. You review it; nothing is sent until you approve." },
   { icon: Sparkles, title: "An assistant that does the work", text: "Ask in your own words, typed or spoken. It drafts jobs, finds matches and proposes times, with the reasons shown." },
   { icon: ListChecks, title: "Every application, followed", text: "Candidates see where each application stands, what comes next, their messages and their interviews, in one portal." },
-  { icon: NotebookPen, title: "Interview prep, built in", text: "Before an interview, the portal helps the candidate prepare for that role and that stage." },
-  { icon: CalendarClock, title: "Interviews, booked", text: "Propose times, book interviews and remind candidates to confirm, without leaving the conversation." },
 ];
 
 // A still of the recruiter's Today: who needs an update, with a draft ready. Decorative, so it's hidden from screen readers.

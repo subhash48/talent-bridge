@@ -8,7 +8,7 @@ import { buttonStyles } from "@/components/ui/Button";
 export function ClosingCta() {
   return (
     <section aria-labelledby="closing-title" className="px-5 pt-2 pb-16 sm:px-8 sm:pb-20">
-      <div className="sky-card mx-auto w-full max-w-[1200px] rounded-[24px] px-6 py-12 text-center sm:px-12 sm:py-14">
+      <div className="mx-auto w-full max-w-[1200px] py-12 text-center sm:py-14">
         <h2 id="closing-title" className="mx-auto max-w-[20ch] text-[clamp(28px,3vw,40px)] leading-[1.12] font-semibold tracking-[-0.025em] text-ink">
           Ready to hire with <span className="text-accent">more clarity?</span>
         </h2>

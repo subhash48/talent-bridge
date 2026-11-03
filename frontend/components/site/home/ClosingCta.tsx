@@ -1,7 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
-import { SIGNUP_LINK } from "@/components/site/nav";
+import { DEMO_LINK, SIGNUP_LINK } from "@/components/site/nav";
 import { buttonStyles } from "@/components/ui/Button";
 
 /** The home page's last word: one invitation, two ways to take it. */
@@ -20,8 +20,8 @@ export function ClosingCta() {
             Get started
             <ArrowRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5" />
           </Link>
-          <Link href="/contact" className={buttonStyles({ variant: "secondary", size: "lg", className: "px-6" })}>
-            Talk to us
+          <Link href={DEMO_LINK.href} className={buttonStyles({ variant: "secondary", size: "lg", className: "px-6" })}>
+            {DEMO_LINK.label}
           </Link>
         </div>
       </div>

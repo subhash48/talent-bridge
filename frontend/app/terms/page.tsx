@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { PolicyPage } from "@/components/site/SitePage";
 
-export const metadata: Metadata = { title: "Terms" };
+export const metadata: Metadata = { title: "Terms", description: "An early, plain language draft of the terms for using Hirvello." };
 
 // A plain-language starting point, not legal advice and not final: to be reviewed by a lawyer before
 // Hirvello is offered more widely.

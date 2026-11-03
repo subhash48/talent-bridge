@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { PolicyPage } from "@/components/site/SitePage";
 
-export const metadata: Metadata = { title: "Privacy" };
+export const metadata: Metadata = { title: "Privacy", description: "How Hirvello handles the information you give it." };
 
 // A plain-language starting point, written to match how Hirvello works today. It isn't legal advice and
 // isn't final: it's to be reviewed by a lawyer before Hirvello is offered more widely.

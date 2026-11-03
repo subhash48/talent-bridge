@@ -9,14 +9,25 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
 import { errorMessage } from "@/services/api";
-import { CONTACT_TOPICS, sendContactMessage, type ContactMessage } from "@/services/contact";
+import { CONTACT_TOPICS, sendContactMessage, type ContactMessage, type ContactTopic } from "@/services/contact";
 
-const EMPTY: ContactMessage = { name: "", email: "", company: "", topic: "general", message: "", website: "" };
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Contact Hirvello: full name, email, company (optional), the type of inquiry and the message. */
-export function ContactForm() {
-  const [form, setForm] = useState<ContactMessage>(EMPTY);
+type ContactFormProps = {
+  /** The inquiry type to start on. */
+  topic?: ContactTopic;
+  /** Whether the inquiry type can be changed; a page about one kind of request (Book a demo) fixes it. */
+  topicChoice?: boolean;
+  messageLabel?: string;
+  submitLabel?: string;
+};
+
+/**
+ * Contact Hirvello: full name, email, company (optional), the type of inquiry and the message. The contact page
+ * offers every inquiry type; Book a demo fixes it to the pilot programme and words the rest for a demo.
+ */
+export function ContactForm({ topic = "general", topicChoice = true, messageLabel = "Message", submitLabel = "Send message" }: ContactFormProps) {
+  const [form, setForm] = useState<ContactMessage>({ name: "", email: "", company: "", topic, message: "", website: "" });
   const [checked, setChecked] = useState(false);
   const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -82,20 +93,24 @@ export function ContactForm() {
             aria-describedby={shown.email ? fieldErrorId("contact-email") : undefined}
           />
         </Field>
-        <Field label="Company (optional)" htmlFor="contact-company">
-          <Input id="contact-company" autoComplete="organization" value={form.company} onChange={update("company")} />
-        </Field>
-        <Field label="Inquiry type" htmlFor="contact-topic">
-          <Select id="contact-topic" value={form.topic} onChange={update("topic")}>
-            {CONTACT_TOPICS.map((topic) => (
-              <option key={topic.value} value={topic.value}>
-                {topic.label}
-              </option>
-            ))}
-          </Select>
-        </Field>
+        <div className={topicChoice ? undefined : "sm:col-span-2"}>
+          <Field label="Company (optional)" htmlFor="contact-company">
+            <Input id="contact-company" autoComplete="organization" value={form.company} onChange={update("company")} />
+          </Field>
+        </div>
+        {topicChoice && (
+          <Field label="Inquiry type" htmlFor="contact-topic">
+            <Select id="contact-topic" value={form.topic} onChange={update("topic")}>
+              {CONTACT_TOPICS.map((choice) => (
+                <option key={choice.value} value={choice.value}>
+                  {choice.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        )}
       </div>
-      <Field label="Message" htmlFor="contact-message" error={shown.message} required>
+      <Field label={messageLabel} htmlFor="contact-message" error={shown.message} required>
         <Textarea
           id="contact-message"
           rows={5}
@@ -119,7 +134,7 @@ export function ContactForm() {
       </div>
       <div>
         <Button type="submit" size="lg" disabled={state === "sending"}>
-          {state === "sending" ? "Sending…" : "Send message"}
+          {state === "sending" ? "Sending…" : submitLabel}
         </Button>
       </div>
     </form>

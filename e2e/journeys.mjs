@@ -161,7 +161,8 @@ async function website(browser) {
   // The concierge reads what you type and opens the flow that fits; when it can't tell, it asks.
   await concierge.scrollIntoViewIfNeeded();
   await page.locator("form button[type=submit]").first().click();
-  check("concierge asks for a few words first", (await page.getByText("Tell us a little about what you need first.").isVisible()) && page.url() === `${WEB}/`);
+  // Still on the home page (the URL may carry #how-it-works from following the header's link above).
+  check("concierge asks for a few words first", (await page.getByText("Tell us a little about what you need first.").isVisible()) && new URL(page.url()).pathname === "/", page.url());
   const ask = async (text) => {
     await page.goto(WEB);
     await concierge.fill(text);

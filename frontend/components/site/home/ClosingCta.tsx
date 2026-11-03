@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 
 import { DEMO_LINK, SIGNUP_LINK } from "@/components/site/nav";
@@ -20,8 +20,16 @@ export function ClosingCta() {
             Get started
             <ArrowRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5" />
           </Link>
-          <Link href={DEMO_LINK.href} className={buttonStyles({ variant: "secondary", size: "lg", className: "px-6" })}>
+          <Link
+            href={DEMO_LINK.href}
+            className={buttonStyles({
+              variant: "secondary",
+              size: "lg",
+              className: "border-accent/50 bg-transparent px-6 text-brand-ink backdrop-blur-none hover:border-accent hover:bg-accent-soft/40",
+            })}
+          >
             {DEMO_LINK.label}
+            <ArrowUpRight aria-hidden />
           </Link>
         </div>
       </div>

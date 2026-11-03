@@ -145,6 +145,13 @@ async function website(browser) {
   check("product: the photo loads, described", await product.locator("img").evaluate((i) => i.complete && i.naturalWidth > 0 && i.alt.length > 20));
   check("product: the still of Today", (await product.getByText("Today", { exact: true }).isVisible()) && (await product.getByText("3 updates to review").isVisible()));
   check("product: no sample candidates", (await product.getByText(/Priya Nair|Marcus Lee|Sofia Alvarez/).count()) === 0);
+  // The closing line: a heading, one sentence and two ways in, straight on the sky (no card, no beta label).
+  const closing = page.locator("section[aria-labelledby=closing-title]");
+  await closing.scrollIntoViewIfNeeded();
+  check("closing line", await closing.getByRole("heading", { name: "Ready to hire with more clarity?" }).isVisible());
+  check("closing: Get started signs up", (await closing.getByRole("link", { name: "Get started" }).getAttribute("href")) === "/start");
+  check("closing: Book a demo", (await closing.getByRole("link", { name: "Book a demo" }).getAttribute("href")) === "/book-a-demo");
+  check("closing: no card, no beta label", (await closing.locator(".sky-card, .glass").count()) === 0 && (await closing.getByText(/beta is open/i).count()) === 0);
   const footer = page.getByRole("contentinfo");
   await footer.scrollIntoViewIfNeeded();
   check("footer invitation", await footer.getByRole("heading", { name: "Better hiring starts here." }).isVisible());

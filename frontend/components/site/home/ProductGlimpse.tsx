@@ -1,4 +1,5 @@
 import { ArrowRight, ListChecks, MessageSquareText, Radar, Sparkles, type LucideIcon } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { HomeSection } from "@/components/site/home/HomeSection";
@@ -12,12 +13,16 @@ const FEATURES: { icon: LucideIcon; title: string; text: string }[] = [
   { icon: ListChecks, title: "Every application, followed", text: "Candidates see where each application stands, what comes next, their messages and their interviews, in one portal." },
 ];
 
-// A still of the recruiter's Today: who needs an update, with a draft ready. Decorative, so it's hidden from screen readers.
-const TODAY = [
-  { name: "Priya Nair", role: "Product designer", reason: "Interviewed Tuesday, no follow-up", draft: true },
-  { name: "Marcus Lee", role: "Account executive", reason: "Asked about the start date, no reply", draft: true },
-  { name: "Sofia Alvarez", role: "Office coordinator", reason: "Interview Thursday, not confirmed", draft: false },
-];
+/*
+ * The photograph: "Four coworkers smiling around laptop at table" by Jud Mackrill on Unsplash,
+ * https://unsplash.com/photos/four-coworkers-smiling-around-laptop-at-table-Of_m3hMsoAA, free to use under the
+ * Unsplash License (https://unsplash.com/license; not an Unsplash+ image). Stock models, not Hirvello's team or
+ * customers. Downloaded on 2026-11-03 as a 1200×800 crop into public/images/product/.
+ */
+const PHOTO = {
+  src: "/images/product/team-around-laptop.jpg",
+  alt: "Four colleagues smiling around a laptop at a wooden table in a bright office",
+};
 
 /** The product, glimpsed: a still of Today beside what Hirvello does, feature by feature. */
 export function ProductGlimpse() {
@@ -31,43 +36,16 @@ export function ProductGlimpse() {
       intro="Everything Hirvello does is in service of one promise: nobody in your hiring process is left guessing."
     >
       <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-[1.05fr_1fr] lg:gap-8">
-        <figure aria-hidden className="reveal sky-card rounded-[20px] p-2.5 sm:p-3">
-          <div className="rounded-[14px] bg-glass-strong p-4 ring-1 ring-ink/[0.05] sm:p-5">
-            <div className="flex items-end justify-between gap-4">
-              <div>
-                <p className="text-[20px] font-semibold tracking-[-0.02em] text-ink">Today</p>
-                <p className="mt-0.5 text-[13px] text-stone">3 candidates need an update from you</p>
-              </div>
-              <span className="rounded-full bg-accent-soft px-2.5 py-1 text-[12px] font-semibold text-brand-ink">2 drafts ready</span>
-            </div>
-            <ul className="mt-4 flex flex-col gap-2">
-              {TODAY.map((row) => (
-                <li key={row.name} className="flex items-center gap-3 rounded-[12px] bg-overlay/80 p-3 ring-1 ring-ink/[0.05]">
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[12px] font-semibold text-brand-ink">
-                    {row.name
-                      .split(" ")
-                      .map((part) => part[0])
-                      .join("")}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-baseline gap-2">
-                      <span className="truncate text-[14px] font-semibold text-ink">{row.name}</span>
-                      <span className="truncate text-[12px] text-stone">{row.role}</span>
-                    </span>
-                    <span className="mt-0.5 block truncate text-[12.5px] text-caution">{row.reason}</span>
-                  </span>
-                  <span
-                    className={
-                      row.draft
-                        ? "hidden shrink-0 rounded-full bg-accent-soft px-2.5 py-1 text-[11.5px] font-semibold text-brand-ink sm:inline"
-                        : "hidden shrink-0 rounded-full bg-muted px-2.5 py-1 text-[11.5px] font-semibold text-charcoal sm:inline"
-                    }
-                  >
-                    {row.draft ? "Review draft" : "Remind"}
-                  </span>
-                </li>
-              ))}
-            </ul>
+        <figure className="reveal rounded-[20px] bg-accent-soft/55 p-3 ring-1 ring-accent-soft/80 sm:p-4">
+          <div className="relative overflow-hidden rounded-[14px]">
+            <Image
+              src={PHOTO.src}
+              alt={PHOTO.alt}
+              width={1200}
+              height={800}
+              sizes="(min-width: 1280px) 620px, (min-width: 1024px) 50vw, 100vw"
+              className="aspect-[3/2] w-full object-cover"
+            />
           </div>
         </figure>
 

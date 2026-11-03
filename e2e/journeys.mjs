@@ -137,6 +137,10 @@ async function website(browser) {
   check("who it's for: three photos, loaded, described", photos.length === 3 && photos.every((p) => p.ok && p.alt.length > 20), JSON.stringify(photos));
   check("who it's for: no cards", (await ways.locator(".sky-card, .glass").count()) === 0);
   check("product glimpse", await page.getByRole("heading", { name: "A hiring system that keeps its word." }).isVisible());
+  const product = page.locator("#product");
+  for (const title of ["Communication gaps, noticed", "Updates, drafted", "An assistant that does the work", "Every application, followed"]) {
+    check(`product: ${title}`, await product.getByRole("heading", { name: title, exact: true }).isVisible());
+  }
   const footer = page.getByRole("contentinfo");
   await footer.scrollIntoViewIfNeeded();
   check("footer invitation", await footer.getByRole("heading", { name: "Better hiring starts here." }).isVisible());

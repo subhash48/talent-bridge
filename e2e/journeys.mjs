@@ -77,11 +77,11 @@ async function website(browser) {
   check("hero copy", await page.getByText("The work tells you who they are.").isVisible());
   check("hero: Explore the platform", (await page.getByRole("link", { name: "Explore the platform" }).getAttribute("href")) === "/product");
   check("hero: See how it works", (await page.getByRole("link", { name: "See how it works" }).first().getAttribute("href")) === "/#how-it-works");
-  const concierge = page.getByPlaceholder("Who would make your day easier?");
+  const concierge = page.getByPlaceholder("Tell us what you're looking for...");
   check("hero concierge", await concierge.isVisible());
-  for (const chip of ["An office coordinator", "A bookkeeper", "Someone great with customers"]) {
-    check(`concierge chip: ${chip}`, await page.getByRole("button", { name: chip }).isVisible());
-  }
+  check("concierge question", await page.getByRole("heading", { name: "How can Hirvello help you?" }).isVisible());
+  check("concierge promise", await page.getByText("We'll guide you to the right place.").isVisible());
+  check("no sample candidates or suggestions", (await page.getByText(/Maya Chen|Daniel Okafor|Priya Raman|Strong fit|An office coordinator/).count()) === 0);
   check("no gallery of images", (await page.evaluate(() => document.images.length)) <= 2);
   const nav = page.getByRole("navigation", { name: "Website" });
   for (const label of ["Home", "Product", "How it works", "Pricing"]) {
@@ -140,12 +140,33 @@ async function website(browser) {
   check("footer: no card around it", (await footer.locator(".sky-card, .glass").count()) === 0);
   check("no made-up claims", !(await page.content()).match(/customers love|trusted by|backed by|funding|market leader/i));
 
-  // What you tell the concierge goes with you to Get started.
+  // The concierge reads what you type and opens the flow that fits; when it can't tell, it asks.
   await concierge.scrollIntoViewIfNeeded();
-  await concierge.fill("a weekend barista");
   await page.locator("form button[type=submit]").first().click();
-  await page.waitForURL("**/start?need=a%20weekend%20barista");
-  check("Get started remembers the need", await page.getByText("Looking for a weekend barista?").isVisible());
+  check("concierge asks for a few words first", (await page.getByText("Tell us a little about what you need first.").isVisible()) && page.url() === `${WEB}/`);
+  const ask = async (text) => {
+    await page.goto(WEB);
+    await concierge.fill(text);
+    await concierge.press("Enter");
+  };
+  await ask("I'm a recruiter looking for developers.");
+  await page.waitForURL("**/login?as=employer");
+  check("recruiter intent opens the employer sign-in", await page.getByRole("heading", { name: "Employer sign in" }).isVisible());
+  await ask("I'm hiring staff for my café.");
+  await page.waitForURL("**/signup/employer?mode=simple");
+  check("small-business intent opens Simple Hire's onboarding", await page.getByRole("heading", { name: "Start hiring with Simple Hire" }).isVisible());
+  await ask("Help me find work.");
+  await page.waitForURL("**/login?as=candidate");
+  check("candidate intent opens the candidate sign-in", await page.getByRole("heading", { name: "Candidate sign in" }).isVisible());
+  await ask("I want to find talent.");
+  const choice = page.getByRole("dialog", { name: "Which of these is you?" });
+  check("an unclear request asks who you are", (await choice.isVisible()) && page.url() === `${WEB}/`);
+  for (const label of ["I'm a recruiter", "I own a small business", "I'm looking for a job"]) {
+    check(`choice: ${label}`, await choice.getByRole("link", { name: new RegExp(`^${label}`) }).isVisible());
+  }
+  await choice.getByRole("link", { name: /^I own a small business/ }).click();
+  await page.waitForURL("**/signup/employer?mode=simple");
+  check("the choice opens that flow", page.url().endsWith("/signup/employer?mode=simple"));
 
   await page.goto(`${WEB}/pricing`);
   check("pricing page", await page.getByRole("heading", { name: "Free while we're in beta." }).isVisible());

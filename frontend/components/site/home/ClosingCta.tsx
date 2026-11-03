@@ -13,11 +13,7 @@ export function ClosingCta() {
           aria-hidden
           className="pointer-events-none absolute -right-24 -bottom-32 size-[400px] rounded-full bg-[radial-gradient(closest-side,rgb(50_102_255/0.32),transparent)] blur-2xl"
         />
-        <p className="flex items-center justify-center gap-2 text-[12px] font-semibold tracking-[0.18em] text-charcoal uppercase">
-          <span aria-hidden className="size-1.5 rounded-full bg-accent" />
-          The beta is open
-        </p>
-        <h2 id="closing-title" className="relative mx-auto mt-4 max-w-[20ch] text-[clamp(28px,3vw,40px)] leading-[1.12] font-semibold tracking-[-0.025em] text-ink">
+        <h2 id="closing-title" className="relative mx-auto max-w-[20ch] text-[clamp(28px,3vw,40px)] leading-[1.12] font-semibold tracking-[-0.025em] text-ink">
           Find the <span className="text-accent">real ones</span>, from your first hire.
         </h2>
         <p className="relative mx-auto mt-4 max-w-[44ch] text-[16px] leading-relaxed text-charcoal sm:text-[17px]">

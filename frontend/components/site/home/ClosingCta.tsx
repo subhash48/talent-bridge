@@ -25,11 +25,11 @@ export function ClosingCta() {
             className={buttonStyles({
               variant: "secondary",
               size: "lg",
-              className: "border-accent/50 bg-transparent px-6 text-brand-ink backdrop-blur-none hover:border-accent hover:bg-accent-soft/40",
+              className: "group border-accent/50 bg-transparent px-6 text-brand-ink backdrop-blur-none hover:border-accent hover:bg-accent-soft/40",
             })}
           >
             {DEMO_LINK.label}
-            <ArrowUpRight aria-hidden />
+            <ArrowUpRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </Link>
         </div>
       </div>

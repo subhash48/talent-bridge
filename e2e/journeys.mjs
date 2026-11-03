@@ -82,7 +82,8 @@ async function website(browser) {
   check("concierge question", await page.getByRole("heading", { name: "How can Hirvello help you?" }).isVisible());
   check("concierge promise", await page.getByText("We'll guide you to the right place.").isVisible());
   check("no sample candidates or suggestions", (await page.getByText(/Maya Chen|Daniel Okafor|Priya Raman|Strong fit|An office coordinator/).count()) === 0);
-  check("no gallery of images", (await page.evaluate(() => document.images.length)) <= 2);
+  // Photographs only where they're meant to be: one per audience in Who it's for and one in The product, no gallery anywhere else.
+  check("no gallery of images", (await page.evaluate(() => [...document.images].filter((img) => !img.closest("#solutions, #product")).length)) <= 2);
   const nav = page.getByRole("navigation", { name: "Website" });
   for (const label of ["Home", "Product", "How it works", "Pricing"]) {
     check(`nav: ${label}`, await nav.getByRole("link", { name: label, exact: true }).first().isVisible());

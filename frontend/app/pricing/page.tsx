@@ -1,5 +1,4 @@
-import { ArrowRight, Check, type LucideIcon } from "lucide-react";
-import { Store, UserRound, Users } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -10,14 +9,13 @@ import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: "Hirvello is free while it's in beta. Every workspace, every feature, sample data included.",
+  description: "Hirvello costs nothing while it's in beta: every workspace and every feature, with sample data to try things on.",
 };
 
 // The three ways in, and what each includes. No prices: there are none yet, and the page says so rather than
 // inventing them.
-const PLANS: { icon: LucideIcon; name: string; who: string; href: string; action: string; includes: string[]; featured?: boolean }[] = [
+const PLANS: { name: string; who: string; href: string; action: string; includes: string[]; featured?: boolean }[] = [
   {
-    icon: Store,
     name: "Simple Hire",
     who: "For shops, restaurants and other small employers.",
     href: "/signup/employer?mode=simple",
@@ -25,7 +23,6 @@ const PLANS: { icon: LucideIcon; name: string; who: string; href: string; action
     includes: ["Post a job by describing it, typed or spoken", "See applicants, with the reasons they match", "Message candidates and ask to interview", "Your own careers page"],
   },
   {
-    icon: Users,
     name: "Recruiter workspace",
     who: "For recruiting teams and growing companies.",
     href: "/signup/employer?mode=full",
@@ -34,13 +31,12 @@ const PLANS: { icon: LucideIcon; name: string; who: string; href: string; action
     includes: [
       "Everything in Simple Hire",
       "Pipeline, stages and shared filters",
-      "Communication gaps noticed, updates drafted",
+      "See who's waiting, with the update drafted",
       "Interviews, reminders and the AI assistant",
       "Analytics and communication rules",
     ],
   },
   {
-    icon: UserRound,
     name: "Candidates",
     who: "For anyone applying.",
     href: "/signup",
@@ -58,10 +54,10 @@ export default function PricingPage() {
         id="pricing"
         eyebrow="Pricing"
         title="Free while we're in beta."
-        intro="Every workspace, every feature, sample data to explore with and no commitment. When pricing comes, everyone in the beta hears about it first, and nothing you've set up changes."
+        intro="There's nothing to pay during the beta: every workspace and every feature, with sample data to try things on. When pricing arrives, people in the beta hear about it first, and nothing you've set up changes."
       >
         <ul className="mt-10 grid grid-cols-1 gap-5 lg:grid-cols-3">
-          {PLANS.map(({ icon: Icon, name, who, href, action, includes, featured }) => (
+          {PLANS.map(({ name, who, href, action, includes, featured }) => (
             <li
               key={name}
               className={cn(
@@ -69,10 +65,7 @@ export default function PricingPage() {
                 featured && "bg-glass-strong ring-1 ring-accent/25 lg:-my-3 lg:py-9",
               )}
             >
-              <span className="flex size-9 items-center justify-center rounded-[10px] bg-accent-soft text-brand-ink ring-1 ring-accent/10">
-                <Icon aria-hidden className="size-[18px]" strokeWidth={1.75} />
-              </span>
-              <h2 className="mt-5 text-[20px] leading-snug font-semibold tracking-[-0.015em] text-ink">{name}</h2>
+              <h2 className="text-[20px] leading-snug font-semibold tracking-[-0.015em] text-ink">{name}</h2>
               <p className="mt-1 text-[14px] text-stone">{who}</p>
               <p className="mt-5 flex items-baseline gap-2">
                 <span className="text-[30px] leading-none font-bold tracking-[-0.03em] text-ink">Free</span>
@@ -99,7 +92,7 @@ export default function PricingPage() {
         <p className="mt-8 text-[14px] text-stone">
           Need something else, such as more than one workspace or a conversation about your team?{" "}
           <Link href="/contact" className="font-medium text-brand-ink underline-offset-4 hover:underline">
-            Talk to us
+            Write to us
           </Link>
           .
         </p>

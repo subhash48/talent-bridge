@@ -22,7 +22,7 @@ export function HomeSection({ id, eyebrow, title, intro, children, className, si
   return (
     <section id={id} aria-labelledby={`${id}-title`} className={cn("scroll-mt-28 px-5 py-16 sm:px-8 sm:py-20", className)}>
       <div className={cn("mx-auto w-full", wide ? "max-w-[1280px]" : "max-w-[1200px]")}>
-        <div className={cn("mx-auto text-center", wide ? "max-w-[760px]" : "max-w-[640px]")}>
+        <div className={cn("mx-auto text-center", wide ? "max-w-[920px]" : "max-w-[640px]")}>
           <p className="flex items-center justify-center gap-2 text-[12px] font-semibold tracking-[0.18em] text-charcoal uppercase">
             <span aria-hidden className="size-1.5 rounded-full bg-accent" />
             {eyebrow}

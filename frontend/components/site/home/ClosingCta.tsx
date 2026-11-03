@@ -13,7 +13,7 @@ export function ClosingCta() {
           Ready to hire with <span className="text-accent">more clarity?</span>
         </h2>
         <p className="mx-auto mt-4 max-w-[44ch] text-[16px] leading-relaxed text-charcoal sm:text-[17px]">
-          Explore with sample data, no commitment. Set up a workspace when you&rsquo;re ready.
+          Explore Hirvello and find the right people for your team.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link href={SIGNUP_LINK.href} className={buttonStyles({ size: "lg", className: "group px-6" })}>

@@ -66,10 +66,8 @@ export function ProductGlimpse() {
 
         <ul className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
           {FEATURES.map(({ icon: Icon, title, text }) => (
-            <li key={title} className="reveal flex gap-3.5">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-accent-soft text-brand-ink ring-1 ring-accent/10">
-                <Icon aria-hidden className="size-4" strokeWidth={1.75} />
-              </span>
+            <li key={title} className="reveal grid grid-cols-[auto_1fr] gap-x-4">
+              <Icon aria-hidden className="mt-0.5 size-6 text-accent" strokeWidth={1.75} />
               <div>
                 <h3 className="text-[16px] leading-snug font-semibold text-ink">{title}</h3>
                 <p className="mt-1 text-[14px] leading-relaxed text-charcoal">{text}</p>

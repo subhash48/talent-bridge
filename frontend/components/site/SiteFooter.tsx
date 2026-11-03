@@ -43,25 +43,28 @@ function SocialIcon({ network, ...props }: ComponentProps<"svg"> & { network: So
 /**
  * The public website's footer, on the same sky as the page, with no card around it. First the last invitation
  * (Better hiring starts here, Get started), then the mark with its one line and where to follow Hirvello beside
- * the places on the site in three columns, then a thin rule, the year and the policies.
+ * the places on the site in three columns, then a thin rule, the year and the policies. The home page ends on its
+ * own closing line (ClosingCta), so it passes invitation={false} and the footer starts at the mark.
  */
-export function SiteFooter({ className }: { className?: string }) {
+export function SiteFooter({ className, invitation = true }: { className?: string; invitation?: boolean }) {
   const social = socialLinks();
   return (
     <footer className={cn("px-5 pt-10 pb-8 sm:px-8 sm:pt-14 sm:pb-10", className)}>
       <div className="mx-auto w-full max-w-[1200px]">
-        <div className={cn("flex flex-col gap-6 border-b pb-10 sm:pb-12 lg:flex-row lg:items-end lg:justify-between lg:gap-12", rule)}>
-          <div>
-            <h2 className="text-[clamp(30px,3vw,40px)] leading-[1.1] font-semibold tracking-[-0.025em] text-ink">Better hiring starts here.</h2>
-            <p className="mt-3 max-w-[44ch] text-[16px] leading-relaxed text-charcoal sm:text-[17px]">Less noise. More signal. See the work behind every résumé.</p>
+        {invitation && (
+          <div className={cn("flex flex-col gap-6 border-b pb-10 sm:pb-12 lg:flex-row lg:items-end lg:justify-between lg:gap-12", rule)}>
+            <div>
+              <h2 className="text-[clamp(30px,3vw,40px)] leading-[1.1] font-semibold tracking-[-0.025em] text-ink">Better hiring starts here.</h2>
+              <p className="mt-3 max-w-[44ch] text-[16px] leading-relaxed text-charcoal sm:text-[17px]">Less noise. More signal. See the work behind every résumé.</p>
+            </div>
+            <Link href={SIGNUP_LINK.href} className={buttonStyles({ size: "lg", className: "group w-fit shrink-0 px-6" })}>
+              Get started
+              <ArrowRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5" />
+            </Link>
           </div>
-          <Link href={SIGNUP_LINK.href} className={buttonStyles({ size: "lg", className: "group w-fit shrink-0 px-6" })}>
-            Get started
-            <ArrowRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5" />
-          </Link>
-        </div>
+        )}
 
-        <div className="grid gap-10 pt-10 sm:pt-12 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,2fr)] lg:gap-16">
+        <div className={cn("grid gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,2fr)] lg:gap-16", invitation && "pt-10 sm:pt-12")}>
           <div>
             <Link href="/" aria-label="Hirvello home" className="inline-flex rounded-md">
               <HirvelloLogo />

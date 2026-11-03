@@ -46,6 +46,7 @@ export function Audiences() {
                 className="group mt-3 ml-1 inline-flex items-center gap-1.5 rounded-md text-[16px] font-semibold text-brand-ink transition-colors duration-200 hover:text-ink"
               >
                 Learn more
+                <span className="sr-only"> about Hirvello for {short.toLowerCase()}</span>
                 <ArrowRight aria-hidden className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
               </Link>
             </li>

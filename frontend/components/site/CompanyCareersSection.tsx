@@ -17,11 +17,11 @@ export function CompanyCareersSection() {
       level="h1"
       id="careers"
       eyebrow="Careers at Hirvello"
-      title="Build the future of hiring."
-      intro="We're building tools that make hiring clearer, simpler, and more human."
+      title="Help hiring stop going quiet."
+      intro="Hirvello is in beta and works on one problem: people who apply, interview, and then hear nothing back. If that bothers you too, we'd like to hear from you."
     >
       <div className="mt-10 max-w-[720px]">
-        <h2 className="text-[12px] font-semibold tracking-[0.18em] text-brand-ink/80 uppercase">Open positions</h2>
+        <h2 className="text-[20px] font-semibold tracking-[-0.015em] text-ink">Open positions</h2>
         {OPENINGS.length ? (
           <ul className="mt-4 flex flex-col gap-3">
             {OPENINGS.map((opening) => (
@@ -46,7 +46,7 @@ export function CompanyCareersSection() {
           </ul>
         ) : (
           <p className="sky-card mt-4 rounded-[20px] px-6 py-6 text-[16px] leading-relaxed text-charcoal">
-            We don&apos;t have any open positions listed right now. Check back for future opportunities.
+            There are no open positions at the moment. When one opens, it will be listed here first.
           </p>
         )}
         <p className="mt-5 text-[14px] leading-relaxed text-stone">

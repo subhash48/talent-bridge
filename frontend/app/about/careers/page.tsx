@@ -5,7 +5,7 @@ import { SitePage } from "@/components/site/SitePage";
 
 export const metadata: Metadata = {
   title: "Careers",
-  description: "Working at Hirvello: the tools that make hiring clearer, simpler and more human.",
+  description: "Working at Hirvello, a beta working on one problem: people who apply, interview and then hear nothing back.",
 };
 
 // Working at Hirvello. The job board, the open roles of the companies hiring with Hirvello, stays at /careers.

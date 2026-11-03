@@ -1,56 +1,34 @@
-import {
-  BarChart3,
-  BriefcaseBusiness,
-  CalendarClock,
-  Gauge,
-  HeartPulse,
-  KanbanSquare,
-  Sparkles,
-  Timer,
-  UserRoundCheck,
-} from "lucide-react";
 import Link from "next/link";
 
-import { FeatureIcon, Section } from "@/components/site/Section";
+import { Section } from "@/components/site/Section";
 import { buttonStyles } from "@/components/ui/Button";
 
-const FEATURES = [
+// The workspace in three parts, each a short list: the pipeline itself, keeping candidates informed, and the help
+// around both. Plain rows rather than a wall of icon tiles.
+const GROUPS: { title: string; items: { name: string; text: string }[] }[] = [
   {
-    icon: KanbanSquare,
-    title: "Candidate pipeline",
-    text: "Every application by job and stage, with filters you can share.",
+    title: "Your pipeline",
+    items: [
+      { name: "Candidates by job and stage", text: "Every application in one pipeline, with filters you can share with your team." },
+      { name: "Jobs", text: "Draft a job with the assistant, read it over, and open it on your careers page." },
+      { name: "Interviews", text: "Propose times, book the interview and remind the candidate to confirm." },
+    ],
   },
   {
-    icon: HeartPulse,
-    title: "Communication health",
-    text: "Today shows who's waiting on you: a stage change nobody mentioned, a question with no reply.",
+    title: "Nobody left waiting",
+    items: [
+      { name: "Who's waiting on you", text: "Today lists the stage change nobody mentioned and the question with no reply." },
+      { name: "Your own response times", text: "Decide how long a candidate may wait for news, rule by rule, and see who's past it." },
+      { name: "Updates for the people you pick", text: "One message each, written from that candidate's own application, for you to approve." },
+    ],
   },
   {
-    icon: Sparkles,
-    title: "AI assistant",
-    text: "Ask in your own words, typed or spoken. It drafts and finds; nothing happens until you approve.",
-  },
-  { icon: BriefcaseBusiness, title: "Jobs", text: "Draft a job with AI, review it, and open it on your careers page." },
-  {
-    icon: CalendarClock,
-    title: "Interviews",
-    text: "Propose times, book interviews and remind candidates to confirm.",
-  },
-  {
-    icon: UserRoundCheck,
-    title: "Personalized outreach",
-    text: "One message each, from each candidate's own application, for the people you picked.",
-  },
-  {
-    icon: Gauge,
-    title: "Candidate portal",
-    text: "Candidates follow their application, messages, interviews and preparation in one place.",
-  },
-  { icon: Timer, title: "Communication SLA", text: "Set how long a candidate may wait, rule by rule, for your team." },
-  {
-    icon: BarChart3,
-    title: "Analytics",
-    text: "Time between updates, unanswered messages and SLA compliance, across your pipeline.",
+    title: "Help along the way",
+    items: [
+      { name: "An assistant you can talk to", text: "Ask in your own words, typed or spoken. It drafts and searches; nothing happens until you say yes." },
+      { name: "A portal for candidates", text: "They follow their application, messages, interviews and preparation without having to email you." },
+      { name: "Analytics", text: "Time between updates, messages still unanswered, and how often your team keeps to its rules." },
+    ],
   },
 ];
 
@@ -62,27 +40,31 @@ export function RecruitersSection() {
       id="recruiters"
       eyebrow="For recruiters"
       title="A workspace that keeps every candidate informed."
-      intro="For recruiting teams and growing companies: your pipeline, with the communication around it, so no candidate is left waiting without a word. Matching uses only job-related criteria you choose, with the reasons shown, and never a score."
+      intro="For recruiting teams and growing companies: your pipeline, and the conversations that go with it, so no candidate waits weeks without a word. Matching only uses criteria about the job that you choose, always shows its reasons, and never gives anyone a score."
     >
-      <ul className="mt-12 grid grid-cols-1 gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
-        {FEATURES.map(({ icon: Icon, title, text }) => (
-          <li key={title} className="reveal flex gap-4">
-            <FeatureIcon>
-              <Icon aria-hidden strokeWidth={1.75} />
-            </FeatureIcon>
-            <div>
-              <h3 className="text-[16px] font-semibold text-ink">{title}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-stone">{text}</p>
-            </div>
-          </li>
+      <div className="mt-12 grid grid-cols-1 gap-10 lg:grid-cols-3 lg:gap-8">
+        {GROUPS.map(({ title, items }, index) => (
+          <section key={title} aria-labelledby={`recruiters-group-${index}`} className="reveal">
+            <h2 id={`recruiters-group-${index}`} className="border-b border-ink/[0.12] pb-3 text-[20px] font-semibold tracking-[-0.015em] text-ink">
+              {title}
+            </h2>
+            <dl className="divide-y divide-ink/[0.08]">
+              {items.map(({ name, text }) => (
+                <div key={name} className="py-4">
+                  <dt className="text-[16px] font-semibold text-ink">{name}</dt>
+                  <dd className="mt-1 text-[15px] leading-relaxed text-pretty text-charcoal">{text}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
         ))}
-      </ul>
+      </div>
       <div className="mt-12 flex flex-wrap gap-3">
-        <Link href="/login?as=employer" className={buttonStyles({ size: "lg" })}>
-          Recruiter sign in
+        <Link href="/signup/employer?mode=full" className={buttonStyles({ size: "lg" })}>
+          Create a company workspace
         </Link>
-        <Link href="/signup/employer?mode=full" className={buttonStyles({ variant: "secondary", size: "lg" })}>
-          Create company workspace
+        <Link href="/login?as=employer" className={buttonStyles({ variant: "secondary", size: "lg" })}>
+          Recruiter sign in
         </Link>
       </div>
     </Section>

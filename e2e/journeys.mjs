@@ -203,6 +203,20 @@ async function website(browser) {
   const stored = await sql("select topic, email from contact_requests order by created_at desc limit 1");
   check("contact form stored", stored[0]?.topic === "pilot" && stored[0]?.email === "priya@northwind.example");
 
+  // Book a demo is the same form set to the pilot programme, with no inquiry type to pick.
+  await page.goto(`${WEB}/book-a-demo`);
+  check("demo page", await page.getByRole("heading", { name: "See Hirvello with your own roles." }).isVisible());
+  check("demo page has no inquiry type to pick", (await page.locator("#contact-topic").count()) === 0);
+  await page.getByRole("button", { name: "Request a demo" }).click();
+  check("demo form checks its fields first", await page.getByText("Enter your full name.").isVisible());
+  await page.fill("#contact-name", "Dana Whitfield");
+  await page.fill("#contact-email", "dana@brightside.example");
+  await page.fill("#contact-company", "Brightside Dental");
+  await page.fill("#contact-message", "Two clinics, hiring front-desk staff.");
+  await page.getByRole("button", { name: "Request a demo" }).click();
+  await page.getByText("Thanks, Dana.").waitFor({ timeout: 10000 });
+  const demo = await sql("select topic, company, email from contact_requests order by created_at desc limit 1");
+  check("demo request stored as a pilot inquiry", demo[0]?.topic === "pilot" && demo[0]?.company === "Brightside Dental" && demo[0]?.email === "dana@brightside.example");
 
   await page.getByRole("contentinfo").getByRole("link", { name: "Privacy" }).click();
   await page.waitForURL("**/privacy");

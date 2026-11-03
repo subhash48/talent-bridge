@@ -10,7 +10,7 @@ export function ClosingCta() {
     <section aria-labelledby="closing-title" className="px-5 pt-2 pb-16 sm:px-8 sm:pb-20">
       <div className="sky-card mx-auto w-full max-w-[1200px] rounded-[24px] px-6 py-12 text-center sm:px-12 sm:py-14">
         <h2 id="closing-title" className="mx-auto max-w-[20ch] text-[clamp(28px,3vw,40px)] leading-[1.12] font-semibold tracking-[-0.025em] text-ink">
-          Find the <span className="text-accent">real ones</span>, from your first hire.
+          Ready to hire with <span className="text-accent">more clarity?</span>
         </h2>
         <p className="mx-auto mt-4 max-w-[44ch] text-[16px] leading-relaxed text-charcoal sm:text-[17px]">
           Explore with sample data, no commitment. Set up a workspace when you&rsquo;re ready.

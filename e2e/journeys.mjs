@@ -111,6 +111,16 @@ async function website(browser) {
   await page.waitForTimeout(1000);
   const stepsTop = await page.evaluate(() => document.getElementById("how-it-works").getBoundingClientRect().top);
   check("How it works scrolls to its three steps", stepsTop < 160 && (await page.getByRole("heading", { name: "Three steps. No noise." }).isVisible()), `top ${stepsTop}`);
+  const steps = page.locator("#how-it-works");
+  for (const [title, line] of [
+    ["Say who you need", "Describe your role. Review before posting."],
+    ["See the real ones", "See real evidence behind every match."],
+    ["Keep everyone informed", "Keep candidates updated at every stage."],
+  ]) {
+    check(`step: ${title}`, (await steps.getByRole("heading", { name: new RegExp(`${title}$`) }).isVisible()) && (await steps.getByText(line).isVisible()));
+  }
+  check("each step shows the product, as one labelled picture", (await steps.getByRole("img").count()) === 3);
+  check("no cards around the steps", (await steps.locator(".sky-card, .glass").count()) === 0);
   check("three ways in", (await page.locator('#solutions a[href^="/for-"]').count()) === 3);
   check("product glimpse", await page.getByRole("heading", { name: "A hiring system that keeps its word." }).isVisible());
   const footer = page.getByRole("contentinfo");

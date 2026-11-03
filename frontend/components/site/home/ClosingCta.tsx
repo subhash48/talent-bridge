@@ -12,7 +12,7 @@ export function ClosingCta() {
         <h2 id="closing-title" className="text-[clamp(26px,2.4vw,34px)] leading-[1.15] font-semibold tracking-[-0.02em] text-balance text-ink">
           Ready to hire with <span className="text-accent">more clarity?</span>
         </h2>
-        <p className="mx-auto mt-4 max-w-[44ch] text-[16px] leading-relaxed text-charcoal sm:text-[17px]">
+        <p className="mx-auto mt-3 max-w-[46ch] text-[16px] leading-relaxed text-pretty text-charcoal sm:text-[17px]">
           Explore Hirvello and find the right people for your team.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">

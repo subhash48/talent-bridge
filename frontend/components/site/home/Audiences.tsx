@@ -13,7 +13,12 @@ const LINES: Record<string, string> = {
   "/for-small-businesses": "Hire without the complexity.",
 };
 
-/** The three ways in: recruiters, candidates and small businesses, each a card that is the link to its page. */
+/**
+ * The three ways in: recruiters, candidates and small businesses. Each is a photograph in the same soft-blue frame
+ * as How it works' pictures, then its name, one line and Learn more (its page), straight on the section's sky
+ * rather than in a card. The section shares How it works' sky, faded in at the top as well as out at the foot, so
+ * the two read as one stretch of the page. Side by side from lg, stacked (no wider than 520px) below it.
+ */
 export function Audiences() {
   return (
     <HomeSection

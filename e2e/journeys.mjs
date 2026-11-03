@@ -123,6 +123,15 @@ async function website(browser) {
   check("each step shows the product, as one labelled picture", (await steps.getByRole("img").count()) === 3);
   check("no cards around the steps", (await steps.locator(".sky-card, .glass").count()) === 0);
   check("three ways in", (await page.locator('#solutions a[href^="/for-"]').count()) === 3);
+  const ways = page.locator("#solutions");
+  await ways.scrollIntoViewIfNeeded();
+  for (const [title, line] of [
+    ["Recruiters", "Run a clearer hiring process."],
+    ["Candidates", "Know what happens next."],
+    ["Small business", "Hire without the complexity."],
+  ]) {
+    check(`who it's for: ${title}`, (await ways.getByRole("heading", { name: title, exact: true }).isVisible()) && (await ways.getByText(line).isVisible()));
+  }
   check("product glimpse", await page.getByRole("heading", { name: "A hiring system that keeps its word." }).isVisible());
   const footer = page.getByRole("contentinfo");
   await footer.scrollIntoViewIfNeeded();

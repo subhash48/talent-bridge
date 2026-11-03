@@ -22,7 +22,13 @@ const TODAY = [
 /** The product, glimpsed: a still of Today beside what Hirvello does, feature by feature. */
 export function ProductGlimpse() {
   return (
-    <HomeSection id="product" eyebrow="The product" title="A hiring system that keeps its word." intro="Everything Hirvello does is in service of one promise: nobody in your hiring process is left guessing.">
+    <HomeSection
+      id="product"
+      size="wide"
+      eyebrow="The product"
+      title="A hiring system that keeps its word."
+      intro="Everything Hirvello does is in service of one promise: nobody in your hiring process is left guessing."
+    >
       <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-[1.05fr_1fr] lg:gap-8">
         <figure aria-hidden className="reveal sky-card rounded-[20px] p-2.5 sm:p-3">
           <div className="rounded-[14px] bg-glass-strong p-4 ring-1 ring-ink/[0.05] sm:p-5">

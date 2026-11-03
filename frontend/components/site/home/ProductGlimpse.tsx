@@ -38,7 +38,7 @@ export function ProductGlimpse() {
       className="steps-sky [--sky-mask:linear-gradient(to_bottom,transparent_0%,#000_18%,#000_82%,transparent_100%)]"
       eyebrow="The product"
       title="A hiring system that keeps its word."
-      intro="Everything Hirvello does is in service of one promise: nobody in your hiring process is left guessing."
+      intro="Everything Hirvello does comes back to one promise: nobody in your hiring process is left guessing."
     >
       <div className="mt-12 grid grid-cols-1 items-center gap-12 lg:mt-14 lg:grid-cols-[52fr_48fr] lg:gap-10 xl:gap-12">
         <figure className="reveal rounded-[20px] bg-accent-soft/55 p-3 ring-1 ring-accent-soft/80 sm:p-4">

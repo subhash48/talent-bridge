@@ -238,6 +238,28 @@
     linear-gradient(160deg, #f9fbff 0%, #edf3fc 35%, #d9e7fc 70%, #b7d0f8 100%);
 }
 
+/*
+ * How it works' own sky, as in its reference: soft blue at the top left deepening to periwinkle at the lower right
+ * (#E4EEFF, #C9DEFF, #B6D0FF, #9FBFFF), a little light at the top, and faded out at its foot into the page's sky
+ * so the next section doesn't start at an edge. It sits behind the section on a layer of its own.
+ */
+@utility steps-sky {
+  position: relative;
+  isolation: isolate;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      radial-gradient(55% 45% at 12% 0%, rgb(244 248 255 / 0.7), transparent 70%),
+      linear-gradient(160deg, #e4eeff 0%, #c9deff 45%, #b6d0ff 75%, #9fbfff 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 80%, transparent 100%);
+  }
+}
+
 /* Frosted glass on the sky: the website's cards, lifted from the gradient rather than a white block on it. */
 @utility sky-card {
   background-color: rgb(255 255 255 / 0.5);

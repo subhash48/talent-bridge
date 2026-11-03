@@ -25,7 +25,7 @@ export function PreviewFrame({ label, tabs, active, children }: PreviewFrameProp
       <figure
         role="img"
         aria-label={label}
-        className="aspect-[4/3] overflow-hidden rounded-[22px] bg-sky/45 p-[1.4em] text-[clamp(10.5px,3.15cqw,13px)] leading-snug text-ink ring-1 ring-accent/10 select-none"
+        className="aspect-[4/3] overflow-hidden rounded-[22px] bg-accent-soft/55 p-[1.4em] text-[clamp(10.5px,3.15cqw,13px)] leading-snug text-ink ring-1 ring-accent-soft/80 select-none"
       >
         <div className="flex h-full flex-col overflow-hidden rounded-[14px] bg-accent-soft ring-1 ring-ink/[0.06]">
           <div className="flex items-center gap-[0.55em] border-b border-ink/[0.07] px-[1em] py-[0.7em]">

@@ -4,11 +4,11 @@ import Link from "next/link";
 import { HomeSection } from "@/components/site/home/HomeSection";
 import { SOLUTIONS } from "@/components/site/nav";
 
-// What each audience gets, in one line more than the menu says.
-const DETAILS: Record<string, string> = {
-  "/for-recruiters": "A workspace that shows who's waiting on you, drafts the update, and books the interview.",
-  "/for-candidates": "One portal for every application: where it stands, what's next, and how to prepare.",
-  "/for-small-businesses": "Simple Hire: say who you need, see who applied, and talk to them. No recruiting software to learn.",
+// What each audience gets from Hirvello, in one line.
+const LINES: Record<string, string> = {
+  "/for-recruiters": "Run a clearer hiring process.",
+  "/for-candidates": "Know what happens next.",
+  "/for-small-businesses": "Hire without the complexity.",
 };
 
 /** The three ways in: recruiters, candidates and small businesses, each a card that is the link to its page. */
@@ -27,7 +27,7 @@ export function Audiences() {
               </span>
               <span className="mt-5 text-[18px] leading-snug font-semibold tracking-[-0.015em] text-ink">{short}</span>
               <span className="mt-1 text-[14px] text-stone">{text}</span>
-              <span className="mt-3 text-[15px] leading-relaxed text-charcoal">{DETAILS[href]}</span>
+              <span className="mt-3 text-[15px] leading-relaxed text-charcoal">{LINES[href]}</span>
               <span className="mt-5 inline-flex items-center gap-1.5 text-[14px] font-semibold text-brand-ink">
                 Learn more
                 <ArrowRight aria-hidden className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />

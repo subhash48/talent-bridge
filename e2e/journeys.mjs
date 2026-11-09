@@ -256,20 +256,37 @@ async function website(browser) {
   check("Get started offers three ways in", (await page.locator('main a[href^="/signup"]').count()) === 3);
 
   await page.goto(`${WEB}/contact`);
-  check("official contact email shown", await page.getByRole("link", { name: "hello@hirvello.example" }).isVisible());
+  // Two ways in, each with its own address, and one form that reaches the team its topic names.
+  for (const [title, address] of [["Business inquiries", "business@hirvello.com"], ["Customer support", "support@hirvello.com"]]) {
+    const main = page.locator("main");
+    check(`contact: ${title}`, (await main.getByRole("heading", { name: title }).isVisible()) && (await main.getByRole("link", { name: address }).getAttribute("href")) === `mailto:${address}`);
+  }
+  await page.getByRole("button", { name: "Send message" }).click();
+  check("contact form asks for a subject", await page.getByText("Add a subject.").isVisible());
+  await page.getByLabel("Customer support").check();
   await page.fill("#contact-name", "Priya Nair");
   await page.fill("#contact-email", "priya@northwind.example");
-  await page.selectOption("#contact-topic", "pilot");
-  await page.fill("#contact-message", "We'd like to pilot Hirvello.");
+  await page.fill("#contact-subject", "Can't see my applicants");
+  await page.fill("#contact-message", "The Today page is empty since this morning.");
   await page.getByRole("button", { name: "Send message" }).click();
-  await page.getByText("Thanks, Priya.").waitFor({ timeout: 10000 });
-  const stored = await sql("select topic, email from contact_requests order by created_at desc limit 1");
-  check("contact form stored", stored[0]?.topic === "pilot" && stored[0]?.email === "priya@northwind.example");
+  await page.getByText("Thanks, Priya. Your message reached our support team").waitFor({ timeout: 10000 });
+  const stored = await sql("select topic, email, message from contact_requests order by created_at desc limit 1");
+  check(
+    "support request stored with its subject",
+    stored[0]?.topic === "support" && stored[0]?.email === "priya@northwind.example" && stored[0]?.message.startsWith("Subject: Can't see my applicants"),
+  );
+  const footerMail = await page.getByRole("contentinfo").locator('a[href^="mailto:"]').evaluateAll((links) => links.map((a) => a.getAttribute("href")));
+  check("footer: business and support addresses", footerMail.join(" ") === "mailto:business@hirvello.com mailto:support@hirvello.com", footerMail.join(" "));
+  await page.goto(`${WEB}/about`);
+  for (const [name, address] of [["Subhash Galla", "subhash@hirvello.com"], ["Jordan Curri", "jordan.curri@hirvello.com"]]) {
+    check(`about: ${name}`, (await page.getByText(name, { exact: true }).isVisible()) && (await page.getByRole("link", { name: address }).count()) === 1);
+  }
 
   // Book a demo is the same form set to the pilot programme, with no inquiry type to pick.
   await page.goto(`${WEB}/book-a-demo`);
   check("demo page", await page.getByRole("heading", { name: "See Hirvello with your own roles." }).isVisible());
-  check("demo page has no inquiry type to pick", (await page.locator("#contact-topic").count()) === 0);
+  check("demo page has no inquiry type to pick", (await page.locator('input[name="contact-topic"]').count()) === 0);
+  check("demo page offers the business address", (await page.locator("main").getByRole("link", { name: "business@hirvello.com" }).count()) === 1);
   await page.getByRole("button", { name: "Request a demo" }).click();
   check("demo form checks its fields first", await page.getByText("Enter your full name.").isVisible());
   await page.fill("#contact-name", "Dana Whitfield");

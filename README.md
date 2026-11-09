@@ -284,6 +284,31 @@ The AI never evaluates, scores, ranks or rejects candidates, lists strengths or 
 
 All `/assistant/*` routes check the recruiter role on the server; a candidate's token gets 403.
 
+## Contact email setup
+
+The contact form works without any of this: every message is kept and readable with
+`python -m app.db.contact_requests`. To have it emailed to the Zoho groups, all of the following are needed, and
+none of them can be done from the code:
+
+1. **Resend sending domain (DNS).** Verify a domain in Resend, preferably a subdomain such as one you choose under
+   hirvello.com rather than hirvello.com itself, so Zoho's MX records for the root domain are never touched. Resend
+   lists the records to add (a DKIM TXT record at `resend._domainkey`, and an MX and SPF TXT record on its `send`
+   host). Keep Zoho's existing MX, SPF and DKIM records as they are.
+2. **Backend environment** (Railway, never the frontend): `RESEND_API_KEY` (from Resend) and `EMAIL_FROM`, a sender on
+   the verified domain, for example `Hirvello <name@your-verified-domain>`. Not business@ or support@: those are
+   Zoho groups and may not be authorised to send. `CONTACT_BUSINESS_EMAIL` and `CONTACT_SUPPORT_EMAIL` can stay empty
+   in production (they default to the real groups); set them to test addresses anywhere else.
+3. **Zoho groups.** In Zoho Mail's admin console, let business@ and support@ receive mail from outside the
+   organisation (the group's "who can send" permission set to everyone, the public setting), or add the
+   `EMAIL_FROM` address or domain to the group's allowed senders. Otherwise Zoho holds the form's emails for
+   moderation or bounces them. Replies are sent by each member from their own mailbox to the visitor (Reply-To);
+   replying *as* the group address needs Zoho's own permission for that, which this setup doesn't require.
+4. **Check it.** Send one message from `/contact` for each topic; it should arrive in the group with the visitor as
+   Reply-To. If it doesn't, `python -m app.db.contact_requests --not-emailed` shows what's waiting, and the
+   backend log has a line `email.send_refused provider=resend` with the reason.
+
+`EMAIL_FROM` and `RESEND_API_KEY` also send candidate emails, so setting them turns those on too.
+
 ## Environment
 
 - `backend/.env` (see `backend/.env.example`) — database URL, Supabase project URL and secret key (portal invitations and sign-in links), AI provider (`mock`, `gemini` or `groq`) and keys, `RESEND_API_KEY` and `EMAIL_FROM` (email delivery; optional), `CONTACT_BUSINESS_EMAIL` and `CONTACT_SUPPORT_EMAIL` (where the contact form delivers; empty means business@hirvello.com and support@hirvello.com), Ashby keys and options, CORS. Server-side only.

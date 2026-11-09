@@ -78,9 +78,10 @@ class Settings(BaseSettings):
     resend_api_key: SecretStr | None = None
     email_from: str | None = None
     email_timeout_seconds: float = 10.0
-    # Hirvello's own contact address: shown in the website's Contact section, and where its contact
-    # form's messages are emailed (with an email provider). Unset, the site shows no address.
-    contact_email: str | None = None
+    # Where the website's contact form delivers (with an email provider): Hirvello's two Zoho distribution
+    # groups. They only ever receive: the From address is EMAIL_FROM, and the visitor is the Reply-To.
+    contact_business_email: str = "business@hirvello.com"
+    contact_support_email: str = "support@hirvello.com"
 
     # Supabase Auth admin access, for the one-time links applicants get into the candidate portal (an
     # activation or sign-in link). Server-side; never sent to the browser. Either name works (the dashboard

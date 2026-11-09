@@ -4,9 +4,9 @@
     python -m app.db.contact_requests --limit 50
     python -m app.db.contact_requests --not-emailed   only those the team hasn't had by email
 
-Every message is kept (contact_requests), and emailed to CONTACT_EMAIL only when an email provider is set
-up. Until it is, this is where they're read: each shows who sent it, their address to reply to, the topic,
-and the message itself.
+Every message is kept (contact_requests), and emailed to the business or support team only when an email
+provider is set up. Until it is, this is where they're read: each shows who sent it, their address to reply
+to, the topic, and the message itself, with its subject on the first line.
 """
 
 import argparse

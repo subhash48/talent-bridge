@@ -53,6 +53,22 @@ async def test_resend_sends_the_email() -> None:
     }
 
 
+async def test_a_reply_to_address_is_sent_only_when_there_is_one() -> None:
+    bodies: list[dict[str, object]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        bodies.append(json.loads(request.content))
+        return httpx.Response(200, json={"id": "1"})
+
+    provider = ResendEmail(KEY, "Hirvello <updates@example.com>", transport=httpx.MockTransport(handler))
+    await provider.send(
+        OutboundEmail(to="team@example.com", subject="Hello", text="Hi", reply_to="visitor@example.com")
+    )
+    await provider.send(OutboundEmail(to="team@example.com", subject="Hello", text="Hi"))
+    assert bodies[0]["reply_to"] == "visitor@example.com"
+    assert "reply_to" not in bodies[1]
+
+
 async def test_a_refused_email_fails_with_a_safe_reason() -> None:
     def refuse(request: httpx.Request) -> httpx.Response:
         return httpx.Response(

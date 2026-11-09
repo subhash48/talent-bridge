@@ -26,6 +26,8 @@ class OutboundEmail:
     text: str
     # Sent as the provider's idempotency key, so a retried send is one email.
     idempotency_key: str | None = None
+    # Where a reply goes when that isn't the From address: a website visitor, for mail to a team that only receives.
+    reply_to: str | None = None
 
 
 @dataclass(frozen=True)
@@ -78,7 +80,14 @@ class ResendEmail(EmailProvider):
         headers = {"Authorization": f"Bearer {self._api_key}"}
         if email.idempotency_key:
             headers["Idempotency-Key"] = email.idempotency_key
-        payload = {"from": self.sender, "to": [email.to], "subject": email.subject, "text": email.text}
+        payload: dict[str, object] = {
+            "from": self.sender,
+            "to": [email.to],
+            "subject": email.subject,
+            "text": email.text,
+        }
+        if email.reply_to:
+            payload["reply_to"] = email.reply_to
         try:
             async with httpx.AsyncClient(timeout=self._timeout, transport=self._transport) as client:
                 response = await client.post(f"{self._base_url}/emails", json=payload, headers=headers)

@@ -15,16 +15,14 @@ const LINES: Record<string, string> = {
 
 /**
  * The three ways in: recruiters, candidates and small businesses. Each is a photograph in the same soft-blue frame
- * as How it works' pictures, then its name, one line and Learn more (its page), straight on the section's sky
- * rather than in a card. The section shares How it works' sky, faded in at the top as well as out at the foot, so
- * the two read as one stretch of the page. Side by side from lg, stacked (no wider than 520px) below it.
+ * as How it works' pictures, then its name, one line and Learn more (its page), straight on the home page's one
+ * sky rather than in a card. Side by side from lg, stacked (no wider than 520px) below it.
  */
 export function Audiences() {
   return (
     <HomeSection
       id="solutions"
       size="wide"
-      className="steps-sky [--sky-mask:linear-gradient(to_bottom,transparent_0%,#000_18%,#000_82%,transparent_100%)]"
       eyebrow="Who it's for"
       title="One product. Three ways in."
       intro="The right workspace for every side of hiring."

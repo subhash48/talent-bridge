@@ -21,7 +21,7 @@ export default async function Home() {
   if (user) redirect(homePath(user));
 
   return (
-    <div className="sky-backdrop flex min-h-dvh flex-col">
+    <div className="home-sky flex min-h-dvh flex-col">
       <SkipLink />
       <SiteHeader />
       <main id="main" className="flex-1">

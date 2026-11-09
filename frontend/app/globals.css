@@ -226,6 +226,21 @@
 }
 
 /*
+ * The home page's sky: one gradient over the whole page, from the hero to the footer, so no section starts at an
+ * edge of its own. Soft sky blue at the top (#EAF2FF) through powder blue (#D9E8FF) to a stronger pastel blue at
+ * the foot (#C9DDFF, #C5DAFF), with the website's light at the top left and its blue at the lower right. The
+ * sections on it have no background; the hero's own sky fades into it.
+ */
+@utility home-sky {
+  background-color: #dfeaff;
+  background-image:
+    radial-gradient(70% 22% at 100% 100%, rgb(50 102 255 / 0.22), transparent 70%),
+    radial-gradient(45% 12% at 0% 0%, rgb(255 255 255 / 0.7), transparent 70%),
+    linear-gradient(180deg, #eaf2ff 0%, #d9e8ff 32%, #c9ddff 68%, #c5daff 100%);
+  background-repeat: no-repeat;
+}
+
+/*
  * The home page's hero: the same sky, stronger. Pale at the top left, a deep blue glow at the lower right, and a
  * pale curve at the foot like a horizon.
  */
@@ -236,29 +251,6 @@
     radial-gradient(36% 40% at 68% 100%, rgb(120 170 255 / 0.5), transparent 70%),
     radial-gradient(40% 36% at 10% 8%, rgb(255 255 255 / 0.85), transparent 65%),
     linear-gradient(160deg, #f9fbff 0%, #edf3fc 35%, #d9e7fc 70%, #b7d0f8 100%);
-}
-
-/*
- * How it works' own sky, as in its reference: soft blue at the top left deepening to periwinkle at the lower right
- * (#E4EEFF, #C9DEFF, #B6D0FF, #9FBFFF), a little light at the top, and faded out at its foot into the page's sky
- * so the next section doesn't start at an edge. It sits behind the section on a layer of its own. Who it's for
- * shares it, faded in at its top as well (--sky-mask), so the two sections read as one stretch of the page.
- */
-@utility steps-sky {
-  position: relative;
-  isolation: isolate;
-
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background-image:
-      radial-gradient(55% 45% at 12% 0%, rgb(244 248 255 / 0.7), transparent 70%),
-      linear-gradient(160deg, #e4eeff 0%, #c9deff 45%, #b6d0ff 75%, #9fbfff 100%);
-    mask-image: var(--sky-mask, linear-gradient(to bottom, #000 0%, #000 80%, transparent 100%));
-  }
 }
 
 /* Frosted glass on the sky: the website's cards, lifted from the gradient rather than a white block on it. */
@@ -280,6 +272,7 @@
 
 /* Pages on the sky: the same sky past the edges (overscroll) instead of the app's mist. */
 html:has(.sky-backdrop),
+html:has(.home-sky),
 html:has(.hero-sky) {
   background-color: #eaf1fb;
 

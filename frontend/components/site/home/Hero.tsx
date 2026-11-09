@@ -14,18 +14,20 @@ export function Hero() {
   return (
     <section
       aria-labelledby="hero-title"
-      className="relative isolate overflow-hidden px-5 pt-[120px] pb-16 text-center sm:px-8 lg:pt-[136px] lg:pb-20"
+      className="relative isolate px-5 pt-[120px] pb-8 text-center sm:px-8 sm:pb-10 lg:pt-[136px] lg:pb-12"
     >
-      <div aria-hidden className="hero-sky absolute inset-0 -z-20" />
-      {/* A soft curve at the foot, like a horizon, and a drifting glow behind the words. */}
+      {/* The hero's own sky, its horizon and its glow, on one layer that reaches 12rem past the hero and fades out
+          there, so the hero melts into the page's sky (home-sky) instead of stopping at an edge. It clips its own
+          overflow, so the wide horizon never makes the page scroll sideways. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -bottom-[40vw] left-1/2 -z-10 h-[56vw] w-[150vw] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgb(255_255_255/0.7),rgb(214_230_253/0.45)_55%,transparent)] blur-2xl"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute top-[14%] left-1/2 -z-10 h-[40vh] w-[64vw] -translate-x-1/2 animate-drift rounded-full bg-[radial-gradient(closest-side,rgb(255_255_255/0.55),transparent)] blur-3xl motion-reduce:animate-none"
-      />
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[calc(100%+12rem)] overflow-hidden [mask-image:linear-gradient(to_bottom,#000_0%,#000_58%,transparent_100%)]"
+      >
+        <div className="hero-sky absolute inset-0" />
+        {/* A soft curve at the foot, like a horizon, and a drifting glow behind the words. */}
+        <div className="absolute bottom-[calc(12rem-40vw)] left-1/2 h-[56vw] w-[150vw] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgb(255_255_255/0.7),rgb(214_230_253/0.45)_55%,transparent)] blur-2xl" />
+        <div className="absolute top-[14%] left-1/2 h-[40vh] w-[64vw] -translate-x-1/2 animate-drift rounded-full bg-[radial-gradient(closest-side,rgb(255_255_255/0.55),transparent)] blur-3xl motion-reduce:animate-none" />
+      </div>
 
       <p className="flex items-center justify-center gap-2 text-[12px] font-semibold tracking-[0.18em] text-charcoal uppercase">
         <span aria-hidden className="size-1.5 rounded-full bg-accent" />

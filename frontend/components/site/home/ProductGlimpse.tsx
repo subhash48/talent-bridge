@@ -26,7 +26,7 @@ const PHOTO = {
 
 /**
  * The product: a photograph of a team at work, with a small still of Today on it, beside what Hirvello does in four
- * features, straight on the sky (shared with How it works and Who it's for, faded in and out at the edges). The
+ * features, straight on the home page's one sky. The
  * still is a picture, not the app: it shows the shape of Today and reads no one's data. Photo first and features
  * in one column on a phone, two columns from sm, side by side (52 / 48) from lg.
  */
@@ -35,7 +35,6 @@ export function ProductGlimpse() {
     <HomeSection
       id="product"
       size="wide"
-      className="steps-sky [--sky-mask:linear-gradient(to_bottom,transparent_0%,#000_18%,#000_82%,transparent_100%)]"
       eyebrow="The product"
       title="A hiring system that keeps its word."
       intro="Everything Hirvello does comes back to one promise: nobody in your hiring process is left guessing."

@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
+import { FOUNDERS } from "@/components/site/contact";
 import { Section } from "@/components/site/Section";
 import { SOLUTIONS } from "@/components/site/nav";
 import { buttonStyles } from "@/components/ui/Button";
@@ -56,6 +57,24 @@ export function AboutSection() {
                   </span>{" "}
                   {line}
                 </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="grid gap-3 border-b border-ink/[0.08] py-8 md:grid-cols-[220px_1fr] md:gap-12">
+          <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-ink md:pt-0.5">The founders</h2>
+          {/* Name, role and work address only: nothing personal. */}
+          <ul className="grid max-w-[640px] grid-cols-1 gap-5 sm:grid-cols-2">
+            {FOUNDERS.map(({ name, role, email }) => (
+              <li key={email} className="text-[17px] leading-relaxed">
+                <p className="font-semibold text-ink">{name}</p>
+                <p className="text-charcoal">{role}</p>
+                <a
+                  href={`mailto:${email}`}
+                  className="mt-1 inline-block rounded-sm text-[15px] font-medium text-brand-ink underline-offset-4 transition-colors duration-200 hover:text-ink hover:underline"
+                >
+                  {email}
+                </a>
               </li>
             ))}
           </ul>

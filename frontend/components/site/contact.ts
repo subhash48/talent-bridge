@@ -14,3 +14,12 @@ export const CONTACT_CHANNELS: { topic: ContactTopic; title: string; team: strin
   { topic: "general", title: "Business inquiries", team: "business team", text: "Partnerships, investors and sales.", email: BUSINESS_EMAIL },
   { topic: "support", title: "Customer support", team: "support team", text: "Help with your account, or something that isn't working.", email: SUPPORT_EMAIL },
 ];
+
+/**
+ * The founders, as About introduces them: name, role and work address only. No phone numbers, personal addresses
+ * or profiles: their work email is the professional way to reach them.
+ */
+export const FOUNDERS = [
+  { name: "Subhash Galla", role: "Founder & CEO", email: "subhash@hirvello.com" },
+  { name: "Jordan Curri", role: "Co-founder", email: "jordan.curri@hirvello.com" },
+] as const;

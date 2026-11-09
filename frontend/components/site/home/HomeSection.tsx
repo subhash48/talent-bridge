@@ -9,19 +9,21 @@ type HomeSectionProps = {
   intro?: ReactNode;
   children: ReactNode;
   className?: string;
-  /** wide: a 1280px page and a 32 to 48px headline, for a section whose content is pictures (How it works). */
+  /** wide: a 32 to 48px headline, for a section whose content is pictures (How it works). */
   size?: "default" | "wide";
 };
 
 /**
  * One section of the home page: a short label, a centred headline (28 to 40px; wide, 32 to 48px), a line of intro,
- * then its content.
+ * then its content. No background of its own (the page's home-sky runs behind every section), the same 1200px
+ * column and side padding as the closing line and the footer, and 32 / 40 / 48px above and below, so the space
+ * between two sections' content is about 64px on a phone, 80px on a tablet and 96px on a desktop.
  */
 export function HomeSection({ id, eyebrow, title, intro, children, className, size = "default" }: HomeSectionProps) {
   const wide = size === "wide";
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className={cn("scroll-mt-28 px-5 py-16 sm:px-8 sm:py-20", className)}>
-      <div className={cn("mx-auto w-full", wide ? "max-w-[1280px]" : "max-w-[1200px]")}>
+    <section id={id} aria-labelledby={`${id}-title`} className={cn("scroll-mt-28 px-5 py-8 sm:px-8 sm:py-10 lg:py-12", className)}>
+      <div className="mx-auto w-full max-w-[1200px]">
         <div className={cn("mx-auto text-center", wide ? "max-w-[920px]" : "max-w-[640px]")}>
           <p className="text-[15px] font-semibold text-brand-ink">
             {eyebrow}

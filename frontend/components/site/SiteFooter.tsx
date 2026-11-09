@@ -15,7 +15,8 @@ const COLUMNS: { title: string; links: readonly { href: string; label: string }[
   { title: "Company", links: COMPANY_LINKS },
 ];
 
-const headingStyles = "text-[12px] font-semibold tracking-[0.16em] text-stone uppercase";
+// Charcoal rather than grey: the sky is at its bluest behind the footer, and grey there falls below AA contrast.
+const headingStyles = "text-[12px] font-semibold tracking-[0.16em] text-charcoal uppercase";
 const linkStyles = "rounded-sm text-[15px] text-charcoal transition-colors duration-200 hover:text-brand-ink";
 const rule = "border-ink/[0.08]";
 
@@ -49,7 +50,7 @@ function SocialIcon({ network, ...props }: ComponentProps<"svg"> & { network: So
 export function SiteFooter({ className, invitation = true }: { className?: string; invitation?: boolean }) {
   const social = socialLinks();
   return (
-    <footer className={cn("px-5 pt-10 pb-8 sm:px-8 sm:pt-14 sm:pb-10", className)}>
+    <footer className={cn("px-5 pb-8 sm:px-8 sm:pb-10", invitation ? "pt-10 sm:pt-14" : "pt-8 sm:pt-10 lg:pt-12", className)}>
       <div className="mx-auto w-full max-w-[1200px]">
         {invitation && (
           <div className={cn("flex flex-col gap-6 border-b pb-10 sm:pb-12 lg:flex-row lg:items-end lg:justify-between lg:gap-12", rule)}>
@@ -87,8 +88,8 @@ export function SiteFooter({ className, invitation = true }: { className?: strin
                     </a>
                   ) : (
                     // Not configured yet (HIRVELLO_*_URL): the name and its mark, and nowhere to go.
-                    <span className="inline-flex items-center gap-2 text-[15px] text-stone">
-                      <SocialIcon network={network} className="size-[18px] text-faint" />
+                    <span className="inline-flex items-center gap-2 text-[15px] text-charcoal">
+                      <SocialIcon network={network} className="size-[18px] text-stone" />
                       {network}
                     </span>
                   )}
@@ -114,7 +115,7 @@ export function SiteFooter({ className, invitation = true }: { className?: strin
           </nav>
         </div>
 
-        <div className={cn("mt-12 flex flex-col gap-3 border-t pt-6 text-[13px] text-stone sm:mt-14 sm:flex-row sm:items-center sm:justify-between", rule)}>
+        <div className={cn("mt-12 flex flex-col gap-3 border-t pt-6 text-[13px] text-charcoal sm:mt-14 sm:flex-row sm:items-center sm:justify-between", rule)}>
           <p>© 2026 Hirvello</p>
           <ul className="flex items-center gap-5">
             {POLICY_LINKS.map((link) => (

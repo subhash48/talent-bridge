@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ComponentProps } from "react";
 
 import { HirvelloLogo } from "@/components/shared/HirvelloLogo";
+import { CONTACT_CHANNELS } from "@/components/site/contact";
 import { COMPANY_LINKS, HOW_IT_WORKS_LINK, POLICY_LINKS, PRICING_LINK, PRODUCT_LINK, SIGNUP_LINK, SOLUTIONS } from "@/components/site/nav";
 import { socialLinks, type SocialNetwork } from "@/components/site/social";
 import { buttonStyles } from "@/components/ui/Button";
@@ -44,7 +45,8 @@ function SocialIcon({ network, ...props }: ComponentProps<"svg"> & { network: So
 /**
  * The public website's footer, on the same sky as the page, with no card around it. First the last invitation
  * (Better hiring starts here, Get started), then the mark with its one line and where to follow Hirvello beside
- * the places on the site in three columns, then a thin rule, the year and the policies. The home page ends on its
+ * the places on the site in three columns and, under them, the business and support addresses (mailto), then a
+ * thin rule, the year and the policies. The home page ends on its
  * own closing line (ClosingCta), so it passes invitation={false} and the footer starts at the mark.
  */
 export function SiteFooter({ className, invitation = true }: { className?: string; invitation?: boolean }) {
@@ -97,22 +99,37 @@ export function SiteFooter({ className, invitation = true }: { className?: strin
               ))}
             </ul>
           </div>
-          <nav aria-label="Footer" className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 sm:gap-x-8">
-            {COLUMNS.map((column) => (
-              <div key={column.title}>
-                <p className={headingStyles}>{column.title}</p>
-                <ul className="mt-4 flex flex-col gap-2.5">
-                  {column.links.map((link) => (
-                    <li key={link.href}>
-                      <Link href={link.href} className={linkStyles}>
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </nav>
+          <div>
+            <nav aria-label="Footer" className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 sm:gap-x-8">
+              {COLUMNS.map((column) => (
+                <div key={column.title}>
+                  <p className={headingStyles}>{column.title}</p>
+                  <ul className="mt-4 flex flex-col gap-2.5">
+                    {column.links.map((link) => (
+                      <li key={link.href}>
+                        <Link href={link.href} className={linkStyles}>
+                          {link.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </nav>
+            {/* Where to write: on the same columns as the links above, one under the other on a phone. */}
+            <dl className="mt-10 grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-3">
+              {CONTACT_CHANNELS.map(({ title, email }) => (
+                <div key={email}>
+                  <dt className={headingStyles}>{title}</dt>
+                  <dd className="mt-3">
+                    <a href={`mailto:${email}`} className={linkStyles}>
+                      {email}
+                    </a>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
         </div>
 
         <div className={cn("mt-12 flex flex-col gap-3 border-t pt-6 text-[13px] text-charcoal sm:mt-14 sm:flex-row sm:items-center sm:justify-between", rule)}>

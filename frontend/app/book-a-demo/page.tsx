@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 
 import { DemoSection } from "@/components/site/DemoSection";
 import { SitePage } from "@/components/site/SitePage";
-import { getContactEmail } from "@/services/contact";
 
 export const metadata: Metadata = {
   title: "Book a demo",
@@ -10,11 +9,10 @@ export const metadata: Metadata = {
 };
 
 // Where the header's Book a demo leads: a request to the team, answered by email (see DemoSection).
-export default async function BookADemoPage() {
-  const email = await getContactEmail();
+export default function BookADemoPage() {
   return (
     <SitePage>
-      <DemoSection email={email} />
+      <DemoSection />
     </SitePage>
   );
 }

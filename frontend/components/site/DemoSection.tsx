@@ -1,6 +1,7 @@
 import { Mail } from "lucide-react";
 import Link from "next/link";
 
+import { BUSINESS_EMAIL } from "@/components/site/contact";
 import { ContactForm } from "@/components/site/ContactForm";
 import { FeatureIcon, Section } from "@/components/site/Section";
 import { SIGNUP_LINK } from "@/components/site/nav";
@@ -15,10 +16,10 @@ const SHOWN = [
 /**
  * Book a demo: a request, not a calendar. There's no scheduling service behind the site, so this is the contact form
  * set to the pilot programme, with no inquiry type to pick: the request is kept with the other messages
- * (contact_requests), emailed to the team when an address is configured, and answered by email with times.
+ * (contact_requests), emailed to the business team when email is set up, and answered by email with times.
  * Nothing here promises a slot it can't keep.
  */
-export function DemoSection({ email }: { email: string | null }) {
+export function DemoSection() {
   return (
     <Section
       level="h1"
@@ -40,19 +41,17 @@ export function DemoSection({ email }: { email: string | null }) {
               ))}
             </ul>
           </div>
-          {email && (
-            <p className="flex items-center gap-3">
-              <FeatureIcon>
-                <Mail aria-hidden strokeWidth={1.75} />
-              </FeatureIcon>
-              <span>
-                Or email{" "}
-                <a href={`mailto:${email}`} className="font-medium text-brand-ink underline-offset-4 hover:underline">
-                  {email}
-                </a>
-              </span>
-            </p>
-          )}
+          <p className="flex items-center gap-3">
+            <FeatureIcon>
+              <Mail aria-hidden strokeWidth={1.75} />
+            </FeatureIcon>
+            <span>
+              Or email{" "}
+              <a href={`mailto:${BUSINESS_EMAIL}`} className="font-medium text-brand-ink underline-offset-4 hover:underline">
+                {BUSINESS_EMAIL}
+              </a>
+            </span>
+          </p>
           <p className="text-[14px] text-stone">
             Prefer to look around first? Every workspace is free while we&rsquo;re in beta:{" "}
             <Link href={SIGNUP_LINK.href} className="font-medium text-brand-ink underline-offset-4 hover:underline">
@@ -62,7 +61,7 @@ export function DemoSection({ email }: { email: string | null }) {
           </p>
         </div>
         <div className="sky-card self-start rounded-[20px] p-5 sm:p-7">
-          <ContactForm topic="pilot" topicChoice={false} messageLabel="What would you like to see?" submitLabel="Request a demo" />
+          <ContactForm demo />
         </div>
       </div>
     </Section>

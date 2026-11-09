@@ -2,18 +2,16 @@ import type { Metadata } from "next";
 
 import { ContactSection } from "@/components/site/ContactSection";
 import { SitePage } from "@/components/site/SitePage";
-import { getContactEmail } from "@/services/contact";
 
 export const metadata: Metadata = {
   title: "Contact",
-  description: "Questions, feedback or a pilot in mind? Write to the Hirvello team and we'll reply by email.",
+  description: "Reach Hirvello's business team or customer support, with the contact form or by email.",
 };
 
-export default async function ContactPage() {
-  const email = await getContactEmail();
+export default function ContactPage() {
   return (
     <SitePage>
-      <ContactSection email={email} />
+      <ContactSection />
     </SitePage>
   );
 }

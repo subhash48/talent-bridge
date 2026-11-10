@@ -12,12 +12,12 @@ import { pluralize } from "@/lib/format";
 import { jobFacts } from "@/lib/simple-hire";
 import { cn } from "@/lib/utils";
 import { errorMessage } from "@/services/api";
-import { setJobStatus } from "@/services/jobs";
-import type { JobOpening } from "@/types/workspace";
+import { closingDatePassed, jobBoardHref, setJobStatus } from "@/services/jobs";
+import type { ManagedJob } from "@/types/job";
 
 /**
- * Simple Hire's jobs: each one with its facts, how many people applied, its page on the careers site, and a
- * button to stop or start taking applications. Posting a new one starts with the assistant.
+ * Simple Hire's jobs: each one with its facts, how many people applied, its page on the Hirvello job board, and
+ * a button to stop or start taking applications. Posting a new one starts with the assistant.
  */
 export function HireJobs() {
   const { jobs, candidates } = useWorkspace();
@@ -29,7 +29,7 @@ export function HireJobs() {
         <div>
           <h1 className="text-[24px] font-semibold tracking-tight text-ink sm:text-[28px]">Jobs</h1>
           <p className="mt-1 text-[15px] text-stone">
-            {jobs.length ? `${pluralize(jobs.length, "job")}. Open ones are on your careers page.` : "No jobs yet."}
+            {jobs.length ? `${pluralize(jobs.length, "job")}. Open ones are on the Hirvello job board.` : "No jobs yet."}
           </p>
         </div>
         <Link href="/hire?do=post" className={buttonStyles({ size: "lg" })}>
@@ -55,18 +55,22 @@ export function HireJobs() {
   );
 }
 
-function JobRow({ job, applicants }: { job: JobOpening; applicants: number }) {
+function JobRow({ job, applicants }: { job: ManagedJob; applicants: number }) {
   const router = useRouter();
   const { refresh } = useWorkspace();
   const toast = useToast();
   const [pending, setPending] = useState(false);
-  const open = job.status === "open";
+  // Open but past its closing date, a job has stopped taking applications on its own.
+  const closedByDate = job.status === "open" && closingDatePassed(job);
+  const open = job.status === "open" && !closedByDate;
+  const href = jobBoardHref(job);
   const facts = jobFacts(job);
 
   async function toggle() {
     setPending(true);
     try {
-      await setJobStatus(job.id, open ? "closed" : "open");
+      // Taking applications again after the closing date means the date goes, or the job would stay shut.
+      await setJobStatus(job.id, open ? "closed" : "open", { clearClosingDate: !open && closingDatePassed(job) });
     } catch (error) {
       toast({ title: "Not changed", description: errorMessage(error, "Try again in a moment."), tone: "error" });
       setPending(false);
@@ -97,16 +101,19 @@ function JobRow({ job, applicants }: { job: JobOpening; applicants: number }) {
                 "rounded-full px-2.5 py-0.5 text-xs font-medium",
                 open
                   ? "bg-success/10 text-success"
-                  : job.status === "closed"
+                  : job.status === "closed" || closedByDate
                     ? "bg-muted text-stone"
                     : "bg-caution/10 text-caution",
               )}
             >
-              {open ? "Taking applications" : job.status === "closed" ? "Closed" : "Not posted"}
+              {open ? "Taking applications" : closedByDate ? "Closing date passed" : job.status === "closed" ? "Closed" : "Not posted"}
             </span>
           </p>
           {facts.length > 0 && <p className="mt-1 text-[15px] text-charcoal">{facts.join(" · ")}</p>}
           {job.location && <p className="mt-0.5 text-sm text-stone">{job.location}</p>}
+          {open && !href && (
+            <p className="mt-0.5 text-sm text-stone">Private: it isn&apos;t on the Hirvello job board.</p>
+          )}
         </div>
         <Link
           href={`/hire/applicants?job=${job.id}`}
@@ -117,13 +124,9 @@ function JobRow({ job, applicants }: { job: JobOpening; applicants: number }) {
         </Link>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
-        {open && (
-          <Link
-            href={`/careers/${job.id}`}
-            target="_blank"
-            className={buttonStyles({ variant: "secondary", size: "md" })}
-          >
-            See it on your careers page <ExternalLink aria-hidden />
+        {href && (
+          <Link href={href} target="_blank" className={buttonStyles({ variant: "secondary", size: "md" })}>
+            See it on the job board <ExternalLink aria-hidden />
           </Link>
         )}
         {job.status !== "draft" && (

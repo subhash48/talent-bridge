@@ -54,7 +54,7 @@ export function HireApplicants({ initialJob }: { initialJob: string | null }) {
         <div className="glass mt-8 rounded-[18px] border border-border p-8 text-center">
           <p className="text-lg font-semibold text-ink">Nobody has applied yet</p>
           <p className="mx-auto mt-1 max-w-md text-[15px] text-stone">
-            When people apply on your careers page, they show up here with the days they can work.
+            When people apply on the Hirvello job board, they show up here with the days they can work.
           </p>
         </div>
       ) : (

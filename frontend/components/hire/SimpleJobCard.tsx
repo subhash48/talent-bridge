@@ -66,7 +66,7 @@ export function SimpleJobCard({ card, onPost, onEdits, busy, superseded }: Props
         {jobFacts(card.draft).length > 0 && (
           <p className="mt-0.5 text-[15px] text-charcoal">{jobFacts(card.draft).join(" · ")}</p>
         )}
-        <p className="mt-1 text-sm text-stone">It&apos;s on your careers page, taking applications.</p>
+        <p className="mt-1 text-sm text-stone">It&apos;s on the Hirvello job board, taking applications.</p>
         <div className="mt-4 flex flex-wrap gap-2">
           {card.careers_href && (
             <Link

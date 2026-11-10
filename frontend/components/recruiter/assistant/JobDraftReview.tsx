@@ -210,7 +210,7 @@ export function JobDraftReview({ card, onApprove, onCancel, onEdits, superseded 
           ))}
         </ul>
       )}
-      {open && <p className="mt-2 text-[11px] text-faint">Approve &amp; Create opens it on your careers site. Nothing exists until then.</p>}
+      {open && <p className="mt-2 text-[11px] text-faint">Approve &amp; Create opens it on the Hirvello job board. Nothing exists until then.</p>}
       {(problem || card.error) && <p className="mt-2 text-xs text-danger">{problem ?? card.error}</p>}
 
       <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
@@ -236,7 +236,7 @@ export function JobDraftReview({ card, onApprove, onCancel, onEdits, superseded 
               </Link>
               {card.careers_href && (
                 <a href={card.careers_href} target="_blank" rel="noopener noreferrer" className={buttonStyles({ variant: "secondary", size: "sm" })}>
-                  <ExternalLink aria-hidden /> Careers page
+                  <ExternalLink aria-hidden /> Job board
                 </a>
               )}
             </>

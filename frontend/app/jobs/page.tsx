@@ -34,11 +34,11 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
   return (
     <div className="mx-auto w-full max-w-[1200px] px-5 pb-20 sm:px-8">
       <header className="mx-auto max-w-[880px] pt-6 text-center sm:pt-10">
-        <p className="text-[15px] font-semibold text-brand-ink">Hirvello job board</p>
-        <h1 className="mt-3 text-[clamp(34px,4.4vw,56px)] leading-[1.05] font-bold tracking-[-0.035em] text-balance text-ink">
+        <p className="text-[0.9375rem] font-semibold text-brand-ink">Hirvello job board</p>
+        <h1 className="mt-3 text-[clamp(2.125rem,4.4vw,3.5rem)] leading-[1.05] font-bold tracking-[-0.035em] text-balance text-ink">
           Find your next opportunity.
         </h1>
-        <p className="mx-auto mt-4 max-w-[560px] text-[17px] leading-relaxed text-pretty text-charcoal">
+        <p className="mx-auto mt-4 max-w-[560px] text-[1.0625rem] leading-relaxed text-pretty text-charcoal">
           Explore opportunities from recruiters and growing businesses—all in one place.
         </p>
       </header>
@@ -67,7 +67,7 @@ function Board({ query, page }: { query: BoardQuery; page: JobBoardPage }) {
         {page.jobs.length > 0 ? (
           <>
             <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <p aria-live="polite" className="text-[15px] text-charcoal">
+              <p aria-live="polite" className="text-[0.9375rem] text-charcoal">
                 <span className="font-semibold text-ink">{resultsLabel(page.total, query.page, page.jobs.length, page.limit)}</span>
                 {query.q && <> for &ldquo;{query.q}&rdquo;</>}
                 {query.location && <> in {query.location}</>}

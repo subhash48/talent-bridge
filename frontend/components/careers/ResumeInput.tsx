@@ -112,7 +112,7 @@ export function ResumeInput({ id, file, onChange, error, disabled }: ResumeInput
       {file ? (
         <div className="flex items-center gap-3 p-3 sm:p-3.5">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-[8px] bg-ink/[0.05] ring-1 ring-ink/[0.08]">
-            <FileText aria-hidden className="size-[18px] text-charcoal" />
+            <FileText aria-hidden className="size-[1.125rem] text-charcoal" />
           </span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-ink">{file.name}</p>
@@ -130,7 +130,7 @@ export function ResumeInput({ id, file, onChange, error, disabled }: ResumeInput
       ) : (
         <div className="flex flex-col items-center gap-2 px-4 py-7 text-center">
           <span className="flex size-10 items-center justify-center rounded-full bg-ink/[0.05] ring-1 ring-ink/[0.08]">
-            <Upload aria-hidden className="size-[18px] text-charcoal" />
+            <Upload aria-hidden className="size-[1.125rem] text-charcoal" />
           </span>
           <p className="text-sm text-charcoal">
             <label htmlFor={id} className={cn("font-medium text-brand-ink underline-offset-4 hover:text-ink hover:underline", chooseStyles)}>

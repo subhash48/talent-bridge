@@ -28,11 +28,11 @@ type Choice<T extends string> = { value: T; label: string };
 
 // 44px tall, for a thumb. A chosen filter turns cobalt-tinted and says what's chosen.
 const TRIGGER =
-  "inline-flex h-11 items-center gap-2 rounded-full border px-4 text-[14px] font-medium whitespace-nowrap transition-colors data-[state=open]:border-brand/60 [&_svg]:size-4 [&_svg]:shrink-0";
+  "inline-flex h-11 items-center gap-2 rounded-full border px-4 text-[0.875rem] font-medium whitespace-nowrap transition-colors data-[state=open]:border-brand/60 [&_svg]:size-4 [&_svg]:shrink-0";
 const IDLE = "border-ink/12 bg-white/40 text-ink hover:border-ink/25 hover:bg-white/60";
 const ACTIVE = "border-brand/35 bg-accent-soft text-brand-ink hover:border-brand/55";
 // Roomier than a workspace menu's rows: these are picked on phones too.
-const ITEM = "h-10 text-[14px]";
+const ITEM = "h-10 text-[0.875rem]";
 
 /** Work arrangement, employment type, salary and date posted; each change updates the URL and the results. */
 export function BoardFilters({ className }: { className?: string }) {
@@ -71,7 +71,7 @@ export function BoardFilters({ className }: { className?: string }) {
         type="button"
         onClick={() => go(withoutFilters(query))}
         disabled={count === 0}
-        className="inline-flex h-11 items-center gap-1.5 rounded-full px-3 text-[14px] font-medium text-brand-ink transition-colors hover:bg-ink/[0.05] hover:text-ink disabled:pointer-events-none disabled:text-stone/70"
+        className="inline-flex h-11 items-center gap-1.5 rounded-full px-3 text-[0.875rem] font-medium text-brand-ink transition-colors hover:bg-ink/[0.05] hover:text-ink disabled:pointer-events-none disabled:text-stone/70"
       >
         <X aria-hidden className="size-4" />
         Clear filters
@@ -111,7 +111,7 @@ function MultiFilter<T extends string>({ label, choices, values, onChange }: Mul
         )}
         <ChevronDown aria-hidden />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" aria-label={label} className="min-w-[210px]">
+      <DropdownMenuContent align="start" aria-label={label} className="min-w-[13.125rem]">
         {choices.map((choice) => (
           <DropdownMenuCheckboxItem
             key={choice.value}
@@ -154,7 +154,7 @@ function SingleFilter<T extends string>({ label, anyLabel, choices, value, onCha
         )}
         <ChevronDown aria-hidden />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" aria-label={label} className="min-w-[200px]">
+      <DropdownMenuContent align="start" aria-label={label} className="min-w-[12.5rem]">
         <DropdownMenuRadioGroup
           value={value ?? ANY}
           onValueChange={(next) => onChange(choices.find((choice) => choice.value === next)?.value ?? null)}

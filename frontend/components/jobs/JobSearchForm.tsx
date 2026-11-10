@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 // Each field is a plain transparent input on the one frosted bar, so there's no second layer of white behind the text.
 const FIELD =
-  "h-12 w-full min-w-0 rounded-[14px] bg-transparent pr-4 pl-11 text-base text-ink placeholder:text-stone focus-visible:bg-white/45 sm:text-[15px] md:rounded-full";
+  "h-12 w-full min-w-0 rounded-[14px] bg-transparent pr-4 pl-11 text-base text-ink placeholder:text-stone focus-visible:bg-white/45 sm:text-[0.9375rem] md:rounded-full";
 
 /** As the board's URL keeps it: single spaces, at most the API's 100 characters. */
 function tidy(value: string): string {
@@ -54,7 +54,7 @@ export function JobSearchForm({ className }: { className?: string }) {
         <label htmlFor="jobs-q" className="sr-only">
           Job title, skill or company
         </label>
-        <Search aria-hidden className="pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2 text-brand-ink" />
+        <Search aria-hidden className="pointer-events-none absolute top-1/2 left-4 size-[1.125rem] -translate-y-1/2 text-brand-ink" />
         <input
           id="jobs-q"
           name="q"
@@ -73,7 +73,7 @@ export function JobSearchForm({ className }: { className?: string }) {
         <label htmlFor="jobs-location" className="sr-only">
           Location
         </label>
-        <MapPin aria-hidden className="pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2 text-brand-ink" />
+        <MapPin aria-hidden className="pointer-events-none absolute top-1/2 left-4 size-[1.125rem] -translate-y-1/2 text-brand-ink" />
         <input
           id="jobs-location"
           name="location"
@@ -99,7 +99,7 @@ export function JobSearchForm({ className }: { className?: string }) {
       {query.source && <input type="hidden" name="source" value={query.source} />}
       <button
         type="submit"
-        className={buttonStyles({ size: "lg", className: "mt-1 h-12 w-full px-7 text-[15px] md:mt-0 md:ml-1.5 md:w-auto" })}
+        className={buttonStyles({ size: "lg", className: "mt-1 h-12 w-full px-7 text-[0.9375rem] md:mt-0 md:ml-1.5 md:w-auto" })}
       >
         {pending ? <LoaderCircle aria-hidden className="animate-spin" /> : <Search aria-hidden />}
         Search

@@ -6,7 +6,7 @@ import { BoardLink, useBoard } from "@/components/jobs/BoardNavigation";
 import { withChanges } from "@/components/jobs/board";
 import { buttonStyles } from "@/components/ui/Button";
 
-const STEP = buttonStyles({ variant: "secondary", size: "lg", className: "min-w-[104px] px-4 sm:min-w-[124px]" });
+const STEP = buttonStyles({ variant: "secondary", size: "lg", className: "min-w-[6.5rem] px-4 sm:min-w-[7.75rem]" });
 
 /** Previous and Next, as links to the board's other pages; each adds to the history, so Back returns to this one. */
 export function BoardPagination({ page, pages }: { page: number; pages: number }) {
@@ -20,9 +20,9 @@ export function BoardPagination({ page, pages }: { page: number; pages: number }
           Previous
         </BoardLink>
       ) : (
-        <span aria-hidden className="min-w-[104px] sm:min-w-[124px]" />
+        <span aria-hidden className="min-w-[6.5rem] sm:min-w-[7.75rem]" />
       )}
-      <p className="text-[14px] text-charcoal tabular-nums">
+      <p className="text-[0.875rem] text-charcoal tabular-nums">
         Page {page} of {pages}
       </p>
       {page < pages ? (
@@ -31,7 +31,7 @@ export function BoardPagination({ page, pages }: { page: number; pages: number }
           <ArrowRight aria-hidden />
         </BoardLink>
       ) : (
-        <span aria-hidden className="min-w-[104px] sm:min-w-[124px]" />
+        <span aria-hidden className="min-w-[6.5rem] sm:min-w-[7.75rem]" />
       )}
     </nav>
   );

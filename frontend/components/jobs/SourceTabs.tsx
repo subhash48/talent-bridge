@@ -22,7 +22,7 @@ export function SourceTabs({ counts, className }: { counts: JobBoardPage["counts
                 to={withChanges(query, { source: tab.source })}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative -mb-px inline-flex h-12 items-center gap-2 rounded-t-[10px] border-b-2 px-3 text-[15px] font-medium whitespace-nowrap transition-colors sm:px-4",
+                  "relative -mb-px inline-flex h-12 items-center gap-2 rounded-t-[10px] border-b-2 px-3 text-[0.9375rem] font-medium whitespace-nowrap transition-colors sm:px-4",
                   active ? "border-brand text-ink" : "border-transparent text-charcoal hover:border-ink/20 hover:text-ink",
                 )}
               >

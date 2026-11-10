@@ -71,13 +71,13 @@ export function ApplyResultCard({ site = "demo", result, problem, retrying, stil
   return (
     <Card className="p-5 sm:p-6">
       <span className={cn("flex size-12 items-center justify-center rounded-full ring-1", TONES[tone])}>
-        <Icon aria-hidden className="size-[22px]" />
+        <Icon aria-hidden className="size-[1.375rem]" />
       </span>
-      <h2 ref={heading} tabIndex={-1} className="mt-5 text-[22px] font-semibold tracking-tight text-ink focus:outline-none">
+      <h2 ref={heading} tabIndex={-1} className="mt-5 text-[1.375rem] font-semibold tracking-tight text-ink focus:outline-none">
         {title}
       </h2>
 
-      <div className="mt-2 flex flex-col gap-3 text-[15px] leading-relaxed text-charcoal">
+      <div className="mt-2 flex flex-col gap-3 text-[0.9375rem] leading-relaxed text-charcoal">
         {result.status === "invitation_sent" && (
           <>
             <p>

@@ -32,11 +32,11 @@ export function JobCard({ job, from = "" }: JobCardProps) {
       <div className="flex items-start gap-3.5">
         <CompanyLogo name={company} logoUrl={job.companyLogoUrl} size={44} />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[14px] font-medium text-charcoal">
+          <p className="truncate text-[0.875rem] font-medium text-charcoal">
             {company}
             {job.department && <span className="font-normal text-stone"> · {job.department}</span>}
           </p>
-          <h3 id={titleId} className="mt-0.5 text-[18px] leading-snug font-semibold tracking-[-0.015em] text-pretty text-ink sm:text-[19px]">
+          <h3 id={titleId} className="mt-0.5 text-[1.125rem] leading-snug font-semibold tracking-[-0.015em] text-pretty text-ink sm:text-[1.1875rem]">
             {job.title}
           </h3>
         </div>
@@ -45,14 +45,14 @@ export function JobCard({ job, from = "" }: JobCardProps) {
       <JobTags job={job} lead={job.source && <SourceBadge source={job.source} />} className="mt-4" />
 
       {pay && (
-        <p className="mt-4 flex items-center gap-2 text-[15px] font-semibold text-ink">
+        <p className="mt-4 flex items-center gap-2 text-[0.9375rem] font-semibold text-ink">
           <Banknote aria-hidden className="size-4 shrink-0 text-brand-ink" />
           <span className="sr-only">Pay: </span>
           <span>{pay}</span>
         </p>
       )}
 
-      {job.summary && <p className="mt-3 line-clamp-2 text-[14px] leading-relaxed text-charcoal">{job.summary}</p>}
+      {job.summary && <p className="mt-3 line-clamp-2 text-[0.875rem] leading-relaxed text-charcoal">{job.summary}</p>}
 
       <div className="mt-auto flex flex-col gap-3 pt-5 sm:flex-row sm:items-center sm:justify-between">
         {posted ? (
@@ -67,14 +67,14 @@ export function JobCard({ job, from = "" }: JobCardProps) {
           <Link
             href={jobHref(job.id, from)}
             aria-describedby={titleId}
-            className={buttonStyles({ variant: "secondary", size: "lg", className: "px-4 text-[14px] backdrop-blur-none" })}
+            className={buttonStyles({ variant: "secondary", size: "lg", className: "px-4 text-[0.875rem] backdrop-blur-none" })}
           >
             View details
           </Link>
           <Link
             href={jobHref(job.id, from, "apply")}
             aria-describedby={titleId}
-            className={buttonStyles({ size: "lg", className: "px-4 text-[14px]" })}
+            className={buttonStyles({ size: "lg", className: "px-4 text-[0.875rem]" })}
           >
             Apply now
             <ArrowRight aria-hidden className="transition-transform duration-200 group-hover/card:translate-x-0.5" />

@@ -14,8 +14,8 @@ function Notice({ icon: Icon, title, children, action }: { icon: LucideIcon; tit
       <span className="flex size-12 items-center justify-center rounded-full bg-accent-soft ring-1 ring-brand/15">
         <Icon aria-hidden className="size-5 text-brand-ink" />
       </span>
-      <h2 className="mt-4 text-[18px] font-semibold tracking-[-0.01em] text-ink">{title}</h2>
-      <p className="mt-1.5 max-w-md text-[15px] leading-relaxed text-charcoal">{children}</p>
+      <h2 className="mt-4 text-[1.125rem] font-semibold tracking-[-0.01em] text-ink">{title}</h2>
+      <p className="mt-1.5 max-w-md text-[0.9375rem] leading-relaxed text-charcoal">{children}</p>
       {action && <div className="mt-6">{action}</div>}
     </div>
   );

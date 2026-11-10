@@ -39,7 +39,7 @@ export default async function JobPage({ params, searchParams }: Props) {
           <h1 className="mt-5 text-3xl leading-tight font-bold tracking-tight text-ink sm:text-4xl">{job.title}</h1>
           <JobTags job={job} full lead={job.source && <SourceBadge source={job.source} />} className="mt-5" />
           {pay && <p className="mt-5 flex items-center gap-2 font-semibold text-ink"><Banknote aria-hidden className="size-5 text-brand-ink" />{pay}</p>}
-          {job.summary && <p className="mt-6 whitespace-pre-line text-[17px] leading-relaxed text-charcoal">{job.summary}</p>}
+          {job.summary && <p className="mt-6 whitespace-pre-line text-[1.0625rem] leading-relaxed text-charcoal">{job.summary}</p>}
           <Link href={apply} className={buttonStyles({ size: "lg", className: "mt-6 w-full sm:w-auto lg:hidden" })}>Apply now</Link>
           {(job.aboutRole || job.requirements.length > 0 || job.responsibilities.length > 0 || job.preferredQualifications.length > 0 ||
             job.skills.length > 0 || job.aboutTeam) && (

@@ -19,7 +19,7 @@ export function CareersShell({ children, site = "demo" }: { children: ReactNode;
       >
         Skip to content
       </a>
-      <div aria-hidden className="app-backdrop pointer-events-none absolute inset-x-0 top-0 h-[560px]" />
+      <div aria-hidden className="app-backdrop pointer-events-none absolute inset-x-0 top-0 h-[35rem]" />
       {site === "demo" && (
         <p className="relative flex items-center justify-center gap-2 border-b border-caution/30 bg-caution/10 px-4 py-2 text-center text-xs text-caution">
           <FlaskConical aria-hidden className="size-3.5 shrink-0" />
@@ -31,7 +31,7 @@ export function CareersShell({ children, site = "demo" }: { children: ReactNode;
           <Link href={CAREERS_PATHS[site]} className="flex items-center gap-3 rounded-md">
             <HirvelloLogo />
             <span aria-hidden className="h-5 w-px bg-border-strong" />
-            <span className="text-[15px] font-medium text-charcoal">Careers</span>
+            <span className="text-[0.9375rem] font-medium text-charcoal">Careers</span>
           </Link>
           {/* /login sends a signed-in candidate straight on to their portal. */}
           <Link href="/login?as=candidate&next=/candidate" prefetch={false} className={buttonStyles({ variant: "ghost", size: "sm" })}>

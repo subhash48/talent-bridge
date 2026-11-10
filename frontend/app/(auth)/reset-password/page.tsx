@@ -9,7 +9,8 @@ import { getServerAccessToken } from "@/lib/supabase-server";
 
 export const metadata: Metadata = { title: "Choose a new password" };
 
-// Opened from the reset email: /auth/confirm has already exchanged the link for a session.
+// Opened from the reset email: /auth/confirm has already exchanged the link for a session. Saving the password
+// goes to "/", which opens the person's own home by the role the API has on record.
 export default async function ResetPasswordPage() {
   if (!(await getServerAccessToken())) {
     return (
@@ -29,9 +30,12 @@ export default async function ResetPasswordPage() {
       title="Choose a new password"
       description="You'll stay signed in on this device."
       footer={
-        <Link href="/login" className={authLinkStyles}>
-          Back to sign in
-        </Link>
+        <p>
+          Changed your mind?{" "}
+          <Link href="/login" className={authLinkStyles}>
+            Back to sign in
+          </Link>
+        </p>
       }
     >
       <ResetPasswordForm />

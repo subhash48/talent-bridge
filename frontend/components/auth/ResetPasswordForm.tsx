@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 
 import { AuthAlert } from "@/components/auth/AuthAlert";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Button } from "@/components/ui/Button";
 import { Field, fieldErrorId } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
@@ -55,9 +56,8 @@ export function ResetPasswordForm({
     <form onSubmit={save} className="flex flex-col gap-4">
       {error && <AuthAlert>{error}</AuthAlert>}
       <Field label={passwordLabel} htmlFor="password" error={shown.password}>
-        <Input
+        <PasswordInput
           id="password"
-          type="password"
           autoComplete="new-password"
           required
           autoFocus

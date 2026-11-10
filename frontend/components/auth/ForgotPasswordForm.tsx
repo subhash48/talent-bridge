@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/Input";
 import { authErrorMessage } from "@/lib/auth";
 import { SUPABASE_CONFIGURED, createClient } from "@/lib/supabase";
 
+/** A reset link by email. Its link signs them in on /auth/confirm and opens /reset-password to choose the new one. */
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [pending, setPending] = useState(false);
@@ -43,13 +44,14 @@ export function ForgotPasswordForm() {
   return (
     <form onSubmit={sendLink} className="flex flex-col gap-4">
       {error && <AuthAlert>{error}</AuthAlert>}
-      <Field label="Email" htmlFor="email">
+      <Field label="Email address" htmlFor="email">
         <Input
           id="email"
           type="email"
           autoComplete="email"
           required
           autoFocus
+          placeholder="you@example.com"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
         />

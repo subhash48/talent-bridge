@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.enums import JobStatus
-from app.models.base import Base, JSONType, Timestamps, UUIDPrimaryKey, db_enum
+from app.core.enums import JobSource, JobStatus, JobVisibility, SalaryPeriod, WorkArrangement
+from app.models.base import Base, JSONType, Timestamps, UUIDPrimaryKey, db_enum, text_enum
 
 if TYPE_CHECKING:
     from app.models.application import Application
@@ -32,6 +32,18 @@ class Job(UUIDPrimaryKey, Timestamps, Base):
     shift: Mapped[str | None] = mapped_column(Text)  # "Evenings"
     work_days: Mapped[list[str]] = mapped_column(JSONType, default=list)  # Weekday values, Monday first
     openings: Mapped[int | None]  # how many people they're hiring
+    # The public job board (migration 022). Who posted it is the employer's workspace mode when it was posted
+    # (services/job_service.create_job), never what a request says, and it never changes afterwards.
+    posted_by: Mapped[JobSource] = mapped_column(text_enum(JobSource))
+    work_arrangement: Mapped[WorkArrangement | None] = mapped_column(text_enum(WorkArrangement))
+    salary_min: Mapped[int | None]  # whole units of salary_currency, per salary_period
+    salary_max: Mapped[int | None]
+    salary_currency: Mapped[str | None] = mapped_column(Text)  # "USD"
+    salary_period: Mapped[SalaryPeriod | None] = mapped_column(text_enum(SalaryPeriod))
+    # A private job is never on the board, whatever its status.
+    visibility: Mapped[JobVisibility] = mapped_column(text_enum(JobVisibility), default=JobVisibility.PUBLIC)
+    published_at: Mapped[datetime | None]  # the first time it opened
+    expires_at: Mapped[datetime | None]  # after this it leaves the board and takes no applications
 
     # Joined, so job.company is always there to read, including in async code.
     company: Mapped["Company"] = relationship(back_populates="jobs", lazy="joined")

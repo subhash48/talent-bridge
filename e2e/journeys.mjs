@@ -17,7 +17,8 @@ const WEB = process.env.E2E_WEB_URL ?? "http://localhost:3100";
 const AUTH = process.env.E2E_AUTH_URL ?? "http://localhost:8200";
 const DATABASE_URL = process.env.E2E_DATABASE_URL;
 const PYTHON = process.env.E2E_PYTHON ?? "python";
-const PASSWORD = "Demo-pass-2026"; // the seeded accounts' password in the stand-in auth server only
+const PASSWORD = "Demo-pass-2026";
+const BOOKING = "https://calendar.app.google/J6jctDawSDETaLWX7"; // Book a demo: the Google Calendar booking page // the seeded accounts' password in the stand-in auth server only
 const results = [];
 const only = new Set(process.argv.slice(2));
 const SHOTS = process.env.E2E_SHOTS ?? path.join(HERE, "shots");
@@ -93,7 +94,10 @@ async function website(browser) {
   check("nav: no Solutions or Company menu", (await nav.getByRole("button").count()) === 0);
   const banner = page.getByRole("banner");
   check("Sign in in the header", await banner.getByRole("link", { name: "Sign in", exact: true }).isVisible());
-  check("Book a demo in the header", (await banner.getByRole("link", { name: /^Book a demo/ }).getAttribute("href")) === "/book-a-demo");
+  const headerDemo = banner.getByRole("link", { name: /^Book a demo/ });
+  check("Book a demo in the header opens the booking page in a new tab", (await headerDemo.getAttribute("href")) === BOOKING
+    && (await headerDemo.getAttribute("target")) === "_blank" && (await headerDemo.getAttribute("rel")) === "noopener noreferrer");
+  check("Book a demo tells screen readers it opens a new tab", /opens in a new tab/.test(await headerDemo.textContent()));
   check("Create account in the header", await banner.getByRole("link", { name: "Create account", exact: true }).isVisible());
   check("no Employer portal in the header", (await banner.getByRole("link", { name: "Employer portal" }).count()) === 0);
   const bar = await banner.evaluate((el) => {
@@ -150,7 +154,8 @@ async function website(browser) {
   await closing.scrollIntoViewIfNeeded();
   check("closing line", await closing.getByRole("heading", { name: "Ready to hire with more clarity?" }).isVisible());
   check("closing: Get started signs up", (await closing.getByRole("link", { name: "Get started" }).getAttribute("href")) === "/start");
-  check("closing: Book a demo", (await closing.getByRole("link", { name: "Book a demo" }).getAttribute("href")) === "/book-a-demo");
+  const closingDemo = closing.getByRole("link", { name: /^Book a demo/ });
+  check("closing: Book a demo opens the booking page in a new tab", (await closingDemo.getAttribute("href")) === BOOKING && (await closingDemo.getAttribute("target")) === "_blank");
   check("closing: no card, no beta label", (await closing.locator(".sky-card, .glass").count()) === 0 && (await closing.getByText(/beta is open/i).count()) === 0);
   const footer = page.getByRole("contentinfo");
   await footer.scrollIntoViewIfNeeded();
@@ -282,21 +287,16 @@ async function website(browser) {
     check(`about: ${name}`, (await page.getByText(name, { exact: true }).isVisible()) && (await page.getByRole("link", { name: address }).count()) === 1);
   }
 
-  // Book a demo is the same form set to the pilot programme, with no inquiry type to pick.
-  await page.goto(`${WEB}/book-a-demo`);
-  check("demo page", await page.getByRole("heading", { name: "See Hirvello with your own roles." }).isVisible());
-  check("demo page has no inquiry type to pick", (await page.locator('input[name="contact-topic"]').count()) === 0);
-  check("demo page offers the business address", (await page.locator("main").getByRole("link", { name: "business@hirvello.com" }).count()) === 1);
-  await page.getByRole("button", { name: "Request a demo" }).click();
-  check("demo form checks its fields first", await page.getByText("Enter your full name.").isVisible());
-  await page.fill("#contact-name", "Dana Whitfield");
-  await page.fill("#contact-email", "dana@brightside.example");
-  await page.fill("#contact-company", "Brightside Dental");
-  await page.fill("#contact-message", "Two clinics, hiring front-desk staff.");
-  await page.getByRole("button", { name: "Request a demo" }).click();
-  await page.getByText("Thanks, Dana.").waitFor({ timeout: 10000 });
-  const demo = await sql("select topic, company, email from contact_requests order by created_at desc limit 1");
-  check("demo request stored as a pilot inquiry", demo[0]?.topic === "pilot" && demo[0]?.company === "Brightside Dental" && demo[0]?.email === "dana@brightside.example");
+  // Book a demo is the Google Calendar booking page: a click opens it in a new tab (the page itself is Google's, so it's
+  // answered here without leaving the test machine), and the old /book-a-demo address redirects there.
+  await page.context().route(`${BOOKING}**`, (route) => route.fulfill({ status: 200, contentType: "text/html", body: "<title>Booking</title>" }));
+  await page.goto(WEB);
+  const [booking] = await Promise.all([page.waitForEvent("popup"), page.getByRole("banner").getByRole("link", { name: /^Book a demo/ }).click()]);
+  check("Book a demo opens the booking page in a new tab", booking.url() === BOOKING && page.url() === `${WEB}/`);
+  check("the booking tab can't reach back into Hirvello", (await booking.evaluate(() => window.opener)) === null);
+  await booking.close();
+  const old = await fetch(`${WEB}/book-a-demo`, { redirect: "manual" });
+  check("/book-a-demo redirects to the booking page", [307, 308].includes(old.status) && old.headers.get("location") === BOOKING, `${old.status} ${old.headers.get("location")}`);
 
   await page.getByRole("contentinfo").getByRole("link", { name: "Privacy" }).click();
   await page.waitForURL("**/privacy");
@@ -322,7 +322,9 @@ async function website(browser) {
   check("no sideways scroll on a phone", overflow <= 1, `overflow ${overflow}px`);
   await small.getByRole("button", { name: "Open menu" }).click();
   check("phone menu opens", await small.locator("#site-menu").isVisible());
-  check("phone menu: navigation and account links", (await small.locator("#site-menu a").allInnerTexts()).join("|") === "Home|Find Jobs|Product|How it works|Pricing|Sign in|Book a demo|Create account");
+  const menuLinks = (await small.locator("#site-menu a").allInnerTexts()).map((text) => text.replace(/\s*\(opens in a new tab\)/, "").trim());
+  check("phone menu: navigation and account links", menuLinks.join("|") === "Home|Find Jobs|Product|How it works|Pricing|Sign in|Book a demo|Create account", menuLinks.join("|"));
+  check("phone menu: Book a demo opens the booking page in a new tab", (await small.locator("#site-menu").getByRole("link", { name: /^Book a demo/ }).getAttribute("target")) === "_blank");
   await small.keyboard.press("Escape");
   check("phone menu closes on Escape", (await small.locator("#site-menu").count()) === 0);
   await small.getByRole("button", { name: "Open menu" }).click();

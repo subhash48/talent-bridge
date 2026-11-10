@@ -22,42 +22,7 @@ export function CareerJobView({ job, site = "demo" }: { job: CareerJobDetail; si
         </RoleHeading>
 
         <Card className="mt-8 flex flex-col gap-8 p-5 sm:p-7">
-          {job.aboutRole && (
-            <Section title="About the role">
-              <Paragraphs text={job.aboutRole} />
-            </Section>
-          )}
-          {job.responsibilities.length > 0 && (
-            <Section title="Responsibilities">
-              <Bullets items={job.responsibilities} />
-            </Section>
-          )}
-          {job.requirements.length > 0 && (
-            <Section title="Requirements">
-              <Bullets items={job.requirements} />
-            </Section>
-          )}
-          {job.preferredQualifications.length > 0 && (
-            <Section title="Preferred qualifications">
-              <Bullets items={job.preferredQualifications} />
-            </Section>
-          )}
-          {job.skills.length > 0 && (
-            <Section title="Skills">
-              <ul className="flex flex-wrap gap-2">
-                {job.skills.map((skill) => (
-                  <li key={skill} className="rounded-full bg-ink/[0.05] px-3 py-1 text-[13px] text-charcoal ring-1 ring-ink/[0.08]">
-                    {skill}
-                  </li>
-                ))}
-              </ul>
-            </Section>
-          )}
-          {job.aboutTeam && (
-            <Section title="About the team">
-              <Paragraphs text={job.aboutTeam} />
-            </Section>
-          )}
+          <RoleSections job={job} />
         </Card>
       </div>
 
@@ -77,6 +42,50 @@ export function CareerJobView({ job, site = "demo" }: { job: CareerJobDetail; si
         </Card>
       </aside>
     </div>
+  );
+}
+
+/** What the posting says, section by section; a section the employer left empty isn't shown. */
+export function RoleSections({ job }: { job: CareerJobDetail }) {
+  return (
+    <>
+      {job.aboutRole && (
+        <Section title="About the role">
+          <Paragraphs text={job.aboutRole} />
+        </Section>
+      )}
+      {job.responsibilities.length > 0 && (
+        <Section title="Responsibilities">
+          <Bullets items={job.responsibilities} />
+        </Section>
+      )}
+      {job.requirements.length > 0 && (
+        <Section title="Requirements">
+          <Bullets items={job.requirements} />
+        </Section>
+      )}
+      {job.preferredQualifications.length > 0 && (
+        <Section title="Preferred qualifications">
+          <Bullets items={job.preferredQualifications} />
+        </Section>
+      )}
+      {job.skills.length > 0 && (
+        <Section title="Skills">
+          <ul className="flex flex-wrap gap-2">
+            {job.skills.map((skill) => (
+              <li key={skill} className="rounded-full bg-ink/[0.05] px-3 py-1 text-[13px] text-charcoal ring-1 ring-ink/[0.08]">
+                {skill}
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+      {job.aboutTeam && (
+        <Section title="About the team">
+          <Paragraphs text={job.aboutTeam} />
+        </Section>
+      )}
+    </>
   );
 }
 

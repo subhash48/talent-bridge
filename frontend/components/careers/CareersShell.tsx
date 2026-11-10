@@ -7,7 +7,7 @@ import { buttonStyles } from "@/components/ui/Button";
 import { CAREERS_PATHS, type CareersSite } from "@/types/careers";
 
 /**
- * The public careers site's frame: the brand, a banner saying it's a development demo, and one calm
+ * The development-only demo careers site's frame (/demo/careers; Hirvello's own job board, /jobs, is on the website): the brand, a banner saying it's a development demo, and one calm
  * column. No sign-in and no sidebar; the same tokens and backdrop as the workspace and the portal.
  */
 export function CareersShell({ children, site = "demo" }: { children: ReactNode; site?: CareersSite }) {
@@ -34,9 +34,8 @@ export function CareersShell({ children, site = "demo" }: { children: ReactNode;
             <span className="text-[15px] font-medium text-charcoal">Careers</span>
           </Link>
           {/* /login sends a signed-in candidate straight on to their portal. */}
-          <Link href="/login?next=/candidate" prefetch={false} className={buttonStyles({ variant: "ghost", size: "sm" })}>
-            <span className="sm:hidden">Sign in</span>
-            <span className="hidden sm:inline">Candidate sign-in</span>
+          <Link href="/login?as=candidate&next=/candidate" prefetch={false} className={buttonStyles({ variant: "ghost", size: "sm" })}>
+            Sign in
           </Link>
         </div>
       </header>

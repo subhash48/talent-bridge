@@ -22,7 +22,8 @@ export function JobFacts({ job, className }: { job: CareerJob; className?: strin
     { label: "Work arrangement", value: job.workArrangement, icon: Building2 },
     { label: "Employment type", value: job.employmentType, icon: BriefcaseBusiness },
     { label: "Seniority", value: job.seniority, icon: ChartNoAxesColumnIncreasing },
-    { label: "Pay", value: job.pay ?? job.salary, icon: Banknote },
+    // The range the employer set, else the pay in their words ("$18/hour").
+    { label: "Pay", value: job.salary ?? job.pay, icon: Banknote },
     { label: "Shift", value: job.shift, icon: Clock },
     { label: "Days", value: job.workDays.length ? daysLabel(job.workDays) : null, icon: CalendarDays },
     { label: "Openings", value: job.openings ? openingsLabel(job.openings) : null, icon: Users },

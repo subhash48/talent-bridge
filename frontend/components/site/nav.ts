@@ -1,5 +1,7 @@
 import { Store, UserRound, Users, type LucideIcon } from "lucide-react";
 
+import { DEMO_BOOKING_URL } from "@/lib/booking";
+
 /*
  * The public website's places. The header shows Home, Find Jobs, Product, How it works and Pricing, then Sign in,
  * Book a demo and Create account; the footer spells everything out: the solutions (For you, led by Find jobs), the
@@ -53,5 +55,13 @@ export const POLICY_LINKS = [
 export const LOGIN_LINK = { href: "/signin", label: "Sign in" } as const;
 export const SIGNUP_LINK = { href: "/start", label: "Create account" } as const;
 
-/** Book a demo: a request to the team (the contact form, set to the pilot topic), since there's no calendar behind the site. */
-export const DEMO_LINK = { href: "/book-a-demo", label: "Book a demo" } as const;
+/**
+ * Book a demo: the Google Calendar booking page (lib/booking.ts), in a new tab (NEW_TAB). /book-a-demo redirects there
+ * too (next.config.ts), for older links.
+ */
+export const DEMO_LINK = { href: DEMO_BOOKING_URL, label: "Book a demo" } as const;
+
+/** An outside page in a new tab, without handing it this window (window.opener) or the page's address. */
+export const NEW_TAB = { target: "_blank", rel: "noopener noreferrer" } as const;
+/** Said to screen readers after a link that opens in a new tab. */
+export const NEW_TAB_NOTE = " (opens in a new tab)";

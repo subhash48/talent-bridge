@@ -4,52 +4,56 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AuthCard, authLinkStyles } from "@/components/auth/AuthCard";
-import { homePath } from "@/lib/auth";
+import { landingPath, localPath, loginPath } from "@/lib/auth";
 import { getSignedInUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Sign in" };
 
 const CHOICES = [
   {
-    href: "/login?as=candidate",
+    audience: "candidate",
     icon: UserRound,
     title: "Candidate",
     text: "Follow your applications, messages and interviews.",
   },
   {
-    href: "/login?as=employer",
+    audience: "employer",
     icon: BriefcaseBusiness,
     title: "Employer / Recruiter",
     text: "Open your company's workspace or Simple Hire.",
   },
-];
+] as const;
 
-// The website's Sign in: it asks who you are rather than assuming a recruiter.
-export default async function SignInChooserPage() {
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
+
+// The website's Sign in: it asks who you are rather than assuming a recruiter. ?next= goes on to the sign-in page.
+export default async function SignInChooserPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const next = localPath(typeof params.next === "string" ? params.next : null);
   const user = await getSignedInUser();
-  if (user) redirect(homePath(user));
+  if (user) redirect(landingPath(user.role, next, user.workspace?.mode));
 
   return (
     <AuthCard
       title="How are you using Hirvello?"
       footer={
-        <>
+        <p>
           New here?{" "}
-          <Link href="/signup" className={authLinkStyles}>
+          <Link href={next ? `/signup?next=${encodeURIComponent(next)}` : "/signup"} className={authLinkStyles}>
             Create a candidate account
           </Link>{" "}
           or{" "}
           <Link href="/signup/employer" className={authLinkStyles}>
             set up your company
           </Link>
-        </>
+        </p>
       }
     >
       <ul className="flex flex-col gap-3">
-        {CHOICES.map(({ href, icon: Icon, title, text }) => (
-          <li key={href}>
+        {CHOICES.map(({ audience, icon: Icon, title, text }) => (
+          <li key={audience}>
             <Link
-              href={href}
+              href={loginPath({ audience, next })}
               className="group flex items-center gap-4 rounded-[14px] border border-border/70 bg-glass-strong p-3.5 transition-[background-color,border-color,transform] duration-200 hover:-translate-y-px hover:border-accent/40 hover:bg-overlay"
             >
               <span className="flex size-10 shrink-0 items-center justify-center rounded-[12px] bg-accent-soft text-brand-ink ring-1 ring-accent/10">

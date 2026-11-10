@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AuthAlert } from "@/components/auth/AuthAlert";
-import { AuthCard, authLinkStyles } from "@/components/auth/AuthCard";
+import { AUDIENCE_EYEBROW, AuthCard } from "@/components/auth/AuthCard";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { buttonStyles } from "@/components/ui/Button";
 import { LOGIN_NOTICES, homePath } from "@/lib/auth";
@@ -31,6 +31,7 @@ export default async function WelcomePage() {
 
   return (
     <AuthCard
+      eyebrow={AUDIENCE_EYEBROW.candidate}
       title="Create your Hirvello password"
       description={
         <>

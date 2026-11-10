@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { AuthCard } from "@/components/auth/AuthCard";
+import { AUDIENCE_EYEBROW, AuthCard } from "@/components/auth/AuthCard";
 import { WorkspaceSetupForm } from "@/components/auth/WorkspaceSetupForm";
 
 export const metadata: Metadata = { title: "Set up your workspace" };
@@ -15,6 +15,7 @@ export default async function WorkspaceSetupPage({ searchParams }: Props) {
   return (
     <AuthCard
       wide
+      eyebrow={AUDIENCE_EYEBROW.employer}
       title="Set up your workspace"
       description="Your company's own space on Hirvello. Nobody else's applicants are ever in it."
     >

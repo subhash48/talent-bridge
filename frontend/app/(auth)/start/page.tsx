@@ -8,9 +8,9 @@ import { homePath } from "@/lib/auth";
 import { getSignedInUser } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Sign up" };
+export const metadata: Metadata = { title: "Create account" };
 
-// Who it's for decides which account is made, so Sign up asks first. Each is one card of glass on the sky: what
+// Who it's for decides which account is made, so Create account asks first. Each is one card of glass on the sky: what
 // you're here for, the account that fits, and where it leads.
 const ROLES: { href: string; icon: LucideIcon; who: string; title: string; text: string; action: string; simple?: boolean }[] = [
   {
@@ -43,7 +43,7 @@ const ROLES: { href: string; icon: LucideIcon; who: string; title: string; text:
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 /**
- * The website's Sign up: the sky, the mark, and three cards of the same size, one per way of using Hirvello. The
+ * The website's Create account: the sky, the mark, and three cards of the same size, one per way of using Hirvello. The
  * whole card is the link; the arrow at its foot only shows where it leads. Arriving from the home page's concierge
  * with what you need (?need=), the page says so and points at Simple Hire, which posts that job.
  */
@@ -99,7 +99,7 @@ export default async function GetStartedPage({ searchParams }: Props) {
         <p className="sky-card mt-8 rounded-full px-5 py-2.5 text-[15px] text-charcoal">
           Already have an account?{" "}
           <Link href="/signin" className="font-semibold text-brand-ink underline underline-offset-4 transition-colors hover:text-ink">
-            Log in
+            Sign in
           </Link>
         </p>
       </main>

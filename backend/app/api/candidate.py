@@ -19,6 +19,7 @@ from uuid import UUID
 from fastapi import APIRouter, Query, Response
 
 from app.core.dependencies import AIProviderDep, CurrentCandidateDep, SessionDep
+from app.schemas.careers import CandidateApplicationCreate, CandidateApplyResult
 from app.schemas.portal import (
     CandidateApplicationDetail,
     CandidateAskRequest,
@@ -43,6 +44,7 @@ from app.services import (
     candidate_interview_service,
     candidate_message_service,
     candidate_portal_service,
+    careers,
 )
 from app.services.candidate_visibility import present_candidate
 from app.services.company_profile import profile_for
@@ -199,6 +201,18 @@ async def practice(
         application_id=body.application_id,
         interview_id=body.interview_id,
     )
+
+
+@router.post("/jobs/{job_id}/apply", response_model=CandidateApplyResult, summary="Apply for a job on the job board")
+async def apply(
+    job_id: UUID, body: CandidateApplicationCreate, session: SessionDep, candidate: CurrentCandidateDep
+) -> CandidateApplyResult:
+    """Apply as the signed-in candidate, under their account's name and email. The application goes to the job's
+    employer at once and is in the portal straight away; nothing is emailed. Applying again to the same job adds
+    nothing (already_applied). 404 job_not_found, 409 job_closed (closed, or past its closing date), 422
+    invalid_resume or availability_required, 429 too_many_applications after ten in ten minutes."""
+    careers.candidate_limiter.check(str(candidate.id))
+    return await careers.apply_as_candidate(session, job_id, candidate, body)
 
 
 @router.post("/ai/ask", response_model=CandidateAskResponse, summary="Ask the candidate assistant")

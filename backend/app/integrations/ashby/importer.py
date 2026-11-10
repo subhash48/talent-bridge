@@ -43,7 +43,7 @@ from app.models import Application, Candidate, Interview, Job
 from app.models.base import utcnow
 from app.services.activity_service import record_activity
 from app.services.application_service import record_stage
-from app.services.company_profile import workspace_company_id
+from app.services.company_profile import job_source, workspace_company_id
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +106,7 @@ class AshbyImporter:
                 {
                     "id": uuid.uuid4(),
                     "external_id": data.id,
-                    "company_id": await workspace_company_id(self.session),
+                    **await self._owner(),
                     **values,
                 },
             )
@@ -138,7 +138,7 @@ class AshbyImporter:
             {
                 "id": uuid.uuid4(),
                 "external_id": ref.id,
-                "company_id": await workspace_company_id(self.session),
+                **await self._owner(),
                 "title": ref.title or "Untitled role",
                 "status": JobStatus.OPEN,  # it's receiving applications
                 "employment_type": "Full-time",
@@ -609,6 +609,11 @@ class AshbyImporter:
 
     async def has_job(self, external_id: str) -> bool:
         return await self._job(external_id) is not None
+
+    async def _owner(self) -> dict[str, Any]:
+        """The employer a new Ashby job belongs to, and who posted it (its workspace's mode)."""
+        company_id = await workspace_company_id(self.session)
+        return {"company_id": company_id, "posted_by": await job_source(self.session, company_id)}
 
     async def _job(self, external_id: str) -> Job | None:
         return await self.session.scalar(

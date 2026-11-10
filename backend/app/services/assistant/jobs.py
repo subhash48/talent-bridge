@@ -12,7 +12,7 @@ import re
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.enums import WEEKEND, JobStatus, Weekday
+from app.core.enums import WEEKEND, JobStatus, SalaryPeriod, Weekday, WorkArrangement
 from app.models import Company, Job
 from app.schemas.assistant import JobChanges, JobDraft
 from app.schemas.demo import JobPostingBrief, clean_list
@@ -280,6 +280,11 @@ async def create(session: AsyncSession, job: JobDraft) -> Job:
     location = ", ".join(part for part in (job.location,) if part)
     if job.work_arrangement:
         location = f"{location} · {job.work_arrangement}" if location else job.work_arrangement
+    # The same facts as the job board's filters read them (migration 022). A draft edited to "up to 90K" after
+    # "from 120K" holds them the wrong way round: the range is the two numbers, lowest first.
+    low, high = job.salary_min, job.salary_max
+    if low is not None and high is not None and high < low:
+        low, high = high, low
     created = await job_service.create_job(
         session,
         JobCreate(
@@ -293,6 +298,11 @@ async def create(session: AsyncSession, job: JobDraft) -> Job:
             shift=job.shift,
             work_days=job.work_days,
             openings=job.openings,
+            work_arrangement=WorkArrangement.from_label(job.work_arrangement),
+            salary_min=low,
+            salary_max=high,
+            salary_currency=job.salary_currency,
+            salary_period=SalaryPeriod.YEAR if low is not None or high is not None else None,  # the draft's are yearly
         ),
     )
     stored = await session.get(Job, created.id)

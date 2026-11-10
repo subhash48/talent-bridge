@@ -1109,7 +1109,7 @@ async def confirm(
                     "changes": [],
                     "job_id": job.id,
                     "job_href": "/hire/jobs" if draft_card.layout == "simple" else f"/recruiter/jobs/{job.id}",
-                    "careers_href": f"/careers/{job.id}",
+                    "careers_href": f"/jobs/{job.id}",
                 }
             )
             created = ("job", job.id, job.title)

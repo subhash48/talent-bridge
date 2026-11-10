@@ -37,13 +37,13 @@ export function CandidatesSection() {
       <div className="mt-12 grid grid-cols-1 gap-12 lg:grid-cols-[1.3fr_1fr]">
         <ul className="grid grid-cols-1 content-start border-t border-ink/[0.08] sm:grid-cols-2 sm:gap-x-8">
           {FEATURES.map((label) => (
-            <li key={label} className="border-b border-ink/[0.08] py-3.5 text-[16px] font-medium text-ink">
+            <li key={label} className="border-b border-ink/[0.08] py-3.5 text-[1rem] font-medium text-ink">
               {label}
             </li>
           ))}
         </ul>
         <figure className="reveal sky-card self-start rounded-[20px] p-5">
-          <p className="text-[14px] font-semibold text-ink">My applications</p>
+          <p className="text-[0.875rem] font-semibold text-ink">My applications</p>
           <ul className="mt-3 flex flex-col gap-2">
             {APPLICATIONS.map((application) => (
               <li

@@ -21,7 +21,7 @@ export function CompanyCareersSection() {
       intro="Hirvello is in beta and works on one problem: people who apply, interview, and then hear nothing back. If that bothers you too, we'd like to hear from you."
     >
       <div className="mt-10 max-w-[720px]">
-        <h2 className="text-[20px] font-semibold tracking-[-0.015em] text-ink">Open positions</h2>
+        <h2 className="text-[1.25rem] font-semibold tracking-[-0.015em] text-ink">Open positions</h2>
         {OPENINGS.length ? (
           <ul className="mt-4 flex flex-col gap-3">
             {OPENINGS.map((opening) => (
@@ -34,8 +34,8 @@ export function CompanyCareersSection() {
                     <BriefcaseBusiness aria-hidden className="size-4.5" strokeWidth={1.75} />
                   </span>
                   <span className="flex-1">
-                    <span className="block text-[16px] font-semibold text-ink">{opening.title}</span>
-                    <span className="mt-0.5 block text-[14px] text-stone">
+                    <span className="block text-[1rem] font-semibold text-ink">{opening.title}</span>
+                    <span className="mt-0.5 block text-[0.875rem] text-stone">
                       {opening.team} · {opening.location}
                     </span>
                   </span>
@@ -45,11 +45,11 @@ export function CompanyCareersSection() {
             ))}
           </ul>
         ) : (
-          <p className="sky-card mt-4 rounded-[20px] px-6 py-6 text-[16px] leading-relaxed text-charcoal">
+          <p className="sky-card mt-4 rounded-[20px] px-6 py-6 text-[1rem] leading-relaxed text-charcoal">
             There are no open positions at the moment. When one opens, it will be listed here first.
           </p>
         )}
-        <p className="mt-5 text-[14px] leading-relaxed text-stone">
+        <p className="mt-5 text-[0.875rem] leading-relaxed text-stone">
           Looking for a job at a company that hires with Hirvello? Those roles are on the{" "}
           <Link href="/jobs" className="font-medium text-brand-ink underline-offset-4 hover:underline">
             job board
@@ -59,7 +59,7 @@ export function CompanyCareersSection() {
       </div>
 
       <div className="mt-10 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
-        <p className="max-w-[34rem] text-[17px] leading-relaxed text-charcoal">
+        <p className="max-w-[34rem] text-[1.0625rem] leading-relaxed text-charcoal">
           Interested in the work even so? Tell us what you&apos;d bring, and we&apos;ll keep it in mind when a role
           opens.
         </p>

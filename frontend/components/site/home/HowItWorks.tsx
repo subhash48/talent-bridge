@@ -30,13 +30,13 @@ export function HowItWorks() {
         {STEPS.map(({ title, text, Preview }, index) => (
           <li key={title} className="reveal mx-auto w-full max-w-[520px] lg:max-w-none">
             <Preview />
-            <h3 className="mt-6 flex items-baseline gap-3 px-1 text-[clamp(22px,1.8vw,26px)] leading-tight font-bold tracking-[-0.02em] text-ink">
-              <span aria-hidden className="text-[16px] font-semibold tracking-normal text-brand-ink tabular-nums">
+            <h3 className="mt-6 flex items-baseline gap-3 px-1 text-[clamp(1.375rem,1.8vw,1.625rem)] leading-tight font-bold tracking-[-0.02em] text-ink">
+              <span aria-hidden className="text-[1rem] font-semibold tracking-normal text-brand-ink tabular-nums">
                 0{index + 1}
               </span>
               {title}
             </h3>
-            <p className="mt-2 px-1 text-[16px] leading-relaxed text-charcoal">{text}</p>
+            <p className="mt-2 px-1 text-[1rem] leading-relaxed text-charcoal">{text}</p>
           </li>
         ))}
       </ol>

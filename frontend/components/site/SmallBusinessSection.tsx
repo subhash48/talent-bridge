@@ -34,12 +34,12 @@ export function SmallBusinessSection() {
         <ol className="self-start border-t border-ink/[0.08]">
           {ACTIONS.map(({ label, text }, index) => (
             <li key={label} className="reveal grid grid-cols-[2rem_1fr] border-b border-ink/[0.08] py-5">
-              <span aria-hidden className="pt-0.5 text-[15px] font-semibold text-accent tabular-nums">
+              <span aria-hidden className="pt-0.5 text-[0.9375rem] font-semibold text-accent tabular-nums">
                 0{index + 1}
               </span>
               <div>
-                <p className="text-[18px] font-semibold tracking-[-0.01em] text-ink">{label}</p>
-                <p className="mt-1 text-[15px] leading-relaxed text-pretty text-charcoal">{text}</p>
+                <p className="text-[1.125rem] font-semibold tracking-[-0.01em] text-ink">{label}</p>
+                <p className="mt-1 text-[0.9375rem] leading-relaxed text-pretty text-charcoal">{text}</p>
               </div>
             </li>
           ))}
@@ -49,7 +49,7 @@ export function SmallBusinessSection() {
             <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand text-on-brand">
               <Mic aria-hidden className="size-4" />
             </span>
-            <blockquote className="rounded-[18px] rounded-tl-[6px] bg-overlay px-4 py-3 text-[15px] leading-relaxed text-charcoal ring-1 ring-ink/[0.06]">
+            <blockquote className="rounded-[18px] rounded-tl-[6px] bg-overlay px-4 py-3 text-[0.9375rem] leading-relaxed text-charcoal ring-1 ring-ink/[0.06]">
               &ldquo;I need two workers for my restaurant. Evening shift, $18 an hour. They should have kitchen
               experience and be available Friday and Saturday.&rdquo;
             </blockquote>

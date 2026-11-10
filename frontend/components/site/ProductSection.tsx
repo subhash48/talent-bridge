@@ -52,17 +52,17 @@ export function ProductSection() {
       <ol className="mt-12 border-t border-ink/[0.08]">
         {FEATURES.map(({ title, text, href, more }, index) => (
           <li key={title} className="grid gap-3 border-b border-ink/[0.08] py-7 md:grid-cols-[minmax(0,340px)_1fr] md:gap-12 md:py-8">
-            <h2 className="flex items-baseline gap-3 text-[20px] leading-snug font-semibold tracking-[-0.015em] text-balance text-ink">
-              <span aria-hidden className="text-[15px] font-semibold text-accent tabular-nums">
+            <h2 className="flex items-baseline gap-3 text-[1.25rem] leading-snug font-semibold tracking-[-0.015em] text-balance text-ink">
+              <span aria-hidden className="text-[0.9375rem] font-semibold text-accent tabular-nums">
                 0{index + 1}
               </span>
               {title}
             </h2>
             <div className="max-w-[620px]">
-              <p className="text-[16px] leading-relaxed text-pretty text-charcoal sm:text-[17px]">{text}</p>
+              <p className="text-[1rem] leading-relaxed text-pretty text-charcoal sm:text-[1.0625rem]">{text}</p>
               <Link
                 href={href}
-                className="group mt-3 inline-flex items-center gap-1.5 rounded-sm text-[15px] font-semibold text-brand-ink transition-colors duration-200 hover:text-ink"
+                className="group mt-3 inline-flex items-center gap-1.5 rounded-sm text-[0.9375rem] font-semibold text-brand-ink transition-colors duration-200 hover:text-ink"
               >
                 {more}
                 <ArrowRight aria-hidden className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />

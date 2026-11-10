@@ -42,11 +42,11 @@ export function Audiences() {
                   className="aspect-[3/2] w-full rounded-[14px] object-cover"
                 />
               </div>
-              <h3 className="mt-6 px-1 text-[clamp(22px,1.8vw,26px)] leading-tight font-bold tracking-[-0.02em] text-ink">{short}</h3>
-              <p className="mt-2 px-1 text-[16px] leading-relaxed text-charcoal">{LINES[href]}</p>
+              <h3 className="mt-6 px-1 text-[clamp(1.375rem,1.8vw,1.625rem)] leading-tight font-bold tracking-[-0.02em] text-ink">{short}</h3>
+              <p className="mt-2 px-1 text-[1rem] leading-relaxed text-charcoal">{LINES[href]}</p>
               <Link
                 href={href}
-                className="group mt-3 ml-1 inline-flex items-center gap-1.5 rounded-md text-[16px] font-semibold text-brand-ink transition-colors duration-200 hover:text-ink"
+                className="group mt-3 ml-1 inline-flex items-center gap-1.5 rounded-md text-[1rem] font-semibold text-brand-ink transition-colors duration-200 hover:text-ink"
               >
                 Learn more
                 <span className="sr-only"> about Hirvello for {short.toLowerCase()}</span>

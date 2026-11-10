@@ -45,14 +45,14 @@ export function RecruitersSection() {
       <div className="mt-12 grid grid-cols-1 gap-10 lg:grid-cols-3 lg:gap-8">
         {GROUPS.map(({ title, items }, index) => (
           <section key={title} aria-labelledby={`recruiters-group-${index}`} className="reveal">
-            <h2 id={`recruiters-group-${index}`} className="border-b border-ink/[0.12] pb-3 text-[20px] font-semibold tracking-[-0.015em] text-ink">
+            <h2 id={`recruiters-group-${index}`} className="border-b border-ink/[0.12] pb-3 text-[1.25rem] font-semibold tracking-[-0.015em] text-ink">
               {title}
             </h2>
             <dl className="divide-y divide-ink/[0.08]">
               {items.map(({ name, text }) => (
                 <div key={name} className="py-4">
-                  <dt className="text-[16px] font-semibold text-ink">{name}</dt>
-                  <dd className="mt-1 text-[15px] leading-relaxed text-pretty text-charcoal">{text}</dd>
+                  <dt className="text-[1rem] font-semibold text-ink">{name}</dt>
+                  <dd className="mt-1 text-[0.9375rem] leading-relaxed text-pretty text-charcoal">{text}</dd>
                 </div>
               ))}
             </dl>

@@ -22,7 +22,7 @@ export function Section({ id, eyebrow, title, intro, children, className, level 
   return (
     <section id={id} aria-labelledby={`${id}-title`} className={cn("scroll-mt-28 py-14 sm:py-20", className)}>
       <div className="mx-auto w-full max-w-[1200px] px-5 sm:px-8">
-        <p className="text-[15px] font-semibold text-brand-ink">
+        <p className="text-[0.9375rem] font-semibold text-brand-ink">
           {eyebrow}
         </p>
         <Heading
@@ -30,13 +30,13 @@ export function Section({ id, eyebrow, title, intro, children, className, level 
           className={cn(
             "mt-3 max-w-3xl text-balance text-ink",
             level === "h1"
-              ? "text-[clamp(32px,3.6vw,46px)] leading-[1.1] font-bold tracking-[-0.03em]"
-              : "text-[clamp(26px,2.8vw,36px)] leading-[1.15] font-semibold tracking-[-0.02em]",
+              ? "text-[clamp(2rem,3.6vw,2.875rem)] leading-[1.1] font-bold tracking-[-0.03em]"
+              : "text-[clamp(1.625rem,2.8vw,2.25rem)] leading-[1.15] font-semibold tracking-[-0.02em]",
           )}
         >
           {title}
         </Heading>
-        {intro && <div className="mt-4 max-w-2xl text-[16px] leading-relaxed text-pretty text-charcoal sm:text-[17px]">{intro}</div>}
+        {intro && <div className="mt-4 max-w-2xl text-[1rem] leading-relaxed text-pretty text-charcoal sm:text-[1.0625rem]">{intro}</div>}
         {children}
       </div>
     </section>

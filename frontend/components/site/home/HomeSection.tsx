@@ -25,7 +25,7 @@ export function HomeSection({ id, eyebrow, title, intro, children, className, si
     <section id={id} aria-labelledby={`${id}-title`} className={cn("scroll-mt-28 px-5 py-8 sm:px-8 sm:py-10 lg:py-12", className)}>
       <div className="mx-auto w-full max-w-[1200px]">
         <div className={cn("mx-auto text-center", wide ? "max-w-[920px]" : "max-w-[640px]")}>
-          <p className="text-[15px] font-semibold text-brand-ink">
+          <p className="text-[0.9375rem] font-semibold text-brand-ink">
             {eyebrow}
           </p>
           <h2
@@ -33,13 +33,13 @@ export function HomeSection({ id, eyebrow, title, intro, children, className, si
             className={cn(
               "mt-3 text-balance text-ink",
               wide
-                ? "text-[clamp(32px,3.4vw,48px)] leading-[1.08] font-bold tracking-[-0.03em]"
-                : "text-[clamp(28px,3vw,40px)] leading-[1.12] font-semibold tracking-[-0.025em]",
+                ? "text-[clamp(2rem,3.4vw,3rem)] leading-[1.08] font-bold tracking-[-0.03em]"
+                : "text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.12] font-semibold tracking-[-0.025em]",
             )}
           >
             {title}
           </h2>
-          {intro && <p className={cn("mt-4 leading-relaxed text-pretty text-charcoal", wide ? "text-[17px] sm:text-[19px]" : "text-[16px] sm:text-[17px]")}>{intro}</p>}
+          {intro && <p className={cn("mt-4 leading-relaxed text-pretty text-charcoal", wide ? "text-[1.0625rem] sm:text-[1.1875rem]" : "text-[1rem] sm:text-[1.0625rem]")}>{intro}</p>}
         </div>
         {children}
       </div>

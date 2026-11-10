@@ -31,7 +31,7 @@ const COLUMNS: { title: string; links: readonly { href: string; label: string }[
 
 // Charcoal rather than grey: the sky is at its bluest behind the footer, and grey there falls below AA contrast.
 const headingStyles = "text-[12px] font-semibold tracking-[0.16em] text-charcoal uppercase";
-const linkStyles = "rounded-sm text-[15px] text-charcoal transition-colors duration-200 hover:text-brand-ink";
+const linkStyles = "rounded-sm text-[0.9375rem] text-charcoal transition-colors duration-200 hover:text-brand-ink";
 const rule = "border-ink/[0.08]";
 
 /** The two networks' marks, drawn in the same thin line as the site's other icons. */
@@ -70,8 +70,8 @@ export function SiteFooter({ className, invitation = true }: { className?: strin
         {invitation && (
           <div className={cn("flex flex-col gap-6 border-b pb-10 sm:pb-12 lg:flex-row lg:items-end lg:justify-between lg:gap-12", rule)}>
             <div>
-              <h2 className="text-[clamp(30px,3vw,40px)] leading-[1.1] font-semibold tracking-[-0.025em] text-ink">Better hiring starts here.</h2>
-              <p className="mt-3 max-w-[44ch] text-[16px] leading-relaxed text-charcoal sm:text-[17px]">Less noise. More signal. See the work behind every résumé.</p>
+              <h2 className="text-[clamp(1.875rem,3vw,2.5rem)] leading-[1.1] font-semibold tracking-[-0.025em] text-ink">Better hiring starts here.</h2>
+              <p className="mt-3 max-w-[44ch] text-[1rem] leading-relaxed text-charcoal sm:text-[1.0625rem]">Less noise. More signal. See the work behind every résumé.</p>
             </div>
             <Link href={SIGNUP_LINK.href} className={buttonStyles({ size: "lg", className: "group w-fit shrink-0 px-6" })}>
               Get started
@@ -85,7 +85,7 @@ export function SiteFooter({ className, invitation = true }: { className?: strin
             <Link href="/" aria-label="Hirvello home" className="inline-flex rounded-md">
               <HirvelloLogo />
             </Link>
-            <p className="mt-4 max-w-[30ch] text-[15px] leading-relaxed text-charcoal sm:text-[16px]">Find real talent. See the work behind the résumé.</p>
+            <p className="mt-4 max-w-[30ch] text-[0.9375rem] leading-relaxed text-charcoal sm:text-[1rem]">Find real talent. See the work behind the résumé.</p>
             <p className={cn("mt-7", headingStyles)}>Follow Hirvello</p>
             <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
               {social.map(({ network, href }) => (
@@ -98,13 +98,13 @@ export function SiteFooter({ className, invitation = true }: { className?: strin
                       aria-label={`Hirvello on ${network} (opens in a new tab)`}
                       className={cn("group inline-flex items-center gap-2", linkStyles)}
                     >
-                      <SocialIcon network={network} className="size-[18px] text-stone transition-colors duration-200 group-hover:text-brand-ink" />
+                      <SocialIcon network={network} className="size-[1.125rem] text-stone transition-colors duration-200 group-hover:text-brand-ink" />
                       {network}
                     </a>
                   ) : (
                     // Not configured yet (HIRVELLO_*_URL): the name and its mark, and nowhere to go.
-                    <span className="inline-flex items-center gap-2 text-[15px] text-charcoal">
-                      <SocialIcon network={network} className="size-[18px] text-stone" />
+                    <span className="inline-flex items-center gap-2 text-[0.9375rem] text-charcoal">
+                      <SocialIcon network={network} className="size-[1.125rem] text-stone" />
                       {network}
                     </span>
                   )}

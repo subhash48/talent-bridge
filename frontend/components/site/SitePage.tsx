@@ -8,7 +8,7 @@ export function SkipLink() {
   return (
     <a
       href="#main"
-      className="sr-only rounded-full bg-ink px-4 py-2 text-[14px] font-semibold text-on-brand focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60]"
+      className="sr-only rounded-full bg-ink px-4 py-2 text-[0.875rem] font-semibold text-on-brand focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60]"
     >
       Skip to content
     </a>
@@ -35,12 +35,12 @@ export function PolicyPage({ title, updated, summary, children }: PolicyPageProp
     <SitePage>
       <article className="mx-auto w-full max-w-[760px] px-5 py-10 sm:px-8 sm:py-12">
         <div className="sky-card rounded-[22px] px-6 py-8 sm:px-10 sm:py-10">
-          <h1 className="text-[clamp(30px,3.4vw,42px)] leading-[1.1] font-bold tracking-[-0.03em] text-ink">{title}</h1>
+          <h1 className="text-[clamp(1.875rem,3.4vw,2.625rem)] leading-[1.1] font-bold tracking-[-0.03em] text-ink">{title}</h1>
           <p className="mt-2.5 text-sm text-faint">Last updated {updated}</p>
           <div className="mt-6 rounded-[14px] bg-caution/[0.06] px-5 py-4 text-sm leading-relaxed text-charcoal ring-1 ring-caution/20">
             {summary}
           </div>
-          <div className="mt-10 flex flex-col gap-8 text-[16px] leading-relaxed text-pretty text-charcoal [&_h2]:text-[20px] [&_h2]:font-semibold [&_h2]:tracking-[-0.01em] [&_h2]:text-ink [&_li]:mt-1.5 [&_ul]:mt-2 [&_ul]:list-disc [&_ul]:pl-5">
+          <div className="mt-10 flex flex-col gap-8 text-[1rem] leading-relaxed text-pretty text-charcoal [&_h2]:text-[1.25rem] [&_h2]:font-semibold [&_h2]:tracking-[-0.01em] [&_h2]:text-ink [&_li]:mt-1.5 [&_ul]:mt-2 [&_ul]:list-disc [&_ul]:pl-5">
             {children}
           </div>
         </div>

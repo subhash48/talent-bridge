@@ -12,10 +12,10 @@ export function ClosingCta() {
   return (
     <section aria-labelledby="closing-title" className="px-5 sm:px-8">
       <div className="mx-auto w-full max-w-[1200px] border-b border-ink/[0.08] py-10 text-center sm:py-12">
-        <h2 id="closing-title" className="text-[clamp(26px,2.4vw,34px)] leading-[1.15] font-semibold tracking-[-0.02em] text-balance text-ink">
+        <h2 id="closing-title" className="text-[clamp(1.625rem,2.4vw,2.125rem)] leading-[1.15] font-semibold tracking-[-0.02em] text-balance text-ink">
           Ready to hire with <span className="text-accent">more clarity?</span>
         </h2>
-        <p className="mx-auto mt-3 max-w-[46ch] text-[16px] leading-relaxed text-pretty text-charcoal sm:text-[17px]">
+        <p className="mx-auto mt-3 max-w-[46ch] text-[1rem] leading-relaxed text-pretty text-charcoal sm:text-[1.0625rem]">
           Explore Hirvello and find the right people for your team.
         </p>
         <div className="mx-auto mt-7 flex max-w-[320px] flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">

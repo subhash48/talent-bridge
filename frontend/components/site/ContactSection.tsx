@@ -22,18 +22,18 @@ export function ContactSection() {
           <ul className="border-t border-ink/[0.08]">
             {CONTACT_CHANNELS.map(({ title, text, email }) => (
               <li key={email} className="border-b border-ink/[0.08] py-5">
-                <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-ink">{title}</h2>
-                <p className="mt-1 text-[15px] leading-relaxed text-pretty text-charcoal">{text}</p>
+                <h2 className="text-[1.125rem] font-semibold tracking-[-0.01em] text-ink">{title}</h2>
+                <p className="mt-1 text-[0.9375rem] leading-relaxed text-pretty text-charcoal">{text}</p>
                 <a
                   href={`mailto:${email}`}
-                  className="mt-2 inline-block rounded-sm text-[15px] font-semibold text-brand-ink underline-offset-4 transition-colors duration-200 hover:text-ink hover:underline"
+                  className="mt-2 inline-block rounded-sm text-[0.9375rem] font-semibold text-brand-ink underline-offset-4 transition-colors duration-200 hover:text-ink hover:underline"
                 >
                   {email}
                 </a>
               </li>
             ))}
           </ul>
-          <p className="text-[14px] leading-relaxed text-charcoal">
+          <p className="text-[0.875rem] leading-relaxed text-charcoal">
             Applying for a role? Jobs at companies hiring with Hirvello are on the{" "}
             <Link href="/jobs" className="font-medium text-brand-ink underline-offset-4 hover:underline">
               job board

@@ -27,16 +27,16 @@ const PLACES = [HOME_LINK, JOBS_LINK, PRODUCT_LINK, HOW_IT_WORKS_LINK, PRICING_L
 // Navy text at 16px with nothing behind it; the place you're on is a shade heavier (aria-current is "page" on the
 // page itself and "true" inside its section, such as a job under Find Jobs), and blue under the pointer.
 const linkStyles =
-  "inline-flex h-10 items-center gap-1 rounded-md text-[16px] font-medium whitespace-nowrap text-ink transition-colors duration-200 hover:text-brand-ink [&[aria-current]]:font-semibold";
+  "inline-flex h-10 items-center gap-1 rounded-md text-[1rem] font-medium whitespace-nowrap text-ink transition-colors duration-200 hover:text-brand-ink [&[aria-current]]:font-semibold";
 const menuLinkStyles =
-  "flex h-12 items-center gap-1.5 rounded-[10px] px-3 text-[16px] font-medium text-ink transition-colors hover:bg-ink/[0.04] [&[aria-current]]:font-semibold";
+  "flex h-12 items-center gap-1.5 rounded-[10px] px-3 text-[1rem] font-medium text-ink transition-colors hover:bg-ink/[0.04] [&[aria-current]]:font-semibold";
 
 /** A place's words, with a small blue magnifier in front of Find Jobs so the way to the jobs stands out a little. */
 function PlaceLabel({ place }: { place: (typeof PLACES)[number] }) {
   if (place.href !== JOBS_LINK.href) return place.label;
   return (
     <>
-      <Search aria-hidden className="size-[15px] text-brand-ink" strokeWidth={2.25} />
+      <Search aria-hidden className="size-[0.9375rem] text-brand-ink" strokeWidth={2.25} />
       {place.label}
     </>
   );

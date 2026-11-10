@@ -56,7 +56,7 @@ export function Concierge({ className }: { className?: string }) {
   return (
     <div className={cn("mx-auto w-full max-w-[880px] text-center", className)}>
       <HirvelloMark className="mx-auto h-14 sm:h-16" />
-      <h2 className="mt-5 text-[clamp(28px,3.4vw,44px)] leading-[1.1] font-bold tracking-[-0.03em] text-ink">How can Hirvello help you?</h2>
+      <h2 className="mt-5 text-[clamp(1.75rem,3.4vw,2.75rem)] leading-[1.1] font-bold tracking-[-0.03em] text-ink">How can Hirvello help you?</h2>
 
       <form onSubmit={submit} noValidate aria-label="Your hiring concierge" className="mt-7 sm:mt-8">
         <div
@@ -83,7 +83,7 @@ export function Concierge({ className }: { className?: string }) {
             enterKeyHint="go"
             aria-invalid={problem ? true : undefined}
             aria-describedby={hintId}
-            className="h-11 min-w-0 flex-1 bg-transparent text-[16px] text-ink placeholder:text-ink/60 focus:outline-none sm:h-12 sm:text-[17px]"
+            className="h-11 min-w-0 flex-1 bg-transparent text-[1rem] text-ink placeholder:text-ink/60 focus:outline-none sm:h-12 sm:text-[1.0625rem]"
           />
           <button
             type="submit"
@@ -94,7 +94,7 @@ export function Concierge({ className }: { className?: string }) {
             {pending ? <LoaderCircle aria-hidden className="size-5 animate-spin" /> : <ArrowUp aria-hidden className="size-5" strokeWidth={2.25} />}
           </button>
         </div>
-        <p id={hintId} aria-live="polite" className={cn("mt-4 text-[14px] sm:text-[15px]", problem ? "text-danger" : "text-charcoal")}>
+        <p id={hintId} aria-live="polite" className={cn("mt-4 text-[0.875rem] sm:text-[0.9375rem]", problem ? "text-danger" : "text-charcoal")}>
           {problem ?? (pending ? "One moment…" : PROMISE)}
         </p>
       </form>

@@ -89,7 +89,7 @@ export function ContactForm() {
               <label
                 key={option.topic}
                 className={cn(
-                  "flex cursor-pointer items-center gap-2.5 rounded-[12px] border px-3.5 py-3 text-[15px] font-medium transition-colors duration-200 has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-brand/55",
+                  "flex cursor-pointer items-center gap-2.5 rounded-[12px] border px-3.5 py-3 text-[0.9375rem] font-medium transition-colors duration-200 has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-brand/55",
                   form.topic === option.topic
                     ? "border-brand-ink bg-brand-soft text-ink"
                     : "border-border bg-surface-raised text-charcoal hover:border-border-strong",

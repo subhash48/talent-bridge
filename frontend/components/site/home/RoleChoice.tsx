@@ -34,10 +34,10 @@ export function RoleChoice({ open, onClose }: { open: boolean; onClose: () => vo
               className="group flex items-center gap-3.5 rounded-[14px] border border-border/70 bg-glass-strong px-3.5 py-3 transition-[border-color,background-color] duration-200 hover:border-accent/40 hover:bg-overlay"
             >
               <span className="flex size-10 shrink-0 items-center justify-center rounded-[12px] bg-accent-soft text-brand-ink ring-1 ring-accent/10">
-                <Icon aria-hidden className="size-[18px]" strokeWidth={1.75} />
+                <Icon aria-hidden className="size-[1.125rem]" strokeWidth={1.75} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-[15px] font-semibold text-ink">{label}</span>
+                <span className="block text-[0.9375rem] font-semibold text-ink">{label}</span>
                 <span className="mt-0.5 block text-[13px] text-stone">{text}</span>
               </span>
               <ArrowRight

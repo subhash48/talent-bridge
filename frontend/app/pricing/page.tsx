@@ -70,13 +70,13 @@ export default function PricingPage() {
                 featured && "bg-glass-strong ring-1 ring-accent/25 lg:-my-3 lg:py-9",
               )}
             >
-              <h2 className="text-[20px] leading-snug font-semibold tracking-[-0.015em] text-ink">{name}</h2>
-              <p className="mt-1 text-[14px] text-stone">{who}</p>
+              <h2 className="text-[1.25rem] leading-snug font-semibold tracking-[-0.015em] text-ink">{name}</h2>
+              <p className="mt-1 text-[0.875rem] text-stone">{who}</p>
               <p className="mt-5 flex items-baseline gap-2">
-                <span className="text-[30px] leading-none font-bold tracking-[-0.03em] text-ink">Free</span>
+                <span className="text-[1.875rem] leading-none font-bold tracking-[-0.03em] text-ink">Free</span>
                 <span className="text-[13px] text-stone">during the beta</span>
               </p>
-              <ul className="mt-5 flex flex-col gap-2.5 text-[14px] leading-snug text-charcoal">
+              <ul className="mt-5 flex flex-col gap-2.5 text-[0.875rem] leading-snug text-charcoal">
                 {includes.map((line) => (
                   <li key={line} className="flex gap-2.5">
                     <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-brand-ink" strokeWidth={2.25} />
@@ -94,7 +94,7 @@ export default function PricingPage() {
             </li>
           ))}
         </ul>
-        <p className="mt-8 text-[14px] text-stone">
+        <p className="mt-8 text-[0.875rem] text-stone">
           Need something else, such as more than one workspace or a conversation about your team?{" "}
           <Link href="/contact" className="font-medium text-brand-ink underline-offset-4 hover:underline">
             Write to us

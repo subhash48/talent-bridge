@@ -42,16 +42,16 @@ export function AboutSection() {
       <div className="mt-12 border-t border-ink/[0.08]">
         {CHAPTERS.map((chapter) => (
           <div key={chapter.title} className="grid gap-3 border-b border-ink/[0.08] py-8 md:grid-cols-[220px_1fr] md:gap-12">
-            <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-ink md:pt-0.5">{chapter.title}</h2>
-            <p className="max-w-[640px] text-[17px] leading-relaxed text-pretty text-charcoal">{chapter.text}</p>
+            <h2 className="text-[1.125rem] font-semibold tracking-[-0.01em] text-ink md:pt-0.5">{chapter.title}</h2>
+            <p className="max-w-[640px] text-[1.0625rem] leading-relaxed text-pretty text-charcoal">{chapter.text}</p>
           </div>
         ))}
         <div className="grid gap-3 border-b border-ink/[0.08] py-8 md:grid-cols-[220px_1fr] md:gap-12">
-          <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-ink md:pt-0.5">Who we serve</h2>
+          <h2 className="text-[1.125rem] font-semibold tracking-[-0.01em] text-ink md:pt-0.5">Who we serve</h2>
           <ul className="flex max-w-[640px] flex-col gap-4">
             {SERVED.map(({ href, who, line }) => (
               <li key={href}>
-                <Link href={href} className="group rounded-md text-[17px] leading-relaxed text-pretty text-charcoal">
+                <Link href={href} className="group rounded-md text-[1.0625rem] leading-relaxed text-pretty text-charcoal">
                   <span className="font-semibold text-ink underline decoration-ink/20 underline-offset-4 transition-colors duration-200 group-hover:decoration-brand-ink">
                     {who}
                   </span>{" "}
@@ -62,16 +62,16 @@ export function AboutSection() {
           </ul>
         </div>
         <div className="grid gap-3 border-b border-ink/[0.08] py-8 md:grid-cols-[220px_1fr] md:gap-12">
-          <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-ink md:pt-0.5">The founders</h2>
+          <h2 className="text-[1.125rem] font-semibold tracking-[-0.01em] text-ink md:pt-0.5">The founders</h2>
           {/* Name, role and work address only: nothing personal. */}
           <ul className="grid max-w-[640px] grid-cols-1 gap-5 sm:grid-cols-2">
             {FOUNDERS.map(({ name, role, email }) => (
-              <li key={email} className="text-[17px] leading-relaxed">
+              <li key={email} className="text-[1.0625rem] leading-relaxed">
                 <p className="font-semibold text-ink">{name}</p>
                 <p className="text-charcoal">{role}</p>
                 <a
                   href={`mailto:${email}`}
-                  className="mt-1 inline-block rounded-sm text-[15px] font-medium text-brand-ink underline-offset-4 transition-colors duration-200 hover:text-ink hover:underline"
+                  className="mt-1 inline-block rounded-sm text-[0.9375rem] font-medium text-brand-ink underline-offset-4 transition-colors duration-200 hover:text-ink hover:underline"
                 >
                   {email}
                 </a>
@@ -82,7 +82,7 @@ export function AboutSection() {
       </div>
 
       <div className="mt-10 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
-        <p className="max-w-[34rem] text-[17px] leading-relaxed text-charcoal">
+        <p className="max-w-[34rem] text-[1.0625rem] leading-relaxed text-charcoal">
           Questions, feedback, or a pilot in mind? We&apos;d like to hear from you. And if this is work you&apos;d want to
           do, see{" "}
           <Link href="/about/careers" className="font-medium text-brand-ink underline-offset-4 hover:underline">

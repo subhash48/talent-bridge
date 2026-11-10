@@ -36,13 +36,13 @@ export function Hero() {
       </p>
       <h1
         id="hero-title"
-        className="mx-auto mt-5 max-w-[1050px] text-[clamp(38px,4.8vw,68px)] leading-[1.06] font-bold tracking-[-0.03em] text-ink"
+        className="mx-auto mt-5 max-w-[1050px] text-[clamp(2.375rem,4.8vw,4.25rem)] leading-[1.06] font-bold tracking-[-0.03em] text-ink"
       >
         Talent is everywhere.
         <br />
         Find the <span className="text-accent">real ones.</span>
       </h1>
-      <p className="mx-auto mt-6 max-w-[40ch] text-[17px] leading-[1.6] text-charcoal sm:text-[18px]">
+      <p className="mx-auto mt-6 max-w-[40ch] text-[1.0625rem] leading-[1.6] text-charcoal sm:text-[1.125rem]">
         The résumé gets them noticed.
         <br />
         The work tells you who they are.
@@ -59,7 +59,7 @@ export function Hero() {
         </Link>
         <Link
           href={HOW_IT_WORKS_LINK.href}
-          className="inline-flex h-11 items-center justify-center rounded-full px-3 text-[15px] font-semibold text-ink underline-offset-4 transition-colors duration-200 hover:text-brand-ink hover:underline"
+          className="inline-flex h-11 items-center justify-center rounded-full px-3 text-[0.9375rem] font-semibold text-ink underline-offset-4 transition-colors duration-200 hover:text-brand-ink hover:underline"
         >
           See how it works
         </Link>

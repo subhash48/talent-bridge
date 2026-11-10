@@ -1,12 +1,12 @@
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 
-import { DEMO_LINK, SIGNUP_LINK } from "@/components/site/nav";
+import { DEMO_LINK, NEW_TAB, NEW_TAB_NOTE, SIGNUP_LINK } from "@/components/site/nav";
 import { buttonStyles } from "@/components/ui/Button";
 
 /**
  * The home page's last word, just above the footer: one line, one sentence and two ways in, straight on the page's
- * sky with no card around it. Get started is the sign-up (/start); Book a demo is the request to the team.
+ * sky with no card around it. Get started is the sign-up (/start); Book a demo opens the Google Calendar booking page in a new tab.
  */
 export function ClosingCta() {
   return (
@@ -23,8 +23,9 @@ export function ClosingCta() {
             Get started
             <ArrowRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5" />
           </Link>
-          <Link
+          <a
             href={DEMO_LINK.href}
+            {...NEW_TAB}
             className={buttonStyles({
               variant: "secondary",
               size: "lg",
@@ -32,8 +33,9 @@ export function ClosingCta() {
             })}
           >
             {DEMO_LINK.label}
+            <span className="sr-only">{NEW_TAB_NOTE}</span>
             <ArrowUpRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </Link>
+          </a>
         </div>
       </div>
     </section>

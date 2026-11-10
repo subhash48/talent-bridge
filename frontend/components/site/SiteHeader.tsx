@@ -8,6 +8,8 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { HirvelloLogo } from "@/components/shared/HirvelloLogo";
 import {
   DEMO_LINK,
+  NEW_TAB,
+  NEW_TAB_NOTE,
   HOME_LINK,
   HOW_IT_WORKS_LINK,
   JOBS_LINK,
@@ -123,10 +125,11 @@ export function SiteHeader() {
           <Link href={LOGIN_LINK.href} aria-current={current(LOGIN_LINK.href)} className={cn(linkStyles, "hidden lg:inline-flex")}>
             {LOGIN_LINK.label}
           </Link>
-          <Link href={DEMO_LINK.href} aria-current={current(DEMO_LINK.href)} className={cn(linkStyles, "hidden lg:inline-flex")}>
+          <a href={DEMO_LINK.href} {...NEW_TAB} className={cn(linkStyles, "hidden lg:inline-flex")}>
             {DEMO_LINK.label}
+            <span className="sr-only">{NEW_TAB_NOTE}</span>
             <ArrowUpRight aria-hidden className="size-4" strokeWidth={2} />
-          </Link>
+          </a>
           {/* Below 360px the logo, this and the menu button don't fit on one line; the menu has it full width. */}
           <Link href={SIGNUP_LINK.href} className={buttonStyles({ size: "lg", className: "px-5 max-[359px]:hidden" })}>
             {SIGNUP_LINK.label}
@@ -168,10 +171,11 @@ export function SiteHeader() {
                 </Link>
               </li>
               <li>
-                <Link href={DEMO_LINK.href} onClick={close} aria-current={current(DEMO_LINK.href)} className={menuLinkStyles}>
+                <a href={DEMO_LINK.href} {...NEW_TAB} onClick={close} className={menuLinkStyles}>
                   {DEMO_LINK.label}
+                  <span className="sr-only">{NEW_TAB_NOTE}</span>
                   <ArrowUpRight aria-hidden className="size-4" strokeWidth={2} />
-                </Link>
+                </a>
               </li>
             </ul>
             <Link href={SIGNUP_LINK.href} onClick={close} className={buttonStyles({ size: "lg", className: "mt-3 w-full" })}>

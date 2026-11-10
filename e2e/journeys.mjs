@@ -841,7 +841,43 @@ if (!DATABASE_URL) {
 mkdirSync(SHOTS, { recursive: true });
 // An installed Chrome (or E2E_BROWSER=msedge): playwright-core downloads no browser of its own.
 const browser = await chromium.launch({ channel: process.env.E2E_BROWSER ?? "chrome", headless: true });
-const SCENARIOS = { website, candidateSignup, applyFirst, sophiaElsewhere, alex, sam, employerSignup, jobBoard, googleAuth, employerJobBoard, passwordReset };
+// The job board's sample employers (backend/app/db/board_samples.py) and their Simple Hire test owner. Last, so
+// the other journeys see the board as the demo seed left it.
+async function boardSamples(browser) {
+  const owner = "owner.bluebird@inbox.example";
+  await fetch(`${AUTH}/__seed`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: owner, password: PASSWORD }) });
+  const run = (...args) => execFileSync(PYTHON, ["-m", "app.db.board_samples", ...args], { cwd: HERE, encoding: "utf-8" });
+  const out = run("--owner", owner);
+  check("samples added with their owner", out.includes("10 companies, 10 jobs") && out.includes("signs in with its Supabase account"), out.trim());
+  check("running it again adds nothing", run().includes("0 companies, 0 jobs"));
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+  await page.goto(`${WEB}/jobs?source=recruiter`);
+  await page.locator('#job-results[aria-busy="false"]').waitFor();
+  for (const company of ["Fernbrook Analytics", "Halcyon Health", "Ridgeline Freight", "Lanternfish Learning", "Solvane Energy"]) {
+    check(`recruiter tab lists ${company}`, await page.locator("article").filter({ hasText: company }).count() === 1);
+  }
+  await page.goto(`${WEB}/jobs?source=small_business`);
+  await page.locator('#job-results[aria-busy="false"]').waitFor();
+  for (const company of ["Bluebird Coffee Co.", "Greenleaf Landscaping", "Elm Street Auto Repair", "Sunny Paws Pet Care", "Harbor Lane Dental"]) {
+    check(`small business tab lists ${company}`, await page.locator("article").filter({ hasText: company }).filter({ hasText: "Posted by Small Business" }).count() === 1);
+  }
+  await page.screenshot({ path: path.join(SHOTS, "jobs-small-business-samples.png"), fullPage: true });
+  await signIn(page, owner);
+  await page.waitForURL("**/hire**", { timeout: 20000 });
+  check("small business test login opens Simple Hire", await shows(page.getByRole("heading", { name: "What would you like to do?" })));
+  await page.goto(`${WEB}/hire/jobs`);
+  check("the owner's Jobs page lists Bluebird's barista job", await shows(page.getByText("Barista").first()));
+  check("and no other employer's job", await page.getByText("Senior Data Engineer").count() === 0 && await page.getByText("Dog Walker").count() === 0);
+  const [mine] = await sql("select count(*)::int as n from jobs j join users u on u.company_id = j.company_id where u.email = $1", [owner]);
+  check("the owner's workspace has only its own job", mine.n === 1);
+  await context.close();
+  check("hide closes the samples", run("--hide").includes("Closed 10 sample jobs"));
+  const [open] = await sql("select count(*)::int as n from jobs j join companies c on c.id = j.company_id where c.slug = 'bluebird-coffee' and j.status = 'open'");
+  check("hidden samples are off the board", open.n === 0);
+}
+
+const SCENARIOS = { website, candidateSignup, applyFirst, sophiaElsewhere, alex, sam, employerSignup, jobBoard, googleAuth, employerJobBoard, passwordReset, boardSamples };
 for (const [name, run] of Object.entries(SCENARIOS)) {
   if (only.size && !only.has(name)) continue;
   console.log(`\n== ${name}`);

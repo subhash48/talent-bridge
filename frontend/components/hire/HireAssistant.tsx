@@ -167,8 +167,8 @@ export function HireAssistant({ start = null }: { start?: "post" | null }) {
   if (!open) {
     return (
       <div className="flex flex-col items-center pt-6 text-center sm:pt-12">
-        <p className="text-[15px] font-medium text-stone">Hi {firstName(user.name)}</p>
-        <h1 className="mt-2 text-[clamp(28px,3.4vw,40px)] leading-[1.1] font-semibold tracking-[-0.025em] text-ink">
+        <p className="text-[0.9375rem] font-medium text-stone">Hi {firstName(user.name)}</p>
+        <h1 className="mt-2 text-[clamp(1.75rem,3.4vw,2.5rem)] leading-[1.1] font-semibold tracking-[-0.025em] text-ink">
           What would you like to do?
         </h1>
         <button
@@ -188,12 +188,12 @@ export function HireAssistant({ start = null }: { start?: "post" | null }) {
               <button
                 type="button"
                 onClick={() => choose(choice)}
-                className="flex min-h-[104px] w-full flex-col items-start justify-between gap-3 rounded-[16px] bg-surface-raised p-4 text-left shadow-soft ring-1 ring-ink/[0.06] transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:bg-overlay hover:shadow-raised sm:min-h-[120px] sm:p-5"
+                className="flex min-h-[6.5rem] w-full flex-col items-start justify-between gap-3 rounded-[16px] bg-surface-raised p-4 text-left shadow-soft ring-1 ring-ink/[0.06] transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:bg-overlay hover:shadow-raised sm:min-h-[7.5rem] sm:p-5"
               >
                 <span className="flex size-10 items-center justify-center rounded-[12px] bg-accent-soft/70">
                   <choice.icon aria-hidden className="size-5 text-brand-ink" strokeWidth={1.75} />
                 </span>
-                <span className="text-[16px] font-semibold text-ink">{choice.label}</span>
+                <span className="text-[1rem] font-semibold text-ink">{choice.label}</span>
               </button>
             </li>
           ))}
@@ -218,7 +218,7 @@ export function HireAssistant({ start = null }: { start?: "post" | null }) {
         <Button variant="ghost" size="icon" onClick={() => setOpen(false)} aria-label="Back to the start">
           <ArrowLeft />
         </Button>
-        <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-ink sm:text-[26px]">
+        <h1 className="text-[1.375rem] font-semibold tracking-[-0.02em] text-ink sm:text-[1.625rem]">
           What would you like to do today?
         </h1>
       </div>
@@ -304,7 +304,7 @@ function Conversation({ turns, actions, hint }: { turns: AssistantTurn[]; action
             <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-overlay ring-1 ring-ink/10">
               <HirvelloMark className="h-4" />
             </span>
-            <div className="min-w-0 flex-1 text-[15px] leading-relaxed text-charcoal">
+            <div className="min-w-0 flex-1 text-[0.9375rem] leading-relaxed text-charcoal">
               {turn.status === "thinking" ? (
                 <span className="inline-flex h-7 items-center gap-1">
                   <span className="sr-only">Working…</span>
@@ -337,7 +337,7 @@ function Conversation({ turns, actions, hint }: { turns: AssistantTurn[]; action
         ),
       )}
       {hint && (
-        <p className="flex items-start gap-3 rounded-[18px] border border-dashed border-border-strong px-4 py-3 text-[15px] text-stone">
+        <p className="flex items-start gap-3 rounded-[18px] border border-dashed border-border-strong px-4 py-3 text-[0.9375rem] text-stone">
           <Sparkles aria-hidden className="mt-1 size-4 shrink-0 text-brand-ink" />
           {hint}
         </p>

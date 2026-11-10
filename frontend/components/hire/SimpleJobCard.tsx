@@ -59,12 +59,12 @@ export function SimpleJobCard({ card, onPost, onEdits, busy, superseded }: Props
   if (created) {
     return (
       <div className="mt-3 rounded-[16px] border border-success/30 bg-success/[0.06] p-5">
-        <p className="flex items-center gap-2 text-[15px] font-semibold text-success">
+        <p className="flex items-center gap-2 text-[0.9375rem] font-semibold text-success">
           <CircleCheck aria-hidden className="size-5" /> Posted
         </p>
         <p className="mt-1 text-lg font-semibold text-ink">{card.draft.title}</p>
         {jobFacts(card.draft).length > 0 && (
-          <p className="mt-0.5 text-[15px] text-charcoal">{jobFacts(card.draft).join(" · ")}</p>
+          <p className="mt-0.5 text-[0.9375rem] text-charcoal">{jobFacts(card.draft).join(" · ")}</p>
         )}
         <p className="mt-1 text-sm text-stone">It&apos;s on the Hirvello job board, taking applications.</p>
         <div className="mt-4 flex flex-wrap gap-2">

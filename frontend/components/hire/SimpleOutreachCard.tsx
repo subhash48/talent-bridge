@@ -85,7 +85,7 @@ export function SimpleOutreachCard({ card, onSend, onEdits, busy, superseded }: 
   return (
     <div className={cn("mt-3 rounded-[16px] border border-border bg-surface-raised", closed && "opacity-60")}>
       <div className="border-b border-border px-4 py-3">
-        <p className={cn("text-[15px] font-semibold", done && sent === 0 ? "text-danger" : "text-ink")}>{heading}</p>
+        <p className={cn("text-[0.9375rem] font-semibold", done && sent === 0 ? "text-danger" : "text-ink")}>{heading}</p>
         {card.schedule && (
           <p className="mt-1 flex items-start gap-1.5 text-sm text-stone">
             <CalendarClock aria-hidden className="mt-0.5 size-4 shrink-0" />

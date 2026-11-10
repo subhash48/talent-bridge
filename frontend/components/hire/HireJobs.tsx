@@ -27,8 +27,8 @@ export function HireJobs() {
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[24px] font-semibold tracking-tight text-ink sm:text-[28px]">Jobs</h1>
-          <p className="mt-1 text-[15px] text-stone">
+          <h1 className="text-[1.5rem] font-semibold tracking-tight text-ink sm:text-[1.75rem]">Jobs</h1>
+          <p className="mt-1 text-[0.9375rem] text-stone">
             {jobs.length ? `${pluralize(jobs.length, "job")}. Open ones are on the Hirvello job board.` : "No jobs yet."}
           </p>
         </div>
@@ -39,7 +39,7 @@ export function HireJobs() {
       {ordered.length === 0 ? (
         <div className="glass mt-8 rounded-[18px] border border-border p-8 text-center">
           <p className="text-lg font-semibold text-ink">Post your first job</p>
-          <p className="mx-auto mt-1 max-w-md text-[15px] text-stone">
+          <p className="mx-auto mt-1 max-w-md text-[0.9375rem] text-stone">
             Say what you need, like &ldquo;A cashier, $16 an hour, weekend shifts&rdquo;. You&apos;ll see it before
             it&apos;s posted.
           </p>
@@ -109,7 +109,7 @@ function JobRow({ job, applicants }: { job: ManagedJob; applicants: number }) {
               {open ? "Taking applications" : closedByDate ? "Closing date passed" : job.status === "closed" ? "Closed" : "Not posted"}
             </span>
           </p>
-          {facts.length > 0 && <p className="mt-1 text-[15px] text-charcoal">{facts.join(" · ")}</p>}
+          {facts.length > 0 && <p className="mt-1 text-[0.9375rem] text-charcoal">{facts.join(" · ")}</p>}
           {job.location && <p className="mt-0.5 text-sm text-stone">{job.location}</p>}
           {open && !href && (
             <p className="mt-0.5 text-sm text-stone">Private: it isn&apos;t on the Hirvello job board.</p>

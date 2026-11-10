@@ -64,14 +64,14 @@ export function HireMessages({
   return (
     <div>
       <h1
-        className={cn("text-[24px] font-semibold tracking-tight text-ink sm:text-[28px]", active && "hidden md:block")}
+        className={cn("text-[1.5rem] font-semibold tracking-tight text-ink sm:text-[1.75rem]", active && "hidden md:block")}
       >
         Messages
       </h1>
       <div className="mt-5 grid gap-4 md:grid-cols-[300px_minmax(0,1fr)]">
         <ul aria-label="Conversations" className={cn("flex flex-col gap-2", active && "hidden md:flex")}>
           {conversations.length === 0 && (
-            <li className="glass rounded-[16px] border border-border p-5 text-[15px] text-stone">
+            <li className="glass rounded-[16px] border border-border p-5 text-[0.9375rem] text-stone">
               No messages yet. Message an applicant from Applicants, or ask on Home: &ldquo;Message these three.&rdquo;
             </li>
           )}
@@ -109,7 +109,7 @@ export function HireMessages({
         {active ? (
           <Thread key={active.candidate.id} conversation={active} onBack={() => setActiveId(null)} onSend={send} />
         ) : (
-          <div className="glass hidden items-center justify-center rounded-[18px] border border-border p-10 text-center text-[15px] text-stone md:flex">
+          <div className="glass hidden items-center justify-center rounded-[18px] border border-border p-10 text-center text-[0.9375rem] text-stone md:flex">
             <span className="flex flex-col items-center gap-2">
               <MessageCircle aria-hidden className="size-6 text-brand-ink" />
               Choose a conversation.
@@ -156,7 +156,7 @@ function Thread({ conversation, onBack, onSend }: ThreadProps) {
   return (
     <section
       aria-label={`Conversation with ${conversation.candidate.name}`}
-      className="glass flex min-h-[420px] flex-col rounded-[18px] border border-border"
+      className="glass flex min-h-[26.25rem] flex-col rounded-[18px] border border-border"
     >
       <header className="flex items-center gap-2 border-b border-border p-4">
         <Button variant="ghost" size="icon" onClick={onBack} aria-label="Back to conversations" className="md:hidden">
@@ -169,7 +169,7 @@ function Thread({ conversation, onBack, onSend }: ThreadProps) {
       </header>
       <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
         {conversation.messages.length === 0 && (
-          <p className="text-[15px] text-stone">No messages yet. Say hello to {name}.</p>
+          <p className="text-[0.9375rem] text-stone">No messages yet. Say hello to {name}.</p>
         )}
         {conversation.messages.map((message) => (
           <div key={message.id} className="flex flex-col gap-0.5">

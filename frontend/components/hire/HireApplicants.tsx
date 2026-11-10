@@ -30,8 +30,8 @@ export function HireApplicants({ initialJob }: { initialJob: string | null }) {
 
   return (
     <div>
-      <h1 className="text-[24px] font-semibold tracking-tight text-ink sm:text-[28px]">Applicants</h1>
-      <p className="mt-1 text-[15px] text-stone">{pluralize(shown.length, "person", "people")} applied.</p>
+      <h1 className="text-[1.5rem] font-semibold tracking-tight text-ink sm:text-[1.75rem]">Applicants</h1>
+      <p className="mt-1 text-[0.9375rem] text-stone">{pluralize(shown.length, "person", "people")} applied.</p>
       {withApplicants.length > 1 && (
         <div role="group" aria-label="Which job" className="mt-4 flex flex-wrap gap-2">
           {[{ id: null, title: "All jobs" }, ...withApplicants].map((each) => (
@@ -41,7 +41,7 @@ export function HireApplicants({ initialJob }: { initialJob: string | null }) {
               aria-pressed={job === each.id}
               onClick={() => setJob(each.id)}
               className={cn(
-                "rounded-full px-4 py-2 text-[15px] font-medium transition-colors",
+                "rounded-full px-4 py-2 text-[0.9375rem] font-medium transition-colors",
                 job === each.id ? "bg-brand text-on-brand" : "border border-border text-charcoal hover:bg-muted",
               )}
             >
@@ -53,7 +53,7 @@ export function HireApplicants({ initialJob }: { initialJob: string | null }) {
       {shown.length === 0 ? (
         <div className="glass mt-8 rounded-[18px] border border-border p-8 text-center">
           <p className="text-lg font-semibold text-ink">Nobody has applied yet</p>
-          <p className="mx-auto mt-1 max-w-md text-[15px] text-stone">
+          <p className="mx-auto mt-1 max-w-md text-[0.9375rem] text-stone">
             When people apply on the Hirvello job board, they show up here with the days they can work.
           </p>
         </div>
@@ -89,12 +89,12 @@ function ApplicantRow({ candidate }: { candidate: PipelineCandidate }) {
         </p>
       </div>
       {candidate.availability && candidate.availability.length > 0 && (
-        <p className="mt-2 text-[15px] text-charcoal">
+        <p className="mt-2 text-[0.9375rem] text-charcoal">
           <span className="font-medium">Can work:</span> {daysLabel(candidate.availability)}
         </p>
       )}
       {candidate.experienceNote && (
-        <p className="mt-1 text-[15px] text-charcoal">
+        <p className="mt-1 text-[0.9375rem] text-charcoal">
           <span className="font-medium">Experience:</span> &ldquo;{candidate.experienceNote}&rdquo;
         </p>
       )}

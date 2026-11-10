@@ -113,7 +113,7 @@ function SimpleMessageCard({
 
   return (
     <div className="mt-3 rounded-[16px] border border-border bg-surface-raised p-4">
-      <p className={cn("text-[15px] font-semibold", card.status === "failed" ? "text-danger" : "text-ink")}>
+      <p className={cn("text-[0.9375rem] font-semibold", card.status === "failed" ? "text-danger" : "text-ink")}>
         {sent ? "Sent to" : card.status === "failed" ? "Not sent to" : "To"} {card.candidate.name}
       </p>
       {sent || closed ? (

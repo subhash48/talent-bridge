@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 
 type AuthCardProps = {
   title: string;
+  /** A small label above the title saying whose page this is, e.g. "Candidate portal". */
+  eyebrow?: string;
   description?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
@@ -13,12 +15,16 @@ type AuthCardProps = {
   wide?: boolean;
 };
 
+/** The labels for the two kinds of account, used as the eyebrow on their pages. */
+export const AUDIENCE_EYEBROW = { candidate: "Candidate portal", employer: "Employer workspace" } as const;
+
 /**
  * The frame every sign-in, sign-up and activation page shares. On wide screens: the Hirvello panel on the left,
  * the brand's blue deepening to navy, and the form on the sky on the right, in a sheet of glass. On phones the
- * panel steps aside and the form keeps the whole screen, under the logo.
+ * panel steps aside and the form keeps the whole screen, under the logo. There's no navigation here: the card's
+ * footer holds the one or two links that lead elsewhere.
  */
-export function AuthCard({ title, description, children, footer, wide }: AuthCardProps) {
+export function AuthCard({ title, eyebrow, description, children, footer, wide }: AuthCardProps) {
   return (
     <div className="sky-backdrop flex min-h-dvh">
       <aside className="brand-backdrop relative hidden w-[42%] max-w-[600px] shrink-0 flex-col justify-between overflow-hidden p-10 lg:flex xl:p-14">
@@ -41,16 +47,23 @@ export function AuthCard({ title, description, children, footer, wide }: AuthCar
         <p className="relative text-[13px] text-on-brand/75">© 2026 Hirvello</p>
       </aside>
 
-      <main className="flex flex-1 flex-col px-5 py-5 sm:px-10 sm:py-7">
+      <main className="flex flex-1 flex-col px-4 py-5 sm:px-10 sm:py-7">
         <Link href="/" aria-label="Hirvello home" className="w-fit rounded-md lg:hidden">
           <HirvelloLogo />
         </Link>
-        <div className={cn("mx-auto flex w-full flex-1 flex-col justify-center py-8", wide ? "max-w-[600px]" : "max-w-[460px]")}>
-          <div className="sky-card rounded-[22px] px-6 py-7 sm:px-8 sm:py-8">
-            <h1 className="text-[clamp(22px,2vw,28px)] leading-[1.15] font-bold tracking-[-0.025em] text-ink">{title}</h1>
-            {description && <div className="mt-2.5 text-[15px] leading-relaxed text-charcoal">{description}</div>}
-            <div className="mt-6 [&_input:not([type=checkbox]):not([type=radio])]:h-11 [&_button[type=submit]]:h-11 [&_button[type=submit]]:text-[15px]">{children}</div>
-            {footer && <div className="mt-6 border-t border-ink/[0.07] pt-5 text-sm text-stone">{footer}</div>}
+        <div className={cn("mx-auto flex w-full flex-1 flex-col justify-center py-6 sm:py-10", wide ? "max-w-[600px]" : "max-w-[440px]")}>
+          <div className="sky-card rounded-[22px] px-5 py-7 sm:px-9 sm:py-9">
+            {eyebrow && (
+              <p className="mb-2.5 text-[12px] leading-none font-semibold tracking-[0.14em] text-brand-ink uppercase">{eyebrow}</p>
+            )}
+            <h1 className="text-[clamp(24px,2.1vw,30px)] leading-[1.15] font-bold tracking-[-0.025em] text-ink">{title}</h1>
+            {description && <div className="mt-2 text-[15px] leading-relaxed text-charcoal">{description}</div>}
+            <div className="mt-7 [&_input:not([type=checkbox]):not([type=radio])]:h-11 [&_button[type=submit]]:h-11 [&_button[type=submit]]:text-[15px]">
+              {children}
+            </div>
+            {footer && (
+              <div className="mt-7 flex flex-col gap-2 border-t border-ink/[0.07] pt-5 text-[14px] leading-relaxed text-stone">{footer}</div>
+            )}
           </div>
         </div>
       </main>

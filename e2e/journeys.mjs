@@ -85,16 +85,16 @@ async function website(browser) {
   // Photographs only where they're meant to be: one per audience in Who it's for and one in The product, no gallery anywhere else.
   check("no gallery of images", (await page.evaluate(() => [...document.images].filter((img) => !img.closest("#solutions, #product")).length)) <= 2);
   const nav = page.getByRole("navigation", { name: "Website" });
-  for (const label of ["Home", "Product", "How it works", "Pricing"]) {
+  for (const label of ["Home", "Find Jobs", "Product", "How it works", "Pricing"]) {
     check(`nav: ${label}`, await nav.getByRole("link", { name: label, exact: true }).first().isVisible());
   }
   check("nav: Home goes to the homepage", (await nav.getByRole("link", { name: "Home", exact: true }).getAttribute("href")) === "/");
-  check("nav: four places, in order", (await nav.locator("a").allInnerTexts()).join("|") === "Home|Product|How it works|Pricing");
+  check("nav: five places, in order", (await nav.locator("a").allInnerTexts()).join("|") === "Home|Find Jobs|Product|How it works|Pricing");
   check("nav: no Solutions or Company menu", (await nav.getByRole("button").count()) === 0);
   const banner = page.getByRole("banner");
-  check("Log in in the header", await banner.getByRole("link", { name: "Log in", exact: true }).isVisible());
+  check("Sign in in the header", await banner.getByRole("link", { name: "Sign in", exact: true }).isVisible());
   check("Book a demo in the header", (await banner.getByRole("link", { name: /^Book a demo/ }).getAttribute("href")) === "/book-a-demo");
-  check("Sign up in the header", await banner.getByRole("link", { name: "Sign up", exact: true }).isVisible());
+  check("Create account in the header", await banner.getByRole("link", { name: "Create account", exact: true }).isVisible());
   check("no Employer portal in the header", (await banner.getByRole("link", { name: "Employer portal" }).count()) === 0);
   const bar = await banner.evaluate((el) => {
     const s = getComputedStyle(el);
@@ -199,13 +199,13 @@ async function website(browser) {
   };
   await ask("I'm a recruiter looking for developers.");
   await page.waitForURL("**/login?as=employer");
-  check("recruiter intent opens the employer sign-in", await page.getByRole("heading", { name: "Employer sign in" }).isVisible());
+  check("recruiter intent opens the employer sign-in", await page.getByRole("heading", { name: "Sign in to your workspace" }).isVisible());
   await ask("I'm hiring staff for my café.");
   await page.waitForURL("**/signup/employer?mode=simple");
   check("small-business intent opens Simple Hire's onboarding", await page.getByRole("heading", { name: "Start hiring with Simple Hire" }).isVisible());
   await ask("Help me find work.");
   await page.waitForURL("**/login?as=candidate");
-  check("candidate intent opens the candidate sign-in", await page.getByRole("heading", { name: "Candidate sign in" }).isVisible());
+  check("candidate intent opens the candidate sign-in", await page.getByRole("heading", { name: "Sign in to Hirvello" }).isVisible());
   await ask("I want to find talent.");
   const choice = page.getByRole("dialog", { name: "Which of these is you?" });
   check("an unclear request asks who you are", (await choice.isVisible()) && page.url() === `${WEB}/`);
@@ -305,13 +305,13 @@ async function website(browser) {
   check("terms page says it's a draft", await page.getByText(/not legal advice/).isVisible());
 
   await page.goto(WEB);
-  await page.getByRole("banner").getByRole("link", { name: "Log in", exact: true }).click();
+  await page.getByRole("banner").getByRole("link", { name: "Sign in", exact: true }).click();
   await page.waitForURL("**/signin");
   check("sign in asks who you are", await page.getByRole("heading", { name: "How are you using Hirvello?" }).isVisible());
   check("candidate choice", await page.getByRole("link", { name: /Candidate/ }).first().isVisible());
   check("employer choice", await page.getByRole("link", { name: /Employer \/ Recruiter/ }).isVisible());
   await page.goto(WEB);
-  await page.getByRole("banner").getByRole("link", { name: "Sign up", exact: true }).click();
+  await page.getByRole("banner").getByRole("link", { name: "Create account", exact: true }).click();
   await page.waitForURL("**/start");
   check("Sign up asks how you'll use Hirvello", await page.getByRole("heading", { name: /get started/i }).isVisible());
 
@@ -322,7 +322,7 @@ async function website(browser) {
   check("no sideways scroll on a phone", overflow <= 1, `overflow ${overflow}px`);
   await small.getByRole("button", { name: "Open menu" }).click();
   check("phone menu opens", await small.locator("#site-menu").isVisible());
-  check("phone menu: the four places, Log in, Book a demo and Sign up", (await small.locator("#site-menu a").allInnerTexts()).join("|") === "Home|Product|How it works|Pricing|Log in|Book a demo|Sign up");
+  check("phone menu: navigation and account links", (await small.locator("#site-menu a").allInnerTexts()).join("|") === "Home|Find Jobs|Product|How it works|Pricing|Sign in|Book a demo|Create account");
   await small.keyboard.press("Escape");
   check("phone menu closes on Escape", (await small.locator("#site-menu").count()) === 0);
   await small.getByRole("button", { name: "Open menu" }).click();
@@ -338,29 +338,29 @@ async function candidateSignup(browser) {
   const context = await browser.newContext();
   const page = await context.newPage();
   const email = `test.candidate.${Date.now()}@inbox.example`;
-  await page.goto(`${WEB}/signup`);
-  await page.fill("#first-name", "Test");
-  await page.fill("#last-name", "Candidate");
+  const [role] = await sql("select id from jobs where title='Kitchen Assistant' limit 1");
+  const next = `/jobs/${role.id}/apply`;
+  await page.goto(`${WEB}/signup?next=${encodeURIComponent(next)}`);
+  await page.fill("#full-name", "Test Candidate");
   await page.fill("#email", email);
   await page.fill("#password", "short1");
-  await page.fill("#confirm-password", "short1");
   await page.getByRole("button", { name: "Create account" }).click();
   check("weak password refused", await page.getByText("Use at least 8 characters.").isVisible());
   await page.fill("#password", "river-lamp-42");
-  await page.fill("#confirm-password", "river-lamp-43");
-  await page.getByRole("button", { name: "Create account" }).click();
-  check("mismatched passwords refused", await page.getByText("The passwords don't match.").isVisible());
-  await page.fill("#confirm-password", "river-lamp-42");
+  await page.getByRole("button", { name: "Show password" }).click();
+  check("password visibility toggle", await page.locator("#password").getAttribute("type") === "text");
+  await page.getByRole("button", { name: "Hide password" }).click();
   await page.getByRole("button", { name: "Create account" }).click();
   await page.getByText("Check your email to verify your account.").waitFor({ timeout: 10000 });
   check("signup asks to verify the email", true);
   const link = await lastLink(email, "signup");
   check("verification email sent", Boolean(link));
   await page.goto(link);
-  await page.waitForURL("**/candidate**", { timeout: 20000 });
-  check("verified signup opens the candidate portal", page.url().includes("/candidate"));
+  await page.waitForURL(`${WEB}${next}`, { timeout: 20000 });
+  check("email signup preserves the selected application", await shows(page.getByRole("heading", { name: "Applying as Test Candidate" })));
   const rows = await sql("select c.first_name, c.last_name, u.role from candidates c join users u on u.id = c.user_id where c.email = $1", [email]);
   check("candidate account created with the names given", rows[0]?.first_name === "Test" && rows[0]?.last_name === "Candidate" && rows[0]?.role === "candidate");
+  await page.goto(`${WEB}/candidate`);
   await page.screenshot({ path: path.join(SHOTS, "candidate-new.png") });
   await signOutAll(context);
   await signIn(page, email, "candidate", "river-lamp-42");
@@ -374,10 +374,10 @@ async function applyFirst(browser) {
   const page = await context.newPage();
   const email = `nora.quinn.${Date.now()}@inbox.example`;
   await page.goto(`${WEB}/careers`);
-  await page.getByRole("link", { name: /Kitchen Assistant/ }).first().click();
-  await page.waitForURL("**/careers/**");
-  check("careers page shows the pay", await page.getByText("$18/hour").first().isVisible());
-  check("careers page shows the days", await page.getByText("Friday + Saturday").first().isVisible());
+  await page.getByRole("article").filter({ has: page.getByRole("heading", { name: "Kitchen Assistant", exact: true }) }).getByRole("link", { name: "View details" }).click();
+  await page.waitForURL("**/jobs/**");
+  check("careers page shows the pay", await shows(page.getByText("$18 an hour").first()));
+  check("careers page shows the days", await shows(page.getByText("Friday + Saturday", { exact: true })));
   await page.getByRole("link", { name: /Apply/ }).first().click();
   await page.waitForURL("**/apply");
   await page.fill("#apply-first-name", "Nora");
@@ -422,7 +422,7 @@ async function sophiaElsewhere(browser) {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(`${WEB}/careers`);
-  await page.getByRole("link", { name: /Platform Engineer/ }).first().click();
+  await page.getByRole("article").filter({ has: page.getByRole("heading", { name: "Platform Engineer", exact: true }) }).getByRole("link", { name: "View details" }).click();
   await page.getByRole("link", { name: /Apply/ }).first().click();
   await page.waitForURL("**/apply");
   await page.fill("#apply-first-name", "Sophia");
@@ -589,7 +589,7 @@ async function employerSignup(browser) {
   await page.fill("#email", email);
   await page.fill("#password", "Bakery-2026");
   await page.fill("#confirm-password", "Bakery-2026");
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByText("Check your email to verify it.").waitFor({ timeout: 10000 });
   await page.goto(await lastLink(email, "signup"));
   await page.waitForURL("**/onboarding/workspace**", { timeout: 20000 });
@@ -609,6 +609,207 @@ async function employerSignup(browser) {
   await context.close();
 }
 
+async function jobBoard(browser) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto(`${WEB}/jobs`);
+  check("public board opens without sign-in", await shows(page.getByRole("heading", { name: "Find your next opportunity." })));
+  await page.screenshot({ path: path.join(SHOTS, "jobs-desktop.png"), fullPage: true });
+  const tabs = page.getByRole("navigation", { name: "Who posted the job" });
+  await tabs.getByRole("link", { name: /Small Business Jobs/ }).click();
+  await page.waitForURL("**source=small_business");
+  await page.locator('#job-results[aria-busy="false"]').waitFor();
+  check("small business tab only lists small businesses", (await page.locator("article").count()) > 0 && await page.locator("article").filter({ hasText: "Posted by Recruiter" }).count() === 0);
+  await tabs.getByRole("link", { name: /Recruiter Jobs/ }).click();
+  await page.waitForURL("**source=recruiter");
+  await page.locator('#job-results[aria-busy="false"]').waitFor();
+  check("recruiter tab only lists recruiter jobs", (await page.locator("article").count()) > 0 && await page.locator("article").filter({ hasText: "Posted by Small Business" }).count() === 0);
+  await page.goto(`${WEB}/jobs`);
+  await page.fill("#jobs-q", "Kitchen");
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await page.waitForURL("**q=Kitchen");
+  await page.locator('#job-results[aria-busy="false"]').waitFor();
+  check("keyword search returns the actual job", await page.locator("article").count() === 1 && await shows(page.getByRole("heading", { name: "Kitchen Assistant", exact: true })));
+  await page.getByRole("button", { name: "Work arrangement", exact: true }).click();
+  await page.getByRole("menuitemcheckbox", { name: "Remote", exact: true }).click();
+  await page.keyboard.press("Escape");
+  check("filters show a clear empty state", await shows(page.getByRole("heading", { name: "No jobs match these filters." })));
+  await page.getByRole("button", { name: "Clear filters", exact: true }).click();
+  await page.getByRole("link", { name: "View details", exact: true }).click();
+  check("public detail includes source and pay", await shows(page.getByText("Posted by Small Business", { exact: true })) && await shows(page.getByText("$18 an hour", { exact: true })));
+  await page.getByRole("link", { name: "Apply now", exact: true }).last().click();
+  await page.waitForURL((url) => url.pathname.endsWith("/apply"));
+  const applyUrl = page.url();
+  await page.getByRole("main").getByRole("link", { name: "Sign in", exact: true }).click();
+  await page.fill("#email", "sophia.martinez@example.com");
+  await page.fill("#password", PASSWORD);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.waitForURL(applyUrl, { timeout: 20000 });
+  check("sign in returns to the selected application", await shows(page.getByRole("heading", { name: "Applying as Sophia Martinez" })));
+  await page.setInputFiles("#candidate-apply-resume", PDF);
+  await page.getByLabel("Friday", { exact: true }).check();
+  await page.getByRole("button", { name: "Submit application" }).click();
+  check("signed-in application confirms submission", await shows(page.getByRole("heading", { name: /Application sent|You've already applied/ })));
+  const rows = await sql("select a.id, co.name from applications a join jobs j on j.id=a.job_id join companies co on co.id=j.company_id join candidates c on c.id=a.candidate_id where c.email=$1 and j.title='Kitchen Assistant'", ["sophia.martinez@example.com"]);
+  check("application saved to the correct employer once", rows.length === 1 && rows[0].name === "Sam's Cafe");
+  await page.getByRole("link", { name: "View your applications" }).click();
+  check("signed-in application is in the candidate dashboard", await shows(page.getByText("Kitchen Assistant", { exact: true })));
+  await page.reload();
+  check("refresh preserves the candidate session", await shows(page.getByText("Kitchen Assistant", { exact: true })) && page.url().includes("/candidate/applications"));
+  await page.goto(applyUrl);
+  await page.getByRole("heading", { name: "Applying as Sophia Martinez" }).waitFor();
+  await page.setInputFiles("#candidate-apply-resume", PDF);
+  await page.getByText(path.basename(PDF), { exact: true }).waitFor();
+  await page.getByLabel("Friday", { exact: true }).check();
+  await page.getByRole("button", { name: "Submit application" }).click();
+  check("duplicate application is explained", await shows(page.getByRole("heading", { name: "You've already applied" })));
+  if (!(await page.getByRole("heading", { name: "You've already applied" }).isVisible())) {
+    console.error(await page.locator("main").innerText());
+  }
+  await page.goto(`${WEB}/candidate/applications`);
+  await page.getByRole("button", { name: /Sophia Martinez/ }).click();
+  await page.getByRole("menuitem", { name: "Sign out", exact: true }).click();
+  await page.waitForURL("**reason=signed_out");
+  check("logout returns to candidate sign-in", new URL(page.url()).searchParams.get("as") === "candidate");
+  await page.goto(`${WEB}/candidate/applications`);
+  check("protected candidate page redirects after logout", page.url().includes("/login"));
+  for (const route of ["/jobs", "/login?as=candidate", "/signup"]) {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto(`${WEB}${route}`);
+    check(`mobile ${route} fits`, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+    await page.screenshot({ path: path.join(SHOTS, `mobile-${route.split("?")[0].slice(1)}.png`), fullPage: true });
+  }
+  check("no browser errors in board/apply flow", errors.length === 0, errors.join(" | "));
+  await context.close();
+}
+
+async function googleAuth(browser) {
+  const email = `google.${Date.now()}@inbox.example`;
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const configure = async (data) => fetch(`${AUTH}/__google`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(data) });
+  await configure({ email, fullName: "Google Candidate", cancel: false, enabled: true });
+  const [role] = await sql("select id from jobs where title='Kitchen Assistant' limit 1");
+  const next = `/jobs/${role.id}/apply`;
+  await page.goto(`${WEB}/signup?next=${encodeURIComponent(next)}`);
+  await page.getByRole("button", { name: "Continue with Google" }).click();
+  await page.waitForURL(`${WEB}${next}`, { timeout: 20000 });
+  check("Google signup returns to the selected application", await shows(page.getByRole("heading", { name: "Applying as Google Candidate" })));
+  check("first Google sign-in creates a candidate", (await sql("select u.role from users u join candidates c on c.user_id=u.id where c.email=$1", [email]))[0]?.role === "candidate");
+  await page.goto(`${WEB}/candidate`);
+  await page.reload();
+  check("Google session survives refresh", page.url().endsWith("/candidate"));
+  await context.clearCookies();
+  await page.goto(`${WEB}/login?as=candidate`);
+  await page.getByRole("button", { name: "Continue with Google" }).click();
+  await page.waitForURL("**/candidate", { timeout: 20000 });
+  check("returning Google user reuses the account", (await sql("select id from candidates where email=$1", [email])).length === 1);
+  await context.clearCookies();
+  await configure({ cancel: true });
+  await page.goto(`${WEB}/login?as=candidate`);
+  await page.getByRole("button", { name: "Continue with Google" }).click();
+  await page.waitForURL("**reason=google_cancelled", { timeout: 15000 });
+  check("Google cancellation returns a helpful notice", await shows(page.getByRole("alert")));
+  await configure({ email: "sam@samscafe.example", cancel: false });
+  await page.goto(`${WEB}/login?as=employer`);
+  await page.getByRole("button", { name: "Continue with Google" }).click();
+  await page.waitForURL("**/hire", { timeout: 15000 });
+  check("Google employer reaches its existing workspace", true);
+  await context.clearCookies();
+  await page.goto(`${WEB}/login?as=candidate`);
+  await page.getByRole("button", { name: "Continue with Google" }).click();
+  await page.waitForURL("**reason=wrong_account", { timeout: 15000 });
+  check("Google on candidate page never changes an employer's role", (await sql("select role from users where email='sam@samscafe.example'"))[0].role === "admin");
+  await configure({ email: `owner.${Date.now()}@inbox.example`, fullName: "Google Owner" });
+  await page.goto(`${WEB}/signup/employer?mode=simple`);
+  await page.getByRole("button", { name: "Continue with Google" }).click();
+  await page.waitForURL("**/onboarding/workspace**", { timeout: 15000 });
+  check("new Google employer must create a workspace", await shows(page.getByText("Which best describes you?")));
+  await page.fill("#company", "Google Test Bakery");
+  await page.fill("#location", "Austin, TX");
+  await page.getByRole("button", { name: "Create workspace", exact: true }).click();
+  await page.waitForURL("**/hire", { timeout: 15000 });
+  check("Google employer signup creates its own Simple Hire workspace", true);
+  await context.clearCookies();
+  await configure({ enabled: false });
+  await page.goto(`${WEB}/signup`);
+  await page.getByRole("button", { name: "Continue with Google" }).click();
+  check("disabled Google provider gives email fallback", await shows(page.getByText("Google sign-in isn't available right now. Use your email and password.")));
+  await configure({ enabled: true });
+  await context.close();
+}
+
+async function employerJobBoard(browser) {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const publicPage = await context.newPage();
+  await signIn(page, "alex.chen@encord.example");
+  await page.waitForURL("**/recruiter/**");
+  await page.goto(`${WEB}/recruiter/jobs`);
+  await page.getByRole("button", { name: "Create job", exact: true }).click();
+  const title = `Board Engineer ${Date.now()}`;
+  await page.fill("#new-job-title", title);
+  await page.fill("#new-job-location", "Austin, TX");
+  await page.selectOption("#new-job-arrangement", "remote");
+  await page.fill("#new-job-salary-min", "100000");
+  await page.fill("#new-job-salary-max", "120000");
+  await page.fill("#new-job-description", "Help build a more thoughtful hiring experience.");
+  await page.getByRole("dialog").getByRole("button", { name: "Create job", exact: true }).click();
+  await page.getByRole("dialog").waitFor({ state: "hidden" });
+  const [job] = await sql("select id, posted_by from jobs where title=$1", [title]);
+  check("recruiter form persists the employer's source", job?.posted_by === "recruiter");
+  await publicPage.goto(`${WEB}/jobs?q=${encodeURIComponent(title)}`);
+  check("new recruiter job appears automatically", await shows(publicPage.getByRole("heading", { name: title, exact: true })));
+  check("new recruiter job shows structured pay", await shows(publicPage.getByText("$100k–$120k a year", { exact: true })));
+  await page.goto(`${WEB}/recruiter/jobs/${job.id}`);
+  await page.getByRole("button", { name: "Edit job", exact: true }).click();
+  await page.getByLabel("Show on the Hirvello job board").uncheck();
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await page.getByRole("dialog").waitFor({ state: "hidden" });
+  await publicPage.goto(`${WEB}/jobs/${job.id}`);
+  check("making a job private removes its public detail", await shows(publicPage.getByText("This role isn't open anymore", { exact: true })));
+  await page.getByRole("button", { name: "Edit job", exact: true }).click();
+  await page.getByLabel("Show on the Hirvello job board").check();
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await page.getByRole("dialog").waitFor({ state: "hidden" });
+  await page.getByRole("button", { name: "Close role", exact: true }).click();
+  await page.getByRole("button", { name: "Reopen role", exact: true }).waitFor();
+  await publicPage.goto(`${WEB}/jobs/${job.id}`);
+  check("closing a job removes its public detail", await shows(publicPage.getByText("This role isn't open anymore", { exact: true })));
+  await context.close();
+}
+
+async function passwordReset(browser) {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto(`${WEB}/forgot-password?as=candidate`);
+  await page.fill("#email", "sophia.martinez@example.com");
+  await page.getByRole("button", { name: "Send reset link" }).click();
+  await page.getByText(/we've sent it a link to reset/).waitFor();
+  const link = await lastLink("sophia.martinez@example.com", "recovery");
+  await page.goto(link);
+  await page.waitForURL("**/reset-password", { timeout: 15000 });
+  await page.fill("#password", "Changed-pass-2026");
+  await page.fill("#confirm-password", "Mismatch-pass-2026");
+  await page.getByRole("button", { name: "Set new password" }).click();
+  check("reset refuses mismatched confirmation", await shows(page.getByText("The passwords don't match.")));
+  await page.fill("#confirm-password", "Changed-pass-2026");
+  await page.getByRole("button", { name: "Set new password" }).click();
+  await page.waitForURL("**/candidate", { timeout: 15000 });
+  await context.clearCookies();
+  await signIn(page, "sophia.martinez@example.com", "candidate", "Changed-pass-2026");
+  await page.waitForURL("**/candidate", { timeout: 15000 });
+  check("reset password works at next sign-in", true);
+  await context.clearCookies();
+  await page.goto(`${WEB}/auth/confirm?code=expired`);
+  check("invalid confirmation link is explained", page.url().includes("reason=link_invalid"));
+  // Restore the fixture's password for other journeys, through the test-only auth endpoint.
+  await fetch(`${AUTH}/__seed`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: "sophia.martinez@example.com", password: PASSWORD }) });
+  await context.close();
+}
+
 if (!DATABASE_URL) {
   console.error("Set E2E_DATABASE_URL, or run these with e2e/run.sh.");
   process.exit(2);
@@ -616,7 +817,7 @@ if (!DATABASE_URL) {
 mkdirSync(SHOTS, { recursive: true });
 // An installed Chrome (or E2E_BROWSER=msedge): playwright-core downloads no browser of its own.
 const browser = await chromium.launch({ channel: process.env.E2E_BROWSER ?? "chrome", headless: true });
-const SCENARIOS = { website, candidateSignup, applyFirst, sophiaElsewhere, alex, sam, employerSignup };
+const SCENARIOS = { website, candidateSignup, applyFirst, sophiaElsewhere, alex, sam, employerSignup, jobBoard, googleAuth, employerJobBoard, passwordReset };
 for (const [name, run] of Object.entries(SCENARIOS)) {
   if (only.size && !only.has(name)) continue;
   console.log(`\n== ${name}`);
@@ -624,6 +825,14 @@ for (const [name, run] of Object.entries(SCENARIOS)) {
     await run(browser);
   } catch (error) {
     check(`${name} finished`, false, error.message.split("\n")[0]);
+    console.error(error.message);
+    for (const context of browser.contexts()) {
+      for (const page of context.pages()) {
+        console.error(`Page at failure: ${page.url()}`);
+        await page.screenshot({ path: path.join(SHOTS, `${name}-failure.png`), fullPage: true }).catch(() => {});
+      }
+      await context.close();
+    }
   }
 }
 await browser.close();

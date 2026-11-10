@@ -24,6 +24,7 @@ const sessions = new Map(); // refresh token -> user id
 const codes = new Map(); // pkce auth code -> { userId, challenge, type }
 const tokens = new Map(); // email link token -> { userId, type, redirectTo, challenge }
 const outbox = [];
+let google = { email: "google.candidate@inbox.example", fullName: "Google Candidate", cancel: false, enabled: true };
 
 const b64url = (buffer) => Buffer.from(buffer).toString("base64url");
 
@@ -62,7 +63,7 @@ function publicUser(user) {
     phone: "",
     app_metadata: { provider: "email", providers: ["email"] },
     user_metadata: user.user_metadata,
-    identities: [],
+    identities: [{ provider: user.google ? "google" : "email", user_id: user.id }],
     created_at: user.created_at,
     updated_at: new Date().toISOString(),
     is_anonymous: false,
@@ -91,6 +92,11 @@ async function mirror(user) {
      on conflict (id) do update set email = $2, email_confirmed_at = $3, confirmation_sent_at = $4, invited_at = $5`,
     [user.id, user.email, user.confirmed_at, user.confirmation_sent_at, user.invited_at],
   );
+  if (user.google) {
+    await db.query("delete from auth.identities where user_id = $1 and provider = 'google'", [user.id]);
+    await db.query("insert into auth.identities (user_id, provider, identity_data) values ($1, 'google', $2)",
+      [user.id, JSON.stringify({ email: user.email, email_verified: true })]);
+  }
 }
 
 async function createUser(email, { password = null, data = {}, confirmed = false, invited = false } = {}) {
@@ -166,6 +172,10 @@ createServer(async (req, res) => {
     if (req.method === "OPTIONS") return send(res, 204);
 
     if (path === "/__outbox") return send(res, 200, outbox);
+    if (path === "/__google" && req.method === "POST") {
+      google = { ...google, ...await read(req) };
+      return send(res, 200, google);
+    }
     if (path === "/__seed" && req.method === "POST") {
       // { email, password }: a confirmed account, as an operator would have made it.
       const body = await read(req);
@@ -176,7 +186,31 @@ createServer(async (req, res) => {
       return send(res, 200, { id: user.id });
     }
     if (path === "/auth/v1/.well-known/jwks.json") return send(res, 200, { keys: [jwk] });
-    if (path === "/auth/v1/health" || path === "/auth/v1/settings") return send(res, 200, { external: { email: true } });
+    if (path === "/auth/v1/health" || path === "/auth/v1/settings") return send(res, 200, { external: { email: true, google: google.enabled } });
+
+    // Test-only Google consent boundary: the real app still uses the Supabase SDK, PKCE and session cookies.
+    if (path === "/auth/v1/authorize") {
+      const target = new URL(url.searchParams.get("redirect_to"));
+      if (google.cancel) target.searchParams.set("error", "access_denied");
+      else {
+        const user = byEmail(google.email) ?? await createUser(google.email, { confirmed: true, data: { full_name: google.fullName } });
+        user.google = true;
+        user.confirmed_at ??= new Date().toISOString();
+        await mirror(user);
+        const code = randomUUID();
+        codes.set(code, { userId: user.id, challenge: url.searchParams.get("code_challenge") });
+        target.searchParams.set("code", code);
+      }
+      res.writeHead(303, { location: target.href });
+      return res.end();
+    }
+
+    if (path === "/auth/v1/resend" && req.method === "POST") {
+      const body = await read(req);
+      const user = byEmail(body.email);
+      if (user && !user.confirmed_at) mail(user.email, "signup", emailLink(user, "signup", url.searchParams.get("redirect_to") ?? BASE));
+      return send(res, 200, {});
+    }
 
     if (path === "/auth/v1/signup" && req.method === "POST") {
       const body = await read(req);

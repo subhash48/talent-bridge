@@ -1,9 +1,20 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { NextRequest } from "next/server";
 
-import { localPath } from "@/lib/auth";
+import { AUTH_NEXT_COOKIE, localPath } from "@/lib/auth";
 import { createServerSupabase } from "@/lib/supabase-server";
+
+/** The remembered page from the cookie: a local path, null for one that isn't, undefined for no cookie. */
+function rememberedPath(value: string | undefined): string | null | undefined {
+  if (value === undefined) return undefined;
+  try {
+    return localPath(decodeURIComponent(value));
+  } catch {
+    return null; // not valid percent-encoding
+  }
+}
 
 /**
  * Where Supabase's emails and Google sign-in land: sign-up confirmation, password reset, sign-in links and the
@@ -22,7 +33,12 @@ import { createServerSupabase } from "@/lib/supabase-server";
  */
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
-  const next = localPath(params.get("next")) ?? "/";
+  // Where it was going: the link's own next, or, when Supabase sent it to the home page without one, the page this
+  // browser remembered when it set off (lib/auth.ts authRedirectUrl). Used once.
+  const cookieStore = await cookies();
+  const remembered = rememberedPath(cookieStore.get(AUTH_NEXT_COOKIE)?.value);
+  if (remembered !== undefined) cookieStore.delete(AUTH_NEXT_COOKIE);
+  const next = localPath(params.get("next")) ?? remembered ?? "/";
   const code = params.get("code");
   const tokenHash = params.get("token_hash");
   const type = params.get("type") as EmailOtpType | null;

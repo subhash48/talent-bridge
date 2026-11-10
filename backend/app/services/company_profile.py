@@ -14,6 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.enums import JobSource, WorkspaceMode
 from app.core.tenancy import scoped_company
 from app.models import Company
 
@@ -115,3 +116,10 @@ async def workspace_company_id(session: AsyncSession) -> uuid.UUID:
     session.add(company)
     await session.flush()
     return company.id
+
+
+async def job_source(session: AsyncSession, company_id: uuid.UUID) -> JobSource:
+    """Who posts a job this company makes now: a small business when it hires with Simple Hire, else a
+    recruiting team. Recorded on the job when it's made (jobs.posted_by) and never read again from here."""
+    mode = await session.scalar(select(Company.workspace_mode).where(Company.id == company_id))
+    return JobSource.for_mode(mode or WorkspaceMode.FULL)

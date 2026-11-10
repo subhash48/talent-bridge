@@ -86,6 +86,26 @@ export function authContinuePath({
   return `/auth/continue?${params}`;
 }
 
+/**
+ * The cookie that remembers where a Google sign-in or an emailed link was going. Supabase sends people back to its
+ * Site URL (our home page) instead of the address we asked for when that address isn't on its Redirect URLs list,
+ * for example www.hirvello.com when only hirvello.com is listed; the home page then hands the code on to
+ * /auth/confirm (proxy.ts), which reads this to finish the trip where it started.
+ */
+export const AUTH_NEXT_COOKIE = "hirvello_auth_next";
+
+/**
+ * The address Supabase should send someone back to once it has their session: /auth/confirm on this site, which
+ * goes on to `next`. Called in the browser just before leaving for Google or sending an email, and remembers `next`
+ * for 15 minutes in case Supabase sends them to the home page instead.
+ */
+export function authRedirectUrl(next: string): string {
+  const path = localPath(next) ?? "/";
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${AUTH_NEXT_COOKIE}=${encodeURIComponent(path)}; Path=/; Max-Age=900; SameSite=Lax${secure}`;
+  return `${window.location.origin}/auth/confirm?next=${encodeURIComponent(path)}`;
+}
+
 /** /login for this audience, with a reason to show and the page to return to; every part is optional. */
 export function loginPath({ audience, reason, next }: { audience?: Audience | null; reason?: string | null; next?: string | null }) {
   const params = new URLSearchParams();

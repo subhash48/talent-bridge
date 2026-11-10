@@ -4,7 +4,9 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  AUTH_NEXT_COOKIE,
   authContinuePath,
+  authRedirectUrl,
   candidateCompletePath,
   homePath,
   landingPath,
@@ -103,4 +105,24 @@ test("a full name splits into first and last, or asks again", () => {
   assert.equal(splitFullName("   "), null);
   assert.equal(splitFullName(null), null);
   assert.equal(splitFullName(`A ${"b".repeat(101)}`), null);
+});
+
+test("a sign-in's return address goes to /auth/confirm and remembers where it was going", () => {
+  const cookies = [];
+  globalThis.window = { location: { origin: "https://www.hirvello.com", protocol: "https:" } };
+  globalThis.document = { set cookie(value) { cookies.push(value); } };
+  try {
+    const next = "/auth/continue?as=candidate&intent=signin&next=%2Fjobs%2F1%2Fapply";
+    assert.equal(authRedirectUrl(next), `https://www.hirvello.com/auth/confirm?next=${encodeURIComponent(next)}`);
+    assert.equal(cookies.at(-1), `${AUTH_NEXT_COOKIE}=${encodeURIComponent(next)}; Path=/; Max-Age=900; SameSite=Lax; Secure`);
+    // Anything that could leave the site is never remembered or passed on.
+    assert.equal(authRedirectUrl("https://evil.example/x"), "https://www.hirvello.com/auth/confirm?next=%2F");
+    assert.ok(cookies.at(-1).startsWith(`${AUTH_NEXT_COOKIE}=%2F;`));
+    globalThis.window.location = { origin: "http://localhost:3000", protocol: "http:" };
+    authRedirectUrl("/reset-password");
+    assert.ok(!cookies.at(-1).includes("Secure"));
+  } finally {
+    delete globalThis.window;
+    delete globalThis.document;
+  }
 });

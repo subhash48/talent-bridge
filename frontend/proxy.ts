@@ -15,6 +15,14 @@ export async function proxy(request: NextRequest) {
   // Mock mode is a frontend-only preview with seeded fake data and no API to protect.
   if (USE_MOCK_API) return NextResponse.next({ request });
 
+  // Supabase sends a Google sign-in or an emailed link to its Site URL, the home page, when the address we asked
+  // for isn't on its Redirect URLs list. It still carries the code (or the error), so hand it to /auth/confirm,
+  // which finishes it where it was going (lib/auth.ts AUTH_NEXT_COOKIE) instead of leaving it on the home page.
+  const params = request.nextUrl.searchParams;
+  if (request.nextUrl.pathname === "/" && ["code", "token_hash", "error", "error_description"].some((key) => params.has(key))) {
+    return NextResponse.redirect(new URL(`/auth/confirm${request.nextUrl.search}`, request.url));
+  }
+
   let response = NextResponse.next({ request });
   let signedIn = false;
   if (SUPABASE_CONFIGURED) {

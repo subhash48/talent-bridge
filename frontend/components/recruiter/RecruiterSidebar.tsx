@@ -43,7 +43,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { user, unreadThreads, candidates } = useWorkspace();
   const waiting = candidates.filter((candidate) => candidate.communication.status === "needs_attention").length;
-  const { signOut, signingOut } = useSignOut();
+  const { signOut, signingOut } = useSignOut("employer");
 
   return (
     <div className="flex h-full flex-col px-4 pt-6 pb-5">

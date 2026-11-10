@@ -38,7 +38,7 @@ function isActive(pathname: string, href: string): boolean {
 export function HireShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { user, unreadThreads } = useWorkspace();
-  const { signOut, signingOut } = useSignOut();
+  const { signOut, signingOut } = useSignOut("employer");
   const business = user.workspace?.name ?? user.organization;
 
   const badge = (href: string) =>

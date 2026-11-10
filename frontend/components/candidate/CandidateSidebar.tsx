@@ -57,7 +57,7 @@ export function CandidateSidebarContent({ onNavigate }: { onNavigate?: () => voi
   const pathname = usePathname();
   const { me } = useCandidatePortal();
   const [helpOpen, setHelpOpen] = useState(false);
-  const { signOut, signingOut } = useSignOut();
+  const { signOut, signingOut } = useSignOut("candidate");
   const unread = me.unreadMessages;
 
   return (

@@ -49,6 +49,69 @@ class JobStatus(StrEnum):
     CLOSED = "closed"
 
 
+class JobSource(StrEnum):
+    """Who posted a job, from the employer's workspace when it was posted (migration 022). Kept as it was
+    even if the workspace later switches mode, so a job never moves between the job board's tabs."""
+
+    RECRUITER = "recruiter"  # a full recruiting workspace
+    SMALL_BUSINESS = "small_business"  # Simple Hire
+
+    @classmethod
+    def for_mode(cls, mode: WorkspaceMode) -> "JobSource":
+        return cls.SMALL_BUSINESS if mode == WorkspaceMode.SIMPLE else cls.RECRUITER
+
+
+class WorkArrangement(StrEnum):
+    """Where the work happens (migration 022). The careers pages show the label."""
+
+    ONSITE = "onsite"
+    HYBRID = "hybrid"
+    REMOTE = "remote"
+
+    @property
+    def label(self) -> str:
+        return {"onsite": "On-site", "hybrid": "Hybrid", "remote": "Remote"}[self.value]
+
+    @classmethod
+    def from_label(cls, label: str | None) -> "WorkArrangement | None":
+        """The arrangement for a label ("On-site"), or None."""
+        return next((member for member in cls if member.label == label), None)
+
+    @classmethod
+    def mentioned_in(cls, location: str | None) -> "WorkArrangement | None":
+        """The arrangement a free-text location names ("London, UK · Hybrid"), as migration 022 read the
+        jobs that existed before the column did. Remote wins over hybrid, and hybrid over on-site."""
+        text = (location or "").lower()
+        if "remote" in text:
+            return cls.REMOTE
+        if "hybrid" in text:
+            return cls.HYBRID
+        if any(word in text for word in ("on-site", "onsite", "in office")):
+            return cls.ONSITE
+        return None
+
+
+class SalaryPeriod(StrEnum):
+    """What a job's salary numbers are per (migration 022)."""
+
+    YEAR = "year"
+    MONTH = "month"
+    HOUR = "hour"
+
+    @property
+    def per_year(self) -> int:
+        """How many of these make a year, to compare pay given per hour, month or year (40 hours a week)."""
+        return {"year": 1, "month": 12, "hour": 2080}[self.value]
+
+
+class JobVisibility(StrEnum):
+    """Whether an open job is on the Hirvello job board (migration 022). A private job is never listed and
+    takes no applications from the board; the employer still works with its candidates in their workspace."""
+
+    PUBLIC = "public"
+    PRIVATE = "private"
+
+
 class ApplicationStage(StrEnum):
     SOURCED = "sourced"
     SCREENING = "screening"

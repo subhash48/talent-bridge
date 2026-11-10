@@ -24,12 +24,12 @@ import { cn } from "@/lib/utils";
 /** The places in the bar, in order. Find Jobs comes straight after Home; the solutions and company pages are in the footer. */
 const PLACES = [HOME_LINK, JOBS_LINK, PRODUCT_LINK, HOW_IT_WORKS_LINK, PRICING_LINK] as const;
 
-// Navy text at 16px with nothing behind it; the place you're on is a shade heavier (aria-current is "page" on the
+// Navy text at 14px with nothing behind it; the place you're on is a shade heavier (aria-current is "page" on the
 // page itself and "true" inside its section, such as a job under Find Jobs), and blue under the pointer.
 const linkStyles =
-  "inline-flex h-10 items-center gap-1 rounded-md text-[1rem] font-medium whitespace-nowrap text-ink transition-colors duration-200 hover:text-brand-ink [&[aria-current]]:font-semibold";
+  "inline-flex h-10 items-center gap-1 rounded-md text-[0.9375rem] font-medium whitespace-nowrap text-ink transition-colors duration-200 hover:text-brand-ink [&[aria-current]]:font-semibold";
 const menuLinkStyles =
-  "flex h-12 items-center gap-1.5 rounded-[10px] px-3 text-[1rem] font-medium text-ink transition-colors hover:bg-ink/[0.04] [&[aria-current]]:font-semibold";
+  "flex h-12 items-center gap-1.5 rounded-[10px] px-3 text-[0.9375rem] font-medium text-ink transition-colors hover:bg-ink/[0.04] [&[aria-current]]:font-semibold";
 
 /** A place's words, with a small blue magnifier in front of Find Jobs so the way to the jobs stands out a little. */
 function PlaceLabel({ place }: { place: (typeof PLACES)[number] }) {
@@ -108,7 +108,7 @@ export function SiteHeader() {
       {/* Up to 1440px the three groups share the width evenly (justify-between, so the gaps either side of the places
           match); from 1440px there's room to centre the places on the page. A centred grid any narrower leaves the
           right-hand group no room, and Pricing ends up touching Sign in. */}
-      <div className="mx-auto flex h-16 w-full max-w-[1440px] items-center justify-between gap-4 px-5 sm:px-8 lg:h-20 xl:px-10 min-[1440px]:grid min-[1440px]:grid-cols-[1fr_auto_1fr] min-[1440px]:gap-8">
+      <div className="mx-auto flex h-16 w-full max-w-[1440px] items-center justify-between gap-4 px-5 sm:px-8 lg:h-[4.25rem] xl:px-10 min-[1440px]:grid min-[1440px]:grid-cols-[1fr_auto_1fr] min-[1440px]:gap-8">
         <Link href="/" className="justify-self-start rounded-md" aria-label="Hirvello home">
           <HirvelloLogo />
         </Link>

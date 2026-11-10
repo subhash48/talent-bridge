@@ -35,7 +35,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
     <div className="mx-auto w-full max-w-[1200px] px-5 pb-20 sm:px-8">
       <header className="mx-auto max-w-[880px] pt-6 text-center sm:pt-10">
         <p className="text-[0.9375rem] font-semibold text-brand-ink">Hirvello job board</p>
-        <h1 className="mt-3 text-[clamp(2.125rem,4.4vw,3.5rem)] leading-[1.05] font-bold tracking-[-0.035em] text-balance text-ink">
+        <h1 className="mt-3 text-[clamp(2.125rem,4.4vw,3.25rem)] leading-[1.05] font-bold tracking-[-0.035em] text-balance text-ink">
           Find your next opportunity.
         </h1>
         <p className="mx-auto mt-4 max-w-[560px] text-[1.0625rem] leading-relaxed text-pretty text-charcoal">

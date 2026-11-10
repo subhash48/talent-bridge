@@ -15,7 +15,7 @@ export function Hero() {
   return (
     <section
       aria-labelledby="hero-title"
-      className="relative isolate px-5 pt-[120px] pb-8 text-center sm:px-8 sm:pb-10 lg:pt-[136px] lg:pb-12"
+      className="relative isolate px-5 pt-[6.5rem] pb-8 text-center sm:px-8 sm:pb-10 lg:pt-[7.5rem] lg:pb-12"
     >
       {/* The hero's own sky, its horizon and its glow, on one layer that reaches 12rem past the hero and fades out
           there, so the hero melts into the page's sky (home-sky) instead of stopping at an edge. It clips its own
@@ -36,7 +36,7 @@ export function Hero() {
       </p>
       <h1
         id="hero-title"
-        className="mx-auto mt-5 max-w-[1050px] text-[clamp(2.375rem,4.8vw,4.25rem)] leading-[1.06] font-bold tracking-[-0.03em] text-ink"
+        className="mx-auto mt-5 max-w-[1050px] text-[clamp(2.375rem,4.8vw,3.75rem)] leading-[1.06] font-bold tracking-[-0.03em] text-ink"
       >
         Talent is everywhere.
         <br />

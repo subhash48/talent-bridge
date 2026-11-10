@@ -105,7 +105,7 @@ export function CommunicationAnalyticsView({ initial, error }: ViewProps) {
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <Card>
-              <h2 className="text-[15px] font-medium text-ink">On time, by rule</h2>
+              <h2 className="text-[0.9375rem] font-medium text-ink">On time, by rule</h2>
               <p className="mt-1 text-[13px] text-stone">
                 Each update a rule called for in the last {days} days, and whether the candidate got it in time.
               </p>
@@ -129,7 +129,7 @@ export function CommunicationAnalyticsView({ initial, error }: ViewProps) {
             </Card>
 
             <Card>
-              <h2 className="flex items-center gap-2 text-[15px] font-medium text-ink">
+              <h2 className="flex items-center gap-2 text-[0.9375rem] font-medium text-ink">
                 <Sparkles aria-hidden className="size-4" /> AI drafts
               </h2>
               <p className="mt-1 text-[13px] text-stone">Drafts are only ever sent by a recruiter.</p>
@@ -154,7 +154,7 @@ export function CommunicationAnalyticsView({ initial, error }: ViewProps) {
           </div>
 
           <Card>
-            <h2 className="text-[15px] font-medium text-ink">Delivery</h2>
+            <h2 className="text-[0.9375rem] font-medium text-ink">Delivery</h2>
             <dl className="mt-4 grid grid-cols-3 gap-3 text-center">
               <Stat label="Updates sent" value={report.updatesSent} />
               <Stat label="Emailed" value={report.emailsSent} />
@@ -189,14 +189,14 @@ function Tile({
   tone?: "caution" | "positive";
 }) {
   return (
-    <article className="glass flex min-h-[112px] flex-col justify-between gap-2 rounded-[14px] border border-border px-4 py-3.5">
+    <article className="glass flex min-h-[7rem] flex-col justify-between gap-2 rounded-[14px] border border-border px-4 py-3.5">
       <div className="flex items-start justify-between gap-2">
         <h2 className="line-clamp-2 text-xs leading-snug text-stone">{label}</h2>
         <Icon aria-hidden strokeWidth={1.75} className="size-4 shrink-0 text-faint" />
       </div>
       <p
         className={cn(
-          "text-[26px] leading-none font-semibold tracking-tight tabular-nums",
+          "text-[1.625rem] leading-none font-semibold tracking-tight tabular-nums",
           tone === "caution" ? "text-caution" : tone === "positive" ? "text-success" : "text-ink",
         )}
       >

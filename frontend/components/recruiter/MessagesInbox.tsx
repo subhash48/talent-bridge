@@ -95,7 +95,7 @@ export function MessagesInbox({ initialConversations, initialCandidateId, draftO
   }
 
   return (
-    <div className="glass grid min-h-[504px] overflow-hidden rounded-[16px] border border-border lg:h-[calc(100dvh-15rem)] lg:grid-cols-[304px_minmax(0,1fr)]">
+    <div className="glass grid min-h-[31.5rem] overflow-hidden rounded-[16px] border border-border lg:h-[calc(100dvh-15rem)] lg:grid-cols-[304px_minmax(0,1fr)]">
       <section aria-label="Conversations" className={cn("flex min-h-0 flex-col border-border lg:border-r", threadOpen && "hidden lg:flex")}>
         <div className="p-3">
           <SearchBar
@@ -255,7 +255,7 @@ function Thread({ conversation, onBack, onSent, draftOnOpen, onDraftStarted }: T
         </Button>
         <Avatar name={conversation.candidate.name} src={conversation.candidate.avatarUrl} size={32} />
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-[15px] font-medium text-ink">{conversation.candidate.name}</h2>
+          <h2 className="truncate text-[0.9375rem] font-medium text-ink">{conversation.candidate.name}</h2>
           <p className="truncate text-[13px] text-stone">{conversation.candidate.role}</p>
         </div>
         {candidate && <StatusBadge stage={candidate.stage} className="hidden sm:inline-flex" />}
@@ -281,7 +281,7 @@ function Thread({ conversation, onBack, onSent, draftOnOpen, onDraftStarted }: T
         </Link>
       </header>
 
-      <div ref={scrollRef} className="flex min-h-[216px] flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-4 sm:px-5">
+      <div ref={scrollRef} className="flex min-h-[13.5rem] flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-4 sm:px-5">
         {conversation.messages.length === 0 ? (
           <p className="m-auto max-w-xs text-center text-sm text-stone">
             No messages with {first} yet. Write one below, or let AI draft an opener for you to review.
@@ -315,7 +315,7 @@ function Thread({ conversation, onBack, onSent, draftOnOpen, onDraftStarted }: T
           placeholder={`Write to ${first}…`}
           aria-describedby={`${composerId}-hint`}
           readOnly={drafting}
-          className="field-sizing-content max-h-52 min-h-[72px] bg-overlay"
+          className="field-sizing-content max-h-52 min-h-[4.5rem] bg-overlay"
         />
         <div className="mt-2.5 flex flex-wrap items-center gap-2">
           <Button variant="ai" size="sm" onClick={() => void draftWithAI()} disabled={drafting || sending}>

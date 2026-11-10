@@ -152,7 +152,7 @@ export function RecruiterAI({ initialCandidateId }: { initialCandidateId?: strin
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
         <section
           aria-label="Conversation with the AI Assistant"
-          className="glass flex min-h-[520px] flex-col rounded-[16px] border border-border p-4 sm:p-5 xl:h-[calc(100dvh-13.5rem)]"
+          className="glass flex min-h-[32.5rem] flex-col rounded-[16px] border border-border p-4 sm:p-5 xl:h-[calc(100dvh-13.5rem)]"
         >
           {(assistant.context.selected_application_ids?.length ?? 0) > 0 && (
             <div className="mb-3 flex w-fit items-center gap-2 rounded-full bg-brand-soft py-1 pr-1 pl-3 text-xs text-ink ring-1 ring-brand-ink/25">

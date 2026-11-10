@@ -50,7 +50,7 @@ export function CandidateOverview({ candidate, state, onViewAll }: CandidateOver
 
       <section aria-label="Recent activity">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-[15px] font-medium tracking-tight text-ink">Recent activity</h3>
+          <h3 className="text-[0.9375rem] font-medium tracking-tight text-ink">Recent activity</h3>
           <button
             type="button"
             onClick={onViewAll}

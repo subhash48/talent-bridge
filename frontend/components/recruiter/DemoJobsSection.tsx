@@ -113,7 +113,7 @@ export function DemoJobsSection({ jobs, error }: DemoJobsSectionProps) {
         <EmptyState title="No demo jobs yet" description="Create one to publish it on the demo careers site." className="mt-4 py-8" />
       ) : (
         <div className="-mx-5 mt-4 overflow-x-auto px-5 sm:-mx-5 sm:px-5">
-          <table aria-labelledby="demo-jobs-heading" className="w-full min-w-[760px] border-separate border-spacing-0 text-left text-sm">
+          <table aria-labelledby="demo-jobs-heading" className="w-full min-w-[47.5rem] border-separate border-spacing-0 text-left text-sm">
             <thead>
               <tr>
                 <th scope="col" className={headerCell}>

@@ -77,7 +77,7 @@ export function JobPipeline({ job }: { job: ManagedJob }) {
       </header>
 
       <section aria-label="Applicants by stage" className="-mx-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 xl:mx-0 xl:px-0">
-        <div className="grid min-w-[1000px] grid-cols-5 gap-3 xl:min-w-0">
+        <div className="grid min-w-[62.5rem] grid-cols-5 gap-3 xl:min-w-0">
           {PIPELINE_STAGES.map((stage) => {
             const column = applicants.filter((candidate) => candidate.stage === stage);
             return (

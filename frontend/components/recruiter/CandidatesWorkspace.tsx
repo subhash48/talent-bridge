@@ -242,7 +242,7 @@ export function CandidatesWorkspace({ greeting, initialCandidateId, initialView,
         <div>
           <h1 className="text-ink">
             <span className="block text-base leading-6 text-stone sm:text-lg sm:leading-6">{greeting},</span>
-            <span className="mt-0.5 block text-[26px] leading-[1.1] font-semibold tracking-[-0.02em] sm:text-[32px]">
+            <span className="mt-0.5 block text-[1.625rem] leading-[1.1] font-semibold tracking-[-0.02em] sm:text-[2rem]">
               {firstName(user.name)}
             </span>
           </h1>
@@ -471,7 +471,7 @@ function GlobalSearch({ value, onChange }: { value: string; onChange: (value: st
       }}
       placeholder="Search candidates, jobs, skills..."
       aria-keyshortcuts="Meta+K Control+K"
-      containerClassName="w-full sm:flex-1 xl:w-[324px] xl:flex-none 2xl:w-[400px]"
+      containerClassName="w-full sm:flex-1 xl:w-[20.25rem] xl:flex-none 2xl:w-[25rem]"
       className="bg-ink/[0.04]"
       trailing={
         <kbd className="hidden h-6 sm:inline-flex items-center gap-1 rounded-[6px] border border-border bg-ink/[0.05] px-1.5 font-sans text-[11px] text-stone">

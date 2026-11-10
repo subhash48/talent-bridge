@@ -11,7 +11,7 @@ export default function CandidatesLoading() {
           <Skeleton className="h-4 w-72 max-w-full" />
         </div>
         <div className="flex w-full gap-3 xl:w-auto">
-          <Skeleton className="h-10 flex-1 rounded-[10px] xl:w-[324px] 2xl:w-[400px]" />
+          <Skeleton className="h-10 flex-1 rounded-[10px] xl:w-[20.25rem] 2xl:w-[25rem]" />
           <Skeleton className="h-10 w-36 rounded-[8px]" />
         </div>
       </div>
@@ -19,12 +19,12 @@ export default function CandidatesLoading() {
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {Array.from({ length: 4 }, (_, index) => (
-              <Skeleton key={index} className="h-[84px] rounded-[14px]" />
+              <Skeleton key={index} className="h-[5.25rem] rounded-[14px]" />
             ))}
           </div>
-          <Skeleton className="h-[576px] rounded-[16px]" />
+          <Skeleton className="h-[36rem] rounded-[16px]" />
         </div>
-        <Skeleton className="hidden h-[680px] rounded-[16px] xl:block" />
+        <Skeleton className="hidden h-[42.5rem] rounded-[16px] xl:block" />
       </div>
     </div>
   );

@@ -61,7 +61,7 @@ export function AIComposer({ id, label, placeholder, suggestions, pending, onSen
         }}
         placeholder={placeholder}
         aria-describedby={`${id}-hint`}
-        className="field-sizing-content max-h-40 min-h-[60px] rounded-[10px] px-3.5 py-2.5"
+        className="field-sizing-content max-h-40 min-h-[3.75rem] rounded-[10px] px-3.5 py-2.5"
       />
       <p id={`${id}-hint`} className="sr-only">
         Press Enter to send and Shift plus Enter for a new line.

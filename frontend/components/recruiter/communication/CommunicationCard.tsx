@@ -28,7 +28,7 @@ export function CommunicationCard({ candidate, health, loading }: CommunicationC
   return (
     <section aria-labelledby="communication-heading" className="rounded-[12px] border border-border bg-ink/[0.03] p-4">
       <div className="flex items-center justify-between gap-3">
-        <h3 id="communication-heading" className="text-[15px] font-medium tracking-tight text-ink">
+        <h3 id="communication-heading" className="text-[0.9375rem] font-medium tracking-tight text-ink">
           Communication
         </h3>
         {health ? <CommunicationBadge status={health.status} /> : <CommunicationBadge status={candidate.communication.status} />}

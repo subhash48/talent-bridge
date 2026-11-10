@@ -118,7 +118,7 @@ export function TodayView({ initial, error }: TodayViewProps) {
             return (
               <section key={section.rule} aria-labelledby={`today-${section.rule}`}>
                 <div className="mb-2.5 flex items-baseline gap-2.5">
-                  <h2 id={`today-${section.rule}`} className="flex items-center gap-2 text-[15px] font-semibold text-ink">
+                  <h2 id={`today-${section.rule}`} className="flex items-center gap-2 text-[0.9375rem] font-semibold text-ink">
                     <Icon className="size-4 text-caution" />
                     {section.title}
                     <span className="text-sm font-normal text-stone">{items.length}</span>
@@ -166,7 +166,7 @@ function AttentionRow({ item, open, onToggle, emailConfigured, onSent }: Attenti
             <p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
               <Link
                 href={`/recruiter/candidates?candidate=${item.applicationId}`}
-                className="truncate text-[15px] font-medium text-ink hover:underline"
+                className="truncate text-[0.9375rem] font-medium text-ink hover:underline"
               >
                 {item.name}
               </Link>

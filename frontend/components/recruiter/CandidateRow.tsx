@@ -49,20 +49,20 @@ export function CandidateRow({ candidate, selected, checked, onSelect, onChecked
                 onSelect(candidate.id);
               }}
               aria-current={selected || undefined}
-              className="block max-w-full truncate rounded-sm text-left text-sm leading-[18px] font-medium text-ink"
+              className="block max-w-full truncate rounded-sm text-left text-sm leading-[1.125rem] font-medium text-ink"
             >
               {candidate.name}
             </button>
-            <p className="truncate text-[13px] leading-[18px] text-stone @[44rem]:hidden">{candidate.role}</p>
+            <p className="truncate text-[13px] leading-[1.125rem] text-stone @[44rem]:hidden">{candidate.role}</p>
             {match && <MatchEvidence match={match} className="mt-1.5" />}
           </div>
         </div>
       </td>
       <td className={cell("hidden pr-3 text-sm text-stone @[44rem]:table-cell")}>{candidate.role}</td>
       <td className={cell("pr-3")}>
-        <StatusBadge stage={candidate.stage} className="min-w-[88px]" />
+        <StatusBadge stage={candidate.stage} className="min-w-[5.5rem]" />
       </td>
-      <td className={cell("pr-2 text-[13px] leading-[18px]")}>
+      <td className={cell("pr-2 text-[13px] leading-[1.125rem]")}>
         <CommunicationCell candidate={candidate} />
       </td>
       <td className={cell("w-10 pr-2 text-right")}>

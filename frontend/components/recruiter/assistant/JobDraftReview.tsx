@@ -174,7 +174,7 @@ export function JobDraftReview({ card, onApprove, onCancel, onEdits, superseded 
         </div>
       ) : (
         <>
-          <p className="mt-2 text-[15px] font-semibold tracking-tight text-ink">{job.title}</p>
+          <p className="mt-2 text-[0.9375rem] font-semibold tracking-tight text-ink">{job.title}</p>
           <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs sm:grid-cols-3">
             <Fact label="Department" value={job.department} />
             <Fact label="Location" value={job.location} />

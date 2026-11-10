@@ -101,12 +101,12 @@ export function CandidateFilters({
   }
 
   const count = (list: unknown[]) => (list.length ? <span className="ml-auto pl-3 text-xs text-brand-ink tabular-nums">{list.length}</span> : null);
-  const submenu = "max-h-[min(60vh,var(--radix-dropdown-menu-content-available-height))] w-[248px] overflow-y-auto";
+  const submenu = "max-h-[min(60vh,var(--radix-dropdown-menu-content-available-height))] w-[15.5rem] overflow-y-auto";
 
   return (
     <div className="flex flex-col gap-4 px-4 pt-4 sm:px-5 sm:pt-5">
       <div className="flex items-center justify-between gap-3">
-        <h2 id="candidates-heading" className="text-[15px] font-semibold tracking-tight text-ink sm:text-base">
+        <h2 id="candidates-heading" className="text-[0.9375rem] font-semibold tracking-tight text-ink sm:text-base">
           Candidates
         </h2>
         <div className="flex items-center gap-2">
@@ -149,13 +149,13 @@ export function CandidateFilters({
               >
                 <ListFilter />
                 {filterCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 flex size-[18px] items-center justify-center rounded-full bg-brand text-[11px] font-semibold text-on-brand tabular-nums">
+                  <span className="absolute -top-1.5 -right-1.5 flex size-[1.125rem] items-center justify-center rounded-full bg-brand text-[11px] font-semibold text-on-brand tabular-nums">
                     {filterCount}
                   </span>
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-[232px]">
+            <DropdownMenuContent className="w-[14.5rem]">
               <DropdownMenuLabel>Filter by</DropdownMenuLabel>
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>Job {count(filters.jobs)}</DropdownMenuSubTrigger>

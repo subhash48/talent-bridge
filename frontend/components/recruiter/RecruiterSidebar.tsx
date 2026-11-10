@@ -94,7 +94,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             </span>
             <ChevronsUpDown aria-hidden className="size-4 shrink-0 text-stone" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="start" className="w-[212px]">
+          <DropdownMenuContent side="top" align="start" className="w-[13.25rem]">
             <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
             <DropdownMenuItem asChild>
               <Link href="/recruiter/settings" onClick={onNavigate}>

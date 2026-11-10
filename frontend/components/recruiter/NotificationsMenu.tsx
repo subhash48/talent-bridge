@@ -38,7 +38,7 @@ export function NotificationsMenu() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-[320px]">
+      <DropdownMenuContent className="w-[20rem]">
         <DropdownMenuLabel>Recent activity</DropdownMenuLabel>
         {recent.map((candidate) => (
           <DropdownMenuItem key={candidate.id} asChild className="h-auto items-start py-2">

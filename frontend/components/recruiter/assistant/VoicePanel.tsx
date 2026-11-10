@@ -36,7 +36,7 @@ export function VoicePanel({ state, levels, response, actions, onMic, onClose }:
       role="dialog"
       aria-modal="false"
       aria-label="Voice assistant"
-      className="fixed inset-x-0 bottom-0 z-40 max-h-[85dvh] animate-rise overflow-y-auto rounded-t-[18px] border-t border-border-strong bg-surface px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-raised md:inset-x-auto md:right-6 md:bottom-6 md:w-[392px] md:rounded-[16px] md:border md:pb-4"
+      className="fixed inset-x-0 bottom-0 z-40 max-h-[85dvh] animate-rise overflow-y-auto rounded-t-[18px] border-t border-border-strong bg-surface px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-raised md:inset-x-auto md:right-6 md:bottom-6 md:w-[24.5rem] md:rounded-[16px] md:border md:pb-4"
     >
       <div aria-hidden className="mx-auto mb-2 h-1 w-9 rounded-full bg-ink/15 md:hidden" />
       <header className="flex items-center justify-between gap-3">
@@ -53,7 +53,7 @@ export function VoicePanel({ state, levels, response, actions, onMic, onClose }:
 
       <Waveform levels={levels} active={listening} working={working} />
 
-      <p className={cn("min-h-10 text-[15px] leading-snug", state.transcript ? "text-ink" : "text-faint")}>
+      <p className={cn("min-h-10 text-[0.9375rem] leading-snug", state.transcript ? "text-ink" : "text-faint")}>
         {state.transcript ? <>&ldquo;{state.transcript}&rdquo;</> : listening ? "Say what you'd like to do…" : " "}
       </p>
 

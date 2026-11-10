@@ -27,7 +27,7 @@ export function RecruiterShell({ children }: { children: ReactNode }) {
         Skip to content
       </a>
       <div className="relative isolate flex min-h-dvh">
-        <aside className="sticky top-0 hidden h-dvh w-[248px] shrink-0 border-r border-ink/[0.06] bg-glass backdrop-blur-xl lg:block">
+        <aside className="sticky top-0 hidden h-dvh w-[15.5rem] shrink-0 border-r border-ink/[0.06] bg-glass backdrop-blur-xl lg:block">
           <SidebarContent />
         </aside>
         <Sheet open={navOpen} onOpenChange={setNavOpen} side="left" title="Navigation">
@@ -35,7 +35,7 @@ export function RecruiterShell({ children }: { children: ReactNode }) {
         </Sheet>
 
         <div className="relative flex min-w-0 flex-1 flex-col">
-          <div aria-hidden className="app-backdrop pointer-events-none absolute inset-x-0 top-0 h-[480px]" />
+          <div aria-hidden className="app-backdrop pointer-events-none absolute inset-x-0 top-0 h-[30rem]" />
           <header className="relative flex h-14 shrink-0 items-center justify-between gap-3 px-4 sm:px-6 lg:justify-end lg:px-10">
             <div className="flex items-center gap-1 lg:hidden">
               <Button variant="ghost" size="icon" onClick={() => setNavOpen(true)} aria-label="Open navigation">

@@ -9,6 +9,7 @@ import { authLinkStyles } from "@/components/auth/AuthCard";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
+import { landingPath, loginPath, splitFullName } from "@/lib/auth";
 import { createClient } from "@/lib/supabase";
 import { ApiError, errorMessage } from "@/services/api";
 import { createCandidateAccount } from "@/services/accounts";
@@ -20,25 +21,30 @@ type State =
   | { kind: "problem"; message: string; code: string };
 
 /**
- * Where the candidate's verification email lands, signed in. Makes their candidate account (any applications
- * already made with this email are in it) and opens the portal. The names are the ones given at sign-up; if
- * they're missing (an older link), they're asked for here.
+ * Where the candidate's verification email lands, signed in, and where a first Google sign-in comes to. Makes their
+ * candidate account (any applications already made with this email are in it) and opens `next` when it's somewhere
+ * a candidate may go (a job they were applying for, a portal page), else the portal. The names are the ones given
+ * at sign-up, or Google's full name split in two; if neither gives both (an older link, a one-word name), they're
+ * asked for here.
  */
-export function CompleteCandidateSignup() {
+export function CompleteCandidateSignup({ next }: { next: string | null }) {
   const [state, setState] = useState<State>({ kind: "working" });
   const started = useRef(false);
 
-  const finish = useCallback(async (firstName: string, lastName: string) => {
-    setState({ kind: "working" });
-    try {
-      await createCandidateAccount({ firstName, lastName });
-      window.location.replace("/candidate");
-    } catch (cause) {
-      if (cause instanceof ApiError && cause.status === 401) return setState({ kind: "signed_out" });
-      const code = cause instanceof ApiError ? cause.code : "error";
-      setState({ kind: "problem", message: errorMessage(cause), code });
-    }
-  }, []);
+  const finish = useCallback(
+    async (firstName: string, lastName: string) => {
+      setState({ kind: "working" });
+      try {
+        await createCandidateAccount({ firstName, lastName });
+        window.location.replace(landingPath("candidate", next));
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 401) return setState({ kind: "signed_out" });
+        const code = cause instanceof ApiError ? cause.code : "error";
+        setState({ kind: "problem", message: errorMessage(cause), code });
+      }
+    },
+    [next],
+  );
 
   useEffect(() => {
     if (started.current) return;
@@ -47,11 +53,17 @@ export function CompleteCandidateSignup() {
       const { data } = await createClient().auth.getUser();
       if (!data.user) return setState({ kind: "signed_out" });
       const meta = data.user.user_metadata ?? {};
-      const first = typeof meta.first_name === "string" ? meta.first_name.trim() : "";
-      const last = typeof meta.last_name === "string" ? meta.last_name.trim() : "";
+      const text = (value: unknown) => (typeof value === "string" ? value.trim() : "");
+      // Google gives one full name (full_name, or name); sign-up here gives first and last.
+      const google = splitFullName(text(meta.full_name) || text(meta.name));
+      const first = text(meta.first_name) || google?.firstName || "";
+      const last = text(meta.last_name) || google?.lastName || "";
       // Names saved at sign-up longer than an account takes (100) are asked again, never sent to fail forever.
       if (first && last && first.length <= 100 && last.length <= 100) await finish(first, last);
-      else setState({ kind: "names", first: first.slice(0, 100), last: last.slice(0, 100) });
+      else {
+        const said = first || text(meta.full_name) || text(meta.name);
+        setState({ kind: "names", first: said.slice(0, 100), last: last.slice(0, 100) });
+      }
     })();
   }, [finish]);
 
@@ -66,7 +78,7 @@ export function CompleteCandidateSignup() {
     return (
       <div className="flex flex-col gap-4">
         <AuthAlert tone="info">This link has expired or was already used. Sign in to continue.</AuthAlert>
-        <Link href="/login?as=candidate" className={`${authLinkStyles} text-center text-sm`}>
+        <Link href={loginPath({ audience: "candidate", next })} className={`${authLinkStyles} text-center text-sm`}>
           Sign in
         </Link>
       </div>
@@ -81,7 +93,7 @@ export function CompleteCandidateSignup() {
             Sign in to your employer account
           </Link>
         ) : (
-          <Link href="/login?as=candidate" className={`${authLinkStyles} text-center text-sm`}>
+          <Link href={loginPath({ audience: "candidate", next })} className={`${authLinkStyles} text-center text-sm`}>
             Back to sign in
           </Link>
         )}

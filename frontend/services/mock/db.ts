@@ -1,11 +1,11 @@
 import { STAGE_LABELS } from "@/types/application";
+import type { ManagedJob } from "@/types/job";
 import {
   PIPELINE_STAGES,
   type CandidateActivity,
   type ActivityKind,
   type Conversation,
   type CurrentUser,
-  type JobOpening,
   type PipelineCandidate,
   type ScheduledInterview,
 } from "@/types/workspace";
@@ -29,7 +29,7 @@ export type MockDb = {
   activities: CandidateActivity[];
   interviews: ScheduledInterview[];
   conversations: Conversation[];
-  jobs: JobOpening[];
+  jobs: ManagedJob[];
 };
 
 let browserDb: MockDb | undefined;
@@ -142,7 +142,25 @@ function createMockDb(now: number): MockDb {
     ];
   });
 
-  const jobs = JOB_SEEDS.map(({ openedDaysAgo, ...job }) => ({ ...job, openedAt: new Date(now - openedDaysAgo * DAY).toISOString() }));
+  const jobs = JOB_SEEDS.map(({ openedDaysAgo, board, ...job }): ManagedJob => {
+    const openedAt = new Date(now - openedDaysAgo * DAY).toISOString();
+    return {
+      ...job,
+      openedAt,
+      description: job.summary,
+      external: false,
+      postedBy: "recruiter",
+      publishedAt: job.status === "draft" ? null : openedAt,
+      workArrangement: null,
+      salaryMin: null,
+      salaryMax: null,
+      salaryCurrency: null,
+      salaryPeriod: null,
+      expiresAt: null,
+      visibility: "public",
+      ...board,
+    };
+  });
 
   return {
     user: SEED_USER,

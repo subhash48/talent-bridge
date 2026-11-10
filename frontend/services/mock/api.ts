@@ -1,6 +1,7 @@
 import { STAGE_LABELS } from "@/types/application";
 import type { CandidateQuery } from "@/services/candidates";
 import type { NewJobInput } from "@/services/jobs";
+import type { ManagedJob } from "@/types/job";
 import type { MatchRequest, MatchResult } from "@/types/matching";
 import type {
   CandidateActivity,
@@ -34,6 +35,33 @@ function recordActivity(candidate: PipelineCandidate, kind: CandidateActivity["k
   getMockDb().activities.push({ id: newId("activity"), candidateId: candidate.id, kind, label, occurredAt });
   candidate.lastActivity = label;
   candidate.lastActivityAt = occurredAt;
+}
+
+function findJob(id: string): ManagedJob {
+  const job = getMockDb().jobs.find((item) => item.id === id);
+  if (!job) throw new Error("Job not found");
+  return job;
+}
+
+/** The fields the job form sets, as the API would store them. */
+function jobFields(input: NewJobInput) {
+  const salary = input.salaryMin !== null || input.salaryMax !== null;
+  const description = input.description.trim();
+  return {
+    title: input.title.trim(),
+    department: input.department.trim(),
+    location: input.location.trim(),
+    employmentType: input.employmentType,
+    description,
+    summary: description.split(/\n\s*\n/)[0] ?? "",
+    workArrangement: input.workArrangement,
+    salaryMin: input.salaryMin,
+    salaryMax: input.salaryMax,
+    salaryCurrency: salary ? input.salaryCurrency : null,
+    salaryPeriod: salary ? input.salaryPeriod : null,
+    expiresAt: input.expiresAt,
+    visibility: input.visibility,
+  };
 }
 
 function slugify(name: string): string {
@@ -223,27 +251,35 @@ export const mockApi = {
     return clone(getMockDb().jobs.find((job) => job.id === id) ?? null);
   },
 
-  async createJob(input: NewJobInput): Promise<JobOpening> {
+  async createJob(input: NewJobInput): Promise<ManagedJob> {
     await mockDelay(300);
-    const job: JobOpening = {
+    const now = new Date().toISOString();
+    const job: ManagedJob = {
       id: `${slugify(input.title)}-${crypto.randomUUID().slice(0, 4)}`,
-      title: input.title.trim(),
-      department: input.department.trim(),
-      location: input.location.trim(),
-      employmentType: input.employmentType,
       status: "open",
       hiringManager: "Unassigned",
-      openedAt: new Date().toISOString(),
-      summary: input.description.split(/\n\s*\n/)[0] ?? "",
+      openedAt: now,
+      external: false,
+      postedBy: "recruiter",
+      publishedAt: now,
+      ...jobFields(input),
     };
     getMockDb().jobs.unshift(job);
     return clone(job);
   },
 
-  async setJobStatus(id: string, status: JobOpening["status"]): Promise<JobOpening> {
-    const job = getMockDb().jobs.find((item) => item.id === id);
-    if (!job) throw new Error("Job not found");
+  async updateJob(id: string, input: NewJobInput): Promise<ManagedJob> {
+    await mockDelay(300);
+    const job = findJob(id);
+    Object.assign(job, jobFields(input));
+    return clone(job);
+  },
+
+  async setJobStatus(id: string, status: JobOpening["status"], { clearClosingDate = false } = {}): Promise<ManagedJob> {
+    const job = findJob(id);
     job.status = status;
+    if (clearClosingDate) job.expiresAt = null;
+    if (status === "open") job.publishedAt ??= new Date().toISOString();
     return clone(job);
   },
 

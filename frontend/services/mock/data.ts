@@ -1,5 +1,5 @@
 import type { InterviewStatus } from "@/types/interview";
-import type { JobStatus } from "@/types/job";
+import type { JobBoardSettings, JobStatus } from "@/types/job";
 import type {
   ActivityKind,
   CandidateStage,
@@ -775,6 +775,8 @@ export type JobSeed = {
   hiringManager: string;
   openedDaysAgo: number;
   summary: string;
+  /** Job board settings that differ from the defaults (public, nothing else specified). */
+  board?: Partial<JobBoardSettings>;
 };
 
 export const JOB_SEEDS: JobSeed[] = [
@@ -788,6 +790,7 @@ export const JOB_SEEDS: JobSeed[] = [
     hiringManager: "Maya Okafor",
     openedDaysAgo: 21,
     summary: "Design the workflows teams use to curate, annotate and evaluate multimodal training data.",
+    board: { workArrangement: "hybrid", salaryMin: 90_000, salaryMax: 120_000, salaryCurrency: "GBP", salaryPeriod: "year" },
   },
   {
     id: "ml-engineer",
@@ -799,6 +802,7 @@ export const JOB_SEEDS: JobSeed[] = [
     hiringManager: "Tom Reid",
     openedDaysAgo: 28,
     summary: "Build the model-assisted labeling and active learning systems behind Encord's data engine.",
+    board: { workArrangement: "hybrid" },
   },
   {
     id: "product-manager",
@@ -843,6 +847,7 @@ export const JOB_SEEDS: JobSeed[] = [
     hiringManager: "Ian Park",
     openedDaysAgo: 24,
     summary: "Run the GPU-heavy infrastructure that keeps customer pipelines fast and reliable.",
+    board: { workArrangement: "remote" },
   },
   {
     id: "frontend-engineer",

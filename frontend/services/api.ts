@@ -57,6 +57,9 @@ const AUTH_PAGES = [
   "/reset-password",
   "/welcome",
   "/signin",
+  "/start",
+  "/auth/callback",
+  "/auth/continue",
 ];
 /** 403s that refuse one thing, not the session (messaging the hiring team turned off): the page explains them. */
 const REFUSALS = new Set(["messaging_disabled"]);

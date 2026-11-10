@@ -9,7 +9,7 @@ from uuid import UUID
 
 from pydantic import BeforeValidator, EmailStr, Field, field_validator, model_validator
 
-from app.core.enums import DemoPostingStatus, JobStatus, Weekday
+from app.core.enums import DemoPostingStatus, JobSource, JobStatus, SalaryPeriod, Weekday
 from app.schemas.common import APIModel, OptionalText, OptionalURL, Timestamp
 
 WorkArrangement = Literal["On-site", "Hybrid", "Remote"]
@@ -192,21 +192,28 @@ class DemoJobRead(APIModel):
 
 
 class CareerJobSummary(APIModel):
-    """A published demo job, as the careers site lists it."""
+    """A job as a careers site lists it: a published demo job (/demo/careers), or an open public job on the
+    Hirvello job board (/jobs, services/careers.py)."""
 
     id: UUID
     title: str
     company: str | None = None  # the employer (job -> company); the demo site leaves it out
+    # Who posted it, for the job board's tabs: a recruiting team or a small business. None on the demo site.
+    source: JobSource | None = None
+    company_logo_url: str | None = None
     department: str | None = None
     location: str | None = None
-    work_arrangement: str | None = None
+    work_arrangement: str | None = None  # "On-site", "Hybrid" or "Remote"
     employment_type: str
     seniority: str | None = None
     salary_min: int | None = None
     salary_max: int | None = None
-    salary_currency: str = "USD"
+    # A demo posting always has one; a job board job has one only when it gives a salary.
+    salary_currency: str | None = "USD"
+    salary_period: SalaryPeriod | None = None  # the job board's; a demo salary is yearly
     summary: str | None = None
     published_at: Timestamp | None = None
+    expires_at: Timestamp | None = None  # applications close then
     # A small business's job (Hirvello's own careers site): in the employer's words, or empty.
     pay: str | None = None
     shift: str | None = None

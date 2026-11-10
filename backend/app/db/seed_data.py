@@ -14,6 +14,7 @@ from app.core.enums import (
     JobStatus,
     SalaryPeriod,
     SenderType,
+    WorkArrangement,
     WorkspaceMode,
 )
 
@@ -411,6 +412,8 @@ class JobSeed:
     # The job board's salary filter (migration 022): whole units of the currency, per period. Only for the
     # fictional employers, so no real company's job shows pay it never published.
     salary: tuple[int, int, str, SalaryPeriod] | None = None
+    # Where the work happens, when the location doesn't say ("Austin, TX" is on-site for a cafe).
+    work_arrangement: WorkArrangement | None = None
 
     @property
     def key(self) -> str:

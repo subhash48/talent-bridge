@@ -33,6 +33,7 @@ from app.core.enums import (
     SenderType,
     UserRole,
     WorkArrangement,
+    WorkspaceMode,
 )
 from app.db.seed_data import (
     ANTHROPIC_RECRUITER,
@@ -59,6 +60,8 @@ from app.db.seed_data import (
     WAITING,
     ApplicationSeed,
     CandidateSeed,
+    CompanySeed,
+    JobSeed,
 )
 from app.models import (
     AIAnalysis,
@@ -140,6 +143,67 @@ class Recorder:
         self.add(activity_type=kind.value, title=title, description=None, metadata=metadata, created_at=Ago(minutes))
 
 
+def company_row(company: CompanySeed) -> dict[str, Any]:
+    """A companies row for a seeded employer, with the profile it approved for candidates."""
+    return {
+        "id": seed_id("company", company.key),
+        "slug": company.key,
+        "name": company.name,
+        "logo_url": company.logo_url,
+        "website": company.website,
+        "overview": company.overview,
+        "mission": company.mission,
+        "highlights": [{"title": title, "description": text} for title, text in company.highlights],
+        "products": [{"title": title, "description": text} for title, text in company.products],
+        "culture": [{"title": title, "description": text} for title, text in company.values],
+        "benefits": list(company.benefits),
+        "benefits_scope": company.benefits_scope,
+        "benefits_note": company.benefits_note,
+        "locations": list(company.locations),
+        "locations_note": company.locations_note,
+        "hiring_process": list(company.hiring_process),
+        "hiring_note": company.hiring_note,
+        "links": [{"label": label, "url": url} for label, url in company.links],
+        "source": company.source,
+        "workspace_mode": company.workspace_mode,
+        "created_at": Ago(company.created_days_ago * DAY),
+        "updated_at": Ago(company.created_days_ago * DAY),
+    }
+
+
+def job_row(job: JobSeed, mode: WorkspaceMode) -> dict[str, Any]:
+    """A jobs row for a seeded job, posted by a company that hires in `mode`."""
+    low, high, currency, period = job.salary or (None, None, None, None)
+    return {
+        "id": seed_id("job", job.key),
+        "company_id": seed_id("company", job.company),
+        "external_id": None,
+        "title": job.title,
+        "department": job.department or None,
+        "location": job.location,
+        "description": job.description,
+        "status": job.status,
+        "employment_type": job.employment_type,
+        "hiring_manager": job.hiring_manager,
+        "pay": job.pay,
+        "shift": job.shift,
+        "work_days": list(job.work_days),
+        "openings": job.openings,
+        # The job board (migration 022): who posted it is how its company hires.
+        "posted_by": JobSource.for_mode(mode),
+        "work_arrangement": job.work_arrangement or WorkArrangement.mentioned_in(job.location),
+        "salary_min": low,
+        "salary_max": high,
+        "salary_currency": currency,
+        "salary_period": period,
+        "visibility": JobVisibility.PUBLIC,
+        "published_at": None if job.status == JobStatus.DRAFT else Ago(job.opened_days_ago * DAY),
+        "expires_at": None,
+        "created_at": Ago(job.opened_days_ago * DAY),
+        "updated_at": Ago(job.opened_days_ago * DAY),
+    }
+
+
 def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
     rows: dict[type[Base], list[dict[str, Any]]] = {table: [] for table in TABLES}
     recruiter_id = seed_id("user", RECRUITER["email"])
@@ -167,70 +231,13 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
             }
         )
 
-    for company in COMPANIES:
-        rows[Company].append(
-            {
-                "id": seed_id("company", company.key),
-                "slug": company.key,
-                "name": company.name,
-                "logo_url": company.logo_url,
-                "website": company.website,
-                "overview": company.overview,
-                "mission": company.mission,
-                "highlights": [{"title": title, "description": text} for title, text in company.highlights],
-                "products": [{"title": title, "description": text} for title, text in company.products],
-                "culture": [{"title": title, "description": text} for title, text in company.values],
-                "benefits": list(company.benefits),
-                "benefits_scope": company.benefits_scope,
-                "benefits_note": company.benefits_note,
-                "locations": list(company.locations),
-                "locations_note": company.locations_note,
-                "hiring_process": list(company.hiring_process),
-                "hiring_note": company.hiring_note,
-                "links": [{"label": label, "url": url} for label, url in company.links],
-                "source": company.source,
-                "workspace_mode": company.workspace_mode,
-                "created_at": Ago(company.created_days_ago * DAY),
-                "updated_at": Ago(company.created_days_ago * DAY),
-            }
-        )
+    rows[Company].extend(company_row(company) for company in COMPANIES)
 
     job_ids: dict[str, uuid.UUID] = {}
     modes = {company.key: company.workspace_mode for company in COMPANIES}
     for job in (*JOBS, *SAMS_JOBS):
         job_ids[job.key] = seed_id("job", job.key)
-        low, high, currency, period = job.salary or (None, None, None, None)
-        arrangement = WorkArrangement.mentioned_in(job.location)
-        rows[Job].append(
-            {
-                "id": job_ids[job.key],
-                "company_id": seed_id("company", job.company),
-                "external_id": None,
-                "title": job.title,
-                "department": job.department or None,
-                "location": job.location,
-                "description": job.description,
-                "status": job.status,
-                "employment_type": job.employment_type,
-                "hiring_manager": job.hiring_manager,
-                "pay": job.pay,
-                "shift": job.shift,
-                "work_days": list(job.work_days),
-                "openings": job.openings,
-                # The job board (migration 022): who posted it is how its company hires.
-                "posted_by": JobSource.for_mode(modes[job.company]),
-                "work_arrangement": arrangement,
-                "salary_min": low,
-                "salary_max": high,
-                "salary_currency": currency,
-                "salary_period": period,
-                "visibility": JobVisibility.PUBLIC,
-                "published_at": None if job.status == JobStatus.DRAFT else Ago(job.opened_days_ago * DAY),
-                "expires_at": None,
-                "created_at": Ago(job.opened_days_ago * DAY),
-                "updated_at": Ago(job.opened_days_ago * DAY),
-            }
-        )
+        rows[Job].append(job_row(job, modes[job.company]))
 
     application_ids: dict[str, uuid.UUID] = {}
     confirmations: dict[str, int] = {}

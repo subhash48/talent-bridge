@@ -35,7 +35,7 @@ export function ContactSection() {
           </ul>
           <p className="text-[14px] leading-relaxed text-charcoal">
             Applying for a role? Jobs at companies hiring with Hirvello are on the{" "}
-            <Link href="/careers" className="font-medium text-brand-ink underline-offset-4 hover:underline">
+            <Link href="/jobs" className="font-medium text-brand-ink underline-offset-4 hover:underline">
               job board
             </Link>
             ; working at Hirvello is under{" "}

@@ -10,7 +10,7 @@ const GROUPS: { title: string; items: { name: string; text: string }[] }[] = [
     title: "Your pipeline",
     items: [
       { name: "Candidates by job and stage", text: "Every application in one pipeline, with filters you can share with your team." },
-      { name: "Jobs", text: "Draft a job with the assistant, read it over, and open it on your careers page." },
+      { name: "Jobs", text: "Draft a job with the assistant, read it over, and open it on the Hirvello job board." },
       { name: "Interviews", text: "Propose times, book the interview and remind the candidate to confirm." },
     ],
   },

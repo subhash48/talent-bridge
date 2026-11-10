@@ -1,5 +1,7 @@
+import { Search } from "lucide-react";
 import Link from "next/link";
 
+import { JOBS_LINK } from "@/components/site/nav";
 import { Section } from "@/components/site/Section";
 import { buttonStyles } from "@/components/ui/Button";
 
@@ -22,7 +24,7 @@ const APPLICATIONS = [
   { company: "Juniper & Rye", role: "Line cook", stage: "Screening" },
 ];
 
-/** The candidate portal, and the two ways in: an account first, or applying first. */
+/** The candidate portal, and the ways in: an account first, or a role on the job board first. */
 export function CandidatesSection() {
   return (
     <Section
@@ -30,7 +32,7 @@ export function CandidatesSection() {
       id="candidates"
       eyebrow="For candidates"
       title="Know where every application stands."
-      intro="Apply to a role on a Hirvello careers page, or create your account first. Either way, everything about your applications is in one portal: where you stand, what happens next, and how to prepare."
+      intro="Apply to a role on the Hirvello job board, or create your account first. Either way, everything about your applications is in one portal: where you stand, what happens next, and how to prepare."
     >
       <div className="mt-12 grid grid-cols-1 gap-12 lg:grid-cols-[1.3fr_1fr]">
         <ul className="grid grid-cols-1 content-start border-t border-ink/[0.08] sm:grid-cols-2 sm:gap-x-8">
@@ -67,7 +69,11 @@ export function CandidatesSection() {
         <Link href="/signup" className={buttonStyles({ size: "lg" })}>
           Create a candidate account
         </Link>
-        <Link href="/login?as=candidate" className={buttonStyles({ variant: "secondary", size: "lg" })}>
+        <Link href={JOBS_LINK.href} className={buttonStyles({ variant: "secondary", size: "lg" })}>
+          <Search aria-hidden className="text-brand-ink" />
+          Browse jobs
+        </Link>
+        <Link href="/login?as=candidate" className={buttonStyles({ variant: "ghost", size: "lg", className: "text-ink" })}>
           Already applied? Sign in
         </Link>
       </div>

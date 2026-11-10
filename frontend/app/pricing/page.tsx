@@ -20,7 +20,12 @@ const PLANS: { name: string; who: string; href: string; action: string; includes
     who: "For shops, restaurants and other small employers.",
     href: "/signup/employer?mode=simple",
     action: "Start Simple Hire",
-    includes: ["Post a job by describing it, typed or spoken", "See applicants, with the reasons they match", "Message candidates and ask to interview", "Your own careers page"],
+    includes: [
+      "Post a job by describing it, typed or spoken",
+      "See applicants, with the reasons they match",
+      "Message candidates and ask to interview",
+      "Your jobs on the Hirvello job board",
+    ],
   },
   {
     name: "Recruiter workspace",

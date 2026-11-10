@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: "Working at Hirvello, a beta working on one problem: people who apply, interview and then hear nothing back.",
 };
 
-// Working at Hirvello. The job board, the open roles of the companies hiring with Hirvello, stays at /careers.
+// Working at Hirvello. The job board, the open roles of the companies hiring with Hirvello, is /jobs.
 export default function CompanyCareersPage() {
   return (
     <SitePage>

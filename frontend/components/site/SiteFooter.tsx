@@ -4,15 +4,28 @@ import type { ComponentProps } from "react";
 
 import { HirvelloLogo } from "@/components/shared/HirvelloLogo";
 import { CONTACT_CHANNELS } from "@/components/site/contact";
-import { COMPANY_LINKS, HOW_IT_WORKS_LINK, POLICY_LINKS, PRICING_LINK, PRODUCT_LINK, SIGNUP_LINK, SOLUTIONS } from "@/components/site/nav";
+import {
+  COMPANY_LINKS,
+  HOW_IT_WORKS_LINK,
+  JOBS_LINK,
+  POLICY_LINKS,
+  PRICING_LINK,
+  PRODUCT_LINK,
+  SIGNUP_LINK,
+  SOLUTIONS,
+} from "@/components/site/nav";
 import { socialLinks, type SocialNetwork } from "@/components/site/social";
 import { buttonStyles } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
-// The footer's columns: the product, who it's for by name, then the company.
+// The footer's columns: the product, who it's for by name (led by the job board, the one place that needs no
+// account), then the company.
 const COLUMNS: { title: string; links: readonly { href: string; label: string }[] }[] = [
   { title: "Product", links: [PRODUCT_LINK, HOW_IT_WORKS_LINK, PRICING_LINK] },
-  { title: "For you", links: SOLUTIONS.map(({ href, short }) => ({ href, label: short })) },
+  {
+    title: "For you",
+    links: [{ href: JOBS_LINK.href, label: "Find jobs" }, ...SOLUTIONS.map(({ href, short }) => ({ href, label: short }))],
+  },
   { title: "Company", links: COMPANY_LINKS },
 ];
 
@@ -45,7 +58,7 @@ function SocialIcon({ network, ...props }: ComponentProps<"svg"> & { network: So
 /**
  * The public website's footer, on the same sky as the page, with no card around it. First the last invitation
  * (Better hiring starts here, Get started), then the mark with its one line and where to follow Hirvello beside
- * the places on the site in three columns and, under them, the business and support addresses (mailto), then a
+ * the places on the site in three columns (For you starts with Find jobs) and, under them, the business and support addresses (mailto), then a
  * thin rule, the year and the policies. The home page ends on its
  * own closing line (ClosingCta), so it passes invitation={false} and the footer starts at the mark.
  */

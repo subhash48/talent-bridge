@@ -10,7 +10,7 @@ import { buttonStyles } from "@/components/ui/Button";
  */
 const OPENINGS: { title: string; team: string; location: string; href: string }[] = [];
 
-/** Working at Hirvello. Not the job board: /careers is the open roles of the companies hiring with Hirvello. */
+/** Working at Hirvello. Not the job board: /jobs is the open roles of the companies hiring with Hirvello. */
 export function CompanyCareersSection() {
   return (
     <Section
@@ -51,7 +51,7 @@ export function CompanyCareersSection() {
         )}
         <p className="mt-5 text-[14px] leading-relaxed text-stone">
           Looking for a job at a company that hires with Hirvello? Those roles are on the{" "}
-          <Link href="/careers" className="font-medium text-brand-ink underline-offset-4 hover:underline">
+          <Link href="/jobs" className="font-medium text-brand-ink underline-offset-4 hover:underline">
             job board
           </Link>
           , not here.

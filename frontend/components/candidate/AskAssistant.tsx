@@ -62,7 +62,7 @@ export function AskAssistant({
         </div>
       </div>
 
-      {messages.length > 0 && <AIThread messages={messages} className={cn("mt-4 max-h-[380px] min-h-[96px]", threadClassName)} />}
+      {messages.length > 0 && <AIThread messages={messages} className={cn("mt-4 max-h-[23.75rem] min-h-[6rem]", threadClassName)} />}
 
       <AIComposer
         id={composerId}

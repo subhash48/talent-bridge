@@ -235,10 +235,10 @@ function PrepSection({ title, icon: Icon, hint, items }: { title: string; icon: 
 function PrepSkeleton() {
   return (
     <div className="flex flex-col gap-4" aria-busy="true" aria-label="Preparing your interview prep">
-      <Skeleton className="h-[200px] rounded-[14px]" />
+      <Skeleton className="h-[12.5rem] rounded-[14px]" />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {Array.from({ length: 4 }, (_, index) => (
-          <Skeleton key={index} className="h-[180px] rounded-[14px]" />
+          <Skeleton key={index} className="h-[11.25rem] rounded-[14px]" />
         ))}
       </div>
     </div>

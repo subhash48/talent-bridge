@@ -27,8 +27,8 @@ export function CurrentApplicationCard({ application, job, otherApplications }: 
           <p className="flex items-center gap-2 text-xs font-medium text-stone">
             <BriefcaseBusiness aria-hidden className="size-4" /> Current application
           </p>
-          <h2 className="mt-3 text-[22px] leading-tight font-semibold tracking-[-0.02em] text-ink sm:text-[26px]">{job.title}</h2>
-          {meta && <p className="mt-1.5 text-[15px] text-stone">{meta}</p>}
+          <h2 className="mt-3 text-[1.375rem] leading-tight font-semibold tracking-[-0.02em] text-ink sm:text-[1.625rem]">{job.title}</h2>
+          {meta && <p className="mt-1.5 text-[0.9375rem] text-stone">{meta}</p>}
         </div>
         <div className="flex items-center gap-2 sm:flex-col sm:items-end">
           <span className="text-xs text-faint sm:order-2">{application.status === "active" ? "Current stage" : "Status"}</span>

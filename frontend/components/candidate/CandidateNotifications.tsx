@@ -41,7 +41,7 @@ export function CandidateNotifications() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-[320px]">
+      <DropdownMenuContent className="w-[20rem]">
         <DropdownMenuLabel>Notifications</DropdownMenuLabel>
         <NotificationItems />
       </DropdownMenuContent>

@@ -181,10 +181,10 @@ export function NoApplication() {
 function ApplicationSkeleton() {
   return (
     <div className="flex flex-col gap-4" aria-busy="true" aria-label="Loading your application">
-      <Skeleton className="h-[240px] rounded-[14px]" />
+      <Skeleton className="h-[15rem] rounded-[14px]" />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_304px]">
-        <Skeleton className="h-[380px] rounded-[14px]" />
-        <Skeleton className="h-[288px] rounded-[14px]" />
+        <Skeleton className="h-[23.75rem] rounded-[14px]" />
+        <Skeleton className="h-[18rem] rounded-[14px]" />
       </div>
     </div>
   );

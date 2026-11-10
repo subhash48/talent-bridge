@@ -17,7 +17,7 @@ export function ApplicationProgress({ application, showDates = false }: { applic
 
   return (
     <div className="scrollbar-none -mx-1 overflow-x-auto px-1">
-      <div className="relative min-w-[420px]">
+      <div className="relative min-w-[26.25rem]">
         <div aria-hidden className="absolute top-[11px] h-[2px] rounded-full bg-ink/15" style={{ left: `${inset}%`, right: `${inset}%` }}>
           <div
             className={cn(

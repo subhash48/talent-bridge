@@ -59,7 +59,7 @@ function CompanyProfile({ applicationId, initialCompany }: { applicationId: stri
         {error ? (
           <LoadError title="Company information couldn't load" message={error} onRetry={() => void refresh()} />
         ) : (
-          <Skeleton className="h-[380px] rounded-[14px]" aria-busy="true" aria-label="Loading company information" />
+          <Skeleton className="h-[23.75rem] rounded-[14px]" aria-busy="true" aria-label="Loading company information" />
         )}
       </>
     );

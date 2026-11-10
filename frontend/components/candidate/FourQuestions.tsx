@@ -116,11 +116,11 @@ function Answer({
   return (
     <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:gap-5 sm:px-8 sm:py-6">
       <span className="flex size-10 shrink-0 items-center justify-center rounded-[12px] bg-accent-soft/70">
-        <Icon aria-hidden strokeWidth={1.75} className="size-[18px] text-brand-ink" />
+        <Icon aria-hidden strokeWidth={1.75} className="size-[1.125rem] text-brand-ink" />
       </span>
       <div className="min-w-0 flex-1">
         <dt className="text-xs font-medium text-stone">{question}</dt>
-        <dd className="mt-1 text-[15px] leading-snug text-charcoal">{children}</dd>
+        <dd className="mt-1 text-[0.9375rem] leading-snug text-charcoal">{children}</dd>
       </div>
       {control && <div className="shrink-0">{control}</div>}
     </div>

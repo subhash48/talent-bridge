@@ -37,8 +37,8 @@ export function ProfileView({ initialProfile }: { initialProfile?: CandidateProf
         <LoadError title="Your profile couldn't load" message={error} onRetry={() => void refresh()} />
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_288px]" aria-busy="true" aria-label="Loading your profile">
-          <Skeleton className="h-[420px] rounded-[14px]" />
-          <Skeleton className="h-[232px] rounded-[14px]" />
+          <Skeleton className="h-[26.25rem] rounded-[14px]" />
+          <Skeleton className="h-[14.5rem] rounded-[14px]" />
         </div>
       )}
     </>

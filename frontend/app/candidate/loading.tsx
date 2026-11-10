@@ -8,10 +8,10 @@ export default function CandidateLoading() {
         <Skeleton className="h-8 w-56 max-w-full" />
         <Skeleton className="h-4 w-72 max-w-full" />
       </div>
-      <Skeleton className="h-[252px] rounded-[14px]" />
+      <Skeleton className="h-[15.75rem] rounded-[14px]" />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {Array.from({ length: 3 }, (_, index) => (
-          <Skeleton key={index} className="h-[216px] rounded-[14px]" />
+          <Skeleton key={index} className="h-[13.5rem] rounded-[14px]" />
         ))}
       </div>
     </div>

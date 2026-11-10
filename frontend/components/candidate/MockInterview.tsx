@@ -61,7 +61,7 @@ export function MockInterview({ questions, applicationId, interviewId }: MockInt
           Question {(index % questions.length) + 1} of {questions.length}
         </span>
       </div>
-      <p className="mt-3 text-[15px] font-medium text-ink">{question}</p>
+      <p className="mt-3 text-[0.9375rem] font-medium text-ink">{question}</p>
       <label htmlFor={`${id}-answer`} className="sr-only">
         Your answer
       </label>

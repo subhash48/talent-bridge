@@ -50,7 +50,7 @@ export function AskAIView() {
           key={applicationId}
           description={`Answers from your ${company} application and what ${company} shares with candidates`}
           prompts={ASK_AI_PROMPTS}
-          threadClassName="max-h-[60vh] min-h-[160px]"
+          threadClassName="max-h-[60vh] min-h-[10rem]"
           askShortcut
         />
         <Card className="p-5 sm:p-5">

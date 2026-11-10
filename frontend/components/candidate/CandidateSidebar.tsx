@@ -88,7 +88,7 @@ export function CandidateSidebarContent({ onNavigate }: { onNavigate?: () => voi
           onClick={() => setHelpOpen(true)}
           className="flex h-10 items-center gap-3 rounded-[10px] px-3 text-sm text-stone transition-[background-color,color] duration-200 hover:bg-ink/[0.04] hover:text-ink"
         >
-          <LifeBuoy aria-hidden strokeWidth={1.75} className="size-[18px] text-faint" />
+          <LifeBuoy aria-hidden strokeWidth={1.75} className="size-[1.125rem] text-faint" />
           Help
         </button>
         <HelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} onNavigate={onNavigate} />
@@ -102,7 +102,7 @@ export function CandidateSidebarContent({ onNavigate }: { onNavigate?: () => voi
             </span>
             <ChevronsUpDown aria-hidden className="size-4 shrink-0 text-stone" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="start" className="w-[212px]">
+          <DropdownMenuContent side="top" align="start" className="w-[13.25rem]">
             <DropdownMenuLabel>{me.candidate.email}</DropdownMenuLabel>
             <DropdownMenuItem asChild>
               <Link href="/candidate/profile" onClick={onNavigate}>
@@ -178,7 +178,7 @@ function ApplicationContext({ onNavigate }: { onNavigate?: () => void }) {
         )}
         {unreadElsewhere > 0 && <span aria-hidden className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-highlight" />}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-[280px]">
+      <DropdownMenuContent align="start" className="w-[17.5rem]">
         <DropdownMenuLabel>Your applications</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={selectedId ?? ""} onValueChange={choose}>
           {me.applications.map((application) => (

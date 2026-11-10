@@ -70,8 +70,8 @@ function InterviewsView({ applicationId, initialInterviews }: InterviewsViewProp
         ) : (
           <div className="flex flex-col gap-4" aria-busy="true" aria-label="Loading interviews">
             <Skeleton className="h-9 w-80 max-w-full" />
-            <Skeleton className="h-[168px] rounded-[14px]" />
-            <Skeleton className="h-[168px] rounded-[14px]" />
+            <Skeleton className="h-[10.5rem] rounded-[14px]" />
+            <Skeleton className="h-[10.5rem] rounded-[14px]" />
           </div>
         )}
       </>

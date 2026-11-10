@@ -18,8 +18,8 @@ export default async function CareersPage() {
     <div className="pt-8 sm:pt-12">
       <header className="pb-8">
         <p className="text-xs font-medium tracking-wide text-ai">Demo careers</p>
-        <h1 className="mt-2 text-[30px] leading-tight font-semibold tracking-[-0.025em] text-ink sm:text-[38px]">Open roles</h1>
-        <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-stone">
+        <h1 className="mt-2 text-[1.875rem] leading-tight font-semibold tracking-[-0.025em] text-ink sm:text-[2.375rem]">Open roles</h1>
+        <p className="mt-3 max-w-xl text-[0.9375rem] leading-relaxed text-stone">
           Apply with your résumé in a few minutes, then follow your application in your candidate portal.
         </p>
       </header>

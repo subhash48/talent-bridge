@@ -183,7 +183,7 @@ export function ApplicationSelector() {
       >
         <div ref={row} className="w-max min-w-full">
           {applications.length === 0 ? (
-            <p className="flex min-h-[78px] items-center rounded-[12px] border border-dashed border-border-strong px-4 text-[13px] text-stone">
+            <p className="flex min-h-[4.875rem] items-center rounded-[12px] border border-dashed border-border-strong px-4 text-[13px] text-stone">
               No applications yet. When you apply for a role, it appears here.
             </p>
           ) : shown.length > 0 ? (
@@ -199,7 +199,7 @@ export function ApplicationSelector() {
               ))}
             </div>
           ) : (
-            <div className="flex min-h-[78px] items-center gap-2 rounded-[12px] border border-dashed border-border-strong px-4 text-[13px] text-stone">
+            <div className="flex min-h-[4.875rem] items-center gap-2 rounded-[12px] border border-dashed border-border-strong px-4 text-[13px] text-stone">
               <span className="min-w-0 truncate">No applications match “{query.trim()}”.</span>
               <button type="button" onClick={() => setQuery("")} className="shrink-0 font-medium text-brand-ink underline-offset-2 hover:underline">
                 Clear search
@@ -255,7 +255,7 @@ function ApplicationCard({ application, selected, tabbable, onSelect }: Applicat
         />
       </span>
       {selected && (
-        <span aria-hidden className="absolute top-2 right-2 flex size-[18px] items-center justify-center rounded-full bg-brand text-on-brand">
+        <span aria-hidden className="absolute top-2 right-2 flex size-[1.125rem] items-center justify-center rounded-full bg-brand text-on-brand">
           <Check strokeWidth={3} className="size-3" />
         </span>
       )}

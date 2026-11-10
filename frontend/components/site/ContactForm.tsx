@@ -13,20 +13,18 @@ import { MAX_MESSAGE, MAX_SUBJECT, sendContactMessage, type ContactMessage } fro
 import { cn } from "@/lib/utils";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const DEMO_SUBJECT = "Demo request";
 
 /**
- * Contact Hirvello. On the contact page: what it's about (business or support, which decides the team that gets
- * it), full name, email, subject and message. On Book a demo (demo): the request goes to the business team with
- * a fixed subject, and asks for the company instead of a subject.
+ * Contact Hirvello: what it's about (business or support, which decides the team that gets it), full name, email,
+ * subject and message. Demos are booked on the Google Calendar booking page instead (components/site/nav.ts).
  */
-export function ContactForm({ demo = false }: { demo?: boolean }) {
+export function ContactForm() {
   const [form, setForm] = useState<ContactMessage>({
     name: "",
     email: "",
     company: "",
-    topic: demo ? "pilot" : "general",
-    subject: demo ? DEMO_SUBJECT : "",
+    topic: "general",
+    subject: "",
     message: "",
     website: "",
   });
@@ -84,8 +82,7 @@ export function ContactForm({ demo = false }: { demo?: boolean }) {
           .
         </AuthAlert>
       )}
-      {!demo && (
-        <fieldset>
+      <fieldset>
           <legend className="text-[13px] font-medium text-ink">What&apos;s it about?</legend>
           <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
             {CONTACT_CHANNELS.map((option) => (
@@ -111,7 +108,6 @@ export function ContactForm({ demo = false }: { demo?: boolean }) {
             ))}
           </div>
         </fieldset>
-      )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Full name" htmlFor="contact-name" error={shown.name} required>
           <Input
@@ -137,12 +133,7 @@ export function ContactForm({ demo = false }: { demo?: boolean }) {
           />
         </Field>
       </div>
-      {demo ? (
-        <Field label="Company (optional)" htmlFor="contact-company">
-          <Input id="contact-company" autoComplete="organization" maxLength={200} value={form.company} onChange={update("company")} />
-        </Field>
-      ) : (
-        <Field label="Subject" htmlFor="contact-subject" error={shown.subject} required>
+      <Field label="Subject" htmlFor="contact-subject" error={shown.subject} required>
           <Input
             id="contact-subject"
             maxLength={MAX_SUBJECT}
@@ -151,9 +142,8 @@ export function ContactForm({ demo = false }: { demo?: boolean }) {
             aria-invalid={Boolean(shown.subject)}
             aria-describedby={shown.subject ? fieldErrorId("contact-subject") : undefined}
           />
-        </Field>
-      )}
-      <Field label={demo ? "What would you like to see?" : "Message"} htmlFor="contact-message" error={shown.message} required>
+      </Field>
+      <Field label="Message" htmlFor="contact-message" error={shown.message} required>
         <Textarea
           id="contact-message"
           rows={5}
@@ -171,7 +161,7 @@ export function ContactForm({ demo = false }: { demo?: boolean }) {
       </div>
       <div>
         <Button type="submit" size="lg" disabled={state === "sending"}>
-          {state === "sending" ? "Sending…" : demo ? "Request a demo" : "Send message"}
+          {state === "sending" ? "Sending…" : "Send message"}
         </Button>
       </div>
     </form>

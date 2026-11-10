@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+import { DEMO_BOOKING_URL } from "./lib/booking";
+
 // Short aliases for the recruiter workspace, which lives under /recruiter (ARCHITECTURE.md 11). /jobs isn't one:
 // it's the public job board.
 const RECRUITER_ALIASES = ["candidates", "interviews", "messages", "analytics", "ai"];
@@ -19,6 +21,8 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/dashboard", destination: "/recruiter/today", permanent: false },
+      // Book a demo is the Google Calendar booking page now; the old page's address goes there too.
+      { source: "/book-a-demo", destination: DEMO_BOOKING_URL, permanent: false },
       ...RECRUITER_ALIASES.map((path) => ({
         source: `/${path}`,
         destination: `/recruiter/${path}`,

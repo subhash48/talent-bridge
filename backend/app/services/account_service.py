@@ -43,13 +43,18 @@ async def find_auth_account(
     """The Supabase Auth account, from auth.users. Only Supabase Postgres has that schema."""
     if session.get_bind().dialect.name != "postgresql":
         return None
-    column, value = ("id", auth_user_id) if auth_user_id is not None else ("lower(email)", (email or "").lower())
+    column, value = ("u.id", auth_user_id) if auth_user_id is not None else ("lower(u.email)", (email or "").lower())
+    # Verified: Supabase confirmed the address by an email it sent, or the person signed in with Google and
+    # Google says it verified that same address. Only Google: other sign-in providers prove nothing here.
     row = (
         await session.execute(
             text(
-                "select id, email, email_confirmed_at is not null"
-                " and (confirmation_sent_at is not null or invited_at is not null) as email_verified"
-                f" from auth.users where {column} = :value and deleted_at is null"
+                "select u.id, u.email, (u.email_confirmed_at is not null"
+                " and (u.confirmation_sent_at is not null or u.invited_at is not null"
+                " or exists (select 1 from auth.identities i where i.user_id = u.id and i.provider = 'google'"
+                " and lower(i.identity_data->>'email') = lower(u.email)"
+                " and coalesce(i.identity_data->>'email_verified', 'false') = 'true'))) as email_verified"
+                f" from auth.users u where {column} = :value and u.deleted_at is null"
             ),
             {"value": value},
         )

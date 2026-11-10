@@ -4,6 +4,7 @@ import { ArrowLeft, Clock, MapPin, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
 
+import { JobBoardNote, jobBoardFacts } from "@/components/recruiter/JobBoardNote";
 import { JobStatusActions } from "@/components/recruiter/JobStatusActions";
 import { JobStatusBadge } from "@/components/recruiter/JobStatusBadge";
 import { StageBreakdown, emptyStageCounts } from "@/components/recruiter/StageBreakdown";
@@ -15,10 +16,11 @@ import { jobFacts } from "@/lib/simple-hire";
 import { STAGE_FILL_STYLES } from "@/lib/stages";
 import { cn } from "@/lib/utils";
 import { STAGE_LABELS } from "@/types/application";
-import { PIPELINE_STAGES, type JobOpening } from "@/types/workspace";
+import type { ManagedJob } from "@/types/job";
+import { PIPELINE_STAGES } from "@/types/workspace";
 
 /** /recruiter/jobs/[id]: the job's applicants grouped by stage. */
-export function JobPipeline({ job }: { job: JobOpening }) {
+export function JobPipeline({ job }: { job: ManagedJob }) {
   const { candidates } = useWorkspace();
   const applicants = useMemo(
     () =>
@@ -34,7 +36,7 @@ export function JobPipeline({ job }: { job: JobOpening }) {
     for (const candidate of applicants) result[candidate.stage] += 1;
     return result;
   }, [applicants]);
-  const facts = jobFacts(job);
+  const facts = [...jobBoardFacts(job), ...jobFacts(job)];
 
   return (
     <div className="flex flex-col gap-5 pt-1">
@@ -69,6 +71,7 @@ export function JobPipeline({ job }: { job: JobOpening }) {
           <span>
             Opened <RelativeTime iso={job.openedAt} />
           </span>
+          <JobBoardNote job={job} />
         </p>
         <StageBreakdown counts={counts} className="mt-5 max-w-xl" />
       </header>

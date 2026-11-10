@@ -12,12 +12,13 @@ import {
   updateCandidateStage,
 } from "@/services/candidates";
 import { getUnreadThreadCount } from "@/services/messages";
-import type { CandidateStage, CurrentUser, JobOpening, NewCandidateInput, PipelineCandidate } from "@/types/workspace";
+import type { ManagedJob } from "@/types/job";
+import type { CandidateStage, CurrentUser, NewCandidateInput, PipelineCandidate } from "@/types/workspace";
 
 type WorkspaceValue = {
   user: CurrentUser;
   candidates: PipelineCandidate[];
-  jobs: JobOpening[];
+  jobs: ManagedJob[];
   unreadThreads: number;
   /** Recruiter messages are also emailed. Without it they reach the candidate portal only. */
   emailConfigured: boolean;
@@ -43,7 +44,7 @@ const MESSAGING_BATCH = 200;
 type WorkspaceProviderProps = {
   user: CurrentUser;
   initialCandidates: PipelineCandidate[];
-  initialJobs: JobOpening[];
+  initialJobs: ManagedJob[];
   initialUnreadThreads: number;
   emailConfigured: boolean;
   children: ReactNode;

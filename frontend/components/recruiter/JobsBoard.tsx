@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 
 import { CreateJobButton } from "@/components/recruiter/CreateJobDialog";
 import { DemoJobsSection } from "@/components/recruiter/DemoJobsSection";
+import { JobBoardNote, jobBoardFacts } from "@/components/recruiter/JobBoardNote";
 import { JobStatusBadge } from "@/components/recruiter/JobStatusBadge";
 import { RecruiterHeader } from "@/components/recruiter/RecruiterHeader";
 import { StageBreakdown, emptyStageCounts, type StageCounts } from "@/components/recruiter/StageBreakdown";
@@ -16,7 +17,7 @@ import { buttonStyles } from "@/components/ui/Button";
 import { FilterChip } from "@/components/ui/FilterChip";
 import { jobFacts } from "@/lib/simple-hire";
 import type { DemoJob } from "@/types/demo";
-import type { JobStatus } from "@/types/job";
+import type { JobStatus, ManagedJob } from "@/types/job";
 import type { JobOpening, PipelineCandidate } from "@/types/workspace";
 
 const STATUS_FILTERS: { value: "all" | JobStatus; label: string }[] = [
@@ -44,7 +45,7 @@ function useStageCountsByJob(jobs: JobOpening[], candidates: PipelineCandidate[]
 }
 
 type JobsBoardProps = {
-  jobs: JobOpening[];
+  jobs: ManagedJob[];
   /** Development only (ENABLE_ASHBY_DEMO): null while the demo is off, and in mock mode. */
   demoJobs?: DemoJob[] | null;
   /** Why the demo jobs couldn't load, if they couldn't. */
@@ -103,9 +104,9 @@ export function JobsBoard({ jobs, demoJobs = null, demoError }: JobsBoardProps) 
   );
 }
 
-function JobCard({ job, counts }: { job: JobOpening; counts: StageCounts }) {
+function JobCard({ job, counts }: { job: ManagedJob; counts: StageCounts }) {
   const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
-  const facts = jobFacts(job);
+  const facts = [...jobBoardFacts(job), ...jobFacts(job)];
 
   return (
     <Link
@@ -132,6 +133,7 @@ function JobCard({ job, counts }: { job: JobOpening; counts: StageCounts }) {
             <Clock aria-hidden className="size-3.5" /> {facts.join(" · ")}
           </span>
         )}
+        <JobBoardNote job={job} />
       </p>
       <StageBreakdown counts={counts} className="mt-4 mb-4" />
       <div className="mt-auto flex items-center justify-between gap-3 border-t border-border pt-3 text-[13px] text-stone">

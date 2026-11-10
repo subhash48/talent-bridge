@@ -33,11 +33,86 @@ export function localPath(value: string | null | undefined): string | null {
   }
 }
 
-/** After signing in: the page they were sent away from if it's in their own area, else their home. */
+/** True for `prefix` itself and anything under it ("/jobs", "/jobs/1", "/jobs?q=x"), but not "/jobsearch". */
+function within(pathname: string, prefix: string): boolean {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
+/**
+ * After signing in: the page they were sent away from if it's in their own area, else their home. Candidates may
+ * also go back to the public job board (/jobs and its pages), where they were applying. The path is resolved
+ * first, so "/jobs/../recruiter" counts as the /recruiter it really opens, and the resolved form is what's used.
+ */
 export function landingPath(role: Role, next?: string | null, mode?: WorkspaceMode | null): string {
   const home = roleHomePath(role, mode);
   const path = localPath(next);
-  return path && (path === home || path.startsWith(`${home}/`) || path.startsWith(`${home}?`)) ? path : home;
+  if (!path) return home;
+  const url = new URL(path, SITE);
+  const allowed = within(url.pathname, home) || (role === "candidate" && within(url.pathname, "/jobs"));
+  return allowed ? `${url.pathname}${url.search}${url.hash}` : home;
+}
+
+/** Who a sign-in page is for: a candidate, or someone who hires. Unset, it takes either. */
+export type Audience = "candidate" | "employer";
+/** Whether a Google sign-in started from a sign-in page or from making an account. */
+export type AuthIntent = "signin" | "signup";
+
+/**
+ * Where a Google sign-in (or an emailed link) comes back to once Supabase has the session: /auth/continue, told who
+ * the page was for, whether they were signing in or making an account, the workspace mode they picked (employers)
+ * and where to go after (a local path only).
+ */
+export function authContinuePath({
+  audience,
+  intent,
+  mode,
+  next,
+  via,
+}: {
+  audience: Audience | null;
+  intent: AuthIntent;
+  mode?: WorkspaceMode | null;
+  next?: string | null;
+  /** "email" for an emailed link (sign-in link, verification resent), so a failure isn't called a Google one. */
+  via?: "email";
+}): string {
+  const params = new URLSearchParams();
+  if (audience) params.set("as", audience);
+  params.set("intent", intent);
+  if (mode) params.set("mode", mode);
+  const path = localPath(next);
+  if (path) params.set("next", path);
+  if (via) params.set("via", via);
+  return `/auth/continue?${params}`;
+}
+
+/** /login for this audience, with a reason to show and the page to return to; every part is optional. */
+export function loginPath({ audience, reason, next }: { audience?: Audience | null; reason?: string | null; next?: string | null }) {
+  const params = new URLSearchParams();
+  if (audience) params.set("as", audience);
+  if (reason) params.set("reason", reason);
+  const path = localPath(next);
+  if (path) params.set("next", path);
+  const query = params.toString();
+  return query ? `/login?${query}` : "/login";
+}
+
+/** /signup/complete, carrying the page to open once the candidate account exists. */
+export function candidateCompletePath(next?: string | null): string {
+  const path = localPath(next);
+  return path ? `/signup/complete?next=${encodeURIComponent(path)}` : "/signup/complete";
+}
+
+/**
+ * A full name as the account API wants it: the first word is the first name, the rest the last name. Null when
+ * there aren't two words, so the person is asked for both. Each part is capped at the API's 100 characters.
+ */
+export function splitFullName(fullName: string | null | undefined): { firstName: string; lastName: string } | null {
+  const words = (fullName ?? "").trim().split(/\s+/).filter(Boolean);
+  if (words.length < 2) return null;
+  const firstName = words[0];
+  const lastName = words.slice(1).join(" ");
+  return firstName.length <= 100 && lastName.length <= 100 ? { firstName, lastName } : null;
 }
 
 /** What to tell the person when Supabase Auth refuses a request. Never says whether an email has an account. */
@@ -69,5 +144,9 @@ export const LOGIN_NOTICES: Record<string, string> = {
   account_disabled: "This account has been disabled. Contact the hiring team if you think this is a mistake.",
   account_mismatch:
     "This sign-in doesn't match the email on your candidate record. Sign in with the email you applied with, or contact the hiring team.",
-  link_invalid: "That link is invalid or has expired. Sign in, or request a new link.",
+  link_invalid: "That link is invalid or has expired. Sign in, or request a new one.",
+  google_cancelled: "Google sign-in was cancelled. Try again, or use your email and password.",
+  google_failed: "We couldn't sign you in with Google. Try again, or use your email and password.",
+  wrong_account: "That account is for a different part of Hirvello. Sign in with the account you use here.",
+  signed_out: "You've signed out.",
 };

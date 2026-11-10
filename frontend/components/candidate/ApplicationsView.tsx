@@ -8,6 +8,7 @@ import { CandidateHeader } from "@/components/candidate/CandidateHeader";
 import { PortalStatusBadge } from "@/components/candidate/PortalStatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Card } from "@/components/ui/Card";
+import { buttonStyles } from "@/components/ui/Button";
 import { formatDayLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { CandidateApplicationSummary } from "@/types/portal";
@@ -44,6 +45,7 @@ export function ApplicationsView() {
           icon={BriefcaseBusiness}
           title="No application yet"
           description="When you apply for a role, it appears here."
+          action={<Link href="/jobs" className={buttonStyles({ size: "lg" })}>Browse jobs</Link>}
         />
       </>
     );

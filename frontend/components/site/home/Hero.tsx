@@ -1,14 +1,15 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
 import Link from "next/link";
 
 import { Concierge } from "@/components/site/home/Concierge";
-import { HOW_IT_WORKS_LINK, PRODUCT_LINK } from "@/components/site/nav";
+import { HOW_IT_WORKS_LINK, JOBS_LINK, PRODUCT_LINK } from "@/components/site/nav";
 import { buttonStyles } from "@/components/ui/Button";
 
 /**
  * The home page's opening: the sky, a small label, one headline in two lines with the words that matter in blue,
- * two short lines, two buttons, and the hiring concierge close under them, so its top is in view on a desktop
- * screen before anyone scrolls. Centred, and no wider than a comfortable page.
+ * two short lines, two buttons (the platform, and the job board for anyone looking for work) with a quieter link to
+ * how it works, and the hiring concierge close under them, so its top is in view on a desktop screen before anyone
+ * scrolls. Centred, and no wider than a comfortable page.
  */
 export function Hero() {
   return (
@@ -46,12 +47,20 @@ export function Hero() {
         <br />
         The work tells you who they are.
       </p>
-      <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+      {/* On a phone the two buttons stack at one width with the link under them; from sm they share a row. */}
+      <div className="mx-auto mt-8 flex max-w-[320px] flex-col items-stretch gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
         <Link href={PRODUCT_LINK.href} className={buttonStyles({ size: "lg", className: "group px-6" })}>
           Explore the platform
           <ArrowRight aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5" />
         </Link>
-        <Link href={HOW_IT_WORKS_LINK.href} className={buttonStyles({ variant: "secondary", size: "lg", className: "px-6" })}>
+        <Link href={JOBS_LINK.href} className={buttonStyles({ variant: "secondary", size: "lg", className: "px-6" })}>
+          <Search aria-hidden className="text-brand-ink" />
+          Browse jobs
+        </Link>
+        <Link
+          href={HOW_IT_WORKS_LINK.href}
+          className="inline-flex h-11 items-center justify-center rounded-full px-3 text-[15px] font-semibold text-ink underline-offset-4 transition-colors duration-200 hover:text-brand-ink hover:underline"
+        >
           See how it works
         </Link>
       </div>

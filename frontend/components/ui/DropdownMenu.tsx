@@ -15,7 +15,7 @@ export const DropdownMenuSub = Menu.Sub;
 export const DropdownMenuRadioGroup = Menu.RadioGroup;
 
 const surface =
-  "z-50 min-w-[190px] overflow-hidden rounded-[12px] border border-border/70 bg-overlay/95 p-1.5 text-[13px] text-charcoal shadow-raised backdrop-blur-xl data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in";
+  "z-50 min-w-[11.875rem] overflow-hidden rounded-[12px] border border-border/70 bg-overlay/95 p-1.5 text-[13px] text-charcoal shadow-raised backdrop-blur-xl data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in";
 
 const item =
   "relative flex h-8 cursor-default items-center gap-2 rounded-[8px] px-2.5 outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-ink/[0.05] data-[highlighted]:text-ink [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-stone";
@@ -79,7 +79,7 @@ export function DropdownMenuSubTrigger({ className, children, ...props }: Compon
 export function DropdownMenuSubContent({ className, ...props }: ComponentProps<typeof Menu.SubContent>) {
   return (
     <Menu.Portal>
-      <Menu.SubContent sideOffset={6} className={cn(surface, "min-w-[180px]", className)} {...props} />
+      <Menu.SubContent sideOffset={6} className={cn(surface, "min-w-[11.25rem]", className)} {...props} />
     </Menu.Portal>
   );
 }

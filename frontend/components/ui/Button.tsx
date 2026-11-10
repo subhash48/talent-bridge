@@ -18,9 +18,9 @@ const VARIANTS = {
 // 14 to 15px, semibold, pill-shaped, and never taller than 44px.
 const SIZES = {
   sm: "h-8 gap-1.5 rounded-full px-3 text-[13px] [&_svg]:size-3.5",
-  md: "h-9 gap-2 rounded-full px-4 text-[14px] [&_svg]:size-4",
-  lg: "h-11 gap-2 rounded-full px-5 text-[15px] [&_svg]:size-4",
-  icon: "size-9 rounded-full [&_svg]:size-[17px]",
+  md: "h-9 gap-2 rounded-full px-4 text-[0.875rem] [&_svg]:size-4",
+  lg: "h-11 gap-2 rounded-full px-5 text-[0.9375rem] [&_svg]:size-4",
+  icon: "size-9 rounded-full [&_svg]:size-[1.0625rem]",
   "icon-sm": "size-8 rounded-full [&_svg]:size-3.5",
 } as const;
 

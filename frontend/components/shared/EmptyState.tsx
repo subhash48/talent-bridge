@@ -24,7 +24,7 @@ export function EmptyState({ title, description, icon: Icon, action, className }
           <Icon aria-hidden className="size-4 text-brand-ink" />
         </span>
       )}
-      <p className="text-[15px] font-medium text-ink">{title}</p>
+      <p className="text-[0.9375rem] font-medium text-ink">{title}</p>
       {description && <p className="mt-1 max-w-sm text-[13px] text-stone">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>

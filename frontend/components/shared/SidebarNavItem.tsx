@@ -30,7 +30,7 @@ export function SidebarNavItem({ href, label, icon: Icon, active, indicator, bad
       <Icon
         aria-hidden
         strokeWidth={1.75}
-        className={cn("size-[18px] shrink-0 transition-colors", active ? "text-brand-ink" : "text-faint group-hover:text-charcoal")}
+        className={cn("size-[1.125rem] shrink-0 transition-colors", active ? "text-brand-ink" : "text-faint group-hover:text-charcoal")}
       />
       <span className="flex-1">{label}</span>
       {indicator && (
@@ -39,7 +39,7 @@ export function SidebarNavItem({ href, label, icon: Icon, active, indicator, bad
         </span>
       )}
       {badge && badge.count > 0 && (
-        <span className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent px-1 text-[11px] font-semibold text-on-brand tabular-nums">
+        <span className="inline-flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-accent px-1 text-[11px] font-semibold text-on-brand tabular-nums">
           <span aria-hidden>{badge.count}</span>
           <span className="sr-only">{badge.label}</span>
         </span>

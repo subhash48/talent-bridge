@@ -30,7 +30,7 @@ export function Modal({ open, onClose, title, description, children, className }
             className,
           )}
         >
-          <Dialog.Title className="pr-10 text-[17px] font-semibold tracking-tight text-ink">{title}</Dialog.Title>
+          <Dialog.Title className="pr-10 text-[1.0625rem] font-semibold tracking-tight text-ink">{title}</Dialog.Title>
           {description && <Dialog.Description className="mt-1 text-[13px] text-stone">{description}</Dialog.Description>}
           <div className="mt-4">{children}</div>
           <Dialog.Close asChild>

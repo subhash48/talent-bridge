@@ -193,6 +193,10 @@ AUTH_SCHEMA = (
         "create table if not exists auth.users (id uuid primary key, email text, email_confirmed_at timestamptz,"
         " confirmation_sent_at timestamptz, invited_at timestamptz, deleted_at timestamptz, last_sign_in_at timestamptz)"
     ),
+    (
+        "create table if not exists auth.identities (id uuid primary key default gen_random_uuid(),"
+        " user_id uuid, provider text, identity_data jsonb, email text)"
+    ),
 )
 
 
@@ -208,6 +212,7 @@ async def fresh_engine() -> AsyncEngine:
         for statement in AUTH_SCHEMA:
             await connection.execute(text(statement))
         await connection.execute(text("truncate auth.users"))
+        await connection.execute(text("truncate auth.identities"))
         await connection.run_sync(Base.metadata.drop_all)
         await connection.run_sync(Base.metadata.create_all)
     return engine
@@ -219,7 +224,7 @@ def fresh_rate_limits(monkeypatch: pytest.MonkeyPatch) -> None:
     from app.core.rate_limit import RateLimiter
     from app.services import careers, contact_service
 
-    for module, name in ((careers, "limiter"), (careers, "links"), (contact_service, "limiter")):
+    for module, name in ((careers, "limiter"), (careers, "candidate_limiter"), (careers, "links"), (contact_service, "limiter")):
         limit = getattr(module, name)
         monkeypatch.setattr(module, name, RateLimiter(limit.limit, limit.window_seconds, limit.message, limit.code))
 

@@ -30,7 +30,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import settings
 from app.core.database import create_engine_for, create_tables, get_session, get_session_factory
-from app.core.enums import ApplicationStage, DemoPostingStatus, JobStatus, PortalAccountStatus, UserRole
+from app.core.enums import ApplicationStage, DemoPostingStatus, JobSource, JobStatus, PortalAccountStatus, UserRole
 from app.core.security import TokenVerifier, get_token_verifier
 from app.db.seed import seed_id
 from app.integrations.ashby import demo
@@ -149,6 +149,7 @@ async def demo_job(
                 id=job_id,
                 external_id=demo_id("job", str(job_id)),
                 company_id=await workspace_company_id(session),
+                posted_by=JobSource.RECRUITER,
                 title=title,
                 department="Machine Learning",
                 location="London",
@@ -377,6 +378,10 @@ async def test_the_careers_site_lists_published_roles_only(
         "id": str(older),
         "title": JOB,
         "company": None,  # only Hirvello's own careers site names the employer
+        "company_logo_url": None,
+        "source": None,
+        "salary_period": None,
+        "expires_at": None,
         "department": "Machine Learning",
         "location": "London",
         "work_arrangement": "Hybrid",

@@ -20,6 +20,8 @@ AUTH = """
 create schema if not exists auth;
 create table if not exists auth.users (id uuid primary key, email text, email_confirmed_at timestamptz,
   confirmation_sent_at timestamptz, invited_at timestamptz, deleted_at timestamptz, last_sign_in_at timestamptz);
+create table if not exists auth.identities (id uuid primary key default gen_random_uuid(),
+  user_id uuid, provider text, identity_data jsonb, email text);
 """
 
 

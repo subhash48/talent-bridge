@@ -57,10 +57,10 @@ export default async function SignInChooserPage({ searchParams }: Props) {
               className="group flex items-center gap-4 rounded-[14px] border border-border/70 bg-glass-strong p-3.5 transition-[background-color,border-color,transform] duration-200 hover:-translate-y-px hover:border-accent/40 hover:bg-overlay"
             >
               <span className="flex size-10 shrink-0 items-center justify-center rounded-[12px] bg-accent-soft text-brand-ink ring-1 ring-accent/10">
-                <Icon aria-hidden className="size-[18px]" strokeWidth={1.75} />
+                <Icon aria-hidden className="size-[1.125rem]" strokeWidth={1.75} />
               </span>
               <span className="flex-1">
-                <span className="block text-[15px] font-semibold text-ink">{title}</span>
+                <span className="block text-[0.9375rem] font-semibold text-ink">{title}</span>
                 <span className="mt-0.5 block text-[13px] leading-snug text-stone">{text}</span>
               </span>
               <ChevronRight

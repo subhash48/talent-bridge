@@ -57,14 +57,14 @@ export default async function GetStartedPage({ searchParams }: Props) {
     <div className="sky-backdrop relative flex min-h-dvh flex-col">
       <main className="mx-auto flex w-full max-w-[1080px] flex-1 flex-col items-center justify-center px-5 py-10 text-center sm:px-8">
         <Link href="/" aria-label="Hirvello home" className="rounded-md">
-          <HirvelloLogo className="gap-2.5 [&>svg]:h-7 [&>span]:text-[24px]" />
+          <HirvelloLogo className="gap-2.5 [&>svg]:h-7 [&>span]:text-[1.5rem]" />
         </Link>
-        <h1 className="mt-8 text-[clamp(30px,3.4vw,44px)] leading-[1.1] font-bold tracking-[-0.03em] text-ink">Get started with Hirvello</h1>
-        <p className="mt-3 text-[16px] leading-relaxed text-charcoal sm:text-[17px]">
+        <h1 className="mt-8 text-[clamp(1.875rem,3.4vw,2.75rem)] leading-[1.1] font-bold tracking-[-0.03em] text-ink">Get started with Hirvello</h1>
+        <p className="mt-3 text-[1rem] leading-relaxed text-charcoal sm:text-[1.0625rem]">
           Choose how you&rsquo;ll use it, and we&rsquo;ll set up the right account.
         </p>
         {need && (
-          <p className="sky-card mt-5 max-w-[52ch] rounded-full px-5 py-2.5 text-[14.5px] text-charcoal">
+          <p className="sky-card mt-5 max-w-[52ch] rounded-full px-5 py-2.5 text-[0.9062rem] text-charcoal">
             Looking for <span className="font-semibold text-ink">{need}</span>? Simple Hire turns that into a job that&rsquo;s ready to post.
           </p>
         )}
@@ -75,7 +75,7 @@ export default async function GetStartedPage({ searchParams }: Props) {
               <Link
                 href={href}
                 className={cn(
-                  "group sky-card flex w-full flex-col items-center rounded-[20px] px-5 pt-7 pb-6 text-center transition-[transform,background-color] duration-200 hover:-translate-y-0.5 hover:bg-glass-strong sm:min-h-[260px]",
+                  "group sky-card flex w-full flex-col items-center rounded-[20px] px-5 pt-7 pb-6 text-center transition-[transform,background-color] duration-200 hover:-translate-y-0.5 hover:bg-glass-strong sm:min-h-[16.25rem]",
                   need && simple && "ring-2 ring-accent/40",
                 )}
               >
@@ -83,8 +83,8 @@ export default async function GetStartedPage({ searchParams }: Props) {
                   <Icon aria-hidden className="size-6" strokeWidth={1.6} />
                 </span>
                 <span className="mt-5 text-[12px] font-semibold tracking-[0.12em] text-brand-ink uppercase">{who}</span>
-                <span className="mt-1.5 text-[20px] leading-tight font-semibold tracking-[-0.015em] text-ink">{title}</span>
-                <span className="mt-2 max-w-[26ch] text-[14.5px] leading-snug text-charcoal">{text}</span>
+                <span className="mt-1.5 text-[1.25rem] leading-tight font-semibold tracking-[-0.015em] text-ink">{title}</span>
+                <span className="mt-2 max-w-[26ch] text-[0.9062rem] leading-snug text-charcoal">{text}</span>
                 <span className="mt-auto flex pt-6">
                   <span className="flex size-10 items-center justify-center rounded-full bg-brand text-on-brand shadow-raised transition-transform duration-200 group-hover:translate-x-0.5">
                     <ArrowRight aria-hidden className="size-4.5" />
@@ -96,7 +96,7 @@ export default async function GetStartedPage({ searchParams }: Props) {
           ))}
         </ul>
 
-        <p className="sky-card mt-8 rounded-full px-5 py-2.5 text-[15px] text-charcoal">
+        <p className="sky-card mt-8 rounded-full px-5 py-2.5 text-[0.9375rem] text-charcoal">
           Already have an account?{" "}
           <Link href="/signin" className="font-semibold text-brand-ink underline underline-offset-4 transition-colors hover:text-ink">
             Sign in

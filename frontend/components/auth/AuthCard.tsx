@@ -28,7 +28,7 @@ export function AuthCard({ title, eyebrow, description, children, footer, wide }
   return (
     <div className="sky-backdrop flex min-h-dvh">
       <aside className="brand-backdrop relative hidden w-[42%] max-w-[600px] shrink-0 flex-col justify-between overflow-hidden p-10 lg:flex xl:p-14">
-        <HirvelloMark tone="dark" aria-hidden className="pointer-events-none absolute -right-20 -bottom-20 h-[440px] opacity-[0.12]" />
+        <HirvelloMark tone="dark" aria-hidden className="pointer-events-none absolute -right-20 -bottom-20 h-[27.5rem] opacity-[0.12]" />
         <Link href="/" aria-label="Hirvello home" className="relative w-fit rounded-md">
           <HirvelloLogo tone="dark" />
         </Link>
@@ -37,10 +37,10 @@ export function AuthCard({ title, eyebrow, description, children, footer, wide }
             <span aria-hidden className="size-1.5 rounded-full bg-sky" />
             Less noise. More signal.
           </p>
-          <p className="mt-4 text-[clamp(26px,2.3vw,36px)] leading-[1.12] font-bold tracking-[-0.025em] text-on-brand">
+          <p className="mt-4 text-[clamp(1.625rem,2.3vw,2.25rem)] leading-[1.12] font-bold tracking-[-0.025em] text-on-brand">
             Hiring shouldn&apos;t feel like a <span className="text-sky">black box.</span>
           </p>
-          <p className="mt-4 text-[16px] leading-relaxed text-on-brand/85">
+          <p className="mt-4 text-[1rem] leading-relaxed text-on-brand/85">
             Hirvello finds the real candidates and keeps recruiters and candidates informed throughout hiring.
           </p>
         </div>
@@ -56,13 +56,13 @@ export function AuthCard({ title, eyebrow, description, children, footer, wide }
             {eyebrow && (
               <p className="mb-2.5 text-[12px] leading-none font-semibold tracking-[0.14em] text-brand-ink uppercase">{eyebrow}</p>
             )}
-            <h1 className="text-[clamp(24px,2.1vw,30px)] leading-[1.15] font-bold tracking-[-0.025em] text-ink">{title}</h1>
-            {description && <div className="mt-2 text-[15px] leading-relaxed text-charcoal">{description}</div>}
-            <div className="mt-7 [&_input:not([type=checkbox]):not([type=radio])]:h-11 [&_button[type=submit]]:h-11 [&_button[type=submit]]:text-[15px]">
+            <h1 className="text-[clamp(1.5rem,2.1vw,1.875rem)] leading-[1.15] font-bold tracking-[-0.025em] text-ink">{title}</h1>
+            {description && <div className="mt-2 text-[0.9375rem] leading-relaxed text-charcoal">{description}</div>}
+            <div className="mt-7 [&_input:not([type=checkbox]):not([type=radio])]:h-11 [&_button[type=submit]]:h-11 [&_button[type=submit]]:text-[0.9375rem]">
               {children}
             </div>
             {footer && (
-              <div className="mt-7 flex flex-col gap-2 border-t border-ink/[0.07] pt-5 text-[14px] leading-relaxed text-stone">{footer}</div>
+              <div className="mt-7 flex flex-col gap-2 border-t border-ink/[0.07] pt-5 text-[0.875rem] leading-relaxed text-stone">{footer}</div>
             )}
           </div>
         </div>

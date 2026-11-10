@@ -90,7 +90,7 @@ export function GoogleButton({ audience, intent, mode, next, disabled, className
         onClick={() => void start()}
         disabled={disabled || pending}
         aria-busy={pending}
-        className="inline-flex h-11 w-full items-center justify-center gap-3 rounded-full border border-ink/15 bg-white px-5 text-[15px] font-semibold text-ink shadow-[0_1px_2px_rgb(20_35_59/0.06)] transition-[background-color,border-color,box-shadow] duration-200 select-none hover:border-ink/25 hover:bg-[#f8fafd] hover:shadow-[0_2px_8px_rgb(20_35_59/0.08)] focus-visible:ring-4 focus-visible:ring-accent/25 focus-visible:outline-none active:scale-[0.99] disabled:pointer-events-none disabled:opacity-60"
+        className="inline-flex h-11 w-full items-center justify-center gap-3 rounded-full border border-ink/15 bg-white px-5 text-[0.9375rem] font-semibold text-ink shadow-[0_1px_2px_rgb(20_35_59/0.06)] transition-[background-color,border-color,box-shadow] duration-200 select-none hover:border-ink/25 hover:bg-[#f8fafd] hover:shadow-[0_2px_8px_rgb(20_35_59/0.08)] focus-visible:ring-4 focus-visible:ring-accent/25 focus-visible:outline-none active:scale-[0.99] disabled:pointer-events-none disabled:opacity-60"
       >
         <GoogleMark />
         {pending ? "Connecting to Google…" : "Continue with Google"}
@@ -102,7 +102,7 @@ export function GoogleButton({ audience, intent, mode, next, disabled, className
 /** Google's "G", in its four colours. */
 function GoogleMark() {
   return (
-    <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false" className="size-[18px] shrink-0">
+    <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false" className="size-[1.125rem] shrink-0">
       <path
         fill="#EA4335"
         d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"

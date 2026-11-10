@@ -167,7 +167,7 @@ export function WorkspaceSetupForm({ initialMode }: { initialMode: WorkspaceMode
                 <Icon aria-hidden className="size-4" strokeWidth={1.75} />
                 {who}
               </span>
-              <span className="text-[15px] font-semibold text-ink">{title}</span>
+              <span className="text-[0.9375rem] font-semibold text-ink">{title}</span>
               <span className="text-[13px] leading-snug text-stone">{text}</span>
             </label>
           ))}

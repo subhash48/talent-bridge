@@ -50,7 +50,7 @@ const WRONG_PLACE: Record<Audience, { message: string; href: string; link: strin
 // The sign-in card's own field styles: larger than the app's, with a clearer edge.
 const labelStyles = "text-sm font-medium text-ink";
 const inputStyles =
-  "h-11 rounded-[10px] border-ink/15 bg-overlay px-3.5 text-[15px] hover:border-ink/25 focus-visible:border-accent focus-visible:bg-overlay focus-visible:ring-4 focus-visible:ring-accent/20";
+  "h-11 rounded-[10px] border-ink/15 bg-overlay px-3.5 text-[0.9375rem] hover:border-ink/25 focus-visible:border-accent focus-visible:bg-overlay focus-visible:ring-4 focus-visible:ring-accent/20";
 
 type LoginFormProps = {
   next: string | null;
@@ -281,7 +281,7 @@ export function LoginForm({ next, reason, audience = null, emailLink = false }: 
             </Link>
           </div>
         </div>
-        <Button type="submit" size="lg" disabled={pending} className="mt-1 h-11 w-full text-[15px]">
+        <Button type="submit" size="lg" disabled={pending} className="mt-1 h-11 w-full text-[0.9375rem]">
           {pending ? "Signing in…" : "Sign in"}
         </Button>
         {emailLink && (
@@ -290,7 +290,7 @@ export function LoginForm({ next, reason, audience = null, emailLink = false }: 
             size="lg"
             disabled={pending || linkState === "sending"}
             onClick={() => void sendEmailLink()}
-            className="-mt-1 h-11 w-full text-[14px] text-brand-ink hover:text-ink"
+            className="-mt-1 h-11 w-full text-[0.875rem] text-brand-ink hover:text-ink"
           >
             {linkState === "sending" ? "Sending…" : "Email me a sign-in link"}
           </Button>

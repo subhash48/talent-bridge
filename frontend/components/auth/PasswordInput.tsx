@@ -21,7 +21,7 @@ export function PasswordInput({ className, ...props }: Omit<ComponentProps<"inpu
         onClick={() => setShown((value) => !value)}
         className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-[10px] text-stone transition-colors hover:text-ink focus-visible:text-ink focus-visible:ring-4 focus-visible:ring-accent/20 focus-visible:outline-none"
       >
-        {shown ? <EyeOff aria-hidden className="size-[18px]" /> : <Eye aria-hidden className="size-[18px]" />}
+        {shown ? <EyeOff aria-hidden className="size-[1.125rem]" /> : <Eye aria-hidden className="size-[1.125rem]" />}
       </button>
     </div>
   );

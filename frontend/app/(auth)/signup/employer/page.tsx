@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { AuthCard, authLinkStyles } from "@/components/auth/AuthCard";
+import { AUDIENCE_EYEBROW, AuthCard, authLinkStyles } from "@/components/auth/AuthCard";
 import { EmployerSignupForm } from "@/components/auth/EmployerSignupForm";
 import { homePath } from "@/lib/auth";
 import { getSignedInUser } from "@/lib/session";
@@ -21,6 +21,7 @@ export default async function EmployerSignupPage({ searchParams }: Props) {
 
   return (
     <AuthCard
+      eyebrow={AUDIENCE_EYEBROW.employer}
       title={mode === "simple" ? "Start hiring with Simple Hire" : "Set up your company"}
       description={
         mode === "simple"
@@ -28,20 +29,20 @@ export default async function EmployerSignupPage({ searchParams }: Props) {
           : "Create your sign-in, then tell us how your company hires."
       }
       footer={
-        <div className="flex flex-col gap-2">
-          <span>
+        <>
+          <p>
             Already set up?{" "}
             <Link href="/login?as=employer" className={authLinkStyles}>
               Employer sign in
             </Link>
-          </span>
-          <span>
-            Looking for a job?{" "}
+          </p>
+          <p>
+            Looking for work?{" "}
             <Link href="/signup" className={authLinkStyles}>
               Create a candidate account
             </Link>
-          </span>
-        </div>
+          </p>
+        </>
       }
     >
       <EmployerSignupForm mode={mode} />

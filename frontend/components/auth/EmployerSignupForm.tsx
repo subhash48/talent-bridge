@@ -1,8 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
 import { AuthAlert } from "@/components/auth/AuthAlert";
+import { AuthDivider, GoogleButton } from "@/components/auth/GoogleButton";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Button } from "@/components/ui/Button";
 import { Field, fieldErrorId } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
@@ -22,13 +25,15 @@ export function onboardingPath(mode: WorkspaceMode | null): string {
 /**
  * An employer's own sign-in, for setting up their company's workspace. Supabase Auth keeps the password and
  * sends the verification email; its link opens the workspace set-up, where they say how they hire. Nothing
- * exists in Hirvello until then, and the email must be verified first.
+ * exists in Hirvello until then, and the email must be verified first. Google does the same in one step: its
+ * address is already verified, so /auth/continue goes straight to the workspace set-up.
  */
 export function EmployerSignupForm({ mode }: { mode: WorkspaceMode | null }) {
   const [form, setForm] = useState<Form>({ fullName: "", email: "", password: "", confirm: "" });
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState<string | null>(null);
+  const [taken, setTaken] = useState(false);
   const [showProblems, setShowProblems] = useState(false);
 
   const email = form.email.trim();
@@ -51,6 +56,7 @@ export function EmployerSignupForm({ mode }: { mode: WorkspaceMode | null }) {
     if (Object.values(problems).some(Boolean)) return;
     setPending(true);
     setError(null);
+    setTaken(false);
     const next = onboardingPath(mode);
     const { data, error: signUpError } = await createClient().auth.signUp({
       email,
@@ -66,6 +72,12 @@ export function EmployerSignupForm({ mode }: { mode: WorkspaceMode | null }) {
       setPending(false);
       return;
     }
+    // Supabase answers an address that already has an account with a user that has no identities, and sends nothing.
+    if (data.user && !data.session && data.user.identities?.length === 0) {
+      setTaken(true);
+      setPending(false);
+      return;
+    }
     if (!data.session) {
       setSentTo(email);
       return;
@@ -73,7 +85,7 @@ export function EmployerSignupForm({ mode }: { mode: WorkspaceMode | null }) {
     window.location.assign(next);
   }
 
-  if (!SUPABASE_CONFIGURED) return <AuthAlert>Sign-up isn&apos;t available right now.</AuthAlert>;
+  if (!SUPABASE_CONFIGURED) return <AuthAlert>Creating an account isn&apos;t available right now.</AuthAlert>;
 
   if (sentTo) {
     return (
@@ -85,66 +97,82 @@ export function EmployerSignupForm({ mode }: { mode: WorkspaceMode | null }) {
   }
 
   return (
-    <form onSubmit={signUp} noValidate className="flex flex-col gap-4">
-      {error && <AuthAlert>{error}</AuthAlert>}
-      <Field label="Your name" htmlFor="full-name" error={shown.fullName}>
-        <Input
-          id="full-name"
-          autoComplete="name"
-          required
-          maxLength={100}
-          autoFocus
-          value={form.fullName}
-          onChange={update("fullName")}
-          aria-invalid={Boolean(shown.fullName)}
-          aria-describedby={shown.fullName ? fieldErrorId("full-name") : undefined}
-        />
-      </Field>
-      <Field label="Work email" htmlFor="email" error={shown.email}>
-        <Input
-          id="email"
-          type="email"
-          autoComplete="email"
-          required
-          value={form.email}
-          onChange={update("email")}
-          aria-invalid={Boolean(shown.email)}
-          aria-describedby={shown.email ? fieldErrorId("email") : undefined}
-        />
-      </Field>
-      <Field label="Password" htmlFor="password" error={shown.password}>
-        <Input
-          id="password"
-          type="password"
-          autoComplete="new-password"
-          required
-          minLength={MIN_PASSWORD}
-          value={form.password}
-          onChange={update("password")}
-          aria-invalid={Boolean(shown.password)}
-          aria-describedby={shown.password ? fieldErrorId("password") : "password-rules"}
-        />
-      </Field>
-      {!shown.password && (
-        <p id="password-rules" className="-mt-2 text-xs text-faint">
-          At least {MIN_PASSWORD} characters, with letters and a number.
-        </p>
-      )}
-      <Field label="Confirm password" htmlFor="confirm-password" error={shown.confirm}>
-        <Input
-          id="confirm-password"
-          type="password"
-          autoComplete="new-password"
-          required
-          value={form.confirm}
-          onChange={update("confirm")}
-          aria-invalid={Boolean(shown.confirm)}
-          aria-describedby={shown.confirm ? fieldErrorId("confirm-password") : undefined}
-        />
-      </Field>
-      <Button type="submit" size="lg" disabled={pending} className="mt-1 w-full">
-        {pending ? "Creating your sign-in…" : "Continue"}
-      </Button>
-    </form>
+    <div className="flex flex-col gap-5">
+      <GoogleButton audience="employer" intent="signup" mode={mode} disabled={pending} />
+      <AuthDivider>or sign up with email</AuthDivider>
+      <form onSubmit={signUp} noValidate className="flex flex-col gap-4">
+        {error && <AuthAlert>{error}</AuthAlert>}
+        {taken && (
+          <AuthAlert tone="info">
+            An account with this email already exists.{" "}
+            <Link href="/login?as=employer" className="font-medium underline underline-offset-4">
+              Sign in instead
+            </Link>
+            , or{" "}
+            <Link href="/forgot-password?as=employer" className="font-medium underline underline-offset-4">
+              reset your password
+            </Link>
+            .
+          </AuthAlert>
+        )}
+        <Field label="Your name" htmlFor="full-name" error={shown.fullName}>
+          <Input
+            id="full-name"
+            autoComplete="name"
+            required
+            maxLength={100}
+            autoFocus
+            value={form.fullName}
+            onChange={update("fullName")}
+            aria-invalid={Boolean(shown.fullName)}
+            aria-describedby={shown.fullName ? fieldErrorId("full-name") : undefined}
+          />
+        </Field>
+        <Field label="Work email" htmlFor="email" error={shown.email}>
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            required
+            value={form.email}
+            onChange={update("email")}
+            aria-invalid={Boolean(shown.email)}
+            aria-describedby={shown.email ? fieldErrorId("email") : undefined}
+          />
+        </Field>
+        <Field label="Password" htmlFor="password" error={shown.password}>
+          <PasswordInput
+            id="password"
+            autoComplete="new-password"
+            required
+            minLength={MIN_PASSWORD}
+            value={form.password}
+            onChange={update("password")}
+            aria-invalid={Boolean(shown.password)}
+            aria-describedby={shown.password ? fieldErrorId("password") : "password-rules"}
+          />
+        </Field>
+        {!shown.password && (
+          <p id="password-rules" className="-mt-2 text-xs text-faint">
+            At least {MIN_PASSWORD} characters, with letters and a number.
+          </p>
+        )}
+        <Field label="Confirm password" htmlFor="confirm-password" error={shown.confirm}>
+          <Input
+            id="confirm-password"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={form.confirm}
+            onChange={update("confirm")}
+            aria-invalid={Boolean(shown.confirm)}
+            aria-describedby={shown.confirm ? fieldErrorId("confirm-password") : undefined}
+          />
+        </Field>
+        <Button type="submit" size="lg" disabled={pending} className="mt-1 w-full">
+          {pending ? "Creating your sign-in…" : "Continue"}
+        </Button>
+      </form>
+    </div>
   );
 }

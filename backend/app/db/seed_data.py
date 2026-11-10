@@ -12,6 +12,7 @@ from app.core.enums import (
     InterviewStatus,
     InterviewType,
     JobStatus,
+    SalaryPeriod,
     SenderType,
     WorkspaceMode,
 )
@@ -407,6 +408,9 @@ class JobSeed:
     work_days: tuple[str, ...] = ()
     openings: int | None = None
     employment_type: str = "Full-time"
+    # The job board's salary filter (migration 022): whole units of the currency, per period. Only for the
+    # fictional employers, so no real company's job shows pay it never published.
+    salary: tuple[int, int, str, SalaryPeriod] | None = None
 
     @property
     def key(self) -> str:
@@ -586,6 +590,7 @@ JOBS: tuple[JobSeed, ...] = (
         "Turn Nova AI's speech and translation research into features customers use on live support calls.",
         ("Python", "LLM evaluation", "Speech recognition", "PyTorch", "APIs"),
         company="nova-ai",
+        salary=(75_000, 95_000, "EUR", SalaryPeriod.YEAR),
     ),
     JobSeed(
         "Platform Engineer",
@@ -596,6 +601,7 @@ JOBS: tuple[JobSeed, ...] = (
         "Build and run the cloud platform that plans, routes and monitors Harbor's autonomous fleets.",
         ("Go", "Kubernetes", "Distributed systems", "Observability", "PostgreSQL"),
         company="harbor-robotics",
+        salary=(70_000, 90_000, "EUR", SalaryPeriod.YEAR),
     ),
     # Sophia's other applications. Postings written for the demo, not copied from the companies' own, and
     # drafts, so the public careers site never lists a job at a real company; Sophia still sees hers.
@@ -1532,6 +1538,7 @@ SAMS_JOBS: tuple[JobSeed, ...] = (
         work_days=("friday", "saturday"),
         openings=2,
         employment_type="Part-time",
+        salary=(18, 18, "USD", SalaryPeriod.HOUR),
     ),
 )
 SAMS_KITCHEN = "sams-cafe:Kitchen Assistant"

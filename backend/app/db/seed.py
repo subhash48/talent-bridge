@@ -22,7 +22,18 @@ from typing import Any
 from sqlalchemy import delete, func, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.enums import ActivityType, ApplicationStage, InterviewStatus, InterviewType, SenderType, UserRole
+from app.core.enums import (
+    ActivityType,
+    ApplicationStage,
+    InterviewStatus,
+    InterviewType,
+    JobSource,
+    JobStatus,
+    JobVisibility,
+    SenderType,
+    UserRole,
+    WorkArrangement,
+)
 from app.db.seed_data import (
     ANTHROPIC_RECRUITER,
     APPLICATIONS,
@@ -185,8 +196,11 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
         )
 
     job_ids: dict[str, uuid.UUID] = {}
+    modes = {company.key: company.workspace_mode for company in COMPANIES}
     for job in (*JOBS, *SAMS_JOBS):
         job_ids[job.key] = seed_id("job", job.key)
+        low, high, currency, period = job.salary or (None, None, None, None)
+        arrangement = WorkArrangement.mentioned_in(job.location)
         rows[Job].append(
             {
                 "id": job_ids[job.key],
@@ -203,6 +217,16 @@ def build_seed() -> dict[type[Base], list[dict[str, Any]]]:
                 "shift": job.shift,
                 "work_days": list(job.work_days),
                 "openings": job.openings,
+                # The job board (migration 022): who posted it is how its company hires.
+                "posted_by": JobSource.for_mode(modes[job.company]),
+                "work_arrangement": arrangement,
+                "salary_min": low,
+                "salary_max": high,
+                "salary_currency": currency,
+                "salary_period": period,
+                "visibility": JobVisibility.PUBLIC,
+                "published_at": None if job.status == JobStatus.DRAFT else Ago(job.opened_days_ago * DAY),
+                "expires_at": None,
                 "created_at": Ago(job.opened_days_ago * DAY),
                 "updated_at": Ago(job.opened_days_ago * DAY),
             }

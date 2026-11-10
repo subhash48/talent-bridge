@@ -4,6 +4,7 @@ import Link from "next/link";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ReloadButton } from "@/components/shared/ReloadButton";
 import { buttonStyles } from "@/components/ui/Button";
+import { CAREERS_PATHS, type CareersSite } from "@/types/careers";
 
 // The careers site's calm states, in place of a list or a role.
 
@@ -24,14 +25,14 @@ export function CareersUnavailable({ message }: { message: string }) {
 }
 
 /** A role that isn't on the careers site: never published, unpublished, closed, or an old link. */
-export function RoleNotOpen() {
+export function RoleNotOpen({ site = "demo" }: { site?: CareersSite }) {
   return (
     <EmptyState
       icon={SearchX}
       title="This role isn't open"
       description="It may have closed, or the link may be out of date."
       action={
-        <Link href="/demo/careers" className={buttonStyles({ variant: "secondary" })}>
+        <Link href={CAREERS_PATHS[site]} className={buttonStyles({ variant: "secondary" })}>
           See open roles
         </Link>
       }

@@ -150,7 +150,7 @@ export function ApplyResultCard({ site = "demo", result, problem, retrying, stil
             We still couldn&apos;t send it. Wait a few minutes, then try again.
           </p>
         )}
-        {problem && <ApplyProblemAlert problem={problem} />}
+        {problem && <ApplyProblemAlert problem={problem} site={site} />}
       </div>
 
       <div className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">

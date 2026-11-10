@@ -5,15 +5,22 @@ import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "r
 
 import { ApplyProblemAlert, type ApplyProblem } from "@/components/careers/ApplyProblemAlert";
 import { ApplyResultCard } from "@/components/careers/ApplyResultCard";
+import {
+  AvailabilityFieldset,
+  LINKEDIN_PROBLEM,
+  NO_ZOOM,
+  fieldErrorsFrom,
+  linkedInUrl,
+  phoneProblem,
+  problemFrom,
+} from "@/components/careers/applyFields";
 import { ResumeInput, readResume, resumeProblem } from "@/components/careers/ResumeInput";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, fieldErrorId } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import { WEEKDAYS, dayLabel, type Weekday } from "@/lib/days";
-import { cn } from "@/lib/utils";
-import { ApiError, errorMessage } from "@/services/api";
+import { WEEKDAYS, type Weekday } from "@/lib/days";
 import { applyToJob } from "@/services/careers";
 import type { ApplyInput, ApplyResult, CareersSite } from "@/types/careers";
 
@@ -55,10 +62,6 @@ const API_FIELDS: Partial<Record<string, FieldName>> = {
 };
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-// The API's rule: an optional +, then digits, spaces, brackets, dots, dashes or slashes, with 7 to 15 digits.
-const PHONE_PATTERN = /^\+?[0-9 ().\-/]+$/;
-// 16px on phones, so iOS doesn't zoom into a field when it's focused.
-const NO_ZOOM = "text-base sm:text-sm";
 
 function validate(values: Values, resume: File | null, phoneRequired: boolean, days: DaysAsked): Errors {
   const errors: Errors = {};
@@ -67,13 +70,9 @@ function validate(values: Values, resume: File | null, phoneRequired: boolean, d
   const email = values.email.trim();
   if (!email) errors.email = "Enter your email address.";
   else if (!EMAIL_PATTERN.test(email)) errors.email = "Enter a valid email address, like name@example.com.";
-  const phone = values.phone.trim();
-  const digits = phone.replace(/\D/g, "").length;
-  if (!phone && phoneRequired) errors.phone = "Enter your phone number.";
-  else if (phone && (!PHONE_PATTERN.test(phone) || digits < 7 || digits > 15)) errors.phone = "Enter a phone number, like +1 415 555 0100.";
-  if (values.linkedinUrl.trim() && !linkedInUrl(values.linkedinUrl)) {
-    errors.linkedinUrl = "Enter a linkedin.com link, like linkedin.com/in/your-name.";
-  }
+  const phone = phoneProblem(values.phone, phoneRequired);
+  if (phone) errors.phone = phone;
+  if (values.linkedinUrl.trim() && !linkedInUrl(values.linkedinUrl)) errors.linkedinUrl = LINKEDIN_PROBLEM;
   if (days.offered.length > 0 && days.chosen.length === 0) errors.availability = "Choose the days you can work.";
   const resumeError = resume ? resumeProblem(resume) : "Attach your résumé.";
   if (resumeError) errors.resume = resumeError;
@@ -82,18 +81,6 @@ function validate(values: Values, resume: File | null, phoneRequired: boolean, d
 
 /** The job's work days, and the ones the applicant ticked. */
 type DaysAsked = { offered: readonly Weekday[]; chosen: readonly Weekday[] };
-
-/** The link as the API takes it (with https:// when it was left off); null when empty or not on linkedin.com. */
-function linkedInUrl(value: string): string | null {
-  const text = value.trim();
-  if (!text) return null;
-  try {
-    const url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
-    return url.hostname === "linkedin.com" || url.hostname.endsWith(".linkedin.com") ? url.href : null;
-  } catch {
-    return null;
-  }
-}
 
 /**
  * The application form, then what happened to it. Nothing reaches the hiring team from here: the API
@@ -211,9 +198,9 @@ export function ApplyForm({
       setAttempts((count) => count + 1);
       setResult(outcome);
     } catch (error) {
-      const { fields, complete } = fieldErrorsFrom(error);
+      const { fields, complete } = fieldErrorsFrom(error, API_FIELDS, (field) => field !== "availability" || (native && workDays.length > 0));
       setSubmitErrors(fields);
-      if (!complete) setProblem(problemFrom(error));
+      if (!complete) setProblem(problemFrom(error, site));
       if (Object.keys(fields).length > 0) {
         setResult(null); // from "Try again": back to the form, where the fields are
         setFocusRequest({ target: "invalid" });
@@ -286,45 +273,15 @@ export function ApplyForm({
         </div>
 
         {native && workDays.length > 0 && (
-          <fieldset
+          <AvailabilityFieldset
+            id={IDS.availability}
+            days={workDays}
+            chosen={days}
+            onToggle={toggleDay}
+            error={errors.availability}
+            disabled={pending}
             className="mt-6 border-t border-border pt-6"
-            aria-describedby={errors.availability ? fieldErrorId(IDS.availability) : undefined}
-          >
-            <legend className="text-xs font-medium text-charcoal">
-              Which of these days can you work?
-              <span aria-hidden className="ml-0.5 text-faint">
-                *
-              </span>
-            </legend>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {workDays.map((day) => (
-                <label
-                  key={day}
-                  className={cn(
-                    "inline-flex cursor-pointer items-center gap-2 rounded-full border px-3.5 py-2 text-sm transition-colors has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-brand/55",
-                    days.includes(day)
-                      ? "border-brand-ink bg-brand-soft text-ink"
-                      : "border-border bg-surface-raised text-charcoal hover:border-border-strong",
-                  )}
-                >
-                  <input
-                    type="checkbox"
-                    checked={days.includes(day)}
-                    onChange={() => toggleDay(day)}
-                    disabled={pending}
-                    aria-invalid={errors.availability ? true : undefined}
-                    className="size-4 accent-[var(--color-brand-ink)]"
-                  />
-                  {dayLabel(day)}
-                </label>
-              ))}
-            </div>
-            {errors.availability && (
-              <p id={fieldErrorId(IDS.availability)} className="mt-2 text-xs text-danger">
-                {errors.availability}
-              </p>
-            )}
-          </fieldset>
+          />
         )}
 
         {native && (
@@ -356,7 +313,7 @@ export function ApplyForm({
 
         {problem && (
           <div className="mt-6">
-            <ApplyProblemAlert problem={problem} />
+            <ApplyProblemAlert problem={problem} site={site} />
           </div>
         )}
 
@@ -372,34 +329,4 @@ export function ApplyForm({
       </Card>
     </form>
   );
-}
-
-/** A validation error's details, on the form's fields. complete is false when some belong to no field here. */
-function fieldErrorsFrom(error: unknown): { fields: Errors; complete: boolean } {
-  const fields: Errors = {};
-  if (!(error instanceof ApiError) || error.code !== "validation_error" || !Array.isArray(error.details)) {
-    return { fields, complete: false };
-  }
-  let complete = error.details.length > 0;
-  for (const detail of error.details as { field?: unknown; message?: unknown }[]) {
-    const field = typeof detail?.field === "string" ? API_FIELDS[detail.field.split(".")[0]] : undefined;
-    if (field && typeof detail.message === "string") fields[field] ??= asSentence(detail.message);
-    else complete = false;
-  }
-  return { fields, complete };
-}
-
-/** Anything else that stopped the application, for the alert above the button. */
-function problemFrom(error: unknown): ApplyProblem {
-  if (!(error instanceof ApiError)) return { message: errorMessage(error) };
-  // A role that's gone answers job_not_found; any other 404 means the whole demo is switched off.
-  if (error.status === 404 && error.code !== "job_not_found") return { message: "The demo careers site is turned off." };
-  return { message: error.message, roleGone: error.code === "job_not_found" || error.code === "job_closed" };
-}
-
-/** Pydantic's wording as a sentence: "Value error, enter a phone number" → "Enter a phone number." */
-function asSentence(message: string): string {
-  const text = message.replace(/^value error,\s*/i, "").trim();
-  const sentence = text.charAt(0).toUpperCase() + text.slice(1);
-  return /[.!?]$/.test(sentence) ? sentence : `${sentence}.`;
 }

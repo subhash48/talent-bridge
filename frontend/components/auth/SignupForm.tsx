@@ -10,7 +10,7 @@ import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Button } from "@/components/ui/Button";
 import { Field, fieldErrorId } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
-import { authErrorMessage, candidateCompletePath, loginPath, splitFullName } from "@/lib/auth";
+import { authErrorMessage, authRedirectUrl, candidateCompletePath, loginPath, splitFullName } from "@/lib/auth";
 import { MIN_PASSWORD, passwordProblem } from "@/lib/password";
 import { SUPABASE_CONFIGURED, createClient } from "@/lib/supabase";
 
@@ -62,7 +62,7 @@ export function SignupForm({ next }: { next: string | null }) {
       email,
       password: form.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(complete)}`,
+        emailRedirectTo: authRedirectUrl(complete),
         // A name to show, and which account this sign-in is for. It grants nothing: the API decides.
         data: {
           first_name: name.firstName,

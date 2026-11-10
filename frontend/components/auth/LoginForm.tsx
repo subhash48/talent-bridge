@@ -10,7 +10,15 @@ import { PasswordInput } from "@/components/auth/PasswordInput";
 import { SignInLoading } from "@/components/auth/SignInLoading";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { LOGIN_NOTICES, authContinuePath, authErrorMessage, candidateCompletePath, landingPath, type Audience } from "@/lib/auth";
+import {
+  LOGIN_NOTICES,
+  authContinuePath,
+  authErrorMessage,
+  authRedirectUrl,
+  candidateCompletePath,
+  landingPath,
+  type Audience,
+} from "@/lib/auth";
 import { SUPABASE_CONFIGURED, createClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { ApiError, errorMessage } from "@/services/api";
@@ -133,7 +141,7 @@ export function LoginForm({ next, reason, audience = null, emailLink = false }: 
     const { error: resendError } = await createClient().auth.resend({
       type: "signup",
       email: unverified,
-      options: { emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(continuePath)}` },
+      options: { emailRedirectTo: authRedirectUrl(continuePath) },
     });
     // As with the sign-in link: an address Supabase doesn't recognise gets the same answer.
     if (resendError && resendError.status !== 400 && resendError.status !== 422) {
@@ -161,7 +169,7 @@ export function LoginForm({ next, reason, audience = null, emailLink = false }: 
       email: address,
       options: {
         shouldCreateUser: false,
-        emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(continuePath)}`,
+        emailRedirectTo: authRedirectUrl(continuePath),
       },
     });
     // An unknown address gets the same answer, so the form never says who has an account.

@@ -9,7 +9,7 @@ import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Button } from "@/components/ui/Button";
 import { Field, fieldErrorId } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
-import { authErrorMessage } from "@/lib/auth";
+import { authErrorMessage, authRedirectUrl } from "@/lib/auth";
 import { MIN_PASSWORD, passwordProblem } from "@/lib/password";
 import { SUPABASE_CONFIGURED, createClient } from "@/lib/supabase";
 import type { WorkspaceMode } from "@/types/workspace";
@@ -62,7 +62,7 @@ export function EmployerSignupForm({ mode }: { mode: WorkspaceMode | null }) {
       email,
       password: form.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(next)}`,
+        emailRedirectTo: authRedirectUrl(next),
         // Shown back on the set-up page; it grants nothing. The API makes the workspace once it's asked to.
         data: { full_name: form.fullName.trim(), account_type: "employer", hire_mode: mode },
       },

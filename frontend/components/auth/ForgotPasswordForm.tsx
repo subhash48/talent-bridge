@@ -6,7 +6,7 @@ import { AuthAlert } from "@/components/auth/AuthAlert";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
-import { authErrorMessage } from "@/lib/auth";
+import { authErrorMessage, authRedirectUrl } from "@/lib/auth";
 import { SUPABASE_CONFIGURED, createClient } from "@/lib/supabase";
 
 /** A reset link by email. Its link signs them in on /auth/confirm and opens /reset-password to choose the new one. */
@@ -22,7 +22,7 @@ export function ForgotPasswordForm() {
     setError(null);
     const address = email.trim();
     const { error: resetError } = await createClient().auth.resetPasswordForEmail(address, {
-      redirectTo: `${window.location.origin}/auth/confirm?next=/reset-password`,
+      redirectTo: authRedirectUrl("/reset-password"),
     });
     setPending(false);
     if (resetError) setError(authErrorMessage(resetError));

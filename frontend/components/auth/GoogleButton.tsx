@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { AuthAlert } from "@/components/auth/AuthAlert";
-import { authContinuePath, type Audience, type AuthIntent } from "@/lib/auth";
+import { authContinuePath, authRedirectUrl, type Audience, type AuthIntent } from "@/lib/auth";
 import { SUPABASE_CONFIGURED, SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, createClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import type { WorkspaceMode } from "@/types/workspace";
@@ -69,7 +69,7 @@ export function GoogleButton({ audience, intent, mode, next, disabled, className
       const { error: oauthError } = await createClient().auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(continuePath)}`,
+          redirectTo: authRedirectUrl(continuePath),
           // Always ask which Google account, so someone signed in to several can choose the right one.
           queryParams: { prompt: "select_account" },
         },

@@ -738,6 +738,30 @@ async function googleAuth(browser) {
   await page.getByRole("button", { name: "Continue with Google" }).click();
   check("disabled Google provider gives email fallback", await shows(page.getByText("Google sign-in isn't available right now. Use your email and password.")));
   await configure({ enabled: true });
+
+  // A return address that isn't on Supabase's Redirect URLs list sends people to the Site URL, the home page,
+  // with the code: the app still finishes the sign-in and goes back to where it was going.
+  await context.clearCookies();
+  await configure({ email: `google.site.${Date.now()}@inbox.example`, fullName: "Site Fallback", cancel: false, siteUrl: `${WEB}/` });
+  await page.goto(`${WEB}/signup?next=${encodeURIComponent(next)}`);
+  await page.getByRole("button", { name: "Continue with Google" }).click();
+  await page.waitForURL(`${WEB}${next}`, { timeout: 20000 });
+  check("Google sent to the home page still returns to the application", await shows(page.getByRole("heading", { name: "Applying as Site Fallback" })));
+  await context.clearCookies();
+  await page.goto(`${WEB}/login?as=candidate`);
+  await page.getByRole("button", { name: "Continue with Google" }).click();
+  await page.waitForURL("**/candidate", { timeout: 20000 });
+  check("returning Google sign-in sent to the home page opens the portal", page.url() === `${WEB}/candidate`);
+  await context.clearCookies();
+  await configure({ cancel: true });
+  await page.goto(`${WEB}/login?as=candidate`);
+  await page.getByRole("button", { name: "Continue with Google" }).click();
+  await page.waitForURL("**reason=google_cancelled", { timeout: 15000 });
+  check("cancelled Google sent to the home page still says so", await shows(page.getByRole("alert")));
+  await page.goto(`${WEB}/?code=not-a-real-code`);
+  await page.waitForURL("**/login?reason=link_invalid", { timeout: 15000 });
+  check("a stray code on the home page is refused, not ignored", true);
+  await configure({ cancel: false, siteUrl: null });
   await context.close();
 }
 

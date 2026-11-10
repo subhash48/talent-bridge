@@ -24,7 +24,9 @@ const sessions = new Map(); // refresh token -> user id
 const codes = new Map(); // pkce auth code -> { userId, challenge, type }
 const tokens = new Map(); // email link token -> { userId, type, redirectTo, challenge }
 const outbox = [];
-let google = { email: "google.candidate@inbox.example", fullName: "Google Candidate", cancel: false, enabled: true };
+// siteUrl, when set, plays a Supabase project whose Redirect URLs list doesn't have the address the app asked for:
+// Google sign-ins go back there (the Site URL) instead, as Supabase does.
+let google = { email: "google.candidate@inbox.example", fullName: "Google Candidate", cancel: false, enabled: true, siteUrl: null };
 
 const b64url = (buffer) => Buffer.from(buffer).toString("base64url");
 
@@ -190,7 +192,7 @@ createServer(async (req, res) => {
 
     // Test-only Google consent boundary: the real app still uses the Supabase SDK, PKCE and session cookies.
     if (path === "/auth/v1/authorize") {
-      const target = new URL(url.searchParams.get("redirect_to"));
+      const target = new URL(google.siteUrl ?? url.searchParams.get("redirect_to"));
       if (google.cancel) target.searchParams.set("error", "access_denied");
       else {
         const user = byEmail(google.email) ?? await createUser(google.email, { confirmed: true, data: { full_name: google.fullName } });

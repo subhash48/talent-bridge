@@ -12,11 +12,15 @@
  * button's edge. Coral (highlight) marks what's urgent or unread, as dots and small badges, never a large fill.
  * Success is a calm green, caution an amber, danger a muted red: each is paired with words, never the only signal.
  *
- * Type is one family (Ranade, or Manrope until its files are in: app/fonts.ts) on one scale: the home page's
- * headline 38 to 68px, a page's 32 to 46px, a section's 28 to 40px, card titles 18 to 20px, body 15 to 17px,
- * navigation and buttons 14 to 15px, labels 12 to 13px.
+ * Type is one family (Ranade, or Manrope until its files are in: app/fonts.ts) on one scale, set in rem against a
+ * 15px root (below): the home page's headline 36 to 56px, a page's 30 to 43px, a section's 26 to 38px, card titles
+ * 17 to 19px, body 14 to 16px, navigation and buttons 13 to 14px, labels 12 to 13px (labels stay in px, so they
+ * never shrink below what's comfortable to read).
  */
 @theme {
+  /* Tailwind's text-xs follows the root; keep it at 12px, the smallest size used for reading. */
+  --text-xs: 0.8rem;
+
   --color-canvas: #f4f8fc;
   --color-surface: #f7fafd;
   --color-surface-raised: #fafcfe;
@@ -143,6 +147,9 @@
 
 @layer base {
   html {
+    /* 15px instead of the browser's 16: everything sized in rem (type, spacing, buttons, cards) is a sixteenth
+       smaller, in proportion, as on Linear, Stripe or Ashby. Breakpoints are unaffected (media queries read 16px). */
+    font-size: 93.75%;
     color-scheme: light;
     background-color: var(--color-canvas);
   }
